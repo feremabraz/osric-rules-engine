@@ -1,0 +1,417 @@
+/**
+ * AbilityScoreGenerationRules - OSRIC Ability Score Generation
+ *
+ * Migrated from rules/character/abilityScoreGeneration.ts
+ * PRESERVATION: All OSRIC ability score generation methods and values preserved exactly
+ */
+
+import type { Command } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
+import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
+import type { AbilityScores, CharacterClass, CharacterRace } from '@osric/types/entities';
+
+interface CharacterCreationData {
+  abilityScoreMethod: 'standard3d6' | 'arranged3d6' | '4d6dropLowest';
+  race: CharacterRace;
+  characterClass: CharacterClass;
+  arrangedScores?: AbilityScores;
+}
+
+export class AbilityScoreGenerationRule extends BaseRule {
+  readonly name = RULE_NAMES.ABILITY_SCORE_GENERATION;
+  readonly priority = 10; // Execute early in character creation
+
+  async execute(context: GameContext, _command: Command): Promise<RuleResult> {
+    const creationData = context.getTemporary('character-creation') as CharacterCreationData;
+
+    if (!creationData) {
+      return this.createFailureResult('No character creation data found');
+    }
+
+    try {
+      let abilityScores: AbilityScores;
+
+      // Generate ability scores based on selected method
+      switch (creationData.abilityScoreMethod) {
+        case 'standard3d6':
+          abilityScores = this.generateStandard3d6();
+          break;
+        case 'arranged3d6':
+          if (creationData.arrangedScores) {
+            abilityScores = creationData.arrangedScores;
+          } else {
+            const rolledScores = this.generate3d6Arranged();
+            // For now, assign in order - in a real implementation, player would arrange
+            abilityScores = this.assignArrangedScores(rolledScores);
+          }
+          break;
+        case '4d6dropLowest': {
+          const bestScores = this.generate4d6DropLowest();
+          abilityScores = this.assignArrangedScores(bestScores);
+          break;
+        }
+        default:
+          return this.createFailureResult(
+            `Unknown ability score method: ${creationData.abilityScoreMethod}`
+          );
+      }
+
+      // Store generated scores in context for next rules
+      context.setTemporary('generated-ability-scores', abilityScores);
+
+      return this.createSuccessResult(
+        `Generated ability scores using ${creationData.abilityScoreMethod}`,
+        {
+          abilityScores,
+          method: creationData.abilityScoreMethod,
+        }
+      );
+    } catch (error) {
+      return this.createFailureResult(
+        `Ability score generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  canApply(context: GameContext, command: Command): boolean {
+    if (command.type !== COMMAND_TYPES.CREATE_CHARACTER) return false;
+
+    const creationData = context.getTemporary('character-creation');
+    return creationData != null;
+  }
+
+  // ===== OSRIC ABILITY SCORE GENERATION METHODS =====
+  // PRESERVED: All methods from original rules/character/abilityScoreGeneration.ts
+
+  /**
+   * Generate ability scores using the standard 3d6 method
+   * Rolls 3d6 for each ability in order
+   * PRESERVED: Exact implementation from original
+   */
+  private generateStandard3d6(): AbilityScores {
+    const rollDice = () => Math.floor(Math.random() * 6) + 1; // Simulate a d6 roll
+    const roll3d6 = () => rollDice() + rollDice() + rollDice();
+
+    return {
+      strength: roll3d6(),
+      dexterity: roll3d6(),
+      constitution: roll3d6(),
+      intelligence: roll3d6(),
+      wisdom: roll3d6(),
+      charisma: roll3d6(),
+    };
+  }
+
+  /**
+   * Generate ability scores using 3d6 but allow arranging the scores
+   * Rolls 3d6 six times, returning the scores for player to assign
+   * PRESERVED: Exact implementation from original
+   */
+  private generate3d6Arranged(): number[] {
+    const rollDice = () => Math.floor(Math.random() * 6) + 1;
+    const roll3d6 = () => rollDice() + rollDice() + rollDice();
+
+    return Array(6)
+      .fill(0)
+      .map(() => roll3d6());
+  }
+
+  /**
+   * Generate ability scores using 4d6, drop lowest
+   * This method tends to generate higher ability scores
+   * PRESERVED: Exact implementation from original
+   */
+  private generate4d6DropLowest(): number[] {
+    const rollDice = () => Math.floor(Math.random() * 6) + 1;
+
+    const roll4d6DropLowest = () => {
+      const rolls = [rollDice(), rollDice(), rollDice(), rollDice()];
+      const minRoll = Math.min(...rolls);
+      const minIndex = rolls.indexOf(minRoll);
+      return rolls.reduce((sum, val, index) => (index !== minIndex ? sum + val : sum), 0);
+    };
+
+    return Array(6)
+      .fill(0)
+      .map(() => roll4d6DropLowest());
+  }
+
+  /**
+   * Convert array of scores to AbilityScores object
+   * For arranged methods, assigns in standard order
+   */
+  private assignArrangedScores(scores: number[]): AbilityScores {
+    if (scores.length !== 6) {
+      throw new Error('Expected exactly 6 ability scores');
+    }
+
+    return {
+      strength: scores[0],
+      dexterity: scores[1],
+      constitution: scores[2],
+      intelligence: scores[3],
+      wisdom: scores[4],
+      charisma: scores[5],
+    };
+  }
+}
+
+export class ExceptionalStrengthRule extends BaseRule {
+  readonly name = RULE_NAMES.ABILITY_SCORE_MODIFIERS; // This handles exceptional strength
+  readonly priority = 15; // Execute after ability generation, before racial adjustments
+
+  async execute(context: GameContext, _command: Command): Promise<RuleResult> {
+    const creationData = context.getTemporary('character-creation') as CharacterCreationData;
+    const abilityScores = context.getTemporary('generated-ability-scores') as AbilityScores;
+
+    if (!abilityScores) {
+      return this.createFailureResult('No ability scores found for exceptional strength check');
+    }
+
+    // Check if character qualifies for exceptional strength
+    const exceptionalStrength = this.rollExceptionalStrength(
+      creationData.characterClass,
+      abilityScores.strength
+    );
+
+    if (exceptionalStrength !== null) {
+      // Store exceptional strength for later use
+      context.setTemporary('exceptional-strength', exceptionalStrength);
+
+      return this.createSuccessResult(
+        `Rolled exceptional strength: 18/${exceptionalStrength.toString().padStart(2, '0')}`,
+        { exceptionalStrength }
+      );
+    }
+
+    return this.createSuccessResult('No exceptional strength applicable');
+  }
+
+  canApply(context: GameContext, command: Command): boolean {
+    if (command.type !== COMMAND_TYPES.CREATE_CHARACTER) return false;
+
+    const abilityScores = context.getTemporary('generated-ability-scores') as AbilityScores;
+    const creationData = context.getTemporary('character-creation') as CharacterCreationData;
+
+    return (
+      abilityScores?.strength === 18 &&
+      creationData &&
+      this.canHaveExceptionalStrength(creationData.characterClass)
+    );
+  }
+
+  /**
+   * Check if ability scores qualify for a fighter's exceptional strength
+   * Fighters, paladins, and rangers with 18 strength roll d% for exceptional strength
+   * PRESERVED: Exact logic from original
+   */
+  private rollExceptionalStrength(characterClass: CharacterClass, strength: number): number | null {
+    // Only fighters, paladins, and rangers can have exceptional strength
+    if (!this.canHaveExceptionalStrength(characterClass)) {
+      return null;
+    }
+
+    // Only applies to characters with exactly 18 strength
+    if (strength !== 18) {
+      return null;
+    }
+
+    // Roll percentile dice
+    const roll = Math.floor(Math.random() * 100) + 1;
+    return roll;
+  }
+
+  private canHaveExceptionalStrength(characterClass: CharacterClass): boolean {
+    return ['Fighter', 'Paladin', 'Ranger'].includes(characterClass);
+  }
+}
+
+export class RacialAbilityAdjustmentRule extends BaseRule {
+  readonly name = RULE_NAMES.RACIAL_ABILITIES; // Updated to use strong typing
+  readonly priority = 20; // Execute after exceptional strength
+
+  async execute(context: GameContext, _command: Command): Promise<RuleResult> {
+    const creationData = context.getTemporary('character-creation') as CharacterCreationData;
+    const abilityScores = context.getTemporary('generated-ability-scores') as AbilityScores;
+
+    if (!abilityScores) {
+      return this.createFailureResult('No ability scores found for racial adjustment');
+    }
+
+    // Apply racial adjustments
+    const adjustedScores = this.applyRacialAbilityAdjustments(abilityScores, creationData.race);
+
+    // Check if character meets racial requirements
+    const meetsRequirements = this.meetsRacialRequirements(adjustedScores, creationData.race);
+
+    if (!meetsRequirements) {
+      return this.createFailureResult(
+        `Character does not meet racial ability requirements for ${creationData.race}`,
+        undefined,
+        true // This is a critical failure - character creation should stop
+      );
+    }
+
+    // Store adjusted scores
+    context.setTemporary('adjusted-ability-scores', adjustedScores);
+
+    const adjustmentMessage = this.getAdjustmentMessage(
+      abilityScores,
+      adjustedScores,
+      creationData.race
+    );
+
+    return this.createSuccessResult(
+      `Applied racial adjustments for ${creationData.race}${adjustmentMessage}`,
+      {
+        originalScores: abilityScores,
+        adjustedScores,
+        race: creationData.race,
+      }
+    );
+  }
+
+  canApply(context: GameContext, command: Command): boolean {
+    if (command.type !== 'create-character') return false;
+
+    const abilityScores = context.getTemporary('generated-ability-scores');
+    const creationData = context.getTemporary('character-creation');
+
+    return abilityScores != null && creationData != null;
+  }
+
+  /**
+   * Apply racial ability score adjustments
+   * PRESERVED: Exact implementation from original
+   */
+  private applyRacialAbilityAdjustments(
+    abilityScores: AbilityScores,
+    race: CharacterRace
+  ): AbilityScores {
+    const newScores = { ...abilityScores };
+
+    switch (race) {
+      case 'Dwarf':
+        newScores.constitution += 1;
+        newScores.charisma -= 1; // Only with respect to non-dwarfs
+        break;
+      case 'Elf':
+        newScores.dexterity += 1;
+        newScores.constitution -= 1;
+        break;
+      case 'Halfling':
+        newScores.strength -= 1;
+        newScores.dexterity += 1;
+        break;
+      case 'Half-Orc':
+        newScores.strength += 1;
+        newScores.constitution += 1;
+        newScores.charisma -= 2;
+        break;
+      // No adjustments for humans, gnomes, or half-elves
+    }
+
+    // Ensure no score goes below 3 or above 18 (unless exceptional strength)
+    for (const key of Object.keys(newScores)) {
+      const ability = key as keyof AbilityScores;
+      if (newScores[ability] < 3) newScores[ability] = 3;
+      if (newScores[ability] > 18) newScores[ability] = 18;
+    }
+
+    return newScores;
+  }
+
+  /**
+   * Check if ability scores meet racial minimum requirements
+   * PRESERVED: Exact implementation from original
+   */
+  private meetsRacialRequirements(abilityScores: AbilityScores, race: CharacterRace): boolean {
+    switch (race) {
+      case 'Dwarf':
+        return (
+          abilityScores.strength >= 8 &&
+          abilityScores.dexterity >= 3 &&
+          abilityScores.constitution >= 12 &&
+          abilityScores.intelligence >= 3 &&
+          abilityScores.wisdom >= 3 &&
+          abilityScores.charisma >= 3
+        );
+      case 'Elf':
+        return (
+          abilityScores.strength >= 3 &&
+          abilityScores.dexterity >= 7 &&
+          abilityScores.constitution >= 8 &&
+          abilityScores.intelligence >= 8 &&
+          abilityScores.wisdom >= 3 &&
+          abilityScores.charisma >= 8
+        );
+      case 'Gnome':
+        return (
+          abilityScores.strength >= 6 &&
+          abilityScores.dexterity >= 3 &&
+          abilityScores.constitution >= 8 &&
+          abilityScores.intelligence >= 7 &&
+          abilityScores.wisdom >= 3 &&
+          abilityScores.charisma >= 3
+        );
+      case 'Half-Elf':
+        return (
+          abilityScores.strength >= 3 &&
+          abilityScores.dexterity >= 6 &&
+          abilityScores.constitution >= 6 &&
+          abilityScores.intelligence >= 4 &&
+          abilityScores.wisdom >= 3 &&
+          abilityScores.charisma >= 3
+        );
+      case 'Halfling':
+        return (
+          abilityScores.strength >= 6 &&
+          abilityScores.dexterity >= 8 &&
+          abilityScores.constitution >= 10 &&
+          abilityScores.intelligence >= 6 &&
+          abilityScores.wisdom >= 3 &&
+          abilityScores.charisma >= 3
+        );
+      case 'Half-Orc':
+        return (
+          abilityScores.strength >= 6 &&
+          abilityScores.dexterity >= 3 &&
+          abilityScores.constitution >= 13 &&
+          abilityScores.intelligence >= 3 &&
+          abilityScores.wisdom >= 3 &&
+          abilityScores.charisma >= 3
+        );
+      case 'Human':
+        // Humans have no ability score requirements
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  private getAdjustmentMessage(
+    original: AbilityScores,
+    adjusted: AbilityScores,
+    _race: CharacterRace
+  ): string {
+    const changes: string[] = [];
+
+    for (const ability of [
+      'strength',
+      'dexterity',
+      'constitution',
+      'intelligence',
+      'wisdom',
+      'charisma',
+    ] as const) {
+      const diff = adjusted[ability] - original[ability];
+      if (diff !== 0) {
+        const sign = diff > 0 ? '+' : '';
+        changes.push(`${ability} ${sign}${diff}`);
+      }
+    }
+
+    return changes.length > 0 ? ` (${changes.join(', ')})` : ' (no adjustments)';
+  }
+}

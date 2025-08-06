@@ -14,9 +14,15 @@
     "jsx": "preserve",
     "incremental": true,
     "paths": {
-      "@/*": ["./*"],
       "@rules/*": ["./rules/*"],
-      "@tests/*": ["./__tests__/*"]
+      "@tests/*": ["./__tests__/*"],
+      "@osric/*": ["./osric/*"],
+      "@osric/core/*": ["./osric/core/*"],
+      "@osric/types/*": ["./osric/types/*"],
+      "@osric/utils/*": ["./osric/utils/*"],
+      "@osric/rules/*": ["./osric/rules/*"],
+      "@osric/commands/*": ["./osric/commands/*"],
+      "@osric/entities/*": ["./osric/entities/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"],

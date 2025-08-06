@@ -1,13 +1,16 @@
 {
   "dependencies": {
     "date-fns": "^4.1.0",
+    "jotai": "^2.12.5",
     "nanoid": "^5.1.5",
     "zod": "^3.24.4"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@types/node": "^20",
+    "@types/react": "^19.1.9",
     "husky": "^9.1.7",
+    "react": "^19.1.1",
     "typescript": "^5",
     "vitest": "^3.1.3"
   },

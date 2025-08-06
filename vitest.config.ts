@@ -6,17 +6,21 @@ export default defineConfig({
     environment: 'node',
     include: ['__tests__/**/*.test.ts'],
     globals: true,
+    typecheck: {
+      enabled: true,
+      tsconfig: './tsconfig.json',
+    },
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, './'),
-      '@app': resolve(__dirname, './app'),
-      '@lib': resolve(__dirname, './lib'),
-      '@store': resolve(__dirname, './store'),
-      '@rules': resolve(__dirname, './rules'),
-      '@ai': resolve(__dirname, './ai'),
       '@tests': resolve(__dirname, './__tests__'),
-      '@components': resolve(__dirname, './components'),
+      '@osric': resolve(__dirname, './osric'),
+      '@osric/core': resolve(__dirname, './osric/core'),
+      '@osric/types': resolve(__dirname, './osric/types'),
+      '@osric/utils': resolve(__dirname, './osric/utils'),
+      '@osric/rules': resolve(__dirname, './osric/rules'),
+      '@osric/commands': resolve(__dirname, './osric/commands'),
+      '@osric/entities': resolve(__dirname, './osric/entities'),
     },
   },
 });

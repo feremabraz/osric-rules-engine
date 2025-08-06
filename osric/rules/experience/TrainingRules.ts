@@ -1,0 +1,354 @@
+import type { Command } from '../../core/Command';
+import type { GameContext } from '../../core/GameContext';
+import { BaseRule } from '../../core/Rule';
+import type { RuleResult } from '../../core/Rule';
+import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
+import type { Character } from '../../types/entities';
+
+interface TrainingRequestData {
+  characterId: string;
+  trainingType: 'level_advancement' | 'new_skill' | 'skill_improvement';
+  targetLevel?: number;
+  skillType?: string;
+}
+
+interface TrainingRequirements {
+  timeRequired: number; // in weeks
+  costRequired: number; // in GP
+  trainerRequired: boolean;
+  trainerLevel?: number;
+  locationRequired?: string;
+  prerequisites: string[];
+}
+
+interface TrainingResult {
+  success: boolean;
+  timeSpent: number;
+  costPaid: number;
+  benefits?: string[];
+  message: string;
+}
+
+export class TrainingRule extends BaseRule {
+  readonly name = RULE_NAMES.TRAINING_REQUIREMENTS;
+
+  canApply(context: GameContext, command: Command): boolean {
+    if (command.type !== COMMAND_TYPES.LEVEL_UP) {
+      return false;
+    }
+
+    const data = context.getTemporary<TrainingRequestData>('training-request-params');
+    if (!data?.characterId || !data?.trainingType) {
+      return false;
+    }
+
+    const character = context.getEntity<Character>(data.characterId);
+    return character !== undefined;
+  }
+
+  async execute(context: GameContext, _command: Command): Promise<RuleResult> {
+    const data = context.getTemporary<TrainingRequestData>('training-request-params');
+
+    if (!data) {
+      return this.createFailureResult('No training request data provided');
+    }
+
+    const character = context.getEntity<Character>(data.characterId);
+
+    if (!character) {
+      return this.createFailureResult('Character not found');
+    }
+
+    const requirements = this.calculateTrainingRequirements(character, data);
+
+    // Check if character meets prerequisites
+    const prerequisiteCheck = this.checkPrerequisites(character, requirements);
+    if (!prerequisiteCheck.success) {
+      return this.createFailureResult(prerequisiteCheck.message);
+    }
+
+    // Process training
+    const result = this.processTraining(character, data, requirements);
+
+    // Apply training effects to character
+    if (result.success) {
+      this.applyTrainingEffects(character, data, context);
+    }
+
+    return this.createSuccessResult(result.message, { result });
+  }
+
+  private calculateTrainingRequirements(
+    character: Character,
+    data: TrainingRequestData
+  ): TrainingRequirements {
+    switch (data.trainingType) {
+      case 'level_advancement':
+        return this.calculateLevelTrainingRequirements(
+          character,
+          data.targetLevel || character.level + 1
+        );
+
+      case 'new_skill':
+        return this.calculateNewSkillRequirements(character, data.skillType || 'general');
+
+      case 'skill_improvement':
+        return this.calculateSkillImprovementRequirements(character, data.skillType || 'general');
+
+      default:
+        return {
+          timeRequired: 1,
+          costRequired: 0,
+          trainerRequired: false,
+          prerequisites: [],
+        };
+    }
+  }
+
+  private calculateLevelTrainingRequirements(
+    character: Character,
+    targetLevel: number
+  ): TrainingRequirements {
+    const levelDifference = targetLevel - character.level;
+
+    // Base training time increases with level
+    const baseTimeWeeks = Math.max(1, targetLevel);
+    const timeRequired = baseTimeWeeks * levelDifference;
+
+    // Training cost scales with level and class
+    const baseCost = this.getBaseLevelTrainingCost(character);
+    const costRequired = baseCost * targetLevel;
+
+    // Higher levels require trainers
+    const trainerRequired = targetLevel > 3;
+    const trainerLevel = trainerRequired ? targetLevel + 1 : undefined;
+
+    return {
+      timeRequired,
+      costRequired,
+      trainerRequired,
+      trainerLevel,
+      locationRequired: trainerRequired ? 'civilized settlement' : undefined,
+      prerequisites: this.getLevelAdvancementPrerequisites(character, targetLevel),
+    };
+  }
+
+  private calculateNewSkillRequirements(
+    _character: Character,
+    _skillType: string
+  ): TrainingRequirements {
+    // Standard requirements for learning new skills
+    return {
+      timeRequired: 8, // 8 weeks base
+      costRequired: 500, // 500 GP base
+      trainerRequired: true,
+      trainerLevel: 3,
+      locationRequired: 'guild hall or academy',
+      prerequisites: ['Intelligence 12+', 'Available skill slot'],
+    };
+  }
+
+  private calculateSkillImprovementRequirements(
+    _character: Character,
+    _skillType: string
+  ): TrainingRequirements {
+    // Requirements for improving existing skills
+    return {
+      timeRequired: 4, // 4 weeks
+      costRequired: 250, // 250 GP
+      trainerRequired: true,
+      trainerLevel: 5,
+      prerequisites: ['Previous skill level', 'Practice time completed'],
+    };
+  }
+
+  private getBaseLevelTrainingCost(character: Character): number {
+    // Training costs vary by class
+    const classCostMultipliers: Record<string, number> = {
+      Fighter: 100,
+      Cleric: 150,
+      'Magic-User': 200,
+      Thief: 125,
+      Assassin: 175,
+      Druid: 175,
+      Paladin: 200,
+      Ranger: 175,
+      Illusionist: 175,
+      Monk: 100,
+      Bard: 150,
+    };
+
+    return classCostMultipliers[character.class] || 100;
+  }
+
+  private getLevelAdvancementPrerequisites(character: Character, targetLevel: number): string[] {
+    const prerequisites: string[] = [];
+
+    // Experience requirement
+    prerequisites.push(`${this.getRequiredExperience(targetLevel)} XP`);
+
+    // Ability score requirements for higher levels
+    if (targetLevel > 8) {
+      prerequisites.push('Prime requisite 15+');
+    }
+
+    // Class-specific requirements
+    const classPrereqs = this.getClassSpecificPrerequisites(character, targetLevel);
+    prerequisites.push(...classPrereqs);
+
+    return prerequisites;
+  }
+
+  private getRequiredExperience(targetLevel: number): number {
+    // This would use the level progression tables from the old rules
+    // For now, using a simple calculation
+    return targetLevel ** 3 * 1000;
+  }
+
+  private getClassSpecificPrerequisites(character: Character, targetLevel: number): string[] {
+    const prerequisites: string[] = [];
+
+    switch (character.class) {
+      case 'Cleric':
+        if (targetLevel > 7) {
+          prerequisites.push('Established shrine or temple');
+        }
+        break;
+
+      case 'Magic-User':
+      case 'Illusionist':
+        if (targetLevel > 5) {
+          prerequisites.push('Access to spell research facilities');
+        }
+        break;
+
+      case 'Paladin':
+        prerequisites.push('Lawful Good alignment maintained');
+        if (targetLevel > 8) {
+          prerequisites.push('Completed holy quest');
+        }
+        break;
+
+      case 'Ranger':
+        prerequisites.push('Good alignment maintained');
+        break;
+    }
+
+    return prerequisites;
+  }
+
+  private checkPrerequisites(
+    character: Character,
+    requirements: TrainingRequirements
+  ): { success: boolean; message: string } {
+    // Check experience points for level advancement
+    if (requirements.prerequisites.some((p) => p.includes('XP'))) {
+      const requiredXP = Number.parseInt(
+        requirements.prerequisites.find((p) => p.includes('XP'))?.split(' ')[0] || '0'
+      );
+      if (character.experience.current < requiredXP) {
+        return {
+          success: false,
+          message: `Insufficient experience points. Need ${requiredXP}, have ${character.experience.current}`,
+        };
+      }
+    }
+
+    // Check ability score requirements
+    if (requirements.prerequisites.some((p) => p.includes('Prime requisite'))) {
+      const primeRequisite = this.getPrimeRequisite(character);
+      if (primeRequisite < 15) {
+        return {
+          success: false,
+          message: 'Prime requisite ability score too low for advanced training',
+        };
+      }
+    }
+
+    // All prerequisites met
+    return { success: true, message: 'Prerequisites satisfied' };
+  }
+
+  private getPrimeRequisite(character: Character): number {
+    // Get the prime requisite ability for the character's class
+    const primeRequisites: Record<string, keyof typeof character.abilities> = {
+      Fighter: 'strength',
+      Cleric: 'wisdom',
+      'Magic-User': 'intelligence',
+      Thief: 'dexterity',
+      Assassin: 'dexterity',
+      Druid: 'wisdom',
+      Paladin: 'charisma',
+      Ranger: 'strength',
+      Illusionist: 'intelligence',
+      Monk: 'wisdom',
+      Bard: 'charisma',
+    };
+
+    const requisite = primeRequisites[character.class];
+    return requisite ? character.abilities[requisite] : 10;
+  }
+
+  private processTraining(
+    _character: Character,
+    data: TrainingRequestData,
+    requirements: TrainingRequirements
+  ): TrainingResult {
+    // Simulate training process
+    const success = this.rollTrainingSuccess(data.trainingType);
+
+    if (success) {
+      return {
+        success: true,
+        timeSpent: requirements.timeRequired,
+        costPaid: requirements.costRequired,
+        benefits: this.getTrainingBenefits(data.trainingType),
+        message: `Training completed successfully in ${requirements.timeRequired} weeks`,
+      };
+    }
+
+    return {
+      success: false,
+      timeSpent: Math.floor(requirements.timeRequired / 2),
+      costPaid: Math.floor(requirements.costRequired / 2),
+      message: 'Training failed. Partial time and cost expended.',
+    };
+  }
+
+  private rollTrainingSuccess(trainingType: string): boolean {
+    // Simple success calculation - could be enhanced with dice rolls
+    const baseChance: Record<string, number> = {
+      level_advancement: 0.9,
+      new_skill: 0.7,
+      skill_improvement: 0.8,
+    };
+
+    return Math.random() < (baseChance[trainingType] || 0.5);
+  }
+
+  private getTrainingBenefits(trainingType: string): string[] {
+    switch (trainingType) {
+      case 'level_advancement':
+        return ['Level increased', 'Hit points gained', 'Abilities improved'];
+
+      case 'new_skill':
+        return ['New skill acquired', 'Skill points allocated'];
+
+      case 'skill_improvement':
+        return ['Skill level increased', 'Proficiency bonus improved'];
+
+      default:
+        return [];
+    }
+  }
+
+  private applyTrainingEffects(
+    _character: Character,
+    _data: TrainingRequestData,
+    _context: GameContext
+  ): void {
+    // Apply the training effects to the character
+    // This would modify the character entity through the context
+    // For now, this is a placeholder for the actual implementation
+  }
+}
