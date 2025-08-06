@@ -1,13 +1,13 @@
-import { createStore } from 'jotai';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { GameContext } from '../../../osric/core/GameContext';
+import { GameContext } from '@osric/core/GameContext';
 import {
   AerialAgilityLevel,
   type Mount,
   MountedChargeRule,
-} from '../../../osric/rules/combat/MountedCombatRules';
-import { COMMAND_TYPES } from '../../../osric/types/constants';
-import type { Character, Monster, Weapon } from '../../../osric/types/entities';
+} from '@osric/rules/combat/MountedCombatRules';
+import { COMMAND_TYPES } from '@osric/types/constants';
+import type { Character, Monster, Weapon } from '@osric/types/entities';
+import { createStore } from 'jotai';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 interface _MountedCombatContext {
   rider: Character;

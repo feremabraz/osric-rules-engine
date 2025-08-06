@@ -1,8 +1,8 @@
+import { GameContext } from '@osric/core/GameContext';
+import { ClassRequirementRule } from '@osric/rules/character/ClassRequirementRules';
+import type { AbilityScores } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { GameContext } from '../../../osric/core/GameContext';
-import { ClassRequirementRule } from '../../../osric/rules/character/ClassRequirementRules';
-import type { AbilityScores } from '../../../osric/types/entities';
 
 class MockCharacterCommand {
   readonly type = 'create-character';

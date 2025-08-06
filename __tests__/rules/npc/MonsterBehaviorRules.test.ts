@@ -1,8 +1,8 @@
+import { GameContext } from '@osric/core/GameContext';
+import { MonsterBehaviorRules } from '@osric/rules/npc/MonsterBehaviorRules';
+import type { Monster } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { GameContext } from '../../../osric/core/GameContext';
-import { MonsterBehaviorRules } from '../../../osric/rules/npc/MonsterBehaviorRules';
-import type { Monster } from '../../../osric/types/entities';
 
 describe('MonsterBehaviorRules', () => {
   let _context: GameContext;

@@ -1,8 +1,8 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
-import { rollDice } from '../../core/Dice';
-import type { GameContext } from '../../core/GameContext';
-import { COMMAND_TYPES } from '../../types/constants';
-import type { Character } from '../../types/entities';
+import { BaseCommand, type CommandResult } from '@osric/core/Command';
+import { rollDice } from '@osric/core/Dice';
+import type { GameContext } from '@osric/core/GameContext';
+import { COMMAND_TYPES } from '@osric/types/constants';
+import type { Character } from '@osric/types/entities';
 
 export interface SearchParameters {
   characterId: string;

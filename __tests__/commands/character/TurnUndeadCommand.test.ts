@@ -22,15 +22,15 @@ function getTurnUndeadData(result: CommandResult): TurnUndeadResultData {
   return result.data as unknown as TurnUndeadResultData;
 }
 
-import { createStore } from 'jotai';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   TurnUndeadCommand,
   type TurnUndeadParameters,
-} from '../../../osric/commands/character/TurnUndeadCommand';
-import type { CommandResult } from '../../../osric/core/Command';
-import { GameContext } from '../../../osric/core/GameContext';
-import type { Character, Monster } from '../../../osric/types/entities';
+} from '@osric/commands/character/TurnUndeadCommand';
+import type { CommandResult } from '@osric/core/Command';
+import { GameContext } from '@osric/core/GameContext';
+import type { Character, Monster } from '@osric/types/entities';
+import { createStore } from 'jotai';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {

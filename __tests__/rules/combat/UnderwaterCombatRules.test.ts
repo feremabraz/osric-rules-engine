@@ -1,12 +1,12 @@
-import { describe, expect, it } from 'vitest';
 import {
   applyUnderwaterPenalties,
   canCastSpellUnderwater,
   handleUnderwaterSpell,
   isWeaponEffectiveUnderwater,
-} from '../../../osric/rules/combat/UnderwaterCombatRules';
-import type { Action } from '../../../osric/rules/combat/UnderwaterCombatRules';
-import type { Character, Monster, Spell, Weapon } from '../../../osric/types/entities';
+} from '@osric/rules/combat/UnderwaterCombatRules';
+import type { Action } from '@osric/rules/combat/UnderwaterCombatRules';
+import type { Character, Monster, Spell, Weapon } from '@osric/types/entities';
+import { describe, expect, it } from 'vitest';
 
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {

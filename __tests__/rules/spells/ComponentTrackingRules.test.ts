@@ -1,9 +1,9 @@
+import { GameContext } from '@osric/core/GameContext';
+import { ComponentTrackingRules } from '@osric/rules/spells/ComponentTrackingRules';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
+import type { AbilityScoreModifiers, Character, Item, Spell } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { GameContext } from '../../../osric/core/GameContext';
-import { ComponentTrackingRules } from '../../../osric/rules/spells/ComponentTrackingRules';
-import { COMMAND_TYPES, RULE_NAMES } from '../../../osric/types/constants';
-import type { AbilityScoreModifiers, Character, Item, Spell } from '../../../osric/types/entities';
 
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultModifiers: AbilityScoreModifiers = {

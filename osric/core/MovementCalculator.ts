@@ -1,7 +1,7 @@
-import type { GridSystem } from './GridSystem';
-import type { Position } from './Position';
-import type { Direction } from './Position';
-import { PositionUtils } from './Position';
+import type { GridSystem } from '@osric/core/GridSystem';
+import type { Position } from '@osric/core/Position';
+import type { Direction } from '@osric/core/Position';
+import { PositionUtils } from '@osric/core/Position';
 
 export enum MovementType {
   Walking = 'walking',

@@ -1,12 +1,12 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
-import type { GameContext } from '../../core/GameContext';
-import { COMMAND_TYPES } from '../../types/constants';
+import { BaseCommand, type CommandResult } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
+import { COMMAND_TYPES } from '@osric/types/constants';
 import type {
   Character as CharacterData,
   CombatResult,
   Monster as MonsterData,
   Weapon,
-} from '../../types/entities';
+} from '@osric/types/entities';
 
 export interface AttackParameters {
   attackerId: string;

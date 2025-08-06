@@ -1,8 +1,8 @@
+import { MemorizeSpellCommand } from '@osric/commands/spells/MemorizeSpellCommand';
+import { GameContext } from '@osric/core/GameContext';
+import type { Character, Spell } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { MemorizeSpellCommand } from '../../../osric/commands/spells/MemorizeSpellCommand';
-import { GameContext } from '../../../osric/core/GameContext';
-import type { Character, Spell } from '../../../osric/types/entities';
 
 function createMockWizard(overrides: Partial<Character> = {}): Character {
   const baseCharacter: Character = {

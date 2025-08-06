@@ -1,8 +1,8 @@
+import { GrappleCommand } from '@osric/commands/combat/GrappleCommand';
+import { GameContext } from '@osric/core/GameContext';
+import type { Character, Monster } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { GrappleCommand } from '../../../osric/commands/combat/GrappleCommand';
-import { GameContext } from '../../../osric/core/GameContext';
-import type { Character, Monster } from '../../../osric/types/entities';
 
 vi.spyOn(Math, 'random').mockImplementation(() => 0.5);
 

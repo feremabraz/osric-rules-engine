@@ -1,15 +1,15 @@
-import { createStore } from 'jotai';
-import { type MockedFunction, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { CreateCharacterCommand } from '../../osric/commands/character/CreateCharacterCommand';
-import { GameContext } from '../../osric/core/GameContext';
-import { RuleChain } from '../../osric/core/RuleChain';
+import { CreateCharacterCommand } from '@osric/commands/character/CreateCharacterCommand';
+import { GameContext } from '@osric/core/GameContext';
+import { RuleChain } from '@osric/core/RuleChain';
 import {
   AbilityScoreGenerationRule,
   ExceptionalStrengthRule,
   RacialAbilityAdjustmentRule,
-} from '../../osric/rules/character/AbilityScoreGenerationRules';
-import { ClassRequirementRule } from '../../osric/rules/character/ClassRequirementRules';
-import type { AbilityScores } from '../../osric/types/entities';
+} from '@osric/rules/character/AbilityScoreGenerationRules';
+import { ClassRequirementRule } from '@osric/rules/character/ClassRequirementRules';
+import type { AbilityScores } from '@osric/types/entities';
+import { createStore } from 'jotai';
+import { type MockedFunction, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('Character Creation Workflow Integration', () => {
   let context: GameContext;

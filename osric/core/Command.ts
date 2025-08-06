@@ -1,4 +1,4 @@
-import type { GameContext } from './GameContext';
+import type { GameContext } from '@osric/core/GameContext';
 
 export interface CommandResult {
   success: boolean;

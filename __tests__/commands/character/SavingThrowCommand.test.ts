@@ -1,11 +1,11 @@
-import { createStore } from 'jotai';
-import { beforeEach, describe, expect, it } from 'vitest';
 import {
   SavingThrowCommand,
   type SavingThrowParameters,
-} from '../../../osric/commands/character/SavingThrowCommand';
-import { GameContext } from '../../../osric/core/GameContext';
-import type { Character } from '../../../osric/types/entities';
+} from '@osric/commands/character/SavingThrowCommand';
+import { GameContext } from '@osric/core/GameContext';
+import type { Character } from '@osric/types/entities';
+import { createStore } from 'jotai';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {

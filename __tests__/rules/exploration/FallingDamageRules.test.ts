@@ -1,10 +1,10 @@
+import type { Command, CommandResult } from '@osric/core/Command';
+import { GameContext } from '@osric/core/GameContext';
+import { FallingDamageRule } from '@osric/rules/exploration/FallingDamageRules';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
+import type { AbilityScoreModifiers, Character } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Command, CommandResult } from '../../../osric/core/Command';
-import { GameContext } from '../../../osric/core/GameContext';
-import { FallingDamageRule } from '../../../osric/rules/exploration/FallingDamageRules';
-import { COMMAND_TYPES, RULE_NAMES } from '../../../osric/types/constants';
-import type { AbilityScoreModifiers, Character } from '../../../osric/types/entities';
 
 interface FallingDamageParams {
   characterId: string;

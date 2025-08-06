@@ -1,8 +1,8 @@
+import { AttackCommand } from '@osric/commands/combat/AttackCommand';
+import { GameContext } from '@osric/core/GameContext';
+import type { Character, Monster, Weapon } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { AttackCommand } from '../../../osric/commands/combat/AttackCommand';
-import { GameContext } from '../../../osric/core/GameContext';
-import type { Character, Monster, Weapon } from '../../../osric/types/entities';
 
 vi.spyOn(Math, 'random').mockImplementation(() => 0.5);
 

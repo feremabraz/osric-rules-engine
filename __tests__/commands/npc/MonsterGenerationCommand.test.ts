@@ -1,10 +1,10 @@
-import { createStore } from 'jotai';
-import { beforeEach, describe, expect, it } from 'vitest';
 import {
   MonsterGenerationCommand,
   type MonsterGenerationParameters,
-} from '../../../osric/commands/npc/MonsterGenerationCommand';
-import { GameContext } from '../../../osric/core/GameContext';
+} from '@osric/commands/npc/MonsterGenerationCommand';
+import { GameContext } from '@osric/core/GameContext';
+import { createStore } from 'jotai';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 describe('MonsterGenerationCommand', () => {
   let context: GameContext;

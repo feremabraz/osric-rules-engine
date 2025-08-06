@@ -1,9 +1,9 @@
+import { GameContext } from '@osric/core/GameContext';
+import type { RuleResult } from '@osric/core/Rule';
+import { TurnUndeadRule } from '@osric/rules/character/TurnUndeadRules';
+import type { Character, Monster } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { GameContext } from '../../../osric/core/GameContext';
-import type { RuleResult } from '../../../osric/core/Rule';
-import { TurnUndeadRule } from '../../../osric/rules/character/TurnUndeadRules';
-import type { Character, Monster } from '../../../osric/types/entities';
 
 interface TurnUndeadRuleResultData {
   characterId: string;

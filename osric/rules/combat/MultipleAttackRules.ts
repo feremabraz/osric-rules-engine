@@ -7,7 +7,7 @@ import type {
   CombatResult,
   Monster as MonsterData,
   Weapon,
-} from '../../types/entities';
+} from '@osric/types/entities';
 
 interface AttackContext {
   attacker: CharacterData | MonsterData;

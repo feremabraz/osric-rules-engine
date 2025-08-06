@@ -6,7 +6,7 @@ import type {
   Character as CharacterData,
   Monster as MonsterData,
   Weapon,
-} from '../../types/entities';
+} from '@osric/types/entities';
 
 type WeaponType = 'Slashing' | 'Piercing' | 'Bludgeoning';
 type ArmorCategory =

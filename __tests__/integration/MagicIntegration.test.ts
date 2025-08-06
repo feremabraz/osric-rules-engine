@@ -1,10 +1,10 @@
+import { CastSpellCommand } from '@osric/commands/spells/CastSpellCommand';
+import { MemorizeSpellCommand } from '@osric/commands/spells/MemorizeSpellCommand';
+import { GameContext } from '@osric/core/GameContext';
+import { SpellCastingRules } from '@osric/rules/spells/SpellCastingRules';
+import type { Character, Spell } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { CastSpellCommand } from '../../osric/commands/spells/CastSpellCommand';
-import { MemorizeSpellCommand } from '../../osric/commands/spells/MemorizeSpellCommand';
-import { GameContext } from '../../osric/core/GameContext';
-import { SpellCastingRules } from '../../osric/rules/spells/SpellCastingRules';
-import type { Character, Spell } from '../../osric/types/entities';
 
 function createMockWizard(): Character {
   return {

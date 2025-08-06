@@ -1,4 +1,4 @@
-import type { ErrorType } from './constants';
+import type { ErrorType } from '@osric/types/constants';
 
 export interface OSRICError {
   type: ErrorType;

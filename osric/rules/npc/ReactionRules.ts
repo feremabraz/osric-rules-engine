@@ -1,8 +1,8 @@
-import type { Command } from '../../core/Command';
-import type { GameContext } from '../../core/GameContext';
-import { BaseRule, type RuleResult } from '../../core/Rule';
-import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
-import type { Character } from '../../types/entities';
+import type { Command } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
+import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
+import type { Character } from '@osric/types/entities';
 
 export interface ReactionRollParams {
   characterId: string;

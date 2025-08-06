@@ -1,10 +1,10 @@
+import { SpellResearchCommand } from '@osric/commands/spells/SpellResearchCommand';
+import type { CommandResult } from '@osric/core/Command';
+import { GameContext } from '@osric/core/GameContext';
+import { COMMAND_TYPES } from '@osric/types/constants';
+import type { AbilityScoreModifiers, Character, Spell } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SpellResearchCommand } from '../../../osric/commands/spells/SpellResearchCommand';
-import type { CommandResult } from '../../../osric/core/Command';
-import { GameContext } from '../../../osric/core/GameContext';
-import { COMMAND_TYPES } from '../../../osric/types/constants';
-import type { AbilityScoreModifiers, Character, Spell } from '../../../osric/types/entities';
 
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultModifiers: AbilityScoreModifiers = {

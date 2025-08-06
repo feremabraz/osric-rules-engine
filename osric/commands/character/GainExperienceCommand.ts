@@ -1,12 +1,12 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
-import type { GameContext } from '../../core/GameContext';
-import { calculateGroupXP, calculateMonsterXP } from '../../core/MonsterXP';
+import { BaseCommand, type CommandResult } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
+import { calculateGroupXP, calculateMonsterXP } from '@osric/core/MonsterXP';
 import {
   determineLevel,
   getExperienceForNextLevel,
-} from '../../rules/experience/LevelProgressionRules';
-import { COMMAND_TYPES } from '../../types/constants';
-import type { Character, Monster } from '../../types/entities';
+} from '@osric/rules/experience/LevelProgressionRules';
+import { COMMAND_TYPES } from '@osric/types/constants';
+import type { Character, Monster } from '@osric/types/entities';
 
 export interface GainExperienceParameters {
   characterId: string;

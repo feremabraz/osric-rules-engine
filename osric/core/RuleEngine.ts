@@ -1,7 +1,7 @@
-import type { Command, CommandResult } from './Command';
-import type { GameContext } from './GameContext';
-import type { Rule } from './Rule';
-import { RuleChain, type RuleChainConfig } from './RuleChain';
+import type { Command, CommandResult } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
+import type { Rule } from '@osric/core/Rule';
+import { RuleChain, type RuleChainConfig } from '@osric/core/RuleChain';
 
 export interface RuleEngineConfig {
   defaultChainConfig?: RuleChainConfig;

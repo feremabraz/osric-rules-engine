@@ -1,9 +1,9 @@
-import type { Command } from '../../core/Command';
-import type { GameContext } from '../../core/GameContext';
-import { calculateMonsterXP } from '../../core/MonsterXP';
-import { BaseRule, type RuleResult } from '../../core/Rule';
-import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
-import type { Character, Monster } from '../../types/entities';
+import type { Command } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
+import { calculateMonsterXP } from '@osric/core/MonsterXP';
+import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
+import type { Character, Monster } from '@osric/types/entities';
 
 interface ExperienceGainParameters {
   characterId: string;

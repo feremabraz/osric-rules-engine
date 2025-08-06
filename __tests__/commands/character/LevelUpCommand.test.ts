@@ -1,9 +1,9 @@
+import { LevelUpCommand } from '@osric/commands/character/LevelUpCommand';
+import { GameContext } from '@osric/core/GameContext';
+import type { CharacterClass, CharacterRace } from '@osric/types';
+import type { Character } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { LevelUpCommand } from '../../../osric/commands/character/LevelUpCommand';
-import { GameContext } from '../../../osric/core/GameContext';
-import type { CharacterClass, CharacterRace } from '../../../osric/types';
-import type { Character } from '../../../osric/types/entities';
 
 describe('LevelUpCommand', () => {
   let context: GameContext;

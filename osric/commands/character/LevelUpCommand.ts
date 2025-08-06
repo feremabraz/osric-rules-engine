@@ -1,6 +1,6 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
-import { rollDice } from '../../core/Dice.js';
-import type { GameContext } from '../../core/GameContext';
+import { BaseCommand, type CommandResult } from '@osric/core/Command';
+import { rollDice } from '@osric/core/Dice.js';
+import type { GameContext } from '@osric/core/GameContext';
 import {
   determineLevel,
   getExperienceForNextLevel,
@@ -8,9 +8,9 @@ import {
   getLevelTitle,
   getTrainingRequirements,
   meetsTrainingRequirements,
-} from '../../rules/experience/LevelProgressionRules.js';
-import { COMMAND_TYPES } from '../../types/constants';
-import type { Character } from '../../types/entities';
+} from '@osric/rules/experience/LevelProgressionRules.js';
+import { COMMAND_TYPES } from '@osric/types/constants';
+import type { Character } from '@osric/types/entities';
 
 export interface LevelUpParameters {
   characterId: string;

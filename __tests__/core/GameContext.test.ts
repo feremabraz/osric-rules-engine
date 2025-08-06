@@ -1,6 +1,4 @@
-import { createStore } from 'jotai';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { GameContext } from '../../osric/core/GameContext';
+import { GameContext } from '@osric/core/GameContext';
 import type {
   AbilityScoreModifiers,
   AbilityScores,
@@ -25,7 +23,9 @@ import type {
   ThiefSkills,
   TurnUndeadTable,
   WeaponProficiency,
-} from '../../osric/types/entities';
+} from '@osric/types/entities';
+import { createStore } from 'jotai';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {

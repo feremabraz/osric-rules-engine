@@ -1,6 +1,6 @@
-import type { Command } from './Command';
-import type { GameContext } from './GameContext';
-import type { Rule, RuleResult } from './Rule';
+import type { Command } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
+import type { Rule, RuleResult } from '@osric/core/Rule';
 
 export interface RuleChainResult {
   success: boolean;

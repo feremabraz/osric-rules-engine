@@ -1,13 +1,13 @@
-import { rollDice } from '../../core/Dice';
-import type { GameContext } from '../../core/GameContext';
-import { BaseRule, type RuleResult } from '../../core/Rule';
+import { rollDice } from '@osric/core/Dice';
+import type { GameContext } from '@osric/core/GameContext';
+import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type {
   IdentificationResult,
   MagicScroll,
   MaterialComponent,
   SpellWithComponents,
-} from '../../types/SpellTypes';
-import type { Character, Item, Spell } from '../../types/entities';
+} from '@osric/types/SpellTypes';
+import type { Character, Item, Spell } from '@osric/types/entities';
 
 export class SpellComponentManagementRule extends BaseRule {
   name = 'spell-component-management';

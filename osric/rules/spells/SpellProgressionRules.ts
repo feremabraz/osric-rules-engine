@@ -1,7 +1,7 @@
-import type { GameContext } from '../../core/GameContext';
-import { BaseRule, type RuleResult } from '../../core/Rule';
-import type { Character, SpellSlots } from '../../types';
-import { RULE_NAMES } from '../../types/constants';
+import type { GameContext } from '@osric/core/GameContext';
+import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import type { Character, SpellSlots } from '@osric/types';
+import { RULE_NAMES } from '@osric/types/constants';
 
 export class SpellProgressionRules extends BaseRule {
   public readonly name = RULE_NAMES.SPELL_PROGRESSION;

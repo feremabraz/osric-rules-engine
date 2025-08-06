@@ -1,5 +1,5 @@
-import type { Position, PositionBounds } from './Position';
-import { Direction } from './Position';
+import type { Position, PositionBounds } from '@osric/core/Position';
+import { Direction } from '@osric/core/Position';
 
 export interface GridCell {
   position: Position;

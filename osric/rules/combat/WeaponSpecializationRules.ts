@@ -7,7 +7,7 @@ import type {
   Character as CharacterData,
   Monster as MonsterData,
   Weapon,
-} from '../../types/entities';
+} from '@osric/types/entities';
 
 export enum SpecializationLevel {
   NONE = 0,

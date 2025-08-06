@@ -1,12 +1,12 @@
-import { createStore } from 'jotai';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { GameContext } from '../../../osric/core/GameContext';
+import { GameContext } from '@osric/core/GameContext';
 import {
   AbilityScoreGenerationRule,
   ExceptionalStrengthRule,
   RacialAbilityAdjustmentRule,
-} from '../../../osric/rules/character/AbilityScoreGenerationRules';
-import type { AbilityScores } from '../../../osric/types/entities';
+} from '@osric/rules/character/AbilityScoreGenerationRules';
+import type { AbilityScores } from '@osric/types/entities';
+import { createStore } from 'jotai';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 class MockCharacterCommand {
   readonly type = 'create-character';

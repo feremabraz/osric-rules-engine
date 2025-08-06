@@ -7,7 +7,7 @@ import type {
   Monster as MonsterData,
   Spell,
   Weapon,
-} from '../../types/entities';
+} from '@osric/types/entities';
 
 interface InitiativeContext {
   entities: (CharacterData | MonsterData)[];

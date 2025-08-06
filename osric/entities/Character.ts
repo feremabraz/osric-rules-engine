@@ -1,11 +1,11 @@
-import type { CommandResult } from '../core/Command';
-import type { GameContext } from '../core/GameContext';
+import type { CommandResult } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
 import type {
   Alignment,
   Character as BaseCharacter,
   CharacterClass,
   CharacterRace,
-} from '../types/entities';
+} from '@osric/types/entities';
 
 export class Character {
   private _data: BaseCharacter;

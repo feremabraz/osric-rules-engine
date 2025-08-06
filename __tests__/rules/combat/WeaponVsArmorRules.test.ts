@@ -1,9 +1,9 @@
-import { beforeEach, describe, expect, it } from 'vitest';
 import {
   applyWeaponVsArmorAdjustment,
   getWeaponVsArmorAdjustment,
-} from '../../../osric/rules/combat/WeaponVsArmorRules';
-import type { Character, Monster, Weapon } from '../../../osric/types/entities';
+} from '@osric/rules/combat/WeaponVsArmorRules';
+import type { Character, Monster, Weapon } from '@osric/types/entities';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 function createMockWeapon(overrides: Partial<Weapon> = {}): Weapon {
   const defaultWeapon: Weapon = {

@@ -1,12 +1,12 @@
-import { createStore } from 'jotai';
-import { beforeEach, describe, expect, it } from 'vitest';
 import {
   CharacterTemplates,
   CreateCharacterCommand,
   type CreateCharacterParameters,
-} from '../../../osric/commands/character/CreateCharacterCommand';
-import { GameContext } from '../../../osric/core/GameContext';
-import type { Alignment, CharacterClass, CharacterRace } from '../../../osric/types/entities';
+} from '@osric/commands/character/CreateCharacterCommand';
+import { GameContext } from '@osric/core/GameContext';
+import type { Alignment, CharacterClass, CharacterRace } from '@osric/types/entities';
+import { createStore } from 'jotai';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 type AbilityScoreMethod = 'standard3d6' | 'arranged3d6' | '4d6dropLowest';
 

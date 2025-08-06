@@ -1,10 +1,10 @@
+import { BaseCommand, type CommandResult } from '@osric/core/Command';
+import { GameContext } from '@osric/core/GameContext';
+import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import { RuleChain } from '@osric/core/RuleChain';
+import { RuleEngine, type RuleEngineConfig } from '@osric/core/RuleEngine';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { BaseCommand, type CommandResult } from '../../osric/core/Command';
-import { GameContext } from '../../osric/core/GameContext';
-import { BaseRule, type RuleResult } from '../../osric/core/Rule';
-import { RuleChain } from '../../osric/core/RuleChain';
-import { RuleEngine, type RuleEngineConfig } from '../../osric/core/RuleEngine';
 
 import type {
   AbilityScores,
@@ -12,7 +12,7 @@ import type {
   Character as CharacterData,
   Experience,
   SavingThrowType,
-} from '../../osric/types/entities';
+} from '@osric/types/entities';
 
 const createMockCharacter = (id: string, name: string): CharacterData => ({
   id,

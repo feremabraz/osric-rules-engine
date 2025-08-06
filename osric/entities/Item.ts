@@ -1,6 +1,6 @@
-import type { CommandResult } from '../core/Command';
-import type { GameContext } from '../core/GameContext';
-import type { Item as BaseItem, Currency, Weapon } from '../types/entities';
+import type { CommandResult } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
+import type { Item as BaseItem, Currency, Weapon } from '@osric/types/entities';
 
 export class Item {
   private _data: BaseItem;

@@ -1,8 +1,8 @@
+import { ReactionRollCommand } from '@osric/commands/npc/ReactionRollCommand';
+import { GameContext } from '@osric/core/GameContext';
+import type { Character } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ReactionRollCommand } from '../../../osric/commands/npc/ReactionRollCommand';
-import { GameContext } from '../../../osric/core/GameContext';
-import type { Character } from '../../../osric/types/entities';
 
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {

@@ -1,10 +1,10 @@
+import type { Command } from '@osric/core/Command';
+import { GameContext } from '@osric/core/GameContext';
+import { LoyaltyRules } from '@osric/rules/npc/LoyaltyRules';
+import { COMMAND_TYPES } from '@osric/types/constants';
+import type { Character } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Command } from '../../../osric/core/Command';
-import { GameContext } from '../../../osric/core/GameContext';
-import { LoyaltyRules } from '../../../osric/rules/npc/LoyaltyRules';
-import { COMMAND_TYPES } from '../../../osric/types/constants';
-import type { Character } from '../../../osric/types/entities';
 
 class MockLoyaltyCommand implements Command {
   readonly type = COMMAND_TYPES.LOYALTY_CHECK;

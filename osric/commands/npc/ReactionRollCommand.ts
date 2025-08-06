@@ -1,7 +1,7 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
-import type { GameContext } from '../../core/GameContext';
-import type { ReactionRollParams } from '../../rules/npc/ReactionRules';
-import { COMMAND_TYPES } from '../../types/constants';
+import { BaseCommand, type CommandResult } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
+import type { ReactionRollParams } from '@osric/rules/npc/ReactionRules';
+import { COMMAND_TYPES } from '@osric/types/constants';
 
 export class ReactionRollCommand extends BaseCommand {
   readonly type = COMMAND_TYPES.REACTION_ROLL;

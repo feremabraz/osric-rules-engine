@@ -1,7 +1,7 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
-import type { GameContext } from '../../core/GameContext';
-import type { Character, Item } from '../../types';
-import { COMMAND_TYPES } from '../../types/constants';
+import { BaseCommand, type CommandResult } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
+import type { Character, Item } from '@osric/types';
+import { COMMAND_TYPES } from '@osric/types/constants';
 
 export class ScrollReadCommand extends BaseCommand {
   public readonly type = COMMAND_TYPES.READ_SCROLL;

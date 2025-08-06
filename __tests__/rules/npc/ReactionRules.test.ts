@@ -1,9 +1,9 @@
+import { GameContext } from '@osric/core/GameContext';
+import { type ReactionRollParams, ReactionRules } from '@osric/rules/npc/ReactionRules';
+import { COMMAND_TYPES } from '@osric/types/constants';
+import type { Character } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { GameContext } from '../../../osric/core/GameContext';
-import { type ReactionRollParams, ReactionRules } from '../../../osric/rules/npc/ReactionRules';
-import { COMMAND_TYPES } from '../../../osric/types/constants';
-import type { Character } from '../../../osric/types/entities';
 
 interface ReactionResultData {
   reactionResult: {

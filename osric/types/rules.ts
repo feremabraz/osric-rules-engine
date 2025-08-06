@@ -1,6 +1,6 @@
-import type { Rule } from '../core/Rule';
-import type { RuleName } from './constants';
-import { RULE_NAMES } from './constants';
+import type { Rule } from '@osric/core/Rule';
+import type { RuleName } from '@osric/types/constants';
+import { RULE_NAMES } from '@osric/types/constants';
 
 export type RuleCategory =
   | 'character-creation'

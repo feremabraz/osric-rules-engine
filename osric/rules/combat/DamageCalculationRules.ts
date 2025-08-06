@@ -9,7 +9,7 @@ import type {
   Monster as MonsterData,
   StatusEffect,
   Weapon,
-} from '../../types/entities';
+} from '@osric/types/entities';
 
 interface AttackContext {
   attacker: CharacterData | MonsterData;

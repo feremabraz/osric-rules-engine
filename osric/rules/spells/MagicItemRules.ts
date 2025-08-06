@@ -1,8 +1,8 @@
-import { rollDice } from '../../core/Dice';
-import type { GameContext } from '../../core/GameContext';
-import { BaseRule, type RuleResult } from '../../core/Rule';
-import type { IdentificationResult } from '../../types/SpellTypes';
-import type { Character, Item } from '../../types/entities';
+import { rollDice } from '@osric/core/Dice';
+import type { GameContext } from '@osric/core/GameContext';
+import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import type { IdentificationResult } from '@osric/types/SpellTypes';
+import type { Character, Item } from '@osric/types/entities';
 
 export class MagicItemChargeCalculationRule extends BaseRule {
   name = 'magic-item-charge-calculation';

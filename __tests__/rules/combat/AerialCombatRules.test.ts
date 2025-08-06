@@ -1,4 +1,3 @@
-import { beforeEach, describe, expect, it } from 'vitest';
 import {
   AerialAgilityLevel,
   type AerialMovement,
@@ -6,8 +5,9 @@ import {
   getDiveAttackBonus,
   handleAerialMovement,
   mountFlyingCreature,
-} from '../../../osric/rules/combat/AerialCombatRules';
-import type { Character, Monster } from '../../../osric/types/entities';
+} from '@osric/rules/combat/AerialCombatRules';
+import type { Character, Monster } from '@osric/types/entities';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 function createAerialMovement(overrides: Partial<AerialMovement> = {}): AerialMovement {
   const defaultMovement: AerialMovement = {

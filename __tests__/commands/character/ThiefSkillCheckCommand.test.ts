@@ -1,10 +1,10 @@
+import { ThiefSkillCheckCommand } from '@osric/commands/character/ThiefSkillCheckCommand';
+import type { ThiefSkillCheckParameters } from '@osric/commands/character/ThiefSkillCheckCommand';
+import { GameContext } from '@osric/core/GameContext';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
+import type { Character, CharacterClass, CharacterRace } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ThiefSkillCheckCommand } from '../../../osric/commands/character/ThiefSkillCheckCommand';
-import type { ThiefSkillCheckParameters } from '../../../osric/commands/character/ThiefSkillCheckCommand';
-import { GameContext } from '../../../osric/core/GameContext';
-import { COMMAND_TYPES, RULE_NAMES } from '../../../osric/types/constants';
-import type { Character, CharacterClass, CharacterRace } from '../../../osric/types/entities';
 
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const character: Character = {

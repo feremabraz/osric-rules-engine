@@ -1,7 +1,7 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
-import type { GameContext } from '../../core/GameContext';
-import type { Character, Monster, Spell } from '../../types';
-import { COMMAND_TYPES } from '../../types/constants';
+import { BaseCommand, type CommandResult } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
+import type { Character, Monster, Spell } from '@osric/types';
+import { COMMAND_TYPES } from '@osric/types/constants';
 
 export class CastSpellCommand extends BaseCommand {
   public readonly type = COMMAND_TYPES.CAST_SPELL;

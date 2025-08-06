@@ -1,7 +1,7 @@
+import { BaseCommand, type CommandResult } from '@osric/core/Command';
+import { GameContext } from '@osric/core/GameContext';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { BaseCommand, type CommandResult } from '../../osric/core/Command';
-import { GameContext } from '../../osric/core/GameContext';
 
 class SimpleTestCommand extends BaseCommand {
   readonly type = 'simple-test';
@@ -112,7 +112,7 @@ import type {
   Character as CharacterData,
   Experience,
   SavingThrowType,
-} from '../../osric/types/entities';
+} from '@osric/types/entities';
 
 const createMockCharacter = (id: string, name: string): CharacterData => ({
   id,

@@ -1,9 +1,9 @@
+import { GameContext } from '@osric/core/GameContext';
+import { TrainingRule } from '@osric/rules/experience/TrainingRules';
+import { COMMAND_TYPES } from '@osric/types/constants';
+import type { Character } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { GameContext } from '../../../osric/core/GameContext';
-import { TrainingRule } from '../../../osric/rules/experience/TrainingRules';
-import { COMMAND_TYPES } from '../../../osric/types/constants';
-import type { Character } from '../../../osric/types/entities';
 
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {

@@ -1,8 +1,8 @@
+import { InitiativeCommand } from '@osric/commands/combat/InitiativeCommand';
+import { GameContext } from '@osric/core/GameContext';
+import type { Character, Monster, Weapon } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { InitiativeCommand } from '../../../osric/commands/combat/InitiativeCommand';
-import { GameContext } from '../../../osric/core/GameContext';
-import type { Character, Monster, Weapon } from '../../../osric/types/entities';
 
 vi.spyOn(Math, 'random').mockImplementation(() => 0.5);
 

@@ -1,9 +1,9 @@
+import { BaseCommand, type CommandResult } from '@osric/core/Command';
+import { GameContext } from '@osric/core/GameContext';
+import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import { RuleChain, type RuleChainConfig } from '@osric/core/RuleChain';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { BaseCommand, type CommandResult } from '../../osric/core/Command';
-import { GameContext } from '../../osric/core/GameContext';
-import { BaseRule, type RuleResult } from '../../osric/core/Rule';
-import { RuleChain, type RuleChainConfig } from '../../osric/core/RuleChain';
 
 class TestCommand extends BaseCommand {
   readonly type = 'test-command';

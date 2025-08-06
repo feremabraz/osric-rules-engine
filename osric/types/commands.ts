@@ -1,6 +1,6 @@
-import type { Command } from '../core/Command';
-import type { CommandType } from './constants';
-import { COMMAND_TYPES } from './constants';
+import type { Command } from '@osric/core/Command';
+import type { CommandType } from '@osric/types/constants';
+import { COMMAND_TYPES } from '@osric/types/constants';
 
 export interface BaseCommandParams {
   readonly actorId: string;

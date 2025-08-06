@@ -1,10 +1,10 @@
+import type { Command } from '@osric/core/Command';
+import { GameContext } from '@osric/core/GameContext';
+import { MoraleRules } from '@osric/rules/npc/MoraleRules';
+import { COMMAND_TYPES } from '@osric/types/constants';
+import type { Character, Monster } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Command } from '../../../osric/core/Command';
-import { GameContext } from '../../../osric/core/GameContext';
-import { MoraleRules } from '../../../osric/rules/npc/MoraleRules';
-import { COMMAND_TYPES } from '../../../osric/types/constants';
-import type { Character, Monster } from '../../../osric/types/entities';
 
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {

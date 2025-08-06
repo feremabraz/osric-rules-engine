@@ -1,9 +1,9 @@
+import { GameContext } from '@osric/core/GameContext';
+import { SpellProgressionRules } from '@osric/rules/spells/SpellProgressionRules';
+import { RULE_NAMES } from '@osric/types/constants';
+import type { AbilityScoreModifiers, Character, SpellSlots } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { GameContext } from '../../../osric/core/GameContext';
-import { SpellProgressionRules } from '../../../osric/rules/spells/SpellProgressionRules';
-import { RULE_NAMES } from '../../../osric/types/constants';
-import type { AbilityScoreModifiers, Character, SpellSlots } from '../../../osric/types/entities';
 
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultModifiers: AbilityScoreModifiers = {

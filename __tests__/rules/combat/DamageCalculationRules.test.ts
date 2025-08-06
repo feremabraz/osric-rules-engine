@@ -1,9 +1,9 @@
+import { GameContext } from '@osric/core/GameContext';
+import { DamageCalculationRule } from '@osric/rules/combat/DamageCalculationRules';
+import { COMMAND_TYPES } from '@osric/types/constants';
+import type { Character, CombatResult, Monster, Weapon } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { GameContext } from '../../../osric/core/GameContext';
-import { DamageCalculationRule } from '../../../osric/rules/combat/DamageCalculationRules';
-import { COMMAND_TYPES } from '../../../osric/types/constants';
-import type { Character, CombatResult, Monster, Weapon } from '../../../osric/types/entities';
 
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {

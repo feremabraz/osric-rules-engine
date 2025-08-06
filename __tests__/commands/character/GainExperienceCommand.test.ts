@@ -1,9 +1,9 @@
+import { GainExperienceCommand } from '@osric/commands/character/GainExperienceCommand';
+import { GameContext } from '@osric/core/GameContext';
+import type { CharacterClass, CharacterRace } from '@osric/types';
+import type { Character, Monster } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { GainExperienceCommand } from '../../../osric/commands/character/GainExperienceCommand';
-import { GameContext } from '../../../osric/core/GameContext';
-import type { CharacterClass, CharacterRace } from '../../../osric/types';
-import type { Character, Monster } from '../../../osric/types/entities';
 
 describe('GainExperienceCommand', () => {
   let context: GameContext;
