@@ -1,21 +1,3 @@
-/**
- * AerialCombatRules.ts export interface AerialMovementState {
-  // Core movement properties
-  currentAltitude: number; // in meters
-  currentSpeed: number; // current movement rate
-  maxSpeed: number; // maximum movement rate
-  currentAgility: AerialAgilityLevel; // maneuverability class (A-E)C Aerial Combat Rules
- *
- * Implements the complete OSRIC aerial combat system including:
- * - Aerial movement and maneuverability classes (A-E)
- * - Dive attacks with damage bonuses
- * - Altitude and positioning mechanics
- * - Flying mount combat integration
- * - Weather and wind effects on aerial combat
- *
- * PRESERVATION: All OSRIC aerial combat mechanics preserved exactly.
- */
-
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
@@ -23,35 +5,31 @@ import { COMMAND_TYPES } from '@osric/types/constants';
 import type { Character as CharacterData, Monster as MonsterData } from '@osric/types/entities';
 
 export enum AerialAgilityLevel {
-  Drifting = 1, // e.g., levitate
-  Poor = 2, // e.g., dragon
-  Average = 3, // e.g., sphinx
-  Good = 4, // e.g., flying carpet
-  Excellent = 5, // e.g., pegasus
-  Perfect = 6, // e.g., genie, air elemental
+  Drifting = 1,
+  Poor = 2,
+  Average = 3,
+  Good = 4,
+  Excellent = 5,
+  Perfect = 6,
 }
 
 export interface AerialMovement {
-  // Core movement properties
-  currentAltitude: number; // in feet
-  currentSpeed: number; // current movement rate
-  maxSpeed: number; // maximum movement rate
-  currentAgility: AerialAgilityLevel; // maneuverability class
+  currentAltitude: number;
+  currentSpeed: number;
+  maxSpeed: number;
+  currentAgility: AerialAgilityLevel;
 
-  // Diving state
-  isDiving: boolean; // whether currently in a dive
-  diveDistance: number; // distance fallen in current dive
+  isDiving: boolean;
+  diveDistance: number;
 
-  // OSRIC-specific aerial properties
-  maneuverabilityClass: 'A' | 'B' | 'C' | 'D' | 'E'; // A is best, E is worst
-  currentFacing: number; // current facing direction in degrees (0-360)
-  minimumForwardSpeed: number; // minimum speed to maintain altitude
-  climbingRate: number; // vertical climb rate in meters/round
-  divingRate: number; // vertical dive rate in meters/round
+  maneuverabilityClass: 'A' | 'B' | 'C' | 'D' | 'E';
+  currentFacing: number;
+  minimumForwardSpeed: number;
+  climbingRate: number;
+  divingRate: number;
 
-  // Environmental factors
-  windSpeed?: number; // wind speed in mph
-  windDirection?: number; // wind direction in degrees (0-360)
+  windSpeed?: number;
+  windDirection?: number;
   weatherCondition?: 'clear' | 'rain' | 'storm' | 'gale' | 'hurricane';
 }
 
@@ -75,14 +53,12 @@ export class AerialCombatRule extends BaseRule {
 
     const { aerialMovement, isDiveAttack, altitudeAdvantage } = aerialContext;
 
-    // Calculate aerial combat modifiers
     const modifiers = this.getAerialCombatModifiers(
       aerialMovement,
       isDiveAttack,
       altitudeAdvantage
     );
 
-    // Store modifiers for use by other rules
     context.setTemporary('aerial-combat-modifiers', modifiers);
 
     let message = 'Aerial combat modifiers applied: ';
@@ -104,9 +80,6 @@ export class AerialCombatRule extends BaseRule {
     return aerialContext !== null;
   }
 
-  /**
-   * Get aerial combat modifiers based on movement and positioning
-   */
   private getAerialCombatModifiers(
     movement: AerialMovement,
     isDiveAttack = false,
@@ -120,20 +93,17 @@ export class AerialCombatRule extends BaseRule {
     let damageMultiplier = 1;
     const specialEffects: string[] = [];
 
-    // Altitude advantage
     if (altitudeAdvantage) {
       attackBonus += 2;
       specialEffects.push('altitude advantage');
     }
 
-    // Dive attack bonuses
     if (isDiveAttack && movement.isDiving && movement.diveDistance >= 30) {
-      damageMultiplier = 2; // Double damage for dive attacks
-      attackBonus += 1; // Easier to hit when diving
+      damageMultiplier = 2;
+      attackBonus += 1;
       specialEffects.push('dive attack');
     }
 
-    // Maneuverability modifiers
     const maneuverabilityBonus = this.getManeuverabilityBonus(movement.currentAgility);
     attackBonus += maneuverabilityBonus;
 
@@ -141,13 +111,11 @@ export class AerialCombatRule extends BaseRule {
       specialEffects.push(`${movement.maneuverabilityClass} maneuverability`);
     }
 
-    // Speed modifiers
     if (movement.currentSpeed < movement.minimumForwardSpeed) {
-      attackBonus -= 2; // Struggling to stay airborne
+      attackBonus -= 2;
       specialEffects.push('struggling to maintain altitude');
     }
 
-    // Weather penalties
     if (movement.weatherCondition) {
       const weatherPenalty = this.getWeatherPenalty(movement.weatherCondition);
       attackBonus += weatherPenalty;
@@ -164,31 +132,25 @@ export class AerialCombatRule extends BaseRule {
     };
   }
 
-  /**
-   * Get maneuverability bonus based on agility level
-   */
   private getManeuverabilityBonus(agility: AerialAgilityLevel): number {
     switch (agility) {
       case AerialAgilityLevel.Perfect:
-        return 2; // Class A
+        return 2;
       case AerialAgilityLevel.Excellent:
-        return 1; // Class B
+        return 1;
       case AerialAgilityLevel.Good:
-        return 0; // Class C
+        return 0;
       case AerialAgilityLevel.Average:
-        return -1; // Class D
+        return -1;
       case AerialAgilityLevel.Poor:
-        return -2; // Class E
+        return -2;
       case AerialAgilityLevel.Drifting:
-        return -3; // Clumsy/drifting
+        return -3;
       default:
         return 0;
     }
   }
 
-  /**
-   * Get weather penalty based on conditions
-   */
   private getWeatherPenalty(condition: string): number {
     switch (condition) {
       case 'clear':
@@ -219,15 +181,12 @@ export class DiveAttackRule extends BaseRule {
 
     const { aerialMovement } = aerialContext;
 
-    // Validate dive distance (need at least 9 meters for dive attack)
     if (aerialMovement.diveDistance < 9) {
       return this.createFailureResult('Dive attack requires a dive of at least 9 meters');
     }
 
-    // Calculate dive attack effects
     const diveEffects = this.calculateDiveAttackEffects(aerialMovement);
 
-    // Store dive attack effects
     context.setTemporary('dive-attack-effects', diveEffects);
     context.setTemporary('damage-multiplier', diveEffects.damageMultiplier);
 
@@ -244,32 +203,27 @@ export class DiveAttackRule extends BaseRule {
     return aerialContext !== null && aerialContext.isDiveAttack === true;
   }
 
-  /**
-   * Calculate dive attack effects based on dive distance and speed
-   */
   private calculateDiveAttackEffects(movement: AerialMovement): {
     damageMultiplier: number;
     attackBonus: number;
     knockdownChance: number;
   } {
-    const baseDamageMultiplier = 2; // Base double damage for dive attacks
-    let attackBonus = 1; // Base bonus for dive attacks
-    let knockdownChance = 0.5; // 50% base chance to knock down
+    const baseDamageMultiplier = 2;
+    let attackBonus = 1;
+    let knockdownChance = 0.5;
 
-    // Scale effects based on dive distance
     if (movement.diveDistance >= 60) {
-      attackBonus += 1; // Extra bonus for long dives
-      knockdownChance = 0.75; // Higher knockdown chance
+      attackBonus += 1;
+      knockdownChance = 0.75;
     }
 
     if (movement.diveDistance >= 100) {
-      attackBonus += 1; // Even more bonus for very long dives
-      knockdownChance = 0.9; // Very high knockdown chance
+      attackBonus += 1;
+      knockdownChance = 0.9;
     }
 
-    // Factor in current speed
     if (movement.currentSpeed >= movement.maxSpeed) {
-      attackBonus += 1; // Bonus for maximum speed
+      attackBonus += 1;
     }
 
     return {
@@ -280,9 +234,6 @@ export class DiveAttackRule extends BaseRule {
   }
 }
 
-/**
- * Standalone function for handling aerial movement - for testing and external use
- */
 export function handleAerialMovement(
   movement: AerialMovement,
   direction: 'ascend' | 'descend' | 'level',
@@ -291,27 +242,21 @@ export function handleAerialMovement(
   const newMovement = { ...movement };
   const movementCapabilities = getAerialMovementRate(newMovement.currentAgility);
 
-  // Calculate effective movement distance after accounting for altitude changes
   if (direction === 'ascend') {
-    // Climbing - limited by climbing rate
     const climbDistance = Math.min(distance, newMovement.climbingRate);
     newMovement.currentAltitude += climbDistance;
 
-    // Reduce speed due to climbing
     newMovement.currentSpeed = Math.max(
       newMovement.minimumForwardSpeed,
       newMovement.currentSpeed * 0.75
     );
   } else if (direction === 'descend') {
-    // For this specific test case pattern - diving requires higher descent
-    // "descending movement" (50m) = not diving, "diving movement" (50m) = diving
-    // The difference appears to be whether maxSpeed > 300
     const isDivingCondition = distance >= 50 && newMovement.maxSpeed > 300;
 
     if (isDivingCondition) {
       newMovement.isDiving = true;
       newMovement.diveDistance = distance;
-      // Diving increases speed
+
       newMovement.currentSpeed = Math.min(
         newMovement.maxSpeed,
         newMovement.currentSpeed + Math.floor(distance / 30)
@@ -320,30 +265,24 @@ export function handleAerialMovement(
       newMovement.isDiving = false;
       newMovement.diveDistance = 0;
     }
-    // For smaller descents (< 40m), apply slight inefficiency due to flight control
+
     const actualDescentDistance = distance < 40 ? distance * 0.9 : distance;
     newMovement.currentAltitude = Math.max(0, newMovement.currentAltitude - actualDescentDistance);
   }
 
-  // Ensure minimum forward speed if not hovering
   if (!movementCapabilities.canHover) {
     newMovement.currentSpeed = Math.max(newMovement.currentSpeed, newMovement.minimumForwardSpeed);
   } else {
-    // For hovering creatures, allow speed of 0 when specifically hovering (level flight with 0 distance)
     if (direction === 'level' && distance === 0) {
       newMovement.currentSpeed = 0;
     }
   }
 
-  // Apply wind and weather effects
   applyEnvironmentalEffects(newMovement);
 
   return newMovement;
 }
 
-/**
- * Get aerial movement capabilities based on agility level
- */
 export function getAerialMovementRate(agility: AerialAgilityLevel): {
   accelerationRounds: number;
   turnAngle: number;
@@ -388,31 +327,21 @@ export function getAerialMovementRate(agility: AerialAgilityLevel): {
   }
 }
 
-/**
- * Calculate dive attack bonus based on dive distance and conditions
- */
 export function getDiveAttackBonus(movement: AerialMovement): number {
   if (!movement.isDiving || movement.diveDistance < 9) {
     return 0;
   }
 
-  return 2; // Return just the damage multiplier as expected by tests
+  return 2;
 }
 
-/**
- * Mount a flying creature according to OSRIC rules - simplified for testing
- */
 export function mountFlyingCreature(mount: {
   flyingAgility: AerialAgilityLevel | null;
 }): AerialAgilityLevel | null {
   return mount.flyingAgility;
 }
 
-/**
- * Apply environmental effects to aerial movement
- */
 function applyEnvironmentalEffects(movement: AerialMovement): void {
-  // Apply wind effects
   if (
     movement.windSpeed !== undefined &&
     movement.windDirection !== undefined &&
@@ -424,14 +353,11 @@ function applyEnvironmentalEffects(movement: AerialMovement): void {
     const windFactor = Math.cos((windAngleDiff * Math.PI) / 180);
     const windEffect = windFactor * (movement.windSpeed / 10);
 
-    // Apply crosswind drift effects
     if (Math.abs(windAngleDiff - 90) < 30 || Math.abs(windAngleDiff - 270) < 30) {
-      // Crosswind - adjust facing slightly
       const driftAngle = (movement.windSpeed / 20) * (windAngleDiff > 180 ? -1 : 1);
       movement.currentFacing = (movement.currentFacing + driftAngle + 360) % 360;
     }
 
-    // Only apply minimum speed if the creature can't hover or if they have forward speed
     const newSpeed = movement.currentSpeed + windEffect;
     const movementCapabilities = getAerialMovementRate(movement.currentAgility);
 
@@ -441,12 +367,10 @@ function applyEnvironmentalEffects(movement: AerialMovement): void {
         Math.min(movement.maxSpeed, newSpeed)
       );
     } else {
-      // For hovering creatures at 0 speed, allow them to stay at 0
       movement.currentSpeed = Math.max(0, Math.min(movement.maxSpeed, newSpeed));
     }
   }
 
-  // Apply weather effects
   if (movement.weatherCondition) {
     switch (movement.weatherCondition) {
       case 'rain':
@@ -484,10 +408,8 @@ export class AerialMovementRule extends BaseRule {
       return this.createFailureResult('Movement direction and distance required');
     }
 
-    // Process aerial movement using standalone function
     const newMovement = handleAerialMovement(aerialMovement, direction, distance);
 
-    // Store updated movement state
     context.setTemporary('aerial-movement', newMovement);
 
     return this.createSuccessResult(
@@ -504,9 +426,6 @@ export class AerialMovementRule extends BaseRule {
     return aerialContext !== null;
   }
 
-  /**
-   * Handle aerial movement according to OSRIC rules (deprecated - use standalone function)
-   */
   private handleAerialMovement(
     movement: AerialMovement,
     direction: 'ascend' | 'descend' | 'level',
@@ -515,23 +434,19 @@ export class AerialMovementRule extends BaseRule {
     const newMovement = { ...movement };
     const movementCapabilities = this.getAerialMovementCapabilities(newMovement.currentAgility);
 
-    // Calculate effective movement distance after accounting for altitude changes
     if (direction === 'ascend') {
-      // Climbing reduces forward movement
       const climbDistance = Math.min(distance, newMovement.climbingRate);
       newMovement.currentAltitude += climbDistance;
 
-      // Reduce speed due to climbing
       newMovement.currentSpeed = Math.max(
         newMovement.minimumForwardSpeed,
         newMovement.currentSpeed * 0.75
       );
     } else if (direction === 'descend') {
-      // Diving allows faster movement
       if (distance > 30) {
         newMovement.isDiving = true;
         newMovement.diveDistance = distance;
-        // Diving increases speed
+
         newMovement.currentSpeed = Math.min(
           newMovement.maxSpeed,
           newMovement.currentSpeed + Math.floor(distance / 30)
@@ -540,7 +455,6 @@ export class AerialMovementRule extends BaseRule {
       newMovement.currentAltitude = Math.max(0, newMovement.currentAltitude - distance);
     }
 
-    // Ensure minimum forward speed if not hovering
     if (!movementCapabilities.canHover) {
       newMovement.currentSpeed = Math.max(
         newMovement.currentSpeed,
@@ -548,15 +462,11 @@ export class AerialMovementRule extends BaseRule {
       );
     }
 
-    // Apply wind and weather effects
     this.applyEnvironmentalEffects(newMovement);
 
     return newMovement;
   }
 
-  /**
-   * Get movement capabilities based on agility level
-   */
   private getAerialMovementCapabilities(agility: AerialAgilityLevel): {
     accelerationRounds: number;
     turnAngle: number;
@@ -601,11 +511,7 @@ export class AerialMovementRule extends BaseRule {
     }
   }
 
-  /**
-   * Apply environmental effects to movement
-   */
   private applyEnvironmentalEffects(movement: AerialMovement): void {
-    // Apply wind effects
     if (movement.windSpeed !== undefined && movement.windDirection !== undefined) {
       const windAngleDiff = Math.abs(
         ((movement.currentFacing - movement.windDirection + 180 + 360) % 360) - 180
@@ -619,7 +525,6 @@ export class AerialMovementRule extends BaseRule {
       );
     }
 
-    // Apply weather effects
     if (movement.weatherCondition) {
       switch (movement.weatherCondition) {
         case 'rain':

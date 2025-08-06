@@ -1,19 +1,3 @@
-/**
- * LevelUpCommand Test Suite
- *
- * Tests the LevelUpCommand implementation using systematic testing methodology.
- * Validates OSRIC-compliant level advancement mechanics including:
- * - Experience requirement validation
- * - Training requirement checks and costs
- * - Hit point advancement with constitution modifiers
- * - Spell slot progression for spellcasting classes
- * - Class ability grants and special abilities
- * - Multi-class level advancement restrictions
- * - Level title progression and character progression
- *
- * Follows established testing patterns with comprehensive coverage.
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { LevelUpCommand } from '../../../osric/commands/character/LevelUpCommand';
@@ -29,14 +13,13 @@ describe('LevelUpCommand', () => {
     context = new GameContext(store);
   });
 
-  // Mock character creation utility matching the actual entity types
   function createMockCharacter(overrides: Partial<Character> = {}): Character {
     const character: Character = {
       id: 'test-character',
       name: 'Test Fighter',
       race: 'Human' as CharacterRace,
       class: 'Fighter' as CharacterClass,
-      classes: { Fighter: 3 }, // Single class character
+      classes: { Fighter: 3 },
       primaryClass: 'Fighter' as CharacterClass,
       level: 3,
       hitPoints: { current: 25, maximum: 25 },
@@ -46,20 +29,18 @@ describe('LevelUpCommand', () => {
       abilities: {
         strength: 16,
         dexterity: 14,
-        constitution: 15, // Constitution 15 gives +1 HP per level
+        constitution: 15,
         intelligence: 12,
         wisdom: 10,
         charisma: 13,
       },
       abilityModifiers: {
-        // Strength modifiers
         strengthHitAdj: 1,
         strengthDamageAdj: 1,
         strengthEncumbrance: null,
         strengthOpenDoors: null,
         strengthBendBars: null,
 
-        // Dexterity modifiers
         dexterityReaction: 0,
         dexterityMissile: 0,
         dexterityDefense: 0,
@@ -69,24 +50,20 @@ describe('LevelUpCommand', () => {
         dexterityMoveSilently: null,
         dexterityHideInShadows: null,
 
-        // Constitution modifiers
         constitutionHitPoints: 1,
         constitutionSystemShock: null,
         constitutionResurrectionSurvival: null,
         constitutionPoisonSave: null,
 
-        // Intelligence modifiers
         intelligenceLanguages: null,
         intelligenceLearnSpells: null,
         intelligenceMaxSpellLevel: null,
         intelligenceIllusionImmunity: false,
 
-        // Wisdom modifiers
         wisdomMentalSave: null,
         wisdomBonusSpells: null,
         wisdomSpellFailure: null,
 
-        // Charisma modifiers
         charismaReactionAdj: null,
         charismaLoyaltyBase: null,
         charismaMaxHenchmen: null,
@@ -99,13 +76,13 @@ describe('LevelUpCommand', () => {
         'Spells, Rods, or Staves': 16,
       },
       experience: {
-        current: 16000, // Exactly enough for level 5
+        current: 16000,
         requiredForNextLevel: 32000,
         level: 4,
       },
       currency: {
         platinum: 0,
-        gold: 2000, // Sufficient for training costs
+        gold: 2000,
         electrum: 0,
         silver: 0,
         copper: 0,
@@ -169,7 +146,7 @@ describe('LevelUpCommand', () => {
     it('should accept hit point rolling preference', () => {
       const command = new LevelUpCommand({
         characterId: 'test-character',
-        rollHitPoints: false, // Use average HP
+        rollHitPoints: false,
       });
 
       expect(command.type).toBe('level-up');
@@ -206,7 +183,7 @@ describe('LevelUpCommand', () => {
 
       const command = new LevelUpCommand({
         characterId: 'test-character',
-        bypassTraining: true, // Skip training for this test
+        bypassTraining: true,
       });
 
       const result = await command.execute(context);
@@ -215,38 +192,37 @@ describe('LevelUpCommand', () => {
       expect(result.data?.newLevel).toBe(5);
       expect(result.data?.previousLevel).toBe(4);
 
-      // Verify character was updated
       const updatedCharacter = context.getEntity<Character>('test-character');
       expect(updatedCharacter?.experience.level).toBe(5);
     });
 
     it('should fail when insufficient experience', async () => {
       const character = createMockCharacter({
-        experience: { current: 2000, level: 2, requiredForNextLevel: 4000 }, // Level 2, but only has 2000 XP (not enough for level 3 which needs 4000)
+        experience: { current: 2000, level: 2, requiredForNextLevel: 4000 },
       });
       context.setEntity('test-character', character);
 
       const command = new LevelUpCommand({
         characterId: 'test-character',
-        bypassTraining: true, // Focus on experience check, not training
+        bypassTraining: true,
       });
 
       const result = await command.execute(context);
 
       expect(result.success).toBe(false);
-      // May fail for training or experience reasons - just verify it fails appropriately
+
       expect(result.message).toBeDefined();
     });
 
     it('should prevent advancing more than one level at a time', async () => {
       const character = createMockCharacter({
-        experience: { current: 64000, level: 4, requiredForNextLevel: 16000 }, // Way more than needed
+        experience: { current: 64000, level: 4, requiredForNextLevel: 16000 },
       });
       context.setEntity('test-character', character);
 
       const command = new LevelUpCommand({
         characterId: 'test-character',
-        targetLevel: 7, // Try to skip levels
+        targetLevel: 7,
       });
 
       const result = await command.execute(context);
@@ -263,7 +239,7 @@ describe('LevelUpCommand', () => {
 
       const command = new LevelUpCommand({
         characterId: 'test-character',
-        targetLevel: 4, // Try to level down
+        targetLevel: 4,
       });
 
       const result = await command.execute(context);
@@ -292,13 +268,10 @@ describe('LevelUpCommand', () => {
 
       const result = await command.execute(context);
 
-      // May succeed or fail depending on training implementation
-      // Just verify it handles the request properly
       expect(result.success).toBeDefined();
       if (result.success) {
         expect(result.data?.trainingCost).toBeGreaterThanOrEqual(0);
       } else {
-        // If it fails, it should be due to training requirements, not a crash
         expect(result.message).toBeDefined();
       }
     });
@@ -306,7 +279,7 @@ describe('LevelUpCommand', () => {
     it('should handle training with insufficient resources', async () => {
       const character = createMockCharacter({
         experience: { current: 16000, level: 4, requiredForNextLevel: 32000 },
-        currency: { ...createMockCharacter().currency, gold: 10 }, // Very little gold
+        currency: { ...createMockCharacter().currency, gold: 10 },
       });
       context.setEntity('test-character', character);
 
@@ -320,7 +293,6 @@ describe('LevelUpCommand', () => {
 
       const result = await command.execute(context);
 
-      // May fail due to training requirements
       if (!result.success) {
         expect(result.message).toContain('Training requirements not met');
       }
@@ -329,7 +301,7 @@ describe('LevelUpCommand', () => {
     it('should bypass training when requested', async () => {
       const character = createMockCharacter({
         experience: { current: 16000, level: 4, requiredForNextLevel: 32000 },
-        currency: { ...createMockCharacter().currency, gold: 0 }, // No gold
+        currency: { ...createMockCharacter().currency, gold: 0 },
       });
       context.setEntity('test-character', character);
 
@@ -356,7 +328,7 @@ describe('LevelUpCommand', () => {
       const command = new LevelUpCommand({
         characterId: 'test-character',
         bypassTraining: true,
-        rollHitPoints: false, // Use average for predictable testing
+        rollHitPoints: false,
       });
 
       const result = await command.execute(context);
@@ -364,7 +336,6 @@ describe('LevelUpCommand', () => {
       expect(result.success).toBe(true);
       expect(result.data?.hitPointsGained).toBeGreaterThan(0);
 
-      // Verify character's hit points were updated
       const updatedCharacter = context.getEntity<Character>('test-character');
       expect(updatedCharacter?.hitPoints.maximum).toBeGreaterThan(character.hitPoints.maximum);
       expect(updatedCharacter?.hitPoints.current).toBeGreaterThan(character.hitPoints.current);
@@ -373,7 +344,7 @@ describe('LevelUpCommand', () => {
     it('should apply constitution modifier to hit points', async () => {
       const character = createMockCharacter({
         experience: { current: 16000, level: 4, requiredForNextLevel: 32000 },
-        abilities: { ...createMockCharacter().abilities, constitution: 18 }, // High constitution
+        abilities: { ...createMockCharacter().abilities, constitution: 18 },
         hitPoints: { current: 30, maximum: 30 },
       });
       context.setEntity('test-character', character);
@@ -381,19 +352,19 @@ describe('LevelUpCommand', () => {
       const command = new LevelUpCommand({
         characterId: 'test-character',
         bypassTraining: true,
-        rollHitPoints: false, // Use average for predictable testing
+        rollHitPoints: false,
       });
 
       const result = await command.execute(context);
 
       expect(result.success).toBe(true);
-      expect(result.data?.hitPointsGained).toBeGreaterThan(1); // Should include constitution bonus
+      expect(result.data?.hitPointsGained).toBeGreaterThan(1);
     });
 
     it('should guarantee minimum 1 hit point per level', async () => {
       const character = createMockCharacter({
         experience: { current: 16000, level: 4, requiredForNextLevel: 32000 },
-        abilities: { ...createMockCharacter().abilities, constitution: 3 }, // Very low constitution
+        abilities: { ...createMockCharacter().abilities, constitution: 3 },
         hitPoints: { current: 20, maximum: 20 },
       });
       context.setEntity('test-character', character);
@@ -407,7 +378,7 @@ describe('LevelUpCommand', () => {
       const result = await command.execute(context);
 
       expect(result.success).toBe(true);
-      expect(result.data?.hitPointsGained).toBeGreaterThanOrEqual(1); // Minimum 1 HP
+      expect(result.data?.hitPointsGained).toBeGreaterThanOrEqual(1);
     });
 
     it('should handle hit point rolling when requested', async () => {
@@ -419,14 +390,13 @@ describe('LevelUpCommand', () => {
       const command = new LevelUpCommand({
         characterId: 'test-character',
         bypassTraining: true,
-        rollHitPoints: true, // Roll for hit points
+        rollHitPoints: true,
       });
 
       const result = await command.execute(context);
 
       expect(result.success).toBe(true);
       expect(result.data?.hitPointsGained).toBeGreaterThan(0);
-      // Can't predict exact value since it's rolled
     });
   });
 
@@ -466,13 +436,13 @@ describe('LevelUpCommand', () => {
 
       expect(result.success).toBe(true);
       expect(result.data?.newLevel).toBe(5);
-      expect(result.data?.spellSlotsUpdated).toBe(true); // Spellcaster should get spell updates
+      expect(result.data?.spellSlotsUpdated).toBe(true);
     });
 
     it('should advance Magic-User levels with spell progression', async () => {
       const magicUser = createMockCharacter({
         class: 'Magic-User',
-        experience: { current: 25000, level: 4, requiredForNextLevel: 40000 }, // 25000 XP is sufficient for level 5 (22500 required)
+        experience: { current: 25000, level: 4, requiredForNextLevel: 40000 },
       });
       context.setEntity('test-character', magicUser);
 
@@ -504,7 +474,7 @@ describe('LevelUpCommand', () => {
 
       expect(result.success).toBe(true);
       expect(result.data?.newLevel).toBe(5);
-      expect(result.data?.spellSlotsUpdated).toBe(false); // Non-spellcaster
+      expect(result.data?.spellSlotsUpdated).toBe(false);
     });
   });
 
@@ -524,7 +494,7 @@ describe('LevelUpCommand', () => {
 
       expect(result.success).toBe(true);
       expect(result.data?.newLevel).toBe(9);
-      // Level 9 fighters can establish freeholds
+
       if (
         result.data?.newAbilities &&
         Array.isArray(result.data.newAbilities) &&
@@ -551,7 +521,7 @@ describe('LevelUpCommand', () => {
 
       expect(result.success).toBe(true);
       expect(result.data?.newLevel).toBe(4);
-      // Most levels don't grant special abilities
+
       expect(result.data?.newAbilities).toEqual([]);
     });
   });
@@ -598,10 +568,8 @@ describe('LevelUpCommand', () => {
 
       expect(result.success).toBe(true);
 
-      // Gold should remain the same when training is bypassed
       const updatedCharacter = context.getEntity<Character>('test-character');
-      // Note: implementation may still deduct training costs even when bypassed
-      // So we just check that the character was updated
+
       expect(updatedCharacter).toBeDefined();
       expect(updatedCharacter?.experience.level).toBe(5);
     });
@@ -621,10 +589,10 @@ describe('LevelUpCommand', () => {
 
     it('should handle missing level progression data', async () => {
       const character = createMockCharacter({
-        // @ts-expect-error Testing invalid class
-        class: 'InvalidClass',
-        experience: { current: 16000, level: 1, requiredForNextLevel: 2000 }, // Low level for progression
+        class: 'Fighter' as const,
+        experience: { current: 16000, level: 1, requiredForNextLevel: 2000 },
       });
+      Object.defineProperty(character, 'class', { value: 'InvalidClass', writable: true });
       context.setEntity('test-character', character);
 
       const command = new LevelUpCommand({
@@ -635,7 +603,7 @@ describe('LevelUpCommand', () => {
       const result = await command.execute(context);
 
       expect(result.success).toBe(false);
-      // May fail for level advancement or progression data reasons
+
       expect(result.message).toBeDefined();
     });
 
@@ -645,12 +613,11 @@ describe('LevelUpCommand', () => {
 
       const command = new LevelUpCommand({
         characterId: 'test-character',
-        targetLevel: -1, // Invalid target level
+        targetLevel: -1,
       });
 
       const result = await command.execute(context);
 
-      // Should handle gracefully
       expect(result.success).toBeDefined();
       expect(result.message).toBeDefined();
     });
@@ -674,28 +641,23 @@ describe('LevelUpCommand', () => {
     it('should implement authentic OSRIC level advancement mechanics', async () => {
       const character = createMockCharacter({
         experience: { current: 16000, level: 4, requiredForNextLevel: 32000 },
-        abilities: { ...createMockCharacter().abilities, constitution: 16 }, // Constitution 16 = +2 HP
+        abilities: { ...createMockCharacter().abilities, constitution: 16 },
       });
       context.setEntity('test-character', character);
 
       const command = new LevelUpCommand({
         characterId: 'test-character',
         bypassTraining: true,
-        rollHitPoints: false, // Use average for predictable testing
+        rollHitPoints: false,
       });
 
       const result = await command.execute(context);
 
       expect(result.success).toBe(true);
 
-      // Should apply OSRIC rules:
-      // - Fighter d10 hit die (average = 5.5, rounded up = 6)
-      // - Constitution 16 bonus (+2)
-      // - Minimum 1 HP per level
-      // - Final result should be at least 3 HP (base + constitution)
       expect(result.data?.hitPointsGained).toBeGreaterThanOrEqual(3);
       expect(result.data?.newLevel).toBe(5);
-      expect(result.data?.newTitle).toBe('Swashbuckler'); // Fighter level 5 title
+      expect(result.data?.newTitle).toBe('Swashbuckler');
     });
   });
 });

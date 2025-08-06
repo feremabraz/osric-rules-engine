@@ -1,15 +1,3 @@
-/**
- * WeatherCheckCommand - Check weather effects on character activities
- *
- * Handles weather condition impacts on various activities:
- * - Travel speed modifications
- * - Combat penalties in adverse weather
- * - Spellcasting difficulties
- * - Environmental damage from extreme weather
- *
- * OSRIC Integration: Complete weather effect system from AD&D 1st Edition
- */
-
 import { BaseCommand, type CommandResult } from '../../core/Command';
 import { rollDice } from '../../core/Dice';
 import type { GameContext } from '../../core/GameContext';
@@ -30,26 +18,26 @@ export interface WeatherCondition {
     | 'wind'
     | 'storm';
   intensity: 'light' | 'moderate' | 'heavy' | 'severe';
-  duration: number; // in hours
+  duration: number;
   temperature: 'freezing' | 'cold' | 'cool' | 'mild' | 'warm' | 'hot' | 'scorching';
 }
 
 export interface WeatherEffects {
-  movementMultiplier: number; // 1.0 = normal, 0.5 = half speed
-  visibilityRange: number; // in feet, 0 = normal outdoor visibility
-  combatPenalty: number; // penalty to attack rolls
-  spellcastingPenalty: number; // penalty to spell success
-  rangedAttackPenalty: number; // additional penalty for ranged attacks
-  fireResistance: boolean; // rain/snow provides fire resistance
-  coldDamage: boolean; // freezing weather causes damage
-  heatDamage: boolean; // scorching weather causes damage
+  movementMultiplier: number;
+  visibilityRange: number;
+  combatPenalty: number;
+  spellcastingPenalty: number;
+  rangedAttackPenalty: number;
+  fireResistance: boolean;
+  coldDamage: boolean;
+  heatDamage: boolean;
 }
 
 export interface WeatherCheckParameters {
   characterId: string;
   currentWeather: WeatherCondition;
   activityType: 'travel' | 'combat' | 'spellcasting' | 'ranged-attack' | 'rest' | 'foraging';
-  exposureTime?: number; // hours exposed to weather
+  exposureTime?: number;
 }
 
 export class WeatherCheckCommand extends BaseCommand {
@@ -63,28 +51,21 @@ export class WeatherCheckCommand extends BaseCommand {
     try {
       const { characterId, currentWeather, activityType, exposureTime = 1 } = this.parameters;
 
-      // Get the character
       const character = context.getEntity<Character>(characterId);
       if (!character) {
         return this.createFailureResult(`Character with ID "${characterId}" not found`);
       }
 
-      // Calculate weather effects
       const effects = this.calculateWeatherEffects(currentWeather);
 
-      // Apply activity-specific modifications
       const modifiedEffects = this.applyActivityModifications(effects, activityType);
 
-      // Check for weather-related damage
       const weatherDamage = this.calculateWeatherDamage(character, currentWeather, exposureTime);
 
-      // Determine status effects
       const statusEffects = this.determineStatusEffects(currentWeather, exposureTime);
 
-      // Calculate modified movement rate
       const movementRate = character.movementRate * modifiedEffects.movementMultiplier;
 
-      // Apply any damage to character
       let updatedCharacter = character;
       if (weatherDamage > 0) {
         updatedCharacter = {
@@ -97,7 +78,6 @@ export class WeatherCheckCommand extends BaseCommand {
         context.setEntity(characterId, updatedCharacter);
       }
 
-      // Generate descriptive message
       const message = this.createWeatherMessage(
         character,
         currentWeather,
@@ -106,7 +86,6 @@ export class WeatherCheckCommand extends BaseCommand {
         weatherDamage
       );
 
-      // Prepare result data
       const resultData = {
         characterId,
         weather: currentWeather,
@@ -132,16 +111,13 @@ export class WeatherCheckCommand extends BaseCommand {
   }
 
   getRequiredRules(): string[] {
-    return []; // This command implements its own logic
+    return [];
   }
 
-  /**
-   * Calculate base weather effects according to OSRIC rules
-   */
   private calculateWeatherEffects(weather: WeatherCondition): WeatherEffects {
     const baseEffects: WeatherEffects = {
       movementMultiplier: 1.0,
-      visibilityRange: 0, // 0 means normal visibility
+      visibilityRange: 0,
       combatPenalty: 0,
       spellcastingPenalty: 0,
       rangedAttackPenalty: 0,
@@ -152,11 +128,10 @@ export class WeatherCheckCommand extends BaseCommand {
 
     switch (weather.type) {
       case 'clear':
-        // No penalties
         break;
 
       case 'overcast':
-        baseEffects.visibilityRange = 1200; // Reduced visibility
+        baseEffects.visibilityRange = 1200;
         break;
 
       case 'light-rain':
@@ -239,9 +214,6 @@ export class WeatherCheckCommand extends BaseCommand {
     return baseEffects;
   }
 
-  /**
-   * Apply activity-specific modifications to weather effects
-   */
   private applyActivityModifications(
     effects: WeatherEffects,
     activityType: string
@@ -250,40 +222,31 @@ export class WeatherCheckCommand extends BaseCommand {
 
     switch (activityType) {
       case 'travel':
-        // Movement penalties apply fully
         break;
 
       case 'combat':
-        // Combat penalties are the primary concern
         break;
 
       case 'spellcasting':
-        // Double spellcasting penalties for focused casting
         modified.spellcastingPenalty *= 2;
         break;
 
       case 'ranged-attack':
-        // Ranged attack penalties are critical
         break;
 
       case 'rest':
-        // Halve most penalties during rest
         modified.combatPenalty = Math.floor(modified.combatPenalty / 2);
         modified.spellcastingPenalty = Math.floor(modified.spellcastingPenalty / 2);
         break;
 
       case 'foraging':
-        // Weather severely impacts foraging success
-        modified.combatPenalty *= 2; // Using combat penalty as general difficulty
+        modified.combatPenalty *= 2;
         break;
     }
 
     return modified;
   }
 
-  /**
-   * Calculate weather-related damage from exposure
-   */
   private calculateWeatherDamage(
     character: Character,
     weather: WeatherCondition,
@@ -291,33 +254,27 @@ export class WeatherCheckCommand extends BaseCommand {
   ): number {
     let damage = 0;
 
-    // Cold damage from freezing weather
     if (weather.temperature === 'freezing' && exposureTime >= 2) {
       const hasProtection = this.hasWeatherProtection(character, 'cold');
       if (!hasProtection) {
-        damage += rollDice(1, 4).result; // 1d4 cold damage per exposure period
+        damage += rollDice(1, 4).result;
       }
     }
 
-    // Heat damage from scorching weather
     if (weather.temperature === 'scorching' && exposureTime >= 4) {
       const hasProtection = this.hasWeatherProtection(character, 'heat');
       if (!hasProtection) {
-        damage += rollDice(1, 6).result; // 1d6 heat damage per exposure period
+        damage += rollDice(1, 6).result;
       }
     }
 
-    // Additional damage from severe weather conditions
     if (weather.type === 'blizzard' && exposureTime >= 1) {
-      damage += Math.floor(exposureTime / 2); // Gradual damage from blizzard exposure
+      damage += Math.floor(exposureTime / 2);
     }
 
     return damage;
   }
 
-  /**
-   * Check if character has appropriate weather protection
-   */
   private hasWeatherProtection(character: Character, type: 'cold' | 'heat'): boolean {
     return character.inventory.some((item) => {
       if (type === 'cold') {
@@ -334,9 +291,6 @@ export class WeatherCheckCommand extends BaseCommand {
     });
   }
 
-  /**
-   * Determine status effects from weather exposure
-   */
   private determineStatusEffects(weather: WeatherCondition, exposureTime: number): string[] {
     const effects: string[] = [];
 
@@ -359,9 +313,6 @@ export class WeatherCheckCommand extends BaseCommand {
     return effects;
   }
 
-  /**
-   * Create descriptive message for weather effects
-   */
   private createWeatherMessage(
     character: Character,
     weather: WeatherCondition,

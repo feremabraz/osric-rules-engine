@@ -1,12 +1,3 @@
-/**
- * AbilityScoreGenerationRules Tests - OSRIC Compliance
- *
- * Tests the three individual rules from AbilityScoreGenerationRules.ts:
- * - AbilityScoreGenerationRule (3 OSRIC methods)
- * - ExceptionalStrengthRule (fighter 18/xx strength)
- * - RacialAbilityAdjustmentRule (all racial modifiers)
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { GameContext } from '../../../osric/core/GameContext';
@@ -17,7 +8,6 @@ import {
 } from '../../../osric/rules/character/AbilityScoreGenerationRules';
 import type { AbilityScores } from '../../../osric/types/entities';
 
-// Mock command that implements the Command interface
 class MockCharacterCommand {
   readonly type = 'create-character';
   readonly actorId = 'test-actor';
@@ -53,7 +43,6 @@ describe('AbilityScoreGenerationRules', () => {
 
   describe('AbilityScoreGenerationRule', () => {
     it('should generate valid ability scores with standard3d6', async () => {
-      // Set up character creation data
       context.setTemporary('character-creation', {
         name: 'Test Fighter',
         race: 'Human',
@@ -71,7 +60,6 @@ describe('AbilityScoreGenerationRules', () => {
       const abilityScores = context.getTemporary('generated-ability-scores') as AbilityScores;
       expect(abilityScores).toBeDefined();
 
-      // Verify all ability scores are in valid range (3-18)
       expect(abilityScores.strength).toBeGreaterThanOrEqual(3);
       expect(abilityScores.strength).toBeLessThanOrEqual(18);
       expect(abilityScores.dexterity).toBeGreaterThanOrEqual(3);
@@ -104,7 +92,6 @@ describe('AbilityScoreGenerationRules', () => {
       const abilityScores = context.getTemporary('generated-ability-scores') as AbilityScores;
       expect(abilityScores).toBeDefined();
 
-      // All scores should be in valid range
       for (const score of Object.values(abilityScores)) {
         expect(score).toBeGreaterThanOrEqual(3);
         expect(score).toBeLessThanOrEqual(18);
@@ -129,22 +116,18 @@ describe('AbilityScoreGenerationRules', () => {
       const abilityScores = context.getTemporary('generated-ability-scores') as AbilityScores;
       expect(abilityScores).toBeDefined();
 
-      // 4d6 drop lowest should generally produce higher scores
       const totalScore = Object.values(abilityScores).reduce((sum, score) => sum + score, 0);
-      expect(totalScore).toBeGreaterThan(60); // Should be higher than 3d6 average
+      expect(totalScore).toBeGreaterThan(60);
     });
 
     it('should only apply to create-character commands with ability score method', async () => {
       const rule = new AbilityScoreGenerationRule();
 
-      // Test with wrong command type
       const wrongCommand = { ...mockCommand, type: 'attack' };
       expect(rule.canApply(context, wrongCommand as unknown as typeof mockCommand)).toBe(false);
 
-      // Test with correct command type but no data
       expect(rule.canApply(context, mockCommand)).toBe(false);
 
-      // Test with correct command type and data
       context.setTemporary('character-creation', { abilityScoreMethod: 'standard3d6' });
       expect(rule.canApply(context, mockCommand)).toBe(true);
     });
@@ -152,7 +135,6 @@ describe('AbilityScoreGenerationRules', () => {
 
   describe('ExceptionalStrengthRule', () => {
     it('should apply exceptional strength to fighters with 18 strength', async () => {
-      // Set up data for exceptional strength test
       context.setTemporary('character-creation', {
         characterClass: 'Fighter',
         race: 'Human',
@@ -225,7 +207,6 @@ describe('AbilityScoreGenerationRules', () => {
 
         const rule = new ExceptionalStrengthRule();
 
-        // Rule should not apply
         expect(rule.canApply(context, mockCommand)).toBe(false);
       }
     });
@@ -236,7 +217,7 @@ describe('AbilityScoreGenerationRules', () => {
         race: 'Human',
       });
       context.setTemporary('generated-ability-scores', {
-        strength: 17, // Below 18
+        strength: 17,
         dexterity: 12,
         constitution: 14,
         intelligence: 10,
@@ -273,10 +254,9 @@ describe('AbilityScoreGenerationRules', () => {
       expect(result.message).toContain('Applied racial adjustments for Elf');
 
       const adjustedScores = context.getTemporary('adjusted-ability-scores') as AbilityScores;
-      expect(adjustedScores.dexterity).toBe(originalScores.dexterity + 1); // +1 DEX
-      expect(adjustedScores.constitution).toBe(originalScores.constitution - 1); // -1 CON
+      expect(adjustedScores.dexterity).toBe(originalScores.dexterity + 1);
+      expect(adjustedScores.constitution).toBe(originalScores.constitution - 1);
 
-      // Other scores unchanged
       expect(adjustedScores.strength).toBe(originalScores.strength);
       expect(adjustedScores.intelligence).toBe(originalScores.intelligence);
       expect(adjustedScores.wisdom).toBe(originalScores.wisdom);
@@ -306,8 +286,8 @@ describe('AbilityScoreGenerationRules', () => {
       expect(result.message).toContain('Applied racial adjustments for Dwarf');
 
       const adjustedScores = context.getTemporary('adjusted-ability-scores') as AbilityScores;
-      expect(adjustedScores.constitution).toBe(originalScores.constitution + 1); // +1 CON
-      expect(adjustedScores.charisma).toBe(originalScores.charisma - 1); // -1 CHA
+      expect(adjustedScores.constitution).toBe(originalScores.constitution + 1);
+      expect(adjustedScores.charisma).toBe(originalScores.charisma - 1);
     });
 
     it('should fail if character does not meet racial requirements', async () => {
@@ -316,11 +296,10 @@ describe('AbilityScoreGenerationRules', () => {
         characterClass: 'Fighter',
       });
 
-      // Set scores that don't meet dwarf requirements
       context.setTemporary('generated-ability-scores', {
-        strength: 7, // Below dwarf requirement (8+)
+        strength: 7,
         dexterity: 10,
-        constitution: 11, // Below dwarf requirement (12+)
+        constitution: 11,
         intelligence: 10,
         wisdom: 10,
         charisma: 10,
@@ -403,7 +382,7 @@ describe('AbilityScoreGenerationRules', () => {
       expect(result.message).toContain('Applied racial adjustments for Human');
 
       const adjustedScores = context.getTemporary('adjusted-ability-scores') as AbilityScores;
-      // All scores should remain unchanged for humans
+
       expect(adjustedScores).toEqual(originalScores);
     });
   });

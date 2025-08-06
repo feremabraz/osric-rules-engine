@@ -1,14 +1,3 @@
-/**
- * ReactionRules Tests - OSRIC Compliance
- *
- * Tests the ReactionRules for proper NPC reaction mechanics according to OSRIC:
- * - 2d6 reaction table with Charisma modifiers
- * - Situational adjustments (gifts, threats, reputation)
- * - Party representation mechanics
- * - Context-sensitive reaction outcomes
- * - Edge cases and error scenarios
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { GameContext } from '../../../osric/core/GameContext';
@@ -16,7 +5,6 @@ import { type ReactionRollParams, ReactionRules } from '../../../osric/rules/npc
 import { COMMAND_TYPES } from '../../../osric/types/constants';
 import type { Character } from '../../../osric/types/entities';
 
-// Type for reaction result data
 interface ReactionResultData {
   reactionResult: {
     rollResult: number;
@@ -32,7 +20,6 @@ interface ReactionResultData {
   interactionType: string;
 }
 
-// Mock helper function to create test characters
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-char',
@@ -117,7 +104,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return defaultCharacter;
 }
 
-// Mock command for testing
 class MockReactionCommand {
   readonly type = COMMAND_TYPES.REACTION_ROLL;
   readonly actorId = 'test-character';
@@ -150,23 +136,19 @@ describe('ReactionRules', () => {
     context = new GameContext(store);
     rule = new ReactionRules();
 
-    // Create test character with default charisma
     const character = createMockCharacter({
       id: 'test-character',
       name: 'Test Hero',
-      abilities: { ...createMockCharacter().abilities, charisma: 12 }, // Neutral charisma
+      abilities: { ...createMockCharacter().abilities, charisma: 12 },
     });
 
-    // Store character entity
     context.setEntity('test-character', character);
 
-    // Setup mock command
     mockCommand = new MockReactionCommand();
   });
 
   describe('Rule Application', () => {
     it('should apply when command type is REACTION_ROLL and params are provided', () => {
-      // Setup context data
       context.setTemporary('reaction-roll-params', {
         characterId: 'test-character',
         targetId: 'test-npc',
@@ -184,13 +166,12 @@ describe('ReactionRules', () => {
       } as ReactionRollParams);
 
       const wrongCommand = new MockReactionCommand();
-      // biome-ignore lint/suspicious/noExplicitAny: Testing override
-      (wrongCommand as any).type = 'wrong-type'; // Override the type
+
+      Object.defineProperty(wrongCommand, 'type', { value: 'wrong-type', writable: true });
       expect(rule.canApply(context, wrongCommand)).toBe(false);
     });
 
     it('should not apply when reaction roll params are missing', () => {
-      // No context data set
       expect(rule.canApply(context, mockCommand)).toBe(false);
     });
   });
@@ -225,7 +206,6 @@ describe('ReactionRules', () => {
     });
 
     it('should handle missing reaction roll data', async () => {
-      // Don't set context data
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(false);
@@ -250,7 +230,7 @@ describe('ReactionRules', () => {
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      expect(result.message).toContain('-3'); // Should show negative modifier
+      expect(result.message).toContain('-3');
     });
 
     it('should apply positive modifier for high charisma (18)', async () => {
@@ -269,7 +249,7 @@ describe('ReactionRules', () => {
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      expect(result.message).toContain('+3'); // Should show positive modifier
+      expect(result.message).toContain('+3');
     });
 
     it('should apply no modifier for average charisma (10)', async () => {
@@ -288,7 +268,7 @@ describe('ReactionRules', () => {
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      expect(result.message).toContain('+0'); // Should show zero modifier
+      expect(result.message).toContain('+0');
     });
   });
 
@@ -306,7 +286,7 @@ describe('ReactionRules', () => {
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      expect(result.message).toContain('+2'); // Should include gift modifier
+      expect(result.message).toContain('+2');
     });
 
     it('should apply negative modifiers for threats', async () => {
@@ -322,7 +302,7 @@ describe('ReactionRules', () => {
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      expect(result.message).toContain('-2'); // Should include threat modifier
+      expect(result.message).toContain('-2');
     });
 
     it('should handle reputation modifiers', async () => {
@@ -338,7 +318,7 @@ describe('ReactionRules', () => {
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      expect(result.message).toContain('+1'); // Should include reputation modifier
+      expect(result.message).toContain('+1');
     });
 
     it('should handle language barrier penalties', async () => {
@@ -354,13 +334,13 @@ describe('ReactionRules', () => {
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      expect(result.message).toContain('-1'); // Should include language barrier modifier
+      expect(result.message).toContain('-1');
     });
 
     it('should combine multiple modifiers correctly', async () => {
       const highCharismaCharacter = createMockCharacter({
         id: 'combo-test',
-        abilities: { ...createMockCharacter().abilities, charisma: 16 }, // +1 modifier
+        abilities: { ...createMockCharacter().abilities, charisma: 16 },
       });
       context.setEntity('combo-test', highCharismaCharacter);
 
@@ -378,7 +358,7 @@ describe('ReactionRules', () => {
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      // Total should be +1 (charisma) +1 (gifts) +1 (reputation) -1 (language) = +2
+
       expect(result.message).toContain('+2');
     });
   });
@@ -422,10 +402,9 @@ describe('ReactionRules', () => {
     });
 
     it('should set combat likely for intimidation with unfriendly results', async () => {
-      // Use very low modifiers to force unfriendly result
       const lowCharismaCharacter = createMockCharacter({
         id: 'intimidator',
-        abilities: { ...createMockCharacter().abilities, charisma: 3 }, // -3 modifier
+        abilities: { ...createMockCharacter().abilities, charisma: 3 },
       });
       context.setEntity('intimidator', lowCharismaCharacter);
 
@@ -441,8 +420,7 @@ describe('ReactionRules', () => {
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      // Note: Due to random dice, we can't guarantee the exact result,
-      // but we can verify the structure is correct
+
       const reactionData = result.data as unknown as ReactionResultData;
       expect(reactionData?.reactionResult?.combatLikely).toBeDefined();
       expect(typeof reactionData?.reactionResult?.combatLikely).toBe('boolean');
@@ -478,7 +456,7 @@ describe('ReactionRules', () => {
     it('should handle extreme charisma values', async () => {
       const extremeCharacter = createMockCharacter({
         id: 'extreme-charisma',
-        abilities: { ...createMockCharacter().abilities, charisma: 25 }, // Beyond normal range
+        abilities: { ...createMockCharacter().abilities, charisma: 25 },
       });
       context.setEntity('extreme-charisma', extremeCharacter);
 
@@ -491,7 +469,7 @@ describe('ReactionRules', () => {
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      // Should cap at maximum modifier
+
       expect(result.message).toContain('+3');
     });
 
@@ -501,15 +479,15 @@ describe('ReactionRules', () => {
         targetId: 'test-npc',
         interactionType: 'first_meeting',
         modifiers: {
-          gifts: 10, // Beyond normal range
-          threats: -10, // Beyond normal range
+          gifts: 10,
+          threats: -10,
         },
       } as ReactionRollParams);
 
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      // Should cap modifiers appropriately
+
       expect(result.data?.reactionResult).toBeDefined();
     });
 
@@ -522,7 +500,6 @@ describe('ReactionRules', () => {
 
       await rule.execute(context, mockCommand);
 
-      // Check that last reaction result was stored
       const lastResult = context.getTemporary('last-reaction-result');
       expect(lastResult).toBeDefined();
     });
@@ -546,7 +523,6 @@ describe('ReactionRules', () => {
     });
 
     it('should follow OSRIC reaction table ranges', async () => {
-      // Test multiple times to verify reaction ranges
       for (let i = 0; i < 10; i++) {
         context.setTemporary('reaction-roll-params', {
           characterId: 'test-character',
@@ -561,7 +537,6 @@ describe('ReactionRules', () => {
         const finalResult = reactionData?.reactionResult?.finalResult;
         const reaction = reactionData?.reactionResult?.reaction;
 
-        // Verify OSRIC table mapping
         if (finalResult <= 2) {
           expect(reaction).toBe('hostile');
         } else if (finalResult <= 5) {

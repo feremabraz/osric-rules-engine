@@ -4,10 +4,6 @@ import { BaseRule, type RuleResult } from '../../core/Rule';
 import type { ResearchDifficultyFactors, SpellResearch } from '../../types/SpellTypes';
 import type { Character } from '../../types/entities';
 
-/**
- * Rule for validating spell research requirements
- * Based on OSRIC spell research mechanics
- */
 export class SpellResearchRequirementsRule extends BaseRule {
   name = 'spell-research-requirements';
   description = 'Validate requirements for beginning spell research';
@@ -31,7 +27,6 @@ export class SpellResearchRequirementsRule extends BaseRule {
 
     const { character, spellName, spellLevel, spellRarity } = researchRequest;
 
-    // Check spell level is appropriate for character
     const maxSpellLevel = Math.min(9, Math.ceil(character.level / 2));
     if (spellLevel > maxSpellLevel) {
       return this.createFailureResult(
@@ -39,7 +34,6 @@ export class SpellResearchRequirementsRule extends BaseRule {
       );
     }
 
-    // Calculate requirements
     const factors = this.calculateResearchFactors(character, spellLevel, spellRarity, 0);
     const requirements = this.calculateResearchRequirements(factors);
 
@@ -84,15 +78,12 @@ export class SpellResearchRequirementsRule extends BaseRule {
     canResearch: boolean;
     message: string;
   } {
-    // Base calculations
-    const baseDays = factors.spellLevel * factors.rarity * 7; // Days
-    const baseCost = factors.spellLevel * factors.spellLevel * 1000; // Gold pieces
+    const baseDays = factors.spellLevel * factors.rarity * 7;
+    const baseCost = factors.spellLevel * factors.spellLevel * 1000;
 
-    // Required stats
     const minIntelligence = 9 + factors.spellLevel;
     const minLevel = factors.spellLevel * 2;
 
-    // Check if character meets requirements
     const canResearch = factors.intelligence >= minIntelligence && factors.casterLevel >= minLevel;
 
     const message = canResearch
@@ -110,10 +101,6 @@ export class SpellResearchRequirementsRule extends BaseRule {
   }
 }
 
-/**
- * Rule for starting a new spell research project
- * Based on OSRIC spell research initiation mechanics
- */
 export class SpellResearchStartRule extends BaseRule {
   name = 'spell-research-start';
   description = 'Begin a new spell research project';
@@ -137,7 +124,6 @@ export class SpellResearchStartRule extends BaseRule {
 
     const { character, spellName, spellLevel, spellRarity } = researchStart;
 
-    // Calculate initial research factors
     const factors = this.calculateResearchFactors(character, spellLevel, spellRarity, 0);
     const requirements = this.calculateResearchRequirements(factors);
 
@@ -145,13 +131,11 @@ export class SpellResearchStartRule extends BaseRule {
       return this.createFailureResult(requirements.message);
     }
 
-    // Calculate failure chance (base 5% per spell level)
     const baseFailureChance = spellLevel * 5;
     const intelligenceBonus = Math.max(0, character.abilities.intelligence - 12) * 2;
     const levelBonus = Math.max(0, character.level - requirements.minLevel) * 3;
     const finalFailureChance = Math.max(1, baseFailureChance - intelligenceBonus - levelBonus);
 
-    // Create research project
     const research: SpellResearch = {
       researcherId: character.id,
       spellName,
@@ -221,10 +205,6 @@ export class SpellResearchStartRule extends BaseRule {
   }
 }
 
-/**
- * Rule for continuing work on an existing research project
- * Based on OSRIC research progress mechanics
- */
 export class SpellResearchProgressRule extends BaseRule {
   name = 'spell-research-progress';
   description = 'Continue work on spell research project';
@@ -248,35 +228,27 @@ export class SpellResearchProgressRule extends BaseRule {
 
     const { research, character, daysWorked, goldSpent } = researchProgress;
 
-    // Calculate progress rate based on character's intelligence
     const baseProgressRate = 0.5 + (character.abilities.intelligence - 10) * 0.1;
 
-    // Gold spent improves progress rate (with diminishing returns)
     const goldBonus = Math.min(1.0, (goldSpent / 1000) * 0.2);
 
-    // Calculate progress made during this research period
     const progressRate = baseProgressRate + goldBonus;
 
-    // Randomize progress with a chance of setbacks
     const progressRoll = rollDice(1, 100);
     let progressMade: number;
 
     if (progressRoll.result <= 10) {
-      // Setback (10% chance)
       const setbackRoll = rollDice(1, 10);
       progressMade = -5 + setbackRoll.result;
       context.setTemporary('researchSetback', true);
     } else {
-      // Normal progress
       progressMade = (daysWorked * progressRate * 100) / research.estimatedCompletion;
     }
 
-    // Update research stats
     const updatedProgress = Math.min(100, Math.max(0, research.progressPercentage + progressMade));
     const newDaysSpent = research.daysSpent + daysWorked;
     const newGoldSpent = research.goldSpent + goldSpent;
 
-    // Recalculate estimated completion time
     let newEstimatedCompletion = 0;
     if (updatedProgress < 100) {
       const remainingPercentage = 100 - updatedProgress;
@@ -284,7 +256,7 @@ export class SpellResearchProgressRule extends BaseRule {
       if (progressPerDay > 0) {
         newEstimatedCompletion = Math.ceil(remainingPercentage / progressPerDay);
       } else {
-        newEstimatedCompletion = research.estimatedCompletion * 2; // Doubled if setback
+        newEstimatedCompletion = research.estimatedCompletion * 2;
       }
     }
 
@@ -318,10 +290,6 @@ export class SpellResearchProgressRule extends BaseRule {
   }
 }
 
-/**
- * Rule for completing spell research
- * Based on OSRIC research completion and failure mechanics
- */
 export class SpellResearchSuccessRule extends BaseRule {
   name = 'spell-research-success';
   description = 'Attempt to complete spell research';
@@ -343,19 +311,16 @@ export class SpellResearchSuccessRule extends BaseRule {
 
     const { research, character } = researchCompletion;
 
-    // Research must be at 100% to attempt completion
     if (research.progressPercentage < 100) {
       return this.createFailureResult(
         `Research is only ${research.progressPercentage.toFixed(1)}% complete. Cannot attempt completion yet.`
       );
     }
 
-    // Roll for success
     const successRoll = rollDice(1, 100);
     const success = successRoll.result > research.failureChance;
 
     if (success) {
-      // Add spell to character's known spells (would need spell learning implementation)
       const message = `SUCCESS! ${character.name} successfully completes research on "${research.spellName}"!`;
 
       context.setTemporary('researchCompleted', {
@@ -374,7 +339,6 @@ export class SpellResearchSuccessRule extends BaseRule {
       });
     }
 
-    // Research failed - check for catastrophic failure
     const catastropheRoll = rollDice(1, 100);
     const catastrophe = catastropheRoll.result <= 10;
 
@@ -384,7 +348,7 @@ export class SpellResearchSuccessRule extends BaseRule {
       context.setTemporary('researchCatastrophe', {
         character: character.id,
         spellLevel: research.targetLevel,
-        damage: research.targetLevel * 2, // Damage based on spell level
+        damage: research.targetLevel * 2,
       });
 
       return this.createFailureResult(message, {
@@ -396,14 +360,12 @@ export class SpellResearchSuccessRule extends BaseRule {
       });
     }
 
-    // Normal failure - can try again with additional resources
     const message = `Research failure. ${character.name}'s research on "${research.spellName}" fails, but the work can be continued with additional time and resources.`;
 
-    // Reset progress to 75% to allow continuation
     const updatedResearch: SpellResearch = {
       ...research,
       progressPercentage: 75,
-      failureChance: Math.max(1, research.failureChance - 5), // Slightly better chance next time
+      failureChance: Math.max(1, research.failureChance - 5),
     };
 
     context.setTemporary('activeResearch', updatedResearch);
@@ -418,10 +380,6 @@ export class SpellResearchSuccessRule extends BaseRule {
   }
 }
 
-/**
- * Rule for learning spells from external sources
- * Based on OSRIC spell learning mechanics (scrolls, other wizards, etc.)
- */
 export class SpellLearningRule extends BaseRule {
   name = 'spell-learning';
   description = 'Learn spells from external sources';
@@ -446,7 +404,6 @@ export class SpellLearningRule extends BaseRule {
 
     const { character, spellName, spellLevel, source, difficultyModifier = 0 } = spellLearning;
 
-    // Check if character can learn spells of this level
     const maxSpellLevel = Math.min(9, Math.ceil(character.level / 2));
     if (spellLevel > maxSpellLevel) {
       return this.createFailureResult(
@@ -454,7 +411,6 @@ export class SpellLearningRule extends BaseRule {
       );
     }
 
-    // Check if character already knows this spell
     const extendedCharacter = character as Character & {
       spellsKnown?: Array<{ name: string; level: number }>;
     };
@@ -468,26 +424,24 @@ export class SpellLearningRule extends BaseRule {
       return this.createFailureResult(`${character.name} already knows "${spellName}"`);
     }
 
-    // Calculate learning chance
-    const baseChance = 50; // Base 50% chance
+    const baseChance = 50;
     const intelligenceBonus = (character.abilities.intelligence - 10) * 5;
     const levelBonus = character.level * 2;
     const spellLevelPenalty = spellLevel * 5;
 
-    // Source modifiers
     let sourceModifier = 0;
     switch (source) {
       case 'scroll':
-        sourceModifier = -10; // Harder to learn from scrolls
+        sourceModifier = -10;
         break;
       case 'spellbook':
-        sourceModifier = 0; // Standard difficulty
+        sourceModifier = 0;
         break;
       case 'tutor':
-        sourceModifier = 15; // Easier with a teacher
+        sourceModifier = 15;
         break;
       case 'library':
-        sourceModifier = 5; // Slight bonus from comprehensive study
+        sourceModifier = 5;
         break;
     }
 
@@ -504,18 +458,16 @@ export class SpellLearningRule extends BaseRule {
       )
     );
 
-    // Make the learning attempt
     const learningRoll = rollDice(1, 100);
     const success = learningRoll.result <= totalChance;
 
     if (success) {
-      // Add spell to character's known spells
       const newSpell = {
         id: `${character.id}-${spellName}-${Date.now()}`,
         name: spellName,
         level: spellLevel,
-        school: 'Unknown', // Would be determined by spell data
-        components: ['V', 'S'], // Default components
+        school: 'Unknown',
+        components: ['V', 'S'],
         castingTime: '1 round',
         range: 'Touch',
         duration: 'Instantaneous',
@@ -543,12 +495,10 @@ export class SpellLearningRule extends BaseRule {
       });
     }
 
-    // Learning failed
     const message =
       `${character.name} fails to learn "${spellName}" from ${source} ` +
       `(rolled ${learningRoll.result} vs ${totalChance}%)`;
 
-    // Constitution loss on failure (studying complex magic is taxing)
     const constitutionLoss = spellLevel > 3 ? 1 : 0;
     if (constitutionLoss > 0) {
       const updatedCharacter = {
@@ -561,7 +511,7 @@ export class SpellLearningRule extends BaseRule {
           ...character.statusEffects,
           {
             name: 'Constitution Loss (Spell Study)',
-            duration: constitutionLoss * 8, // 8 hours per point lost
+            duration: constitutionLoss * 8,
             description: `Lost ${constitutionLoss} constitution from intensive spell study`,
             effect: 'constitution_drain',
             savingThrow: null,

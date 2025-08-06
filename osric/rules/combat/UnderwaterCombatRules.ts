@@ -1,16 +1,3 @@
-/**
- * UnderwaterCombatRules.ts - OSRIC Underwater Combat Rules
- *
- * Implements the complete OSRIC underwater combat system including:
- * - Weapon effectiveness restrictions (piercing weapons only)
- * - Attack and damage penalties for underwater combat
- * - Ranged weapon limitations and reload requirements
- * - Spellcasting restrictions and component failures
- * - Movement and breathing limitations
- *
- * PRESERVATION: All OSRIC underwater combat mechanics preserved exactly.
- */
-
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
@@ -27,7 +14,7 @@ interface UnderwaterCombatContext {
   target?: CharacterData | MonsterData;
   weapon?: Weapon;
   spell?: Spell;
-  waterDepth: number; // Depth in meters
+  waterDepth: number;
   hasWaterBreathing: boolean;
   isCastingSpell?: boolean;
 }
@@ -45,7 +32,6 @@ export class UnderwaterCombatRule extends BaseRule {
     const { combatant, weapon, spell, waterDepth, hasWaterBreathing, isCastingSpell } =
       underwaterContext;
 
-    // Check basic underwater survival
     if (!hasWaterBreathing && waterDepth > 0) {
       const breathingCheck = this.checkBreathingRequirements(combatant, waterDepth);
       if (!breathingCheck.canAct) {
@@ -55,7 +41,6 @@ export class UnderwaterCombatRule extends BaseRule {
       }
     }
 
-    // Handle spellcasting underwater
     if (isCastingSpell && spell) {
       const spellResult = this.handleUnderwaterSpell(spell, combatant);
       context.setTemporary('underwater-spell-result', spellResult);
@@ -69,7 +54,6 @@ export class UnderwaterCombatRule extends BaseRule {
       return this.createSuccessResult(spellResult.message || 'Spell cast underwater');
     }
 
-    // Handle weapon combat underwater
     if (weapon) {
       const weaponResult = this.handleUnderwaterWeapon(weapon, combatant);
       context.setTemporary('underwater-weapon-result', weaponResult);
@@ -80,7 +64,6 @@ export class UnderwaterCombatRule extends BaseRule {
         );
       }
 
-      // Apply underwater combat penalties
       const penalties = this.getUnderwaterCombatPenalties(weapon, waterDepth);
       context.setTemporary('underwater-combat-penalties', penalties);
 
@@ -101,9 +84,6 @@ export class UnderwaterCombatRule extends BaseRule {
     return underwaterContext !== null && underwaterContext.waterDepth > 0;
   }
 
-  /**
-   * Check breathing requirements for underwater action
-   */
   private checkBreathingRequirements(
     combatant: CharacterData | MonsterData,
     waterDepth: number
@@ -112,7 +92,6 @@ export class UnderwaterCombatRule extends BaseRule {
     reason?: string;
     timeRemaining?: number;
   } {
-    // Check for water breathing abilities
     if ('specialAbilities' in combatant && combatant.specialAbilities) {
       const hasWaterBreathing = combatant.specialAbilities.some(
         (ability) =>
@@ -125,18 +104,15 @@ export class UnderwaterCombatRule extends BaseRule {
       }
     }
 
-    // Check constitution for breath holding (simplified)
-    let breathHoldTime = 10; // Base 10 rounds
+    let breathHoldTime = 10;
 
     if ('abilities' in combatant) {
-      // Constitution modifier affects breath holding
       const conModifier = Math.floor((combatant.abilities.constitution - 10) / 2);
       breathHoldTime += conModifier * 2;
     }
 
-    // Depth affects breathing difficulty
     if (waterDepth > 30) {
-      breathHoldTime = Math.floor(breathHoldTime * 0.75); // Reduce by 25% for deep water
+      breathHoldTime = Math.floor(breathHoldTime * 0.75);
     }
 
     return {
@@ -146,9 +122,6 @@ export class UnderwaterCombatRule extends BaseRule {
     };
   }
 
-  /**
-   * Handle spellcasting underwater
-   */
   private handleUnderwaterSpell(
     spell: Spell,
     caster: CharacterData | MonsterData
@@ -158,9 +131,7 @@ export class UnderwaterCombatRule extends BaseRule {
     message?: string;
     penalties?: string[];
   } {
-    // Check spell components
     if (spell.components) {
-      // Somatic components fail underwater (can't perform precise gestures)
       if (spell.components.includes('S')) {
         return {
           canCast: false,
@@ -168,7 +139,6 @@ export class UnderwaterCombatRule extends BaseRule {
         };
       }
 
-      // Material components are difficult underwater
       if (spell.components.includes('M')) {
         return {
           canCast: false,
@@ -177,11 +147,9 @@ export class UnderwaterCombatRule extends BaseRule {
       }
     }
 
-    // Check spell type
     const spellName = spell.name.toLowerCase();
     const spellDescription = spell.description?.toLowerCase() || '';
 
-    // Fire spells automatically fail
     if (spellName.includes('fire') || spellDescription.includes('fire')) {
       return {
         canCast: false,
@@ -189,7 +157,6 @@ export class UnderwaterCombatRule extends BaseRule {
       };
     }
 
-    // Lightning spells backfire
     if (spellName.includes('lightning') || spellDescription.includes('lightning')) {
       return {
         canCast: false,
@@ -198,7 +165,6 @@ export class UnderwaterCombatRule extends BaseRule {
       };
     }
 
-    // Verbal-only spells work but with penalties
     if (spell.components && spell.components.length === 1 && spell.components[0] === 'V') {
       return {
         canCast: true,
@@ -207,7 +173,6 @@ export class UnderwaterCombatRule extends BaseRule {
       };
     }
 
-    // Other spells work with penalties
     return {
       canCast: true,
       message: `${caster.name} casts ${spell.name} underwater`,
@@ -215,9 +180,6 @@ export class UnderwaterCombatRule extends BaseRule {
     };
   }
 
-  /**
-   * Handle weapon effectiveness underwater
-   */
   private handleUnderwaterWeapon(
     weapon: Weapon,
     _attacker: CharacterData | MonsterData
@@ -226,7 +188,6 @@ export class UnderwaterCombatRule extends BaseRule {
     reason?: string;
     specialEffects?: string[];
   } {
-    // Only piercing weapons are effective underwater
     const effectiveWeapons = [
       'dagger',
       'spear',
@@ -248,7 +209,6 @@ export class UnderwaterCombatRule extends BaseRule {
       };
     }
 
-    // Special cases for ranged weapons
     if (weapon.type === 'Ranged') {
       if (weaponName.includes('crossbow')) {
         return {
@@ -268,9 +228,6 @@ export class UnderwaterCombatRule extends BaseRule {
     return { isEffective: true };
   }
 
-  /**
-   * Get underwater combat penalties
-   */
   private getUnderwaterCombatPenalties(
     weapon: Weapon,
     waterDepth: number
@@ -279,25 +236,22 @@ export class UnderwaterCombatRule extends BaseRule {
     damagePenalty: number;
     specialEffects: string[];
   } {
-    let attackPenalty = -2; // Base underwater penalty
-    let damagePenalty = -2; // Base underwater penalty
+    let attackPenalty = -2;
+    let damagePenalty = -2;
     const specialEffects: string[] = [];
 
-    // Deeper water increases penalties
     if (waterDepth > 30) {
       attackPenalty -= 1;
       damagePenalty -= 1;
       specialEffects.push('Deep water penalty');
     }
 
-    // Ranged weapons have additional penalties
     if (weapon.type === 'Ranged') {
       attackPenalty -= 2;
       damagePenalty -= 1;
       specialEffects.push('Ranged weapon underwater penalty');
     }
 
-    // Slashing and bludgeoning weapons have severe penalties
     const weaponName = weapon.name.toLowerCase();
     if (weaponName.includes('sword') || weaponName.includes('axe')) {
       attackPenalty -= 2;
@@ -335,14 +289,12 @@ export class UnderwaterMovementRule extends BaseRule {
 
     const { combatant, waterDepth, hasWaterBreathing } = underwaterContext;
 
-    // Calculate underwater movement penalties
     const movementEffects = this.calculateUnderwaterMovement(
       combatant,
       waterDepth,
       hasWaterBreathing
     );
 
-    // Store movement effects
     context.setTemporary('underwater-movement-effects', movementEffects);
 
     return this.createSuccessResult(
@@ -359,9 +311,6 @@ export class UnderwaterMovementRule extends BaseRule {
     return underwaterContext !== null && underwaterContext.waterDepth > 0;
   }
 
-  /**
-   * Calculate underwater movement effects
-   */
   private calculateUnderwaterMovement(
     combatant: CharacterData | MonsterData,
     waterDepth: number,
@@ -370,48 +319,39 @@ export class UnderwaterMovementRule extends BaseRule {
     speedMultiplier: number;
     restrictions: string[];
   } {
-    let speedMultiplier = 0.5; // Base underwater speed penalty (half speed)
+    let speedMultiplier = 0.5;
     const restrictions: string[] = [];
 
-    // Swimming ability improves movement
     if ('proficiencies' in combatant && combatant.proficiencies) {
       const hasSwimming = combatant.proficiencies.some(
         (prof) => prof.weapon?.toLowerCase().includes('swimming') || false
       );
 
       if (hasSwimming) {
-        speedMultiplier = 0.75; // Better speed with swimming proficiency
+        speedMultiplier = 0.75;
       }
     }
 
-    // Water breathing allows normal underwater movement
     if (hasWaterBreathing) {
       speedMultiplier = Math.max(speedMultiplier, 0.75);
     }
 
-    // Depth affects movement
     if (waterDepth > 30) {
-      speedMultiplier *= 0.8; // Additional penalty for deep water
+      speedMultiplier *= 0.8;
       restrictions.push('Deep water movement penalty');
     }
 
-    // Encumbrance has greater effect underwater
     if ('encumbrance' in combatant && combatant.encumbrance > 0.5) {
       speedMultiplier *= 0.5;
       restrictions.push('Heavy encumbrance severely impairs underwater movement');
     }
 
-    // Armor penalties
-    // This would check for armor type and apply additional penalties
-
     return {
-      speedMultiplier: Math.max(0.1, speedMultiplier), // Minimum 10% speed
+      speedMultiplier: Math.max(0.1, speedMultiplier),
       restrictions,
     };
   }
 }
-
-// Utility functions for direct use (exported for tests)
 
 export interface Action {
   type: 'attack' | 'spell' | 'movement' | 'other';
@@ -420,20 +360,15 @@ export interface Action {
   target?: string | CharacterData | MonsterData;
 }
 
-/**
- * Check if a weapon is effective underwater (for test compatibility)
- */
 export function isWeaponEffectiveUnderwater(
   item: Weapon | { name: string; damage?: string; type?: string }
 ): boolean {
-  // If it's not a proper weapon, it's not effective
   if (!item.damage || !item.type) {
     return false;
   }
 
   const name = item.name.toLowerCase();
 
-  // Effective underwater weapons (from OSRIC)
   const effectiveWeapons = [
     'dagger',
     'spear',
@@ -450,9 +385,6 @@ export function isWeaponEffectiveUnderwater(
   return effectiveWeapons.some((effective) => name.includes(effective));
 }
 
-/**
- * Apply underwater penalties to an action (for test compatibility)
- */
 export function applyUnderwaterPenalties(
   action: Action,
   _attacker: CharacterData | MonsterData
@@ -483,10 +415,8 @@ export function applyUnderwaterPenalties(
     };
   }
 
-  // Apply underwater penalties for effective weapons
   const effects = ['underwater_attack_penalty:-2', 'underwater_damage_penalty:-2'];
 
-  // Special case for ranged weapons
   if (weapon.type === 'Ranged') {
     return {
       success: true,
@@ -504,22 +434,16 @@ export function applyUnderwaterPenalties(
   };
 }
 
-/**
- * Check if a spell can be cast underwater (for test compatibility)
- */
 export function canCastSpellUnderwater(spell: Spell): boolean {
-  // Handle null/undefined components
   if (!spell.components || !Array.isArray(spell.components)) {
     return true;
   }
 
-  // Fire-based spells cannot be cast underwater
   const spellText = `${spell.name} ${spell.description}`.toLowerCase();
   if (spellText.includes('fire') || spellText.includes('flame') || spellText.includes('burn')) {
     return false;
   }
 
-  // Lightning/electricity spells cannot be cast underwater
   if (
     spellText.includes('lightning') ||
     spellText.includes('electric') ||
@@ -528,13 +452,9 @@ export function canCastSpellUnderwater(spell: Spell): boolean {
     return false;
   }
 
-  // Spells with somatic or material components cannot be cast underwater
   return !spell.components.includes('S') && !spell.components.includes('M');
 }
 
-/**
- * Handle underwater spell casting (for test compatibility)
- */
 export function handleUnderwaterSpell(
   spell: Spell,
   caster: CharacterData | MonsterData
@@ -544,7 +464,6 @@ export function handleUnderwaterSpell(
   damage: number[] | null;
   effects: Array<{ type: string; duration: number }> | null;
 } {
-  // Lightning spells backfire underwater (regardless of other restrictions)
   if (spell.name.toLowerCase().includes('lightning')) {
     const spellLevel = spell.level || 0;
     return {

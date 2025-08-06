@@ -1,10 +1,3 @@
-/**
- * SavingThrowRules - OSRIC Saving Throw Rule Implementation
- *
- * Handles validation and processing of saving throws according to OSRIC rules.
- * PRESERVATION: All OSRIC saving throw mechanics and calculations preserved exactly.
- */
-
 import type { Command } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { BaseRule, type RuleResult } from '../../core/Rule';
@@ -35,7 +28,7 @@ interface SavingThrowParameters {
 
 export class SavingThrowRule extends BaseRule {
   readonly name = RULE_NAMES.SAVING_THROWS;
-  readonly priority = 500; // Normal priority for saving throws
+  readonly priority = 500;
 
   canApply(_context: GameContext, command: Command): boolean {
     return command.type === COMMAND_TYPES.SAVING_THROW;
@@ -48,7 +41,6 @@ export class SavingThrowRule extends BaseRule {
       return this.createFailureResult('No saving throw data provided');
     }
 
-    // Validate saveType
     if (!saveData.saveType) {
       return this.createFailureResult(`Invalid save type: ${saveData.saveType}`);
     }
@@ -59,16 +51,13 @@ export class SavingThrowRule extends BaseRule {
         return this.createFailureResult(`Character ${saveData.characterId} not found`);
       }
 
-      // Validate the saving throw attempt
       const validationResult = this.validateSavingThrow(character, saveData);
       if (!validationResult.success) {
         return validationResult;
       }
 
-      // Calculate saving throw target number
       const saveCalculation = this.calculateSavingThrow(character, saveData);
 
-      // Apply special class/race modifications
       const specialModifications = this.applySpecialRules(character, saveData, saveCalculation);
 
       return this.createSuccessResult('Saving throw calculation complete', {
@@ -89,14 +78,10 @@ export class SavingThrowRule extends BaseRule {
     }
   }
 
-  /**
-   * Validate that the saving throw can be attempted
-   */
   private validateSavingThrow(
     character: Character,
     saveData: SavingThrowParameters
   ): RuleResult & { canAttempt?: boolean; automaticSuccess?: boolean; automaticFailure?: boolean } {
-    // Check for conditions that prevent saving throws
     if (character.hitPoints.current <= 0) {
       return {
         success: false,
@@ -105,7 +90,6 @@ export class SavingThrowRule extends BaseRule {
       };
     }
 
-    // Check for automatic successes/failures based on class abilities
     const autoResult = this.checkAutomaticResults(character, saveData.saveType);
     if (autoResult) {
       return {
@@ -124,9 +108,6 @@ export class SavingThrowRule extends BaseRule {
     };
   }
 
-  /**
-   * Check for automatic saving throw results
-   */
   private checkAutomaticResults(
     character: Character,
     saveType: string
@@ -134,30 +115,21 @@ export class SavingThrowRule extends BaseRule {
     const characterClass = character.class.toLowerCase();
     const level = character.experience.level;
 
-    // Paladin immunity to disease (automatic success vs certain poison/disease effects)
     if (characterClass === 'paladin' && saveType === 'paralyzation-poison-death') {
       if (level >= 3) {
-        // Note: In a real implementation, you'd check if this is specifically a disease
-        // For now, we don't auto-succeed, but could add this logic
       }
     }
 
-    // Monks have special immunities at higher levels
     if (characterClass === 'monk') {
       if (level >= 7 && saveType === 'paralyzation-poison-death') {
-        // Monks become immune to disease
       }
       if (level >= 9 && saveType === 'spell') {
-        // Monks gain resistance to certain spells
       }
     }
 
-    return null; // No automatic results in this case
+    return null;
   }
 
-  /**
-   * Calculate the final saving throw target number
-   */
   private calculateSavingThrow(
     character: Character,
     saveData: SavingThrowParameters
@@ -168,11 +140,9 @@ export class SavingThrowRule extends BaseRule {
   } {
     const modifiers: Array<{ source: string; modifier: number; description: string }> = [];
 
-    // Get base saving throw from OSRIC tables
     const baseSave = this.getBaseSavingThrow(character, saveData.saveType, modifiers);
     let finalSave = baseSave;
 
-    // Apply situational modifiers
     if (saveData.situationalModifiers) {
       finalSave = this.applySituationalModifiers(
         finalSave,
@@ -183,7 +153,6 @@ export class SavingThrowRule extends BaseRule {
       );
     }
 
-    // Always apply ability score modifiers (even without situational modifiers)
     const abilityMod = this.getAbilityModifiers(
       character,
       saveData.saveType,
@@ -192,7 +161,6 @@ export class SavingThrowRule extends BaseRule {
     );
     finalSave += abilityMod;
 
-    // Apply target number override if provided
     if (saveData.targetNumber !== undefined) {
       modifiers.push({
         source: 'override',
@@ -202,24 +170,19 @@ export class SavingThrowRule extends BaseRule {
       finalSave = saveData.targetNumber;
     }
 
-    // Ensure final save is within valid range (2-20)
     finalSave = Math.max(2, Math.min(20, finalSave));
 
     return { baseSave, finalSave, modifiers };
   }
 
-  /**
-   * Get base saving throw number from OSRIC tables
-   */
   private getBaseSavingThrow(
     character: Character,
     saveType: string,
     modifiers: Array<{ source: string; modifier: number; description: string }>
   ): number {
-    const level = Math.min(character.experience.level, 20); // Cap at level 20
+    const level = Math.min(character.experience.level, 20);
     const characterClass = character.class.toLowerCase();
 
-    // Handle multi-class characters (use best save)
     if (character.classes && Object.keys(character.classes).length > 1) {
       const saves = Object.entries(character.classes).map(([cls, classLevel]) =>
         this.getSingleClassSave(cls.toLowerCase(), classLevel, saveType)
@@ -228,7 +191,7 @@ export class SavingThrowRule extends BaseRule {
 
       modifiers.push({
         source: 'multi-class',
-        modifier: bestSave - saves[0], // Show improvement from best class
+        modifier: bestSave - saves[0],
         description: 'Multi-class (using best save)',
       });
 
@@ -238,11 +201,7 @@ export class SavingThrowRule extends BaseRule {
     return this.getSingleClassSave(characterClass, level, saveType);
   }
 
-  /**
-   * Get saving throw for a single class from OSRIC tables
-   */
   private getSingleClassSave(characterClass: string, level: number, saveType: string): number {
-    // OSRIC saving throw progression tables
     const savingThrowTables: Record<string, Record<string, number[]>> = {
       fighter: {
         'paralyzation-poison-death': [
@@ -276,7 +235,6 @@ export class SavingThrowRule extends BaseRule {
       },
     };
 
-    // Map other classes to base classes
     let classTable = savingThrowTables[characterClass];
     if (!classTable) {
       if (characterClass === 'paladin' || characterClass === 'ranger') {
@@ -288,25 +246,21 @@ export class SavingThrowRule extends BaseRule {
       } else if (characterClass === 'assassin') {
         classTable = savingThrowTables.thief;
       } else if (characterClass === 'monk') {
-        classTable = savingThrowTables.thief; // Monks use thief saves
+        classTable = savingThrowTables.thief;
       } else {
-        classTable = savingThrowTables.fighter; // Default
+        classTable = savingThrowTables.fighter;
       }
     }
 
     const saveArray = classTable[saveType];
     if (!saveArray) {
-      return 20; // Default high save if not found
+      return 20;
     }
 
-    // Get save for level (capped at array length)
     const tableIndex = Math.min(level - 1, saveArray.length - 1);
     return saveArray[tableIndex];
   }
 
-  /**
-   * Apply situational modifiers to saving throw
-   */
   private applySituationalModifiers(
     baseSave: number,
     situationalMods: NonNullable<SavingThrowParameters['situationalModifiers']>,
@@ -316,7 +270,6 @@ export class SavingThrowRule extends BaseRule {
   ): number {
     let modifiedSave = baseSave;
 
-    // Magic item bonuses
     if (situationalMods.magicItemBonus) {
       modifiers.push({
         source: 'magic-items',
@@ -326,7 +279,6 @@ export class SavingThrowRule extends BaseRule {
       modifiedSave += situationalMods.magicItemBonus;
     }
 
-    // Spell bonuses (Bless, etc.)
     if (situationalMods.spellBonus) {
       modifiers.push({
         source: 'spells',
@@ -336,7 +288,6 @@ export class SavingThrowRule extends BaseRule {
       modifiedSave += situationalMods.spellBonus;
     }
 
-    // Class bonuses (paladin aura, etc.)
     if (situationalMods.classBonus) {
       modifiers.push({
         source: 'class',
@@ -346,7 +297,6 @@ export class SavingThrowRule extends BaseRule {
       modifiedSave += situationalMods.classBonus;
     }
 
-    // Racial bonuses
     if (situationalMods.racialBonus) {
       modifiers.push({
         source: 'racial',
@@ -356,7 +306,6 @@ export class SavingThrowRule extends BaseRule {
       modifiedSave += situationalMods.racialBonus;
     }
 
-    // Difficulty modifiers
     if (situationalMods.difficulty && situationalMods.difficulty !== 'normal') {
       const difficultyMods = {
         easy: -2,
@@ -377,9 +326,6 @@ export class SavingThrowRule extends BaseRule {
     return modifiedSave;
   }
 
-  /**
-   * Calculate ability score modifiers for saving throws
-   */
   private getAbilityModifiers(
     character: Character,
     saveType: string,
@@ -388,7 +334,6 @@ export class SavingThrowRule extends BaseRule {
   ): number {
     let totalModifier = 0;
 
-    // Constitution for poison/death
     if (saveType === 'paralyzation-poison-death') {
       const constitution = modifiers?.constitution ?? character.abilities.constitution;
       const constMod = this.getConstitutionSaveModifier(constitution);
@@ -402,7 +347,6 @@ export class SavingThrowRule extends BaseRule {
       }
     }
 
-    // Wisdom for mental effects
     if (saveType === 'spell' || saveType === 'rod-staff-wand') {
       const wisdomMod =
         modifiers?.wisdomBonus !== undefined
@@ -418,7 +362,6 @@ export class SavingThrowRule extends BaseRule {
       }
     }
 
-    // Dexterity for area effects
     if (saveType === 'breath-weapon') {
       const dexMod =
         modifiers?.dexterityBonus !== undefined
@@ -437,9 +380,6 @@ export class SavingThrowRule extends BaseRule {
     return totalModifier;
   }
 
-  /**
-   * Get constitution modifier for poison/death saves
-   */
   private getConstitutionSaveModifier(constitution: number): number {
     if (constitution >= 17) return -4;
     if (constitution >= 16) return -3;
@@ -450,9 +390,6 @@ export class SavingThrowRule extends BaseRule {
     return 2;
   }
 
-  /**
-   * Get wisdom modifier for mental saves
-   */
   private getWisdomSaveModifier(wisdom: number): number {
     if (wisdom >= 17) return -3;
     if (wisdom >= 15) return -2;
@@ -462,9 +399,6 @@ export class SavingThrowRule extends BaseRule {
     return 2;
   }
 
-  /**
-   * Get dexterity modifier for area saves
-   */
   private getDexteritySaveModifier(dexterity: number): number {
     if (dexterity >= 17) return -3;
     if (dexterity >= 15) return -2;
@@ -474,9 +408,6 @@ export class SavingThrowRule extends BaseRule {
     return 2;
   }
 
-  /**
-   * Apply special class and race rules
-   */
   private applySpecialRules(
     character: Character,
     saveData: SavingThrowParameters,
@@ -486,7 +417,6 @@ export class SavingThrowRule extends BaseRule {
     const characterClass = character.class.toLowerCase();
     const level = character.experience.level;
 
-    // Class-specific special rules
     if (characterClass === 'paladin') {
       if (level >= 2) {
         specialRules.push('+2 bonus to all saving throws');
@@ -505,7 +435,6 @@ export class SavingThrowRule extends BaseRule {
       }
     }
 
-    // Racial special rules
     const race = character.race.toLowerCase();
     if (race === 'dwarf') {
       if (saveData.saveType === 'rod-staff-wand' || saveData.saveType === 'spell') {
@@ -519,7 +448,6 @@ export class SavingThrowRule extends BaseRule {
       }
     }
 
-    // General rules
     specialRules.push('Natural 1 always fails, natural 20 always succeeds');
 
     return specialRules;

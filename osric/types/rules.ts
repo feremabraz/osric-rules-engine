@@ -1,16 +1,7 @@
-/**
- * Rule type definitions for the OSRIC Rules Engine
- *
- * These define the structure and metadata for all rules in the system.
- */
-
 import type { Rule } from '../core/Rule';
 import type { RuleName } from './constants';
 import { RULE_NAMES } from './constants';
 
-/**
- * Rule categories for organization
- */
 export type RuleCategory =
   | 'character-creation'
   | 'character-advancement'
@@ -21,33 +12,20 @@ export type RuleCategory =
   | 'social-interaction'
   | 'system-mechanics';
 
-/**
- * Rule execution phases
- */
-export type RulePhase =
-  | 'pre-validation' // Before main execution
-  | 'main-execution' // Primary rule logic
-  | 'post-processing' // After main execution
-  | 'cleanup'; // Final cleanup
+export type RulePhase = 'pre-validation' | 'main-execution' | 'post-processing' | 'cleanup';
 
-/**
- * Rule metadata for documentation and organization
- */
 export interface RuleMetadata {
   readonly name: RuleName;
   readonly description: string;
   readonly category: RuleCategory;
   readonly phase: RulePhase;
   readonly priority: number;
-  readonly osricReference?: string; // Reference to OSRIC rulebook section
-  readonly prerequisites: readonly RuleName[]; // Required rules to execute before this one
-  readonly affects: readonly string[]; // What game elements this rule modifies
-  readonly preservedValues: readonly string[]; // OSRIC values that must be maintained
+  readonly osricReference?: string;
+  readonly prerequisites: readonly RuleName[];
+  readonly affects: readonly string[];
+  readonly preservedValues: readonly string[];
 }
 
-/**
- * Character creation rule types
- */
 export interface CharacterCreationRules {
   [RULE_NAMES.ABILITY_SCORE_GENERATION]: Rule;
   [RULE_NAMES.ABILITY_SCORE_MODIFIERS]: Rule;
@@ -61,72 +39,57 @@ export interface CharacterCreationRules {
   [RULE_NAMES.AGE_EFFECTS]: Rule;
 }
 
-/**
- * Combat rule types - PRESERVE ALL OSRIC CALCULATIONS
- */
 export interface CombatRules {
   [RULE_NAMES.RANGE_CHECK]: Rule;
-  [RULE_NAMES.ATTACK_ROLL]: Rule; // PRESERVE: THAC0 calculations
-  [RULE_NAMES.DAMAGE_CALCULATION]: Rule; // PRESERVE: Weapon damage tables
-  [RULE_NAMES.ARMOR_ABSORPTION]: Rule; // PRESERVE: Armor class values
-  [RULE_NAMES.WEAPON_SPECIALIZATION]: Rule; // PRESERVE: Specialization bonuses
-  [RULE_NAMES.TWO_WEAPON_FIGHTING]: Rule; // PRESERVE: Penalty calculations
+  [RULE_NAMES.ATTACK_ROLL]: Rule;
+  [RULE_NAMES.DAMAGE_CALCULATION]: Rule;
+  [RULE_NAMES.ARMOR_ABSORPTION]: Rule;
+  [RULE_NAMES.WEAPON_SPECIALIZATION]: Rule;
+  [RULE_NAMES.TWO_WEAPON_FIGHTING]: Rule;
   [RULE_NAMES.CRITICAL_HITS]: Rule;
-  [RULE_NAMES.MULTIPLE_ATTACKS]: Rule; // PRESERVE: Fighter attack progression
-  [RULE_NAMES.INITIATIVE_ROLL]: Rule; // PRESERVE: Weapon speed factors
-  [RULE_NAMES.GRAPPLING]: Rule; // PRESERVE: Grappling mechanics
-  [RULE_NAMES.MOUNTED_COMBAT]: Rule; // PRESERVE: Mounted combat rules
-  [RULE_NAMES.AERIAL_COMBAT]: Rule; // PRESERVE: Aerial combat modifiers
-  [RULE_NAMES.UNDERWATER_COMBAT]: Rule; // PRESERVE: Underwater penalties
+  [RULE_NAMES.MULTIPLE_ATTACKS]: Rule;
+  [RULE_NAMES.INITIATIVE_ROLL]: Rule;
+  [RULE_NAMES.GRAPPLING]: Rule;
+  [RULE_NAMES.MOUNTED_COMBAT]: Rule;
+  [RULE_NAMES.AERIAL_COMBAT]: Rule;
+  [RULE_NAMES.UNDERWATER_COMBAT]: Rule;
 }
 
-/**
- * Spell casting rule types - PRESERVE ALL OSRIC MECHANICS
- */
 export interface SpellCastingRules {
-  [RULE_NAMES.SPELL_MEMORIZATION]: Rule; // PRESERVE: Memorization rules
-  [RULE_NAMES.COMPONENT_CHECK]: Rule; // PRESERVE: Component lists
-  [RULE_NAMES.CASTING_TIME_VALIDATION]: Rule; // PRESERVE: Casting times
-  [RULE_NAMES.SPELL_INTERRUPTION]: Rule; // PRESERVE: Interruption mechanics
-  [RULE_NAMES.SPELL_EFFECTS]: Rule; // PRESERVE: Spell effects
-  [RULE_NAMES.SAVING_THROWS]: Rule; // PRESERVE: Save calculations
-  [RULE_NAMES.SPELL_RESISTANCE]: Rule; // PRESERVE: Magic resistance
-  [RULE_NAMES.AREA_OF_EFFECT]: Rule; // PRESERVE: AoE mechanics
-  [RULE_NAMES.SPELL_DURATION]: Rule; // PRESERVE: Duration formulas
-  [RULE_NAMES.SPELL_RANGE]: Rule; // PRESERVE: Range calculations
+  [RULE_NAMES.SPELL_MEMORIZATION]: Rule;
+  [RULE_NAMES.COMPONENT_CHECK]: Rule;
+  [RULE_NAMES.CASTING_TIME_VALIDATION]: Rule;
+  [RULE_NAMES.SPELL_INTERRUPTION]: Rule;
+  [RULE_NAMES.SPELL_EFFECTS]: Rule;
+  [RULE_NAMES.SAVING_THROWS]: Rule;
+  [RULE_NAMES.SPELL_RESISTANCE]: Rule;
+  [RULE_NAMES.AREA_OF_EFFECT]: Rule;
+  [RULE_NAMES.SPELL_DURATION]: Rule;
+  [RULE_NAMES.SPELL_RANGE]: Rule;
 }
 
-/**
- * Skill check rule types
- */
 export interface SkillCheckRules {
-  [RULE_NAMES.THIEF_SKILLS]: Rule; // PRESERVE: Thief skill percentages
-  [RULE_NAMES.TURN_UNDEAD]: Rule; // PRESERVE: Turn undead tables
-  [RULE_NAMES.OPEN_DOORS]: Rule; // PRESERVE: Strength requirements
-  [RULE_NAMES.BEND_BARS]: Rule; // PRESERVE: Strength calculations
-  [RULE_NAMES.SURPRISE_CHECK]: Rule; // PRESERVE: Surprise mechanics
-  [RULE_NAMES.MORALE_CHECK]: Rule; // PRESERVE: Morale calculations
-  [RULE_NAMES.REACTION_ROLL]: Rule; // PRESERVE: Reaction modifiers
-  [RULE_NAMES.LOYALTY_CHECK]: Rule; // PRESERVE: Loyalty formulas
+  [RULE_NAMES.THIEF_SKILLS]: Rule;
+  [RULE_NAMES.TURN_UNDEAD]: Rule;
+  [RULE_NAMES.OPEN_DOORS]: Rule;
+  [RULE_NAMES.BEND_BARS]: Rule;
+  [RULE_NAMES.SURPRISE_CHECK]: Rule;
+  [RULE_NAMES.MORALE_CHECK]: Rule;
+  [RULE_NAMES.REACTION_ROLL]: Rule;
+  [RULE_NAMES.LOYALTY_CHECK]: Rule;
 }
 
-/**
- * Environmental rule types
- */
 export interface EnvironmentalRules {
-  [RULE_NAMES.FALLING_DAMAGE]: Rule; // PRESERVE: Falling damage formula
-  [RULE_NAMES.DROWNING]: Rule; // PRESERVE: Drowning mechanics
-  [RULE_NAMES.SUFFOCATION]: Rule; // PRESERVE: Suffocation rules
-  [RULE_NAMES.TEMPERATURE_EFFECTS]: Rule; // PRESERVE: Temperature tables
-  [RULE_NAMES.SURVIVAL_CHECKS]: Rule; // PRESERVE: Survival mechanics
-  [RULE_NAMES.MOVEMENT_RATES]: Rule; // PRESERVE: Movement calculations
-  [RULE_NAMES.ENCUMBRANCE]: Rule; // PRESERVE: Encumbrance effects
-  [RULE_NAMES.LIGHTING_EFFECTS]: Rule; // PRESERVE: Lighting modifiers
+  [RULE_NAMES.FALLING_DAMAGE]: Rule;
+  [RULE_NAMES.DROWNING]: Rule;
+  [RULE_NAMES.SUFFOCATION]: Rule;
+  [RULE_NAMES.TEMPERATURE_EFFECTS]: Rule;
+  [RULE_NAMES.SURVIVAL_CHECKS]: Rule;
+  [RULE_NAMES.MOVEMENT_RATES]: Rule;
+  [RULE_NAMES.ENCUMBRANCE]: Rule;
+  [RULE_NAMES.LIGHTING_EFFECTS]: Rule;
 }
 
-/**
- * Rule registry interface - comprehensive rule organization
- */
 export interface RuleRegistry {
   readonly character: CharacterCreationRules;
   readonly combat: CombatRules;
@@ -135,9 +98,6 @@ export interface RuleRegistry {
   readonly environment: EnvironmentalRules;
 }
 
-/**
- * Rule dependency graph for complex rule interactions
- */
 export interface RuleDependency {
   readonly rule: RuleName;
   readonly dependsOn: readonly RuleName[];
@@ -145,9 +105,6 @@ export interface RuleDependency {
   readonly optional?: boolean;
 }
 
-/**
- * OSRIC preservation tracking - ensures critical values are maintained
- */
 export interface OSRICPreservationCheck {
   readonly ruleName: RuleName;
   readonly preservedValues: readonly {
@@ -158,9 +115,6 @@ export interface OSRICPreservationCheck {
   readonly validationFunction: (rule: Rule) => boolean;
 }
 
-/**
- * Rule factory interface for creating typed rules
- */
 export interface RuleFactory {
   createRule<T extends RuleName>(name: T, metadata: RuleMetadata): Rule;
 
@@ -171,9 +125,6 @@ export interface RuleFactory {
   };
 }
 
-/**
- * Rule execution context interface
- */
 export interface RuleExecutionContext {
   readonly phase: RulePhase;
   readonly metadata: RuleMetadata;
@@ -181,9 +132,6 @@ export interface RuleExecutionContext {
   readonly osricValues: Record<string, unknown>;
 }
 
-/**
- * High-priority rules that must preserve OSRIC values exactly
- */
 export const CRITICAL_OSRIC_RULES: Partial<Record<RuleName, readonly string[]>> = {
   [RULE_NAMES.ATTACK_ROLL]: [
     'THAC0 calculation: numberNeededToHit = thac0 - targetAC',
@@ -217,11 +165,7 @@ export const CRITICAL_OSRIC_RULES: Partial<Record<RuleName, readonly string[]>> 
   ],
 } as const;
 
-/**
- * Get rule category by rule name using partial mapping for major rules
- */
 export function getRuleCategory(ruleName: RuleName): RuleCategory {
-  // Character rules
   if (
     (
       [
@@ -241,7 +185,6 @@ export function getRuleCategory(ruleName: RuleName): RuleCategory {
     return 'character-creation';
   }
 
-  // Combat rules
   if (
     (
       [
@@ -264,7 +207,6 @@ export function getRuleCategory(ruleName: RuleName): RuleCategory {
     return 'combat-resolution';
   }
 
-  // Spell rules
   if (
     (
       [
@@ -284,7 +226,6 @@ export function getRuleCategory(ruleName: RuleName): RuleCategory {
     return 'spell-casting';
   }
 
-  // Skill rules
   if (
     (
       [
@@ -302,7 +243,6 @@ export function getRuleCategory(ruleName: RuleName): RuleCategory {
     return 'skill-checks';
   }
 
-  // Environmental rules
   if (
     (
       [

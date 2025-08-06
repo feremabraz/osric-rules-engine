@@ -1,15 +1,3 @@
-/**
- * CreateCharacterCommand Tests - OSRIC Compliance
- *
- * Tests the CreateCharacterCommand from commands/character/CreateCharacterCommand.ts:
- * - Parameter validation and sanitization
- * - Command execution and data setup
- * - OSRIC race/class/alignment support
- * - Error handling for invalid inputs
- *
- * NOTE: This tests ONLY the command interface - rule execution is tested separately.
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
@@ -46,7 +34,7 @@ describe('CreateCharacterCommand', () => {
     });
 
     it('should validate character name length', async () => {
-      const longName = 'A'.repeat(51); // 51 characters
+      const longName = 'A'.repeat(51);
       const command = new CreateCharacterCommand({
         name: longName,
         race: 'Human',
@@ -124,7 +112,7 @@ describe('CreateCharacterCommand', () => {
       const command = new CreateCharacterCommand({
         name: 'Test Character',
         race: 'Human',
-        characterClass: 'Wizard' as CharacterClass, // D&D 3e+ class, not OSRIC
+        characterClass: 'Wizard' as CharacterClass,
         alignment: 'Lawful Good',
         abilityScoreMethod: 'standard3d6',
       });
@@ -177,7 +165,6 @@ describe('CreateCharacterCommand', () => {
     });
 
     it('should validate ability score generation methods', async () => {
-      // Test methods that don't require arranged scores
       const methodsWithoutArranged = ['standard3d6', '4d6dropLowest'];
 
       for (const method of methodsWithoutArranged) {
@@ -194,7 +181,6 @@ describe('CreateCharacterCommand', () => {
         expect(result.message).toContain('Character creation initiated');
       }
 
-      // Test arranged method with scores
       const commandWithArranged = new CreateCharacterCommand({
         name: 'Test Character',
         race: 'Human',
@@ -223,7 +209,6 @@ describe('CreateCharacterCommand', () => {
         characterClass: 'Fighter',
         alignment: 'Lawful Good',
         abilityScoreMethod: 'arranged3d6',
-        // Missing arrangedScores
       });
 
       const result = await command.execute(context);
@@ -241,7 +226,7 @@ describe('CreateCharacterCommand', () => {
         alignment: 'Lawful Good',
         abilityScoreMethod: 'arranged3d6',
         arrangedScores: {
-          strength: 25, // Invalid - too high
+          strength: 25,
           dexterity: 12,
           constitution: 14,
           intelligence: 10,
@@ -288,7 +273,6 @@ describe('CreateCharacterCommand', () => {
       const command = new CreateCharacterCommand(parameters);
       const result = await command.execute(context);
 
-      // Command should succeed first
       expect(result.success).toBe(true);
 
       const storedData = context.getTemporary('character-creation');
@@ -318,7 +302,6 @@ describe('CreateCharacterCommand', () => {
         characterId: string;
       };
 
-      // Clear context for second test
       context.setTemporary('character-creation', null);
 
       await command2.execute(context);
@@ -487,11 +470,11 @@ describe('CreateCharacterCommand', () => {
   describe('Error Handling', () => {
     it('should handle multiple validation errors', async () => {
       const command = new CreateCharacterCommand({
-        name: '', // Invalid
-        race: 'InvalidRace' as CharacterRace, // Invalid
-        characterClass: 'InvalidClass' as CharacterClass, // Invalid
+        name: '',
+        race: 'InvalidRace' as CharacterRace,
+        characterClass: 'InvalidClass' as CharacterClass,
         alignment: 'Lawful Good',
-        abilityScoreMethod: 'invalidMethod' as AbilityScoreMethod, // Invalid
+        abilityScoreMethod: 'invalidMethod' as AbilityScoreMethod,
       });
 
       const result = await command.execute(context);
@@ -503,7 +486,6 @@ describe('CreateCharacterCommand', () => {
     });
 
     it('should handle exceptions gracefully', async () => {
-      // Test with invalid combination that will cause an error
       const command = new CreateCharacterCommand({
         name: 'Test Character',
         race: 'Human',
@@ -511,7 +493,7 @@ describe('CreateCharacterCommand', () => {
         alignment: 'Lawful Good',
         abilityScoreMethod: 'arranged3d6',
         arrangedScores: {
-          strength: -5, // This will cause validation to fail
+          strength: -5,
           dexterity: 12,
           constitution: 14,
           intelligence: 10,

@@ -1,15 +1,3 @@
-/**
- * UnderwaterCombatRules Tests - OSRIC Compliance
- *
- * Tests the underwater combat system from rules/combat/underwaterCombat.ts:
- * - OSRIC underwater weapon effectiveness rules
- * - Spell restrictions and casting limitations underwater
- * - Weapon categorization (effective vs ineffective underwater)
- * - Lightning spell backfire mechanics
- * - Ranged weapon limitations and reload requirements
- * - Underwater attack and damage penalties
- */
-
 import { describe, expect, it } from 'vitest';
 import {
   applyUnderwaterPenalties,
@@ -20,7 +8,6 @@ import {
 import type { Action } from '../../../osric/rules/combat/UnderwaterCombatRules';
 import type { Character, Monster, Spell, Weapon } from '../../../osric/types/entities';
 
-// Mock helper function to create test characters
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-char',
@@ -104,7 +91,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return { ...defaultCharacter, ...overrides };
 }
 
-// Mock helper function to create test weapons
 function createMockWeapon(overrides: Partial<Weapon> = {}): Weapon {
   const defaultWeapon: Weapon = {
     id: 'long-sword',
@@ -128,7 +114,6 @@ function createMockWeapon(overrides: Partial<Weapon> = {}): Weapon {
   return { ...defaultWeapon, ...overrides };
 }
 
-// Mock helper function to create test spells
 function createMockSpell(overrides: Partial<Spell> = {}): Spell {
   const defaultSpell: Spell = {
     name: 'Magic Missile',
@@ -154,7 +139,6 @@ function createMockSpell(overrides: Partial<Spell> = {}): Spell {
   return { ...defaultSpell, ...overrides };
 }
 
-// Mock helper function to create test monsters
 function createMockMonster(overrides: Partial<Monster> = {}): Monster {
   const defaultMonster: Monster = {
     id: 'sahuagin-1',
@@ -169,7 +153,7 @@ function createMockMonster(overrides: Partial<Monster> = {}): Monster {
     position: 'underwater',
     statusEffects: [],
     hitDice: '2+2',
-    damagePerAttack: ['1d4+1', '1d4+1', '1d4+1'], // Claws and bite
+    damagePerAttack: ['1d4+1', '1d4+1', '1d4+1'],
     morale: 14,
     treasure: 'D',
     specialAbilities: ['Underwater Breathing', 'Shark Summoning'],
@@ -189,7 +173,6 @@ function createMockMonster(overrides: Partial<Monster> = {}): Monster {
   return { ...defaultMonster, ...overrides };
 }
 
-// Mock helper function to create test actions
 function createMockAction(
   weapon: Weapon,
   attacker: Character | Monster,
@@ -466,7 +449,7 @@ describe('UnderwaterCombatRules', () => {
 
       expect(result.success).toBe(false);
       expect(result.message).toContain('backfires');
-      expect(result.damage).toEqual([6]); // Level 3 * 2 = 6 damage
+      expect(result.damage).toEqual([6]);
       expect(result.effects).toHaveLength(1);
       expect(result.effects?.[0]).toHaveProperty('type', 'stun');
       expect(result.effects?.[0]).toHaveProperty('duration', 1);
@@ -567,7 +550,7 @@ describe('UnderwaterCombatRules', () => {
       const result = handleUnderwaterSpell(zeroLevelLightning, caster);
 
       expect(result.success).toBe(false);
-      expect(result.damage).toEqual([0]); // Level 0 * 2 = 0 damage
+      expect(result.damage).toEqual([0]);
     });
 
     it('should handle extremely high level lightning spells', () => {
@@ -581,13 +564,12 @@ describe('UnderwaterCombatRules', () => {
       const result = handleUnderwaterSpell(highLevelLightning, caster);
 
       expect(result.success).toBe(false);
-      expect(result.damage).toEqual([30]); // Level 15 * 2 = 30 damage
+      expect(result.damage).toEqual([30]);
     });
 
     it('should maintain consistency across multiple underwater checks', () => {
       const weapon = createMockWeapon({ name: 'Trident' });
 
-      // Multiple calls should return the same result
       for (let i = 0; i < 5; i++) {
         expect(isWeaponEffectiveUnderwater(weapon)).toBe(true);
       }

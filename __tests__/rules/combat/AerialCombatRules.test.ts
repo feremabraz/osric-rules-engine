@@ -1,15 +1,3 @@
-/**
- * AerialCombatRules Tests - OSRIC Compliance
- *
- * Tests the aerial combat system from rules/combat/aerialCombat.ts:
- * - OSRIC aerial movement rates and maneuverability classes
- * - Climb/dive movement mechanics and speed modifiers
- * - Aerial agility levels (A through E equivalent)
- * - Wind effects and weather conditions
- * - Dive attack bonuses
- * - Flying creature mounting mechanics
- */
-
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   AerialAgilityLevel,
@@ -21,7 +9,6 @@ import {
 } from '../../../osric/rules/combat/AerialCombatRules';
 import type { Character, Monster } from '../../../osric/types/entities';
 
-// Helper function to create aerial movement state
 function createAerialMovement(overrides: Partial<AerialMovement> = {}): AerialMovement {
   const defaultMovement: AerialMovement = {
     currentAltitude: 100,
@@ -109,8 +96,8 @@ describe('AerialCombatRules', () => {
 
       const result = handleAerialMovement(initialMovement, 'level', 240);
 
-      expect(result.currentAltitude).toBe(100); // No altitude change
-      expect(result.currentSpeed).toBeGreaterThanOrEqual(240); // Maintains speed
+      expect(result.currentAltitude).toBe(100);
+      expect(result.currentSpeed).toBeGreaterThanOrEqual(240);
       expect(result.isDiving).toBe(false);
     });
 
@@ -123,8 +110,8 @@ describe('AerialCombatRules', () => {
 
       const result = handleAerialMovement(initialMovement, 'ascend', 120);
 
-      expect(result.currentAltitude).toBeGreaterThan(100); // Gained altitude
-      expect(result.currentAltitude).toBeLessThanOrEqual(160); // Within climbing rate
+      expect(result.currentAltitude).toBeGreaterThan(100);
+      expect(result.currentAltitude).toBeLessThanOrEqual(160);
       expect(result.isDiving).toBe(false);
     });
 
@@ -136,8 +123,8 @@ describe('AerialCombatRules', () => {
 
       const result = handleAerialMovement(initialMovement, 'descend', 50);
 
-      expect(result.currentAltitude).toBe(150); // Lost altitude
-      expect(result.isDiving).toBe(false); // Not diving yet
+      expect(result.currentAltitude).toBe(150);
+      expect(result.isDiving).toBe(false);
     });
 
     it('should handle diving movement with speed increase', () => {
@@ -150,34 +137,34 @@ describe('AerialCombatRules', () => {
 
       const result = handleAerialMovement(initialMovement, 'descend', 50);
 
-      expect(result.currentAltitude).toBe(150); // Lost altitude
-      expect(result.isDiving).toBe(true); // Now diving
+      expect(result.currentAltitude).toBe(150);
+      expect(result.isDiving).toBe(true);
       expect(result.diveDistance).toBe(50);
-      expect(result.currentSpeed).toBeGreaterThan(240); // Increased speed
+      expect(result.currentSpeed).toBeGreaterThan(240);
     });
 
     it('should enforce minimum forward speed for non-hovering creatures', () => {
       const initialMovement = createAerialMovement({
         currentSpeed: 30,
         minimumForwardSpeed: 60,
-        currentAgility: AerialAgilityLevel.Good, // Cannot hover
+        currentAgility: AerialAgilityLevel.Good,
       });
 
       const result = handleAerialMovement(initialMovement, 'level', 60);
 
-      expect(result.currentSpeed).toBeGreaterThanOrEqual(60); // Enforced minimum
+      expect(result.currentSpeed).toBeGreaterThanOrEqual(60);
     });
 
     it('should allow hovering for creatures with hover capability', () => {
       const initialMovement = createAerialMovement({
         currentSpeed: 0,
         minimumForwardSpeed: 60,
-        currentAgility: AerialAgilityLevel.Perfect, // Can hover
+        currentAgility: AerialAgilityLevel.Perfect,
       });
 
       const result = handleAerialMovement(initialMovement, 'level', 0);
 
-      expect(result.currentSpeed).toBe(0); // Can remain stationary
+      expect(result.currentSpeed).toBe(0);
     });
 
     it('should prevent going below ground level', () => {
@@ -187,7 +174,7 @@ describe('AerialCombatRules', () => {
 
       const result = handleAerialMovement(initialMovement, 'descend', 50);
 
-      expect(result.currentAltitude).toBe(0); // Cannot go below ground
+      expect(result.currentAltitude).toBe(0);
     });
   });
 
@@ -196,41 +183,40 @@ describe('AerialCombatRules', () => {
       const initialMovement = createAerialMovement({
         currentSpeed: 240,
         maxSpeed: 360,
-        currentFacing: 0, // North
+        currentFacing: 0,
         windSpeed: 30,
-        windDirection: 0, // Wind from north (tailwind when facing north)
+        windDirection: 0,
       });
 
       const result = handleAerialMovement(initialMovement, 'level', 240);
 
-      expect(result.currentSpeed).toBeGreaterThan(240); // Wind assistance
+      expect(result.currentSpeed).toBeGreaterThan(240);
     });
 
     it('should apply headwind effects correctly', () => {
       const initialMovement = createAerialMovement({
         currentSpeed: 240,
         minimumForwardSpeed: 60,
-        currentFacing: 0, // North
+        currentFacing: 0,
         windSpeed: 30,
-        windDirection: 180, // Wind from south (headwind when facing north)
+        windDirection: 180,
       });
 
       const result = handleAerialMovement(initialMovement, 'level', 240);
 
-      expect(result.currentSpeed).toBeLessThan(240); // Wind resistance
-      expect(result.currentSpeed).toBeGreaterThanOrEqual(60); // Still above minimum
+      expect(result.currentSpeed).toBeLessThan(240);
+      expect(result.currentSpeed).toBeGreaterThanOrEqual(60);
     });
 
     it('should apply crosswind drift effects', () => {
       const initialMovement = createAerialMovement({
-        currentFacing: 0, // North
+        currentFacing: 0,
         windSpeed: 40,
-        windDirection: 90, // Wind from east (crosswind)
+        windDirection: 90,
       });
 
       const result = handleAerialMovement(initialMovement, 'level', 240);
 
-      // Crosswind should cause some drift in facing
       expect(Math.abs(result.currentFacing - initialMovement.currentFacing)).toBeGreaterThan(0);
     });
   });
@@ -245,8 +231,8 @@ describe('AerialCombatRules', () => {
 
       const result = handleAerialMovement(initialMovement, 'level', 240);
 
-      expect(result.currentSpeed).toBeLessThan(240); // Reduced by rain
-      expect(result.currentSpeed).toBeCloseTo(216, 0); // 90% of original
+      expect(result.currentSpeed).toBeLessThan(240);
+      expect(result.currentSpeed).toBeCloseTo(216, 0);
     });
 
     it('should apply storm effects', () => {
@@ -258,9 +244,9 @@ describe('AerialCombatRules', () => {
 
       const result = handleAerialMovement(initialMovement, 'level', 240);
 
-      expect(result.currentSpeed).toBeLessThan(240); // Reduced by storm
-      expect(result.currentSpeed).toBeCloseTo(168, 0); // 70% of original
-      expect(result.currentSpeed).toBeGreaterThanOrEqual(90); // Increased minimum (1.5x)
+      expect(result.currentSpeed).toBeLessThan(240);
+      expect(result.currentSpeed).toBeCloseTo(168, 0);
+      expect(result.currentSpeed).toBeGreaterThanOrEqual(90);
     });
 
     it('should apply gale effects', () => {
@@ -272,7 +258,7 @@ describe('AerialCombatRules', () => {
 
       const result = handleAerialMovement(initialMovement, 'level', 240);
 
-      expect(result.currentSpeed).toBe(360); // Maximum speed required
+      expect(result.currentSpeed).toBe(360);
     });
 
     it('should apply hurricane effects', () => {
@@ -284,7 +270,7 @@ describe('AerialCombatRules', () => {
 
       const result = handleAerialMovement(initialMovement, 'level', 180);
 
-      expect(result.currentSpeed).toBe(360); // Maximum speed required
+      expect(result.currentSpeed).toBe(360);
     });
   });
 
@@ -292,21 +278,21 @@ describe('AerialCombatRules', () => {
     it('should calculate dive attack bonus for sufficient dive distance', () => {
       const divingMovement = createAerialMovement({
         isDiving: true,
-        diveDistance: 30, // More than 9 meters
+        diveDistance: 30,
       });
 
       const bonus = getDiveAttackBonus(divingMovement);
-      expect(bonus).toBe(2); // Double damage multiplier
+      expect(bonus).toBe(2);
     });
 
     it('should not give dive attack bonus for insufficient dive distance', () => {
       const shallowDiveMovement = createAerialMovement({
         isDiving: true,
-        diveDistance: 6, // Less than 9 meters
+        diveDistance: 6,
       });
 
       const bonus = getDiveAttackBonus(shallowDiveMovement);
-      expect(bonus).toBe(0); // No bonus
+      expect(bonus).toBe(0);
     });
 
     it('should not give dive attack bonus when not diving', () => {
@@ -316,7 +302,7 @@ describe('AerialCombatRules', () => {
       });
 
       const bonus = getDiveAttackBonus(levelMovement);
-      expect(bonus).toBe(0); // No bonus
+      expect(bonus).toBe(0);
     });
   });
 
@@ -357,7 +343,7 @@ describe('AerialCombatRules', () => {
       });
 
       const result = handleAerialMovement(movement, 'level', 240);
-      expect(result.currentSpeed).toBe(240); // No wind effect
+      expect(result.currentSpeed).toBe(240);
     });
 
     it('should handle extreme wind speeds', () => {
@@ -369,7 +355,7 @@ describe('AerialCombatRules', () => {
       });
 
       const result = handleAerialMovement(movement, 'level', 240);
-      expect(result.currentSpeed).toBeLessThanOrEqual(360); // Capped at max speed
+      expect(result.currentSpeed).toBeLessThanOrEqual(360);
     });
 
     it('should handle undefined weather conditions', () => {
@@ -388,7 +374,7 @@ describe('AerialCombatRules', () => {
       });
 
       const result = handleAerialMovement(movement, 'descend', 50);
-      expect(result.currentAltitude).toBe(0); // Cannot go below ground
+      expect(result.currentAltitude).toBe(0);
     });
 
     it('should handle invalid agility levels', () => {
@@ -409,13 +395,12 @@ describe('AerialCombatRules', () => {
         currentSpeed: 240,
       });
 
-      // Perform multiple movements
       movement = handleAerialMovement(movement, 'ascend', 60);
       movement = handleAerialMovement(movement, 'level', 120);
       movement = handleAerialMovement(movement, 'descend', 30);
 
-      expect(movement.currentAltitude).toBeGreaterThan(100); // Net altitude gain
-      expect(movement.currentSpeed).toBeGreaterThan(0); // Still flying
+      expect(movement.currentAltitude).toBeGreaterThan(100);
+      expect(movement.currentSpeed).toBeGreaterThan(0);
     });
   });
 });

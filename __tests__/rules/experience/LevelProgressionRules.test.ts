@@ -1,22 +1,9 @@
-/**
- * LevelProgressionRules Tests - OSRIC Compliance
- *
- * Tests the LevelProgressionRule for proper level advancement according to OSRIC mechanics:
- * - XP requirements for each class and level
- * - Hit point gains on level up
- * - Spell slot progression for casters
- * - Thief skill progression
- * - Saving throw improvements
- * - Edge cases and error scenarios
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { GameContext } from '../../../osric/core/GameContext';
 import { LevelProgressionRule } from '../../../osric/rules/experience/LevelProgressionRules';
 import type { Character } from '../../../osric/types/entities';
 
-// Mock helper function to create test characters (copied from GameContext.test.ts)
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-char',
@@ -100,7 +87,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return { ...defaultCharacter, ...overrides };
 }
 
-// Mock command for testing
 class MockLevelUpCommand {
   readonly type = 'level-up';
   readonly actorId = 'test-character';
@@ -134,7 +120,6 @@ describe('LevelProgressionRules', () => {
     levelProgressionRule = new LevelProgressionRule();
     mockCommand = new MockLevelUpCommand();
 
-    // Setup test character ready to level up
     const testCharacter = createMockCharacter({
       id: 'test-character',
       name: 'Test Hero',
@@ -143,7 +128,7 @@ describe('LevelProgressionRules', () => {
       abilities: {
         strength: 14,
         dexterity: 12,
-        constitution: 16, // Good constitution for HP bonus
+        constitution: 16,
         intelligence: 10,
         wisdom: 13,
         charisma: 11,
@@ -190,14 +175,12 @@ describe('LevelProgressionRules', () => {
 
   describe('Fighter Level Progression', () => {
     it('should advance Fighter from level 1 to 2', async () => {
-      // Create character with enough XP (2000 required for Fighter level 2)
       const character = createMockCharacter({
         class: 'Fighter',
         experience: { current: 2500, requiredForNextLevel: 2000, level: 1 },
       });
       context.setEntity('test-character', character);
 
-      // Setup level progression data with correct parameter key
       context.setTemporary('level-up-params', {
         characterId: 'test-character',
       });
@@ -211,7 +194,6 @@ describe('LevelProgressionRules', () => {
     });
 
     it('should update character stats correctly on level up', async () => {
-      // Create character with enough XP
       const character = createMockCharacter({
         class: 'Fighter',
         experience: { current: 2500, requiredForNextLevel: 2000, level: 1 },
@@ -231,12 +213,11 @@ describe('LevelProgressionRules', () => {
       expect(updatedCharacter).toBeDefined();
       if (updatedCharacter) {
         expect(updatedCharacter.experience.level).toBe(2);
-        expect(updatedCharacter.hitPoints.maximum).toBeGreaterThan(10); // Should gain HP
+        expect(updatedCharacter.hitPoints.maximum).toBeGreaterThan(10);
       }
     });
 
     it('should handle constitution bonus to hit points', async () => {
-      // Create character with high constitution and enough XP
       const character = createMockCharacter({
         class: 'Fighter',
         experience: { current: 2500, requiredForNextLevel: 2000, level: 1 },
@@ -252,7 +233,7 @@ describe('LevelProgressionRules', () => {
       const result = await levelProgressionRule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      // HP gain should be improved with constitution bonus
+
       const updatedCharacter = context.getEntity<Character>('test-character');
       expect(updatedCharacter).toBeDefined();
     });
@@ -260,7 +241,6 @@ describe('LevelProgressionRules', () => {
 
   describe('Spellcaster Level Progression', () => {
     it('should advance Magic-User with spell slot progression', async () => {
-      // Create Magic-User with enough XP (2500 required for level 2)
       const magicUser = createMockCharacter({
         id: 'magic-user',
         class: 'Magic-User',
@@ -277,14 +257,12 @@ describe('LevelProgressionRules', () => {
 
       expect(result.success).toBe(true);
       expect(result.data?.newLevel).toBe(2);
-      // Rule doesn't implement spell slot progression yet - just verify basic level advancement
 
       const updatedCharacter = context.getEntity<Character>('magic-user');
       expect(updatedCharacter).toBeDefined();
     });
 
     it('should advance Cleric with turn undead progression', async () => {
-      // Create Cleric with enough XP (1550 required for level 2)
       const cleric = createMockCharacter({
         id: 'cleric',
         class: 'Cleric',
@@ -301,7 +279,6 @@ describe('LevelProgressionRules', () => {
 
       expect(result.success).toBe(true);
       expect(result.data?.newLevel).toBe(2);
-      // Rule doesn't implement turn undead progression yet - just verify basic level advancement
 
       const updatedCharacter = context.getEntity<Character>('cleric');
       expect(updatedCharacter).toBeDefined();
@@ -310,7 +287,6 @@ describe('LevelProgressionRules', () => {
 
   describe('Thief Level Progression', () => {
     it('should advance Thief with skill progression', async () => {
-      // Create Thief with enough XP (1250 required for level 2)
       const thief = createMockCharacter({
         id: 'thief',
         class: 'Thief',
@@ -327,7 +303,6 @@ describe('LevelProgressionRules', () => {
 
       expect(result.success).toBe(true);
       expect(result.data?.newLevel).toBe(2);
-      // Rule doesn't implement thief skill progression yet - just verify basic level advancement
 
       const updatedCharacter = context.getEntity<Character>('thief');
       expect(updatedCharacter).toBeDefined();
@@ -336,7 +311,6 @@ describe('LevelProgressionRules', () => {
 
   describe('Saving Throw Progression', () => {
     it('should improve saving throws on level up', async () => {
-      // Create character with enough XP for level up
       const character = createMockCharacter({
         class: 'Fighter',
         experience: { current: 2500, requiredForNextLevel: 2000, level: 1 },
@@ -351,7 +325,6 @@ describe('LevelProgressionRules', () => {
 
       expect(result.success).toBe(true);
       expect(result.data?.newLevel).toBe(2);
-      // Rule doesn't implement saving throw progression yet - just verify basic level advancement
 
       const updatedCharacter = context.getEntity<Character>('test-character');
       expect(updatedCharacter).toBeDefined();
@@ -360,7 +333,6 @@ describe('LevelProgressionRules', () => {
 
   describe('Multi-Class Progression', () => {
     it('should handle multi-class level progression', async () => {
-      // Create Fighter with enough XP (simple approach - rule doesn't handle multi-class yet)
       const multiClassChar = createMockCharacter({
         id: 'multi-class',
         class: 'Fighter',
@@ -376,7 +348,6 @@ describe('LevelProgressionRules', () => {
 
       expect(result.success).toBe(true);
       expect(result.data?.newLevel).toBe(2);
-      // Rule doesn't implement multi-class progression yet - just verify basic level advancement
 
       const updatedCharacter = context.getEntity<Character>('multi-class');
       expect(updatedCharacter).toBeDefined();
@@ -385,7 +356,6 @@ describe('LevelProgressionRules', () => {
 
   describe('Edge Cases and Error Handling', () => {
     it('should handle insufficient experience for level up', async () => {
-      // Don't provide level-up-params - rule expects this parameter
       const result = await levelProgressionRule.execute(context, mockCommand);
 
       expect(result.success).toBe(false);
@@ -393,7 +363,6 @@ describe('LevelProgressionRules', () => {
     });
 
     it('should handle maximum level reached', async () => {
-      // Don't provide level-up-params - rule expects this parameter
       const result = await levelProgressionRule.execute(context, mockCommand);
 
       expect(result.success).toBe(false);
@@ -401,7 +370,6 @@ describe('LevelProgressionRules', () => {
     });
 
     it('should handle missing level progression data', async () => {
-      // Don't provide level-up-params - rule expects this parameter
       const result = await levelProgressionRule.execute(context, mockCommand);
 
       expect(result.success).toBe(false);
@@ -409,7 +377,6 @@ describe('LevelProgressionRules', () => {
     });
 
     it('should handle missing character', async () => {
-      // Don't provide level-up-params - rule expects this parameter
       const result = await levelProgressionRule.execute(context, mockCommand);
 
       expect(result.success).toBe(false);
@@ -417,7 +384,6 @@ describe('LevelProgressionRules', () => {
     });
 
     it('should handle invalid target level', async () => {
-      // Don't provide level-up-params - rule expects this parameter
       const result = await levelProgressionRule.execute(context, mockCommand);
 
       expect(result.success).toBe(false);
@@ -425,7 +391,6 @@ describe('LevelProgressionRules', () => {
     });
 
     it('should handle invalid hit point roll', async () => {
-      // Don't provide level-up-params - rule expects this parameter
       const result = await levelProgressionRule.execute(context, mockCommand);
 
       expect(result.success).toBe(false);
@@ -435,7 +400,6 @@ describe('LevelProgressionRules', () => {
 
   describe('Racial Level Limits', () => {
     it('should enforce racial level limits for non-humans', async () => {
-      // Don't provide level-up-params - rule expects this parameter
       const result = await levelProgressionRule.execute(context, mockCommand);
 
       expect(result.success).toBe(false);

@@ -1,15 +1,3 @@
-/**
- * TurnUndeadCommand - OSRIC Turn Undead System
- *
- * Handles turning/controlling undead creatures according to OSRIC rules:
- * - Cleric turning by level vs undead HD
- * - Paladin turning at higher levels
- * - 2d6 table resolution
- * - Turn vs Destroy results
- *
- * PRESERVATION: All OSRIC turn undead mechanics and tables preserved exactly.
- */
-
 import { BaseCommand, type CommandResult } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
@@ -17,15 +5,15 @@ import type { Character, Monster } from '../../types/entities';
 
 export interface TurnUndeadParameters {
   characterId: string;
-  targetUndeadIds: string[]; // IDs of undead creatures to attempt turning
+  targetUndeadIds: string[];
   situationalModifiers?: {
-    holySymbolBonus?: number; // Bonus from blessed/special holy symbol
-    spellBonus?: number; // Bonus from spells like Bless
-    areaBonus?: number; // Bonus in consecrated ground
-    alignment?: 'good' | 'neutral' | 'evil'; // Cleric's alignment affects some undead
-    isEvil?: boolean; // Evil clerics command rather than turn
+    holySymbolBonus?: number;
+    spellBonus?: number;
+    areaBonus?: number;
+    alignment?: 'good' | 'neutral' | 'evil';
+    isEvil?: boolean;
   };
-  massAttempt?: boolean; // Attempt to turn multiple undead types at once
+  massAttempt?: boolean;
 }
 
 export class TurnUndeadCommand extends BaseCommand {
@@ -39,13 +27,11 @@ export class TurnUndeadCommand extends BaseCommand {
     try {
       const { characterId, targetUndeadIds, situationalModifiers, massAttempt } = this.parameters;
 
-      // Get the character
       const character = context.getEntity<Character>(characterId);
       if (!character) {
         return this.createFailureResult(`Character with ID "${characterId}" not found`);
       }
 
-      // Validate situational modifiers
       if (situationalModifiers) {
         if (situationalModifiers.holySymbolBonus !== undefined) {
           if (
@@ -57,20 +43,18 @@ export class TurnUndeadCommand extends BaseCommand {
         }
       }
 
-      // Validate character can turn undead
       const turnAbilityCheck = this.validateTurnUndeadAbility(character);
       if (!turnAbilityCheck.canTurn) {
         return this.createFailureResult(turnAbilityCheck.reason || 'Cannot turn undead');
       }
 
-      // Get target undead creatures
       const targetUndead: Monster[] = [];
       for (const undeadId of targetUndeadIds) {
         const undead = context.getEntity<Monster>(undeadId);
         if (!undead) {
           return this.createFailureResult(`Undead creature with ID "${undeadId}" not found`);
         }
-        // Note: We assume all targets are undead since this command is for turning undead
+
         targetUndead.push(undead);
       }
 
@@ -78,10 +62,8 @@ export class TurnUndeadCommand extends BaseCommand {
         return this.createFailureResult('No valid undead targets found');
       }
 
-      // Set up temporary data for rules processing
       context.setTemporary('turn-undead-params', this.parameters);
 
-      // Perform turning attempt
       const turnResults = this.performTurnUndead(
         character,
         targetUndead,
@@ -89,13 +71,11 @@ export class TurnUndeadCommand extends BaseCommand {
         massAttempt
       );
 
-      // Apply results to game state
       const affectedUndead: string[] = [];
       for (const result of turnResults.individualResults) {
         if (result.effect !== 'no-effect') {
           const undead = context.getEntity<Monster>(result.undeadId);
           if (undead) {
-            // Apply the turning effect to the undead
             const updatedUndead = {
               ...undead,
               statusEffects: [
@@ -145,26 +125,18 @@ export class TurnUndeadCommand extends BaseCommand {
     return ['turn-undead'];
   }
 
-  /**
-   * Parse hit dice string to get numerical value for comparison
-   */
   private parseHitDice(hitDice: string): number {
-    // Parse OSRIC hit dice format: "3+1", "2-1", "1+2", etc.
     const match = hitDice.match(/^(\d+)([+-]\d+)?$/);
     if (!match) {
-      return 1; // Default for unparseable format
+      return 1;
     }
 
     const dice = Number.parseInt(match[1], 10);
     const bonus = match[2] ? Number.parseInt(match[2], 10) : 0;
 
-    // Convert to effective HD (bonus counts as fraction)
     return dice + (bonus > 0 ? 1 : 0);
   }
 
-  /**
-   * Validate that character can turn undead
-   */
   private validateTurnUndeadAbility(character: Character): {
     canTurn: boolean;
     effectiveLevel?: number;
@@ -173,22 +145,18 @@ export class TurnUndeadCommand extends BaseCommand {
     const characterClass = character.class.toLowerCase();
     const level = character.experience.level;
 
-    // Clerics can turn undead at all levels
     if (characterClass === 'cleric' || characterClass === 'druid') {
       return { canTurn: true, effectiveLevel: level };
     }
 
-    // Paladins can turn undead starting at level 3
     if (characterClass === 'paladin') {
       if (level >= 3) {
-        // Paladins turn as clerics 2 levels lower
         const effectiveLevel = Math.max(1, level - 2);
         return { canTurn: true, effectiveLevel };
       }
       return { canTurn: false, reason: 'Paladins can only turn undead starting at level 3' };
     }
 
-    // Multi-class characters with cleric
     if (characterClass.includes('cleric')) {
       return { canTurn: true, effectiveLevel: level };
     }
@@ -196,9 +164,6 @@ export class TurnUndeadCommand extends BaseCommand {
     return { canTurn: false, reason: 'Only clerics, druids, and paladins can turn undead' };
   }
 
-  /**
-   * Perform the actual turning attempt
-   */
   private performTurnUndead(
     character: Character,
     targetUndead: Monster[],
@@ -222,12 +187,10 @@ export class TurnUndeadCommand extends BaseCommand {
     const turnAbility = this.validateTurnUndeadAbility(character);
     const effectiveLevel = turnAbility.effectiveLevel || 1;
 
-    // Roll 2d6
     const dice1 = Math.floor(Math.random() * 6) + 1;
     const dice2 = Math.floor(Math.random() * 6) + 1;
     const baseRoll = dice1 + dice2;
 
-    // Apply modifiers
     let modifiedRoll = baseRoll;
     const appliedModifiers: string[] = [];
 
@@ -248,7 +211,6 @@ export class TurnUndeadCommand extends BaseCommand {
 
     const rollResult = { dice1, dice2, total: baseRoll, modified: modifiedRoll };
 
-    // Process each undead target
     const individualResults: Array<{
       undeadId: string;
       undeadName: string;
@@ -261,7 +223,6 @@ export class TurnUndeadCommand extends BaseCommand {
     let totalTurned = 0;
     let totalDestroyed = 0;
 
-    // Sort undead by hit dice (lowest first for turning order)
     const sortedUndead = [...targetUndead].sort(
       (a, b) => this.parseHitDice(a.hitDice) - this.parseHitDice(b.hitDice)
     );
@@ -291,13 +252,11 @@ export class TurnUndeadCommand extends BaseCommand {
         totalDestroyed += result.count || 1;
       }
 
-      // If not a mass attempt and we got an effect, stop here
       if (!massAttempt && result.effect !== 'no-effect') {
         break;
       }
     }
 
-    // Determine overall result
     let overallResult: string;
     if (totalDestroyed > 0 && totalTurned > 0) {
       overallResult = `${totalDestroyed} destroyed, ${totalTurned} turned`;
@@ -319,9 +278,6 @@ export class TurnUndeadCommand extends BaseCommand {
     };
   }
 
-  /**
-   * Get turn result from OSRIC turn undead table
-   */
   private getTurnResult(
     clericLevel: number,
     undeadHD: number,
@@ -332,40 +288,32 @@ export class TurnUndeadCommand extends BaseCommand {
     duration?: number;
     count?: number;
   } {
-    // OSRIC Turn Undead Table
-    // Based on cleric level vs undead HD and 2d6 roll
-
-    // Calculate the difference between cleric level and undead HD
     const levelDifference = clericLevel - undeadHD;
 
-    // Base target numbers and effects from OSRIC
     let targetNumber: number;
     let destroyOnSuccess = false;
 
     if (levelDifference >= 7) {
-      // Automatically turn/destroy very weak undead
       return {
         effect: isEvil ? 'commanded' : 'destroyed',
-        duration: isEvil ? 24 * 60 : undefined, // 24 hours for commanded
-        count: 2 + Math.floor(Math.random() * 6), // 2d6 undead affected
+        duration: isEvil ? 24 * 60 : undefined,
+        count: 2 + Math.floor(Math.random() * 6),
       };
     }
 
     if (levelDifference >= 5) {
-      targetNumber = 4; // Turn on 4+
-      destroyOnSuccess = !isEvil; // Good clerics destroy, evil command
+      targetNumber = 4;
+      destroyOnSuccess = !isEvil;
     } else if (levelDifference >= 3) {
-      targetNumber = 7; // Turn on 7+
+      targetNumber = 7;
     } else if (levelDifference >= 1) {
-      targetNumber = 10; // Turn on 10+
+      targetNumber = 10;
     } else if (levelDifference >= -1) {
-      targetNumber = 13; // Turn on 13+ (very difficult)
+      targetNumber = 13;
     } else {
-      // Cannot turn undead more than 1 HD higher than cleric level
       return { effect: 'no-effect' };
     }
 
-    // Check if the roll succeeded
     if (roll >= targetNumber) {
       let effect: 'destroyed' | 'commanded' | 'turned';
 
@@ -375,8 +323,7 @@ export class TurnUndeadCommand extends BaseCommand {
         effect = isEvil ? 'commanded' : 'turned';
       }
 
-      // Calculate number affected and duration
-      const baseCount = 1 + Math.floor(Math.random() * 6); // 1d6 base
+      const baseCount = 1 + Math.floor(Math.random() * 6);
       const count = Math.max(1, baseCount + Math.floor(levelDifference / 2));
 
       return {
@@ -384,7 +331,7 @@ export class TurnUndeadCommand extends BaseCommand {
         duration:
           effect === 'commanded' || effect === 'turned'
             ? 3 + Math.floor(Math.random() * 6)
-            : undefined, // 3+1d6 rounds
+            : undefined,
         count,
       };
     }
@@ -392,11 +339,7 @@ export class TurnUndeadCommand extends BaseCommand {
     return { effect: 'no-effect' };
   }
 
-  /**
-   * Get duration in rounds for turning effects
-   */
   private getTurnDuration(clericLevel: number, undeadHD: number): number {
-    // OSRIC: Turned undead flee for 3d4 rounds, +1 round per level difference
     const baseDuration =
       3 +
       Math.floor(Math.random() * 4) +

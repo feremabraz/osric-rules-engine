@@ -1,17 +1,3 @@
-/**
- * DamageCalculationRules Tests - OSRIC Compliance
- *
- * Tests the DamageCalculationRule for proper damage calculations according to OSRIC mechanics:
- * - Weapon damage dice and modifiers
- * - Strength bonuses for melee attacks
- * - Critical hit damage multiplication
- * - Magic weapon bonuses
- * - Large creature damage adjustments
- * - Subdual damage mechanics
- * - Status effects (unconscious, bleeding, dead)
- * - Edge cases and error scenarios
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { GameContext } from '../../../osric/core/GameContext';
@@ -19,7 +5,6 @@ import { DamageCalculationRule } from '../../../osric/rules/combat/DamageCalcula
 import { COMMAND_TYPES } from '../../../osric/types/constants';
 import type { Character, CombatResult, Monster, Weapon } from '../../../osric/types/entities';
 
-// Mock helper function to create test characters
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-char',
@@ -36,7 +21,7 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
     race: 'Human',
     class: 'Fighter',
     abilities: {
-      strength: 16, // +1 to hit, +1 damage
+      strength: 16,
       dexterity: 10,
       constitution: 10,
       intelligence: 10,
@@ -103,7 +88,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return { ...defaultCharacter, ...overrides };
 }
 
-// Mock helper function to create test monsters
 function createMockMonster(overrides: Partial<Monster> = {}): Monster {
   const defaultMonster: Monster = {
     id: 'test-monster',
@@ -135,7 +119,6 @@ function createMockMonster(overrides: Partial<Monster> = {}): Monster {
   return { ...defaultMonster, ...overrides };
 }
 
-// Mock helper function to create test weapons
 function createMockWeapon(overrides: Partial<Weapon> = {}): Weapon {
   const defaultWeapon: Weapon = {
     id: 'test-weapon',
@@ -159,7 +142,6 @@ function createMockWeapon(overrides: Partial<Weapon> = {}): Weapon {
   return { ...defaultWeapon, ...overrides };
 }
 
-// Mock command that implements the Command interface
 class MockAttackCommand {
   readonly type = COMMAND_TYPES.ATTACK;
   readonly actorId = 'test-attacker';
@@ -208,7 +190,6 @@ describe('DamageCalculationRules', () => {
       });
       const weapon = createMockWeapon({ damage: '1d8' });
 
-      // Set up attack context
       context.setTemporary('attack-context', {
         attacker,
         target,
@@ -226,7 +207,7 @@ describe('DamageCalculationRules', () => {
       const damageValues = context.getTemporary('damage-values') as number[];
       expect(damageValues).toBeDefined();
       expect(damageValues.length).toBe(1);
-      // Should be 1d8 + 1 (strength) = minimum 2, maximum 9
+
       expect(damageValues[0]).toBeGreaterThanOrEqual(2);
       expect(damageValues[0]).toBeLessThanOrEqual(9);
 
@@ -287,7 +268,7 @@ describe('DamageCalculationRules', () => {
       expect(result.success).toBe(true);
 
       const damageValues = context.getTemporary('damage-values') as number[];
-      // Should be 1d8 + 1 (magic) + 1 (strength) = minimum 3, maximum 10
+
       expect(damageValues[0]).toBeGreaterThanOrEqual(3);
       expect(damageValues[0]).toBeLessThanOrEqual(10);
     });
@@ -301,7 +282,7 @@ describe('DamageCalculationRules', () => {
       });
       const weapon = createMockWeapon({
         damage: '1d8',
-        damageVsLarge: '1d12', // Better against large creatures
+        damageVsLarge: '1d12',
       });
 
       context.setTemporary('attack-context', {
@@ -318,7 +299,7 @@ describe('DamageCalculationRules', () => {
       expect(result.success).toBe(true);
 
       const damageValues = context.getTemporary('damage-values') as number[];
-      // Should use 1d12 + 1 (strength) = minimum 2, maximum 13
+
       expect(damageValues[0]).toBeGreaterThanOrEqual(2);
       expect(damageValues[0]).toBeLessThanOrEqual(13);
     });
@@ -343,7 +324,7 @@ describe('DamageCalculationRules', () => {
       expect(result.success).toBe(true);
 
       const damageValues = context.getTemporary('damage-values') as number[];
-      // Should be 1d4+1 = minimum 2, maximum 5
+
       expect(damageValues[0]).toBeGreaterThanOrEqual(2);
       expect(damageValues[0]).toBeLessThanOrEqual(5);
     });
@@ -355,7 +336,7 @@ describe('DamageCalculationRules', () => {
       context.setTemporary('attack-context', {
         attacker,
         target,
-        // No weapon = unarmed
+
         attackType: 'unarmed',
         hitRoll: 15,
         isCriticalHit: false,
@@ -366,7 +347,7 @@ describe('DamageCalculationRules', () => {
       expect(result.success).toBe(true);
 
       const damageValues = context.getTemporary('damage-values') as number[];
-      // Should be 1d2 + 1 (strength) = minimum 2, maximum 3
+
       expect(damageValues[0]).toBeGreaterThanOrEqual(2);
       expect(damageValues[0]).toBeLessThanOrEqual(3);
     });
@@ -378,7 +359,7 @@ describe('DamageCalculationRules', () => {
         abilityModifiers: { ...createMockCharacter().abilityModifiers, strengthDamageAdj: -3 },
       });
       const target = createMockCharacter({ name: 'Target', hitPoints: { current: 8, maximum: 8 } });
-      const weapon = createMockWeapon({ damage: '1d2' }); // Low damage weapon
+      const weapon = createMockWeapon({ damage: '1d2' });
 
       context.setTemporary('attack-context', {
         attacker: weakAttacker,
@@ -394,7 +375,7 @@ describe('DamageCalculationRules', () => {
       expect(result.success).toBe(true);
 
       const damageValues = context.getTemporary('damage-values') as number[];
-      // Even with negative modifiers, damage should be at least 1
+
       expect(damageValues[0]).toBeGreaterThanOrEqual(1);
     });
 
@@ -402,7 +383,7 @@ describe('DamageCalculationRules', () => {
       const attacker = createMockCharacter({ name: 'Fighter' });
       const target = createMockCharacter({
         name: 'Target',
-        hitPoints: { current: 2, maximum: 8 }, // Low hp
+        hitPoints: { current: 2, maximum: 8 },
       });
       const weapon = createMockWeapon({ damage: '1d8' });
 
@@ -454,32 +435,27 @@ describe('DamageCalculationRules', () => {
       expect(result.success).toBe(true);
 
       const damageValues = context.getTemporary('damage-values') as number[];
-      expect(damageValues.length).toBe(2); // Real and subdual damage
+      expect(damageValues.length).toBe(2);
 
       const combatResult = context.getTemporary('damage-result') as CombatResult;
       expect(combatResult.message).toContain('subdual damage');
 
-      // Should have subdued status effect
       const subduedEffect = combatResult.specialEffects?.find((e) => e.name === 'Subdued');
       expect(subduedEffect).toBeDefined();
     });
 
     it('should only apply to attack commands with hit rolls', () => {
-      // Test with wrong command type
       const wrongCommand = { ...mockCommand, type: 'move' };
       expect(rule.canApply(context, wrongCommand as unknown as typeof mockCommand)).toBe(false);
 
-      // Test with correct command type but no attack context
       expect(rule.canApply(context, mockCommand)).toBe(false);
 
-      // Test with attack context but no hit roll
       context.setTemporary('attack-context', {
         attacker: createMockCharacter(),
         target: createMockCharacter(),
       });
       expect(rule.canApply(context, mockCommand)).toBe(false);
 
-      // Test with complete attack context
       context.setTemporary('attack-context', {
         attacker: createMockCharacter(),
         target: createMockCharacter(),
@@ -489,7 +465,6 @@ describe('DamageCalculationRules', () => {
     });
 
     it('should fail gracefully without attack context', async () => {
-      // No attack context set
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(false);
@@ -497,7 +472,6 @@ describe('DamageCalculationRules', () => {
     });
 
     it('should preserve OSRIC damage calculations exactly', async () => {
-      // Test exact OSRIC mechanics: 1d8 longsword with 16 STR (+1 damage)
       const attacker = createMockCharacter({
         name: 'OSRIC Fighter',
         abilities: { ...createMockCharacter().abilities, strength: 16 },
@@ -524,7 +498,7 @@ describe('DamageCalculationRules', () => {
       expect(result.success).toBe(true);
 
       const damageValues = context.getTemporary('damage-values') as number[];
-      // OSRIC: 1d8 + 1 (STR) = 2-9 damage
+
       expect(damageValues[0]).toBeGreaterThanOrEqual(2);
       expect(damageValues[0]).toBeLessThanOrEqual(9);
 

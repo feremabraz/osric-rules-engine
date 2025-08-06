@@ -1,18 +1,3 @@
-/**
- * MountedCombatRules Tests - OSRIC Compliance
- *
- * Tests the mounted combat system for proper OSRIC mechanics:
- * - Mounted charge attacks with lance damage bonuses
- * - Mount movement and positioning rules
- * - Dismounting and falling damage from flying mounts
- * - Mount encumbrance and agility effects
- * - Aerial combat integration for flying mounts
- * - Rider proficiency requirements
- * - Mount type restrictions and capabilities
- * - OSRIC exact mounted combat calculations
- * - Edge cases and error scenarios
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { GameContext } from '../../../osric/core/GameContext';
@@ -24,7 +9,6 @@ import {
 import { COMMAND_TYPES } from '../../../osric/types/constants';
 import type { Character, Monster, Weapon } from '../../../osric/types/entities';
 
-// Type interfaces for test clarity
 interface _MountedCombatContext {
   rider: Character;
   mount: Mount;
@@ -39,7 +23,6 @@ interface MountedChargeResult {
   specialEffects?: string[];
 }
 
-// Mock helper function to create test characters
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-char',
@@ -101,7 +84,7 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
     },
     spells: [],
     currency: { platinum: 0, gold: 0, electrum: 0, silver: 0, copper: 0 },
-    encumbrance: 0.3, // Lightly encumbered
+    encumbrance: 0.3,
     movementRate: 120,
     classes: { Fighter: 5 },
     primaryClass: null,
@@ -127,7 +110,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return { ...defaultCharacter, ...overrides };
 }
 
-// Mock helper function to create test monsters
 function createMockMonster(overrides: Partial<Monster> = {}): Monster {
   const defaultMonster: Monster = {
     id: 'test-monster',
@@ -159,19 +141,18 @@ function createMockMonster(overrides: Partial<Monster> = {}): Monster {
   return { ...defaultMonster, ...overrides };
 }
 
-// Mock helper function to create test mounts
 function createMockMount(overrides: Partial<Mount> = {}): Mount {
   const defaultMount: Mount = {
     id: 'test-mount',
     name: 'War Horse',
     type: 'Horse',
-    movementRate: 180, // Fast horse
+    movementRate: 180,
     armorClass: 7,
     hitPoints: { current: 25, maximum: 25 },
     size: 'Large',
     flying: false,
     flyingAgility: null,
-    encumbrance: { current: 200, max: 400 }, // Not encumbered
+    encumbrance: { current: 200, max: 400 },
     isEncumbered: false,
     mountedBy: null,
   };
@@ -179,7 +160,6 @@ function createMockMount(overrides: Partial<Mount> = {}): Mount {
   return { ...defaultMount, ...overrides };
 }
 
-// Mock helper function to create test weapons
 function createMockWeapon(overrides: Partial<Weapon> = {}): Weapon {
   const defaultWeapon: Weapon = {
     id: 'test-weapon',
@@ -191,7 +171,7 @@ function createMockWeapon(overrides: Partial<Weapon> = {}): Weapon {
     speed: 8,
     allowedClasses: ['Fighter', 'Paladin'],
     range: null,
-    twoHanded: false, // One-handed when mounted
+    twoHanded: false,
     weight: 10,
     value: 6,
     description: 'A cavalry lance designed for mounted combat',
@@ -203,7 +183,6 @@ function createMockWeapon(overrides: Partial<Weapon> = {}): Weapon {
   return { ...defaultWeapon, ...overrides };
 }
 
-// Mock command that implements the Command interface
 class MockMountedChargeCommand {
   readonly type = COMMAND_TYPES.MOUNTED_CHARGE;
   readonly actorId = 'test-rider';
@@ -244,7 +223,7 @@ describe('MountedCombatRules', () => {
       const rider = createMockCharacter({
         name: 'Knight',
         class: 'Fighter',
-        encumbrance: 0.4, // Not too encumbered
+        encumbrance: 0.4,
       });
       const mount = createMockMount({
         name: 'War Horse',
@@ -269,7 +248,7 @@ describe('MountedCombatRules', () => {
 
       const chargeResult = context.getTemporary('mounted-charge-result') as MountedChargeResult;
       expect(chargeResult).toBeDefined();
-      expect(chargeResult.damageMultiplier).toBeGreaterThan(1); // Lance does double damage on charge
+      expect(chargeResult.damageMultiplier).toBeGreaterThan(1);
 
       const damageMultiplier = context.getTemporary('damage-multiplier') as number;
       expect(damageMultiplier).toBeGreaterThan(1);
@@ -280,7 +259,7 @@ describe('MountedCombatRules', () => {
       const mount = createMockMount({
         name: 'Overloaded Horse',
         mountedBy: rider.id,
-        isEncumbered: true, // Too encumbered
+        isEncumbered: true,
       });
       const target = createMockMonster({ name: 'Orc' });
       const lance = createMockWeapon({ name: 'Lance' });
@@ -304,7 +283,7 @@ describe('MountedCombatRules', () => {
       const mount = createMockMount({
         name: 'Injured Horse',
         mountedBy: rider.id,
-        hitPoints: { current: 3, maximum: 25 }, // Less than 25% HP
+        hitPoints: { current: 3, maximum: 25 },
         isEncumbered: false,
       });
       const target = createMockMonster({ name: 'Orc' });
@@ -328,7 +307,7 @@ describe('MountedCombatRules', () => {
       const rider = createMockCharacter({ name: 'Knight' });
       const mount = createMockMount({
         name: 'War Horse',
-        mountedBy: 'different-rider-id', // Wrong rider
+        mountedBy: 'different-rider-id',
       });
       const target = createMockMonster({ name: 'Orc' });
       const lance = createMockWeapon({ name: 'Lance' });
@@ -350,7 +329,7 @@ describe('MountedCombatRules', () => {
     it('should fail charge when rider is too encumbered', async () => {
       const rider = createMockCharacter({
         name: 'Overloaded Knight',
-        encumbrance: 0.95, // Very encumbered
+        encumbrance: 0.95,
       });
       const mount = createMockMount({
         name: 'War Horse',
@@ -419,7 +398,6 @@ describe('MountedCombatRules', () => {
       });
       const target = createMockMonster({ name: 'Orc' });
 
-      // Test with lance (should get highest multiplier)
       const lance = createMockWeapon({ name: 'Lance' });
       context.setTemporary('mounted-context', {
         rider,
@@ -433,7 +411,6 @@ describe('MountedCombatRules', () => {
       expect(lanceResult.success).toBe(true);
       const lanceMultiplier = context.getTemporary('damage-multiplier') as number;
 
-      // Test with sword (should get lower multiplier)
       const sword = createMockWeapon({
         name: 'Longsword',
         type: 'Melee',
@@ -451,17 +428,13 @@ describe('MountedCombatRules', () => {
       expect(swordResult.success).toBe(true);
       const swordMultiplier = context.getTemporary('damage-multiplier') as number;
 
-      // Lance should have higher damage multiplier than sword
       expect(lanceMultiplier).toBeGreaterThanOrEqual(swordMultiplier);
     });
 
     it('should require proper riding proficiency for complex maneuvers', async () => {
       const rider = createMockCharacter({
         name: 'Inexperienced Rider',
-        proficiencies: [
-          { weapon: 'Longsword', penalty: 0 },
-          // No riding proficiency
-        ],
+        proficiencies: [{ weapon: 'Longsword', penalty: 0 }],
       });
       const mount = createMockMount({
         name: 'War Horse',
@@ -480,7 +453,7 @@ describe('MountedCombatRules', () => {
       });
 
       const result = await rule.execute(context, mockCommand);
-      // Should succeed but with penalties
+
       expect(result.success).toBe(true);
 
       const chargeResult = context.getTemporary('mounted-charge-result') as MountedChargeResult;
@@ -491,14 +464,14 @@ describe('MountedCombatRules', () => {
       const rider = createMockCharacter({ name: 'Halfling Knight' });
       const mount = createMockMount({
         name: 'Pony',
-        size: 'Medium', // Smaller mount
+        size: 'Medium',
         mountedBy: rider.id,
         isEncumbered: false,
       });
       const target = createMockMonster({ name: 'Goblin' });
       const lance = createMockWeapon({
         name: 'Heavy Lance',
-        size: 'Large', // Large weapon on medium mount
+        size: 'Large',
       });
 
       context.setTemporary('mounted-context', {
@@ -510,7 +483,7 @@ describe('MountedCombatRules', () => {
       });
 
       const result = await rule.execute(context, mockCommand);
-      // Should succeed but possibly with restrictions
+
       expect(result.success).toBe(true);
 
       const chargeResult = context.getTemporary('mounted-charge-result') as MountedChargeResult;
@@ -518,24 +491,20 @@ describe('MountedCombatRules', () => {
     });
 
     it('should only apply to mounted charge commands with context', () => {
-      // Test with wrong command type
       const wrongCommand = { ...mockCommand, type: COMMAND_TYPES.ATTACK };
       expect(rule.canApply(context, wrongCommand as unknown as typeof mockCommand)).toBe(false);
 
-      // Test with correct command type but no context
       expect(rule.canApply(context, mockCommand)).toBe(false);
 
-      // Test with complete context but not charge attack
       const rider = createMockCharacter();
       const mount = createMockMount();
       context.setTemporary('mounted-context', {
         rider,
         mount,
-        isChargeAttack: false, // Not a charge
+        isChargeAttack: false,
       });
       expect(rule.canApply(context, mockCommand)).toBe(false);
 
-      // Test with complete charge context
       context.setTemporary('mounted-context', {
         rider,
         mount,
@@ -545,7 +514,6 @@ describe('MountedCombatRules', () => {
     });
 
     it('should fail gracefully without mounted context', async () => {
-      // No mounted context set
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(false);
@@ -556,13 +524,10 @@ describe('MountedCombatRules', () => {
       const rider = createMockCharacter();
       const mount = createMockMount({ mountedBy: rider.id });
 
-      // Missing target
       context.setTemporary('mounted-context', {
         rider,
         mount,
         isChargeAttack: true,
-        // target missing
-        // weapon missing
       });
 
       const result = await rule.execute(context, mockCommand);
@@ -572,7 +537,6 @@ describe('MountedCombatRules', () => {
     });
 
     it('should preserve OSRIC mounted combat mechanics exactly', async () => {
-      // Test exact OSRIC mechanics for lance charge
       const osricKnight = createMockCharacter({
         name: 'OSRIC Knight',
         class: 'Fighter',
@@ -585,14 +549,14 @@ describe('MountedCombatRules', () => {
       const osricMount = createMockMount({
         name: 'OSRIC War Horse',
         mountedBy: osricKnight.id,
-        movementRate: 180, // Fast enough for charge
+        movementRate: 180,
         isEncumbered: false,
       });
       const osricTarget = createMockMonster({ name: 'OSRIC Orc' });
       const osricLance = createMockWeapon({
         name: 'OSRIC Lance',
         damage: '1d8+1',
-        damageVsLarge: '3d6', // OSRIC lance stats
+        damageVsLarge: '3d6',
       });
 
       context.setTemporary('mounted-context', {
@@ -609,10 +573,8 @@ describe('MountedCombatRules', () => {
 
       const chargeResult = context.getTemporary('mounted-charge-result') as MountedChargeResult;
 
-      // OSRIC: Lance does double damage on mounted charge
       expect(chargeResult.damageMultiplier).toBe(2);
 
-      // Should have appropriate message
       expect(chargeResult.message).toContain('charge');
     });
 
@@ -630,8 +592,6 @@ describe('MountedCombatRules', () => {
         isDismounting: true,
       });
 
-      // Test that the rule can handle dismounting context
-      // (This might be handled by a different rule, but we test context recognition)
       expect(context.getTemporary('mounted-context')).toBeDefined();
     });
 
@@ -642,7 +602,7 @@ describe('MountedCombatRules', () => {
         type: 'Dragon',
         size: 'Gargantuan',
         flying: true,
-        flyingAgility: AerialAgilityLevel.Poor, // Dragons are not agile fliers
+        flyingAgility: AerialAgilityLevel.Poor,
         mountedBy: rider.id,
         hitPoints: { current: 200, maximum: 200 },
         movementRate: 240,
@@ -667,7 +627,6 @@ describe('MountedCombatRules', () => {
 
       const result = await rule.execute(context, mockCommand);
 
-      // Should handle extreme cases gracefully
       expect(result.success).toBe(true);
       expect(result.message).toBeDefined();
 

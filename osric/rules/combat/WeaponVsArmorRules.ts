@@ -1,15 +1,3 @@
-/**
- * WeaponVsArmorRules.ts - OSRIC Weapon vs Armor Rules
- *
- * Implements the complete OSRIC weapon vs armor system including:
- * - Weapon damage type classification (slashing, piercing, bludgeoning)
- * - Armor category classification based on AC values
- * - Attack roll modifiers based on weapon type vs armor type
- * - Optional rule integration with core combat mechanics
- *
- * PRESERVATION: All OSRIC weapon vs armor mechanics preserved exactly.
- */
-
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
@@ -47,10 +35,8 @@ export class WeaponVsArmorRule extends BaseRule {
 
     const { defender, weapon } = weaponArmorContext;
 
-    // Calculate weapon vs armor adjustment
     const adjustment = this.getWeaponVsArmorAdjustment(weapon, defender.armorClass);
 
-    // Store adjustment for use by attack roll
     context.setTemporary('weapon-vs-armor-adjustment', adjustment);
 
     const adjustmentText =
@@ -68,10 +54,6 @@ export class WeaponVsArmorRule extends BaseRule {
     return weaponArmorContext !== null;
   }
 
-  /**
-   * Weapon vs. Armor adjustments table (OSRIC)
-   * Numbers represent modifiers to attack rolls
-   */
   private readonly WEAPON_VS_ARMOR_TABLE: Record<WeaponType, Record<ArmorCategory, number>> = {
     Slashing: {
       Unarmored: 0,
@@ -99,11 +81,7 @@ export class WeaponVsArmorRule extends BaseRule {
     },
   };
 
-  /**
-   * Map weapons to their damage type
-   */
   private readonly WEAPON_DAMAGE_TYPES: Record<string, WeaponType> = {
-    // Slashing weapons
     'Sword, Long': 'Slashing',
     'Sword, Short': 'Slashing',
     'Sword, Broad': 'Slashing',
@@ -114,7 +92,6 @@ export class WeaponVsArmorRule extends BaseRule {
     Scimitar: 'Slashing',
     Falchion: 'Slashing',
 
-    // Piercing weapons
     Dagger: 'Piercing',
     Spear: 'Piercing',
     Arrow: 'Piercing',
@@ -127,7 +104,6 @@ export class WeaponVsArmorRule extends BaseRule {
     Pike: 'Piercing',
     Javelin: 'Piercing',
 
-    // Bludgeoning weapons
     Mace: 'Bludgeoning',
     'Hammer, War': 'Bludgeoning',
     Club: 'Bludgeoning',
@@ -138,50 +114,33 @@ export class WeaponVsArmorRule extends BaseRule {
     Maul: 'Bludgeoning',
   };
 
-  /**
-   * Map armor class to armor category
-   */
   private readonly AC_TO_ARMOR_CATEGORY: Record<number, ArmorCategory> = {
-    10: 'Unarmored', // AC 10 (no armor)
-    9: 'Padded/Leather', // AC 9-8 (leather, padded)
+    10: 'Unarmored',
+    9: 'Padded/Leather',
     8: 'Padded/Leather',
-    7: 'StuddedLeather/Ring', // AC 7 (studded leather, ring)
-    6: 'StuddedLeather/Ring', // AC 6 (scale)
-    5: 'Scale/Chain', // AC 5 (chain)
-    4: 'Scale/Chain', // AC 4 (banded)
-    3: 'Banded/Splint', // AC 3 (splint)
-    2: 'Plate', // AC 2 (plate)
-    1: 'Plate', // AC 1-0 (field plate)
+    7: 'StuddedLeather/Ring',
+    6: 'StuddedLeather/Ring',
+    5: 'Scale/Chain',
+    4: 'Scale/Chain',
+    3: 'Banded/Splint',
+    2: 'Plate',
+    1: 'Plate',
     0: 'Plate',
   };
 
-  /**
-   * Get weapon vs. armor adjustment based on weapon and target's armor
-   */
   public getWeaponVsArmorAdjustment(weapon: Weapon, targetAC: number): number {
-    // Determine weapon damage type
     const damageType = this.getWeaponType(weapon);
 
-    // Determine armor category based on AC
     const armorCategory = this.getArmorCategory(targetAC);
 
-    // Get adjustment from table
     return this.WEAPON_VS_ARMOR_TABLE[damageType][armorCategory];
   }
 
-  /**
-   * Get weapon damage type
-   */
   private getWeaponType(weapon: Weapon): WeaponType {
-    return this.WEAPON_DAMAGE_TYPES[weapon.name] || 'Slashing'; // Default to slashing
+    return this.WEAPON_DAMAGE_TYPES[weapon.name] || 'Slashing';
   }
 
-  /**
-   * Get armor category from AC
-   */
   private getArmorCategory(targetAC: number): ArmorCategory {
-    // In OSRIC, lower AC is better (descending AC system)
-    // Ensure AC is within valid range (0-10)
     const boundedAC = Math.min(Math.max(targetAC, 0), 10);
     return this.AC_TO_ARMOR_CATEGORY[boundedAC] || 'Unarmored';
   }
@@ -200,7 +159,6 @@ export class WeaponTypeRule extends BaseRule {
     const weaponType = this.getWeaponType(weapon);
     const isVersatile = this.isVersatileWeapon(weapon);
 
-    // Store weapon type information
     context.setTemporary('weapon-type', weaponType);
     context.setTemporary('weapon-is-versatile', isVersatile);
 
@@ -217,11 +175,7 @@ export class WeaponTypeRule extends BaseRule {
     return weapon !== null;
   }
 
-  /**
-   * Map weapons to their damage type
-   */
   private readonly WEAPON_DAMAGE_TYPES: Record<string, WeaponType> = {
-    // Slashing weapons
     'Sword, Long': 'Slashing',
     'Sword, Short': 'Slashing',
     'Sword, Broad': 'Slashing',
@@ -232,7 +186,6 @@ export class WeaponTypeRule extends BaseRule {
     Scimitar: 'Slashing',
     Falchion: 'Slashing',
 
-    // Piercing weapons
     Dagger: 'Piercing',
     Spear: 'Piercing',
     Arrow: 'Piercing',
@@ -245,7 +198,6 @@ export class WeaponTypeRule extends BaseRule {
     Pike: 'Piercing',
     Javelin: 'Piercing',
 
-    // Bludgeoning weapons
     Mace: 'Bludgeoning',
     'Hammer, War': 'Bludgeoning',
     Club: 'Bludgeoning',
@@ -256,26 +208,17 @@ export class WeaponTypeRule extends BaseRule {
     Maul: 'Bludgeoning',
   };
 
-  /**
-   * Weapons that can be used with different damage types
-   */
   private readonly VERSATILE_WEAPONS: Record<string, WeaponType[]> = {
-    Quarterstaff: ['Bludgeoning', 'Piercing'], // Can thrust or strike
-    Spear: ['Piercing', 'Slashing'], // Can thrust or cut
-    Halberd: ['Slashing', 'Piercing'], // Has axe and spear components
-    Poleaxe: ['Slashing', 'Bludgeoning'], // Has axe and hammer components
+    Quarterstaff: ['Bludgeoning', 'Piercing'],
+    Spear: ['Piercing', 'Slashing'],
+    Halberd: ['Slashing', 'Piercing'],
+    Poleaxe: ['Slashing', 'Bludgeoning'],
   };
 
-  /**
-   * Get weapon damage type
-   */
   private getWeaponType(weapon: Weapon): WeaponType {
-    return this.WEAPON_DAMAGE_TYPES[weapon.name] || 'Slashing'; // Default to slashing
+    return this.WEAPON_DAMAGE_TYPES[weapon.name] || 'Slashing';
   }
 
-  /**
-   * Check if weapon has multiple damage types
-   */
   private isVersatileWeapon(weapon: Weapon): boolean {
     return weapon.name in this.VERSATILE_WEAPONS;
   }
@@ -294,7 +237,6 @@ export class ArmorCategoryRule extends BaseRule {
     const armorCategory = this.getArmorCategory(target.armorClass);
     const armorEffectiveness = this.getArmorEffectiveness(target.armorClass);
 
-    // Store armor information
     context.setTemporary('armor-category', armorCategory);
     context.setTemporary('armor-effectiveness', armorEffectiveness);
 
@@ -311,9 +253,6 @@ export class ArmorCategoryRule extends BaseRule {
     return target !== null;
   }
 
-  /**
-   * Map armor class to armor category
-   */
   private readonly AC_TO_ARMOR_CATEGORY: Record<number, ArmorCategory> = {
     10: 'Unarmored',
     9: 'Padded/Leather',
@@ -328,17 +267,11 @@ export class ArmorCategoryRule extends BaseRule {
     0: 'Plate',
   };
 
-  /**
-   * Get armor category from AC
-   */
   private getArmorCategory(targetAC: number): ArmorCategory {
     const boundedAC = Math.min(Math.max(targetAC, 0), 10);
     return this.AC_TO_ARMOR_CATEGORY[boundedAC] || 'Unarmored';
   }
 
-  /**
-   * Get armor effectiveness description
-   */
   private getArmorEffectiveness(targetAC: number): string {
     if (targetAC >= 8) return 'light';
     if (targetAC >= 5) return 'medium';
@@ -347,19 +280,11 @@ export class ArmorCategoryRule extends BaseRule {
   }
 }
 
-// Utility functions for direct use (exported for tests)
-
-/**
- * Get weapon vs armor adjustment (for test compatibility)
- */
 export function getWeaponVsArmorAdjustment(weapon: Weapon, targetAC: number): number {
   const rule = new WeaponVsArmorRule();
   return rule.getWeaponVsArmorAdjustment(weapon, targetAC);
 }
 
-/**
- * Apply weapon vs armor adjustment (for test compatibility)
- */
 export function applyWeaponVsArmorAdjustment(
   target: CharacterData | MonsterData,
   weapon: Weapon | undefined,

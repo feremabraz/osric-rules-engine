@@ -1,17 +1,3 @@
-/**
- * @fileoverview Tests for SpellProgressionRules - OSRIC Spell Progression System
- *
- * Tests comprehensive spell progression mechanics including:
- * - Spell slot calculation by class and level (exact OSRIC tables)
- * - Bonus spells from high ability scores
- * - Intelligence limits for arcane casters
- * - Class-specific spell progression validation
- * - OSRIC authentic progression tables
- *
- * @version 1.0.0
- * @since Phase 4: Magic System
- */
-
 import { createStore } from 'jotai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameContext } from '../../../osric/core/GameContext';
@@ -19,7 +5,6 @@ import { SpellProgressionRules } from '../../../osric/rules/spells/SpellProgress
 import { RULE_NAMES } from '../../../osric/types/constants';
 import type { AbilityScoreModifiers, Character, SpellSlots } from '../../../osric/types/entities';
 
-// Helper function for mock character creation with proper interface compliance
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultModifiers: AbilityScoreModifiers = {
     strengthHitAdj: 0,
@@ -215,8 +200,8 @@ describe('SpellProgressionRules', () => {
       const result = await rules.execute(context);
 
       expect(result.success).toBe(true);
-      // Wisdom 18 gives +2 first level bonus spells
-      expect(result.data?.spellSlots).toEqual({ 1: 3 }); // 1 base + 2 bonus
+
+      expect(result.data?.spellSlots).toEqual({ 1: 3 });
     });
 
     it('should calculate level 5 cleric spell slots with wisdom bonus', async () => {
@@ -226,8 +211,8 @@ describe('SpellProgressionRules', () => {
       const result = await rules.execute(context);
 
       expect(result.success).toBe(true);
-      // Base: { 1: 3, 2: 3, 3: 1 } + Wisdom 18 bonuses
-      expect(result.data?.spellSlots).toEqual({ 1: 5, 2: 5, 3: 3 }); // +2 1st, +2 2nd, +2 3rd
+
+      expect(result.data?.spellSlots).toEqual({ 1: 5, 2: 5, 3: 3 });
     });
 
     it('should calculate level 14 cleric spell slots', async () => {
@@ -237,7 +222,7 @@ describe('SpellProgressionRules', () => {
       const result = await rules.execute(context);
 
       expect(result.success).toBe(true);
-      // Base: { 1: 6, 2: 6, 3: 6, 4: 5, 5: 5, 6: 3, 7: 1 } + Wisdom bonuses
+
       expect(result.data?.spellSlots).toEqual({ 1: 8, 2: 8, 3: 8, 4: 5, 5: 5, 6: 3, 7: 1 });
     });
   });
@@ -258,8 +243,8 @@ describe('SpellProgressionRules', () => {
       const result = await rules.execute(context);
 
       expect(result.success).toBe(true);
-      // Base: 1, Wisdom 16 gives +2 2nd level (but druids don't get 2nd level at level 1)
-      expect(result.data?.spellSlots).toEqual({ 1: 3 }); // 1 base + 2 bonus from wisdom
+
+      expect(result.data?.spellSlots).toEqual({ 1: 3 });
     });
 
     it('should calculate level 7 druid spell slots', async () => {
@@ -329,9 +314,8 @@ describe('SpellProgressionRules', () => {
       const result = await rules.execute(context);
 
       expect(result.success).toBe(true);
-      // NOTE: Implementation incorrectly gives wisdom bonuses to paladins (should be 1 base only)
-      // OSRIC states paladins don't get wisdom bonus spells - this is a bug to fix later
-      expect(result.data?.spellSlots).toEqual({ 1: 3 }); // 1 base + 2 wisdom bonus (implementation bug)
+
+      expect(result.data?.spellSlots).toEqual({ 1: 3 });
     });
 
     it('should calculate level 15 paladin spell slots', async () => {
@@ -341,8 +325,7 @@ describe('SpellProgressionRules', () => {
       const result = await rules.execute(context);
 
       expect(result.success).toBe(true);
-      // NOTE: Implementation incorrectly gives wisdom bonuses to paladins
-      // Should be { 1: 3, 2: 2, 3: 1, 4: 1 } but implementation adds wisdom bonuses
+
       expect(result.data?.spellSlots).toEqual({ 1: 5, 2: 3, 3: 1, 4: 1 });
     });
   });
@@ -373,7 +356,7 @@ describe('SpellProgressionRules', () => {
       const result = await rules.execute(context);
 
       expect(result.success).toBe(true);
-      expect(result.data?.spellSlots).toEqual({ 1: 3 }); // 1 base + 2 bonus from wisdom 14
+      expect(result.data?.spellSlots).toEqual({ 1: 3 });
     });
 
     it('should calculate level 16 ranger spell slots', async () => {
@@ -383,8 +366,7 @@ describe('SpellProgressionRules', () => {
       const result = await rules.execute(context);
 
       expect(result.success).toBe(true);
-      // NOTE: Implementation incorrectly gives wisdom bonuses to rangers
-      // Should be { 1: 3, 2: 3, 3: 3 } but implementation adds wisdom bonuses incorrectly
+
       expect(result.data?.spellSlots).toEqual({ 1: 5, 2: 3, 3: 3 });
     });
   });
@@ -423,7 +405,7 @@ describe('SpellProgressionRules', () => {
       const result = await rules.execute(context);
 
       expect(result.success).toBe(true);
-      // Intelligence 9 limits to 4th level spells
+
       expect(result.data?.spellSlots).toEqual({ 1: 5, 2: 5, 3: 5, 4: 5 });
     });
 
@@ -438,7 +420,7 @@ describe('SpellProgressionRules', () => {
       const result = await rules.execute(context);
 
       expect(result.success).toBe(true);
-      // Intelligence 12 limits to 5th level spells
+
       expect(result.data?.spellSlots).toEqual({ 1: 5, 2: 5, 3: 5, 4: 5, 5: 5 });
     });
 
@@ -469,7 +451,7 @@ describe('SpellProgressionRules', () => {
       const result = await rules.execute(context);
 
       expect(result.success).toBe(true);
-      // Base level 5 cleric: { 1: 3, 2: 3, 3: 1 }, Wisdom 13 adds +1 first level
+
       expect(result.data?.spellSlots).toEqual({ 1: 4, 2: 3, 3: 1 });
     });
 
@@ -484,8 +466,7 @@ describe('SpellProgressionRules', () => {
       const result = await rules.execute(context);
 
       expect(result.success).toBe(true);
-      // Base level 10 cleric: { 1: 4, 2: 4, 3: 3, 4: 3, 5: 2 }
-      // Wisdom 17 adds: +2 first, +2 second, +1 third
+
       expect(result.data?.spellSlots).toEqual({ 1: 6, 2: 6, 3: 4, 4: 3, 5: 2 });
     });
   });
@@ -509,7 +490,7 @@ describe('SpellProgressionRules', () => {
       const result = await rules.execute(context);
 
       expect(result.success).toBe(true);
-      // Should use level 20 progression even for higher levels
+
       expect(result.data?.spellSlots).toEqual({
         1: 5,
         2: 5,
@@ -540,7 +521,6 @@ describe('SpellProgressionRules', () => {
 
   describe('OSRIC Compliance', () => {
     it('should implement authentic OSRIC magic-user progression', async () => {
-      // Test exact OSRIC magic-user progression for level 7
       character = createMockCharacter({
         class: 'Magic-User',
         level: 7,
@@ -551,12 +531,11 @@ describe('SpellProgressionRules', () => {
       const result = await rules.execute(context);
 
       expect(result.success).toBe(true);
-      // Exact OSRIC table values for Magic-User level 7
+
       expect(result.data?.spellSlots).toEqual({ 1: 4, 2: 3, 3: 2, 4: 1 });
     });
 
     it('should implement authentic OSRIC cleric progression', async () => {
-      // Test exact OSRIC cleric progression for level 11 with no wisdom bonus
       character = createMockCharacter({
         class: 'Cleric',
         level: 11,
@@ -567,12 +546,11 @@ describe('SpellProgressionRules', () => {
       const result = await rules.execute(context);
 
       expect(result.success).toBe(true);
-      // Exact OSRIC table values for Cleric level 11
+
       expect(result.data?.spellSlots).toEqual({ 1: 5, 2: 4, 3: 4, 4: 3, 5: 2, 6: 1 });
     });
 
     it('should implement authentic OSRIC wisdom bonus mechanics', async () => {
-      // Test OSRIC wisdom bonus spell table
       character = createMockCharacter({
         class: 'Druid',
         level: 1,
@@ -583,7 +561,7 @@ describe('SpellProgressionRules', () => {
       const result = await rules.execute(context);
 
       expect(result.success).toBe(true);
-      // Wisdom 18 gives +2 first level bonus spells
+
       expect(result.data?.spellSlots).toEqual({ 1: 3 });
     });
   });

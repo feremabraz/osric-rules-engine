@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { BaseCommand, type CommandResult } from '../../osric/core/Command';
 import { GameContext } from '../../osric/core/GameContext';
 
-// Mock commands for testing
 class SimpleTestCommand extends BaseCommand {
   readonly type = 'simple-test';
 
@@ -16,7 +15,6 @@ class SimpleTestCommand extends BaseCommand {
   }
 
   async execute(context: GameContext): Promise<CommandResult> {
-    // Simple command execution
     context.setTemporary('command-executed', true);
     context.setTemporary('command-data', this.testData);
 
@@ -103,13 +101,11 @@ class ValidationCommand extends BaseCommand {
     return ['validation-rule'];
   }
 
-  // Expose getInvolvedEntities for testing
   getInvolvedEntities(): string[] {
     return super.getInvolvedEntities();
   }
 }
 
-// Mock entity for testing (implements Character interface)
 import type {
   AbilityScores,
   Alignment,
@@ -118,7 +114,6 @@ import type {
   SavingThrowType,
 } from '../../osric/types/entities';
 
-// Create a minimal Character implementation for testing
 const createMockCharacter = (id: string, name: string): CharacterData => ({
   id,
   name,
@@ -250,59 +245,49 @@ describe('BaseCommand', () => {
       const command = new SimpleTestCommand('data-test');
       const result = await command.execute(gameContext);
 
-      expect(result.data).toBeUndefined(); // Simple command doesn't set data
+      expect(result.data).toBeUndefined();
       expect(result.success).toBe(true);
     });
   });
 
   describe('Entity Validation', () => {
     it('should validate entities exist before execution', () => {
-      // Create a mock character for testing
       const mockCharacter = createMockCharacter('test-character', 'Test Character');
       gameContext.setEntity('test-character', mockCharacter);
 
-      // Test with existing entity
       const validCommand = new EntityRequiredCommand('test-character');
       expect(validCommand.canExecute(gameContext)).toBe(true);
 
-      // Test with non-existing entity
       const invalidCommand = new EntityRequiredCommand('non-existing-character');
       expect(invalidCommand.canExecute(gameContext)).toBe(false);
     });
 
     it('should validate target entities exist', () => {
-      // Create mock characters for testing
       const actor = createMockCharacter('actor', 'Actor');
       const target = createMockCharacter('target', 'Target');
 
       gameContext.setEntity('actor', actor);
       gameContext.setEntity('target', target);
 
-      // Test with existing entities
       const validCommand = new EntityRequiredCommand('actor', ['target']);
       expect(validCommand.canExecute(gameContext)).toBe(true);
 
-      // Test with missing target
       const invalidCommand = new EntityRequiredCommand('actor', ['missing-target']);
       expect(invalidCommand.canExecute(gameContext)).toBe(false);
     });
 
     it('should handle custom validation logic', () => {
-      // Create a mock character for testing
       const mockCharacter = createMockCharacter('validation-character', 'Validation Character');
       gameContext.setEntity('validation-character', mockCharacter);
 
-      // Test without requiring targets
       const command1 = new ValidationCommand('validation-character', [], false);
       expect(command1.canExecute(gameContext)).toBe(true);
 
-      // Test requiring targets but none provided
       const command2 = new ValidationCommand('validation-character', [], true);
       expect(command2.canExecute(gameContext)).toBe(false);
 
-      // Test requiring targets with targets provided
       const command3 = new ValidationCommand('validation-character', ['some-target'], true);
-      expect(command3.canExecute(gameContext)).toBe(false); // validateEntities will fail for missing target
+      expect(command3.canExecute(gameContext)).toBe(false);
     });
   });
 
@@ -385,7 +370,7 @@ describe('BaseCommand', () => {
       const endTime = Date.now();
 
       const executionTime = endTime - startTime;
-      expect(executionTime).toBeLessThan(100); // Should execute quickly
+      expect(executionTime).toBeLessThan(100);
     });
 
     it('should handle batch command creation efficiently', () => {
@@ -398,7 +383,7 @@ describe('BaseCommand', () => {
       const endTime = Date.now();
 
       const creationTime = endTime - startTime;
-      expect(creationTime).toBeLessThan(1000); // Should create quickly
+      expect(creationTime).toBeLessThan(1000);
       expect(commands).toHaveLength(1000);
     });
   });
@@ -427,7 +412,6 @@ describe('BaseCommand', () => {
 
       const command = new ErrorCommand();
 
-      // Since the command throws an error directly, we expect it to propagate
       await expect(command.execute(gameContext)).rejects.toThrow('Unexpected execution error');
     });
 
@@ -470,7 +454,6 @@ describe('BaseCommand', () => {
 
   describe('OSRIC Preservation Features', () => {
     it('should support OSRIC-style command patterns', () => {
-      // Test that command patterns support OSRIC game mechanics
       const attackCommand = new SimpleTestCommand('attack-goblin', 'fighter1', ['goblin1']);
       const spellCommand = new SimpleTestCommand('cast-magic-missile', 'wizard1', ['orc1']);
 
@@ -484,7 +467,6 @@ describe('BaseCommand', () => {
     it('should maintain command execution context for OSRIC rules', async () => {
       const command = new SimpleTestCommand('osric-test');
 
-      // Set up OSRIC-like context data
       gameContext.setTemporary('combat-round', 1);
       gameContext.setTemporary('initiative-order', ['fighter', 'wizard', 'goblin']);
 
@@ -497,14 +479,12 @@ describe('BaseCommand', () => {
     });
 
     it('should support command chaining for complex OSRIC actions', () => {
-      // Create commands that could be chained for complex actions
       const moveCommand = new SimpleTestCommand('move', 'character1');
       const attackCommand = new SimpleTestCommand('attack', 'character1', ['monster1']);
 
       expect(moveCommand.type).toBe('simple-test');
       expect(attackCommand.type).toBe('simple-test');
 
-      // Both commands involve the same actor - good for action sequences
       expect(moveCommand.getInvolvedEntities()[0]).toBe(attackCommand.getInvolvedEntities()[0]);
     });
   });

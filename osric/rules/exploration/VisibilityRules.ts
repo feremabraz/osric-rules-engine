@@ -1,15 +1,3 @@
-/**
- * VisibilityRules - OSRIC Visibility and Detection Systems
- *
- * Handles visibility calculations for:
- * - Light conditions and darkness
- * - Weather effects on visibility
- * - Terrain-based line of sight
- * - Detection ranges for different activities
- *
- * PRESERVATION: All OSRIC visibility mechanics preserved exactly.
- */
-
 import type { Command } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { BaseRule } from '../../core/Rule';
@@ -19,24 +7,24 @@ import type { Character } from '../../types/entities';
 
 export interface LightCondition {
   type: 'bright-light' | 'normal-light' | 'dim-light' | 'darkness' | 'magical-darkness';
-  source?: string; // torch, lantern, spell, etc.
-  radius?: number; // effective radius in feet
-  duration?: number; // remaining duration in hours
+  source?: string;
+  radius?: number;
+  duration?: number;
 }
 
 export interface VisibilityConditions {
   lightLevel: LightCondition;
   weather?: {
     type: string;
-    visibilityReduction: number; // feet of reduced visibility
+    visibilityReduction: number;
   };
   terrain?: {
     type: string;
-    baseVisibility: number; // maximum visibility in this terrain
+    baseVisibility: number;
   };
   elevation?: {
-    observerHeight: number; // height of observer in feet
-    targetHeight: number; // height of target in feet
+    observerHeight: number;
+    targetHeight: number;
   };
 }
 
@@ -45,21 +33,21 @@ export interface VisibilityParameters {
   targetId?: string;
   activityType: 'general' | 'searching' | 'hiding' | 'combat' | 'spellcasting' | 'movement';
   conditions: VisibilityConditions;
-  distance: number; // distance between observer and target in feet
+  distance: number;
 }
 
 export interface VisibilityResult {
   canSee: boolean;
-  effectiveRange: number; // actual visibility range in current conditions
-  detectionChance: number; // percentage chance to notice target
-  penalties: Record<string, number>; // various penalties from poor visibility
-  lightingBonus: number; // bonus or penalty from lighting
+  effectiveRange: number;
+  detectionChance: number;
+  penalties: Record<string, number>;
+  lightingBonus: number;
   description: string;
 }
 
 export class VisibilityRules extends BaseRule {
   readonly name = RULE_NAMES.VISIBILITY_RULES;
-  readonly priority = 50; // Execute after movement and weather rules
+  readonly priority = 50;
 
   canApply(context: GameContext, _command: Command): boolean {
     return this.getTemporaryData<VisibilityParameters>(context, 'visibility-check-params') !== null;
@@ -88,7 +76,6 @@ export class VisibilityRules extends BaseRule {
         target = context.getEntity<Character>(targetId);
       }
 
-      // Calculate visibility conditions
       const visibilityResult = this.calculateVisibility(
         observer,
         target,
@@ -97,7 +84,6 @@ export class VisibilityRules extends BaseRule {
         distance
       );
 
-      // Store results for other rules to use
       this.setTemporaryData(context, 'visibility-result', visibilityResult);
 
       const message = this.createVisibilityMessage(
@@ -128,9 +114,6 @@ export class VisibilityRules extends BaseRule {
     }
   }
 
-  /**
-   * Calculate visibility based on all conditions
-   */
   private calculateVisibility(
     observer: Character,
     target: Character | null,
@@ -138,29 +121,23 @@ export class VisibilityRules extends BaseRule {
     conditions: VisibilityConditions,
     distance: number
   ): VisibilityResult {
-    // Start with base visibility ranges
     let effectiveRange = this.getBaseLightVisibility(conditions.lightLevel);
 
-    // Apply weather restrictions
     if (conditions.weather) {
       effectiveRange = Math.min(effectiveRange, conditions.weather.visibilityReduction);
     }
 
-    // Apply terrain restrictions
     if (conditions.terrain) {
       effectiveRange = Math.min(effectiveRange, conditions.terrain.baseVisibility);
     }
 
-    // Apply elevation bonuses
     if (conditions.elevation) {
       const elevationBonus = this.calculateElevationBonus(conditions.elevation);
       effectiveRange += elevationBonus;
     }
 
-    // Determine if target can be seen
     const canSee = distance <= effectiveRange;
 
-    // Calculate detection chance for specific activities
     const detectionChance = this.calculateDetectionChance(
       observer,
       target,
@@ -170,10 +147,8 @@ export class VisibilityRules extends BaseRule {
       effectiveRange
     );
 
-    // Calculate various penalties
     const penalties = this.calculateVisibilityPenalties(conditions, distance, effectiveRange);
 
-    // Calculate lighting bonus/penalty
     const lightingBonus = this.calculateLightingBonus(conditions.lightLevel, activityType);
 
     const description = this.createVisibilityDescription(
@@ -194,29 +169,23 @@ export class VisibilityRules extends BaseRule {
     };
   }
 
-  /**
-   * Get base visibility range for light conditions
-   */
   private getBaseLightVisibility(light: LightCondition): number {
     switch (light.type) {
       case 'bright-light':
-        return 12000; // Very bright conditions (daylight)
+        return 12000;
       case 'normal-light':
-        return 6000; // Normal daylight conditions
+        return 6000;
       case 'dim-light':
-        return 3000; // Twilight, overcast
+        return 3000;
       case 'darkness':
-        return 60; // Starlight only (OSRIC: 1" = 60 feet)
+        return 60;
       case 'magical-darkness':
-        return 0; // Cannot see at all
+        return 0;
       default:
         return 6000;
     }
   }
 
-  /**
-   * Calculate elevation bonus to visibility
-   */
   private calculateElevationBonus(elevation: {
     observerHeight: number;
     targetHeight: number;
@@ -224,18 +193,13 @@ export class VisibilityRules extends BaseRule {
     const heightDifference = elevation.observerHeight - elevation.targetHeight;
 
     if (heightDifference <= 0) {
-      return 0; // No bonus for being lower or equal
+      return 0;
     }
 
-    // OSRIC rule: For every 10 feet of elevation, add 1 mile of visibility
-    // Convert to feet: 1 mile = 5280 feet
     const milesOfBonus = Math.floor(heightDifference / 10);
     return milesOfBonus * 5280;
   }
 
-  /**
-   * Calculate chance to detect target based on activity
-   */
   private calculateDetectionChance(
     observer: Character,
     target: Character | null,
@@ -244,29 +208,23 @@ export class VisibilityRules extends BaseRule {
     distance: number,
     effectiveRange: number
   ): number {
-    // Base chance depends on activity type
-    let baseChance = 100; // Assume automatic if visible and not hiding
+    let baseChance = 100;
 
     if (activityType === 'hiding' && target) {
-      // Use thief's hide ability or base percentage
       const hideSkill = target.thiefSkills?.hideInShadows || 10;
       baseChance = 100 - hideSkill;
     } else if (activityType === 'searching') {
-      // Searching has base chance modified by conditions
       baseChance = 75;
     } else if (activityType === 'general') {
-      // General observation
       baseChance = 90;
     }
 
-    // Distance penalty
     if (distance > effectiveRange * 0.5) {
       const distancePenalty =
         Math.floor((distance - effectiveRange * 0.5) / (effectiveRange * 0.1)) * 5;
       baseChance -= distancePenalty;
     }
 
-    // Light penalties
     switch (conditions.lightLevel.type) {
       case 'dim-light':
         baseChance -= 20;
@@ -279,22 +237,17 @@ export class VisibilityRules extends BaseRule {
         break;
     }
 
-    // Weather penalties
     if (conditions.weather?.visibilityReduction) {
       const weatherPenalty = Math.floor((6000 - conditions.weather.visibilityReduction) / 300) * 5;
       baseChance -= weatherPenalty;
     }
 
-    // Observer's wisdom bonus
     const wisdomBonus = Math.floor((observer.abilities.wisdom - 10) / 2) * 3;
     baseChance += wisdomBonus;
 
     return Math.max(5, Math.min(95, baseChance));
   }
 
-  /**
-   * Calculate penalties for various activities due to poor visibility
-   */
   private calculateVisibilityPenalties(
     conditions: VisibilityConditions,
     distance: number,
@@ -308,7 +261,6 @@ export class VisibilityRules extends BaseRule {
       search: 0,
     };
 
-    // Light-based penalties
     switch (conditions.lightLevel.type) {
       case 'dim-light':
         penalties.attack = -1;
@@ -331,7 +283,6 @@ export class VisibilityRules extends BaseRule {
         break;
     }
 
-    // Distance penalties
     if (distance > effectiveRange * 0.75) {
       const distancePenalty = Math.floor(
         (distance - effectiveRange * 0.75) / (effectiveRange * 0.1)
@@ -340,7 +291,6 @@ export class VisibilityRules extends BaseRule {
       penalties.spellcasting -= Math.floor(distancePenalty / 2);
     }
 
-    // Weather penalties
     if (conditions.weather?.visibilityReduction && conditions.weather.visibilityReduction < 1000) {
       penalties.rangedAttack -= 2;
       penalties.search -= 3;
@@ -349,12 +299,8 @@ export class VisibilityRules extends BaseRule {
     return penalties;
   }
 
-  /**
-   * Calculate lighting bonus/penalty for specific activities
-   */
   private calculateLightingBonus(light: LightCondition, activityType: string): number {
     if (activityType === 'hiding') {
-      // Darkness helps hiding
       switch (light.type) {
         case 'darkness':
           return 25;
@@ -367,10 +313,9 @@ export class VisibilityRules extends BaseRule {
       }
     }
 
-    // Most other activities suffer in poor light
     switch (light.type) {
       case 'bright-light':
-        return 5; // Bonus for excellent conditions
+        return 5;
       case 'dim-light':
         return -5;
       case 'darkness':
@@ -382,9 +327,6 @@ export class VisibilityRules extends BaseRule {
     }
   }
 
-  /**
-   * Create descriptive text for visibility conditions
-   */
   private createVisibilityDescription(
     conditions: VisibilityConditions,
     effectiveRange: number,
@@ -420,9 +362,6 @@ export class VisibilityRules extends BaseRule {
     return description;
   }
 
-  /**
-   * Create message for visibility check result
-   */
   private createVisibilityMessage(
     observer: Character,
     target: Character | null,
@@ -443,9 +382,6 @@ export class VisibilityRules extends BaseRule {
     return message;
   }
 
-  /**
-   * Helper method to create visibility check parameters
-   */
   static createVisibilityCheck(
     observerId: string,
     targetId: string | undefined,
@@ -462,9 +398,6 @@ export class VisibilityRules extends BaseRule {
     };
   }
 
-  /**
-   * Common light condition presets
-   */
   static readonly LIGHT_CONDITIONS = {
     DAYLIGHT: { type: 'normal-light' as const },
     BRIGHT_DAYLIGHT: { type: 'bright-light' as const },
@@ -476,9 +409,6 @@ export class VisibilityRules extends BaseRule {
     MAGICAL_DARKNESS: { type: 'magical-darkness' as const, source: 'spell' },
   };
 
-  /**
-   * Common terrain visibility data
-   */
   static readonly TERRAIN_VISIBILITY = {
     OPEN_PLAINS: { type: 'plains', baseVisibility: 12000 },
     FOREST: { type: 'forest', baseVisibility: 300 },

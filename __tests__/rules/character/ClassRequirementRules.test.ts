@@ -1,19 +1,9 @@
-/**
- * ClassRequirementRules Tests - OSRIC Compliance
- *
- * Tests the ClassRequirementRule from ClassRequirementRules.ts:
- * - All 9 OSRIC class requirements validation
- * - Racial level limits enforcement
- * - Exact OSRIC value preservation
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { GameContext } from '../../../osric/core/GameContext';
 import { ClassRequirementRule } from '../../../osric/rules/character/ClassRequirementRules';
 import type { AbilityScores } from '../../../osric/types/entities';
 
-// Mock command that implements the Command interface
 class MockCharacterCommand {
   readonly type = 'create-character';
   readonly actorId = 'test-actor';
@@ -54,9 +44,8 @@ describe('ClassRequirementRules', () => {
         race: 'Human',
       });
 
-      // Set scores that meet fighter requirements (STR 9+)
       context.setTemporary('adjusted-ability-scores', {
-        strength: 15, // Meets requirement
+        strength: 15,
         dexterity: 12,
         constitution: 14,
         intelligence: 10,
@@ -78,7 +67,7 @@ describe('ClassRequirementRules', () => {
       });
 
       context.setTemporary('adjusted-ability-scores', {
-        strength: 8, // Below STR 9 requirement
+        strength: 8,
         dexterity: 12,
         constitution: 14,
         intelligence: 10,
@@ -102,9 +91,9 @@ describe('ClassRequirementRules', () => {
 
       context.setTemporary('adjusted-ability-scores', {
         strength: 10,
-        dexterity: 6, // Meets DEX 6+ requirement
+        dexterity: 6,
         constitution: 12,
-        intelligence: 16, // Meets INT 9+ requirement
+        intelligence: 16,
         wisdom: 11,
         charisma: 13,
       });
@@ -126,7 +115,7 @@ describe('ClassRequirementRules', () => {
         strength: 10,
         dexterity: 12,
         constitution: 12,
-        intelligence: 8, // Below INT 9 requirement
+        intelligence: 8,
         wisdom: 11,
         charisma: 13,
       });
@@ -150,7 +139,7 @@ describe('ClassRequirementRules', () => {
         dexterity: 12,
         constitution: 12,
         intelligence: 11,
-        wisdom: 15, // Meets WIS 9+ requirement
+        wisdom: 15,
         charisma: 13,
       });
 
@@ -169,7 +158,7 @@ describe('ClassRequirementRules', () => {
 
       context.setTemporary('adjusted-ability-scores', {
         strength: 10,
-        dexterity: 16, // Meets DEX 9+ requirement
+        dexterity: 16,
         constitution: 12,
         intelligence: 11,
         wisdom: 10,
@@ -189,14 +178,13 @@ describe('ClassRequirementRules', () => {
         race: 'Human',
       });
 
-      // Set scores that don't meet paladin requirements
       context.setTemporary('adjusted-ability-scores', {
-        strength: 11, // Below STR 12 requirement
+        strength: 11,
         dexterity: 12,
-        constitution: 8, // Below CON 9 requirement
-        intelligence: 8, // Below INT 9 requirement
-        wisdom: 12, // Below WIS 13 requirement
-        charisma: 16, // Below CHA 17 requirement
+        constitution: 8,
+        intelligence: 8,
+        wisdom: 12,
+        charisma: 16,
       });
 
       const rule = new ClassRequirementRule();
@@ -214,12 +202,12 @@ describe('ClassRequirementRules', () => {
       });
 
       context.setTemporary('adjusted-ability-scores', {
-        strength: 12, // Meets STR 12 requirement
+        strength: 12,
         dexterity: 12,
-        constitution: 9, // Meets CON 9 requirement
-        intelligence: 9, // Meets INT 9 requirement
-        wisdom: 13, // Meets WIS 13 requirement
-        charisma: 17, // Meets CHA 17 requirement
+        constitution: 9,
+        intelligence: 9,
+        wisdom: 13,
+        charisma: 17,
       });
 
       const rule = new ClassRequirementRule();
@@ -236,11 +224,11 @@ describe('ClassRequirementRules', () => {
       });
 
       context.setTemporary('adjusted-ability-scores', {
-        strength: 13, // Meets STR 13 requirement
+        strength: 13,
         dexterity: 12,
-        constitution: 14, // Meets CON 14 requirement
-        intelligence: 13, // Meets INT 13 requirement
-        wisdom: 14, // Meets WIS 14 requirement
+        constitution: 14,
+        intelligence: 13,
+        wisdom: 14,
         charisma: 10,
       });
 
@@ -262,8 +250,8 @@ describe('ClassRequirementRules', () => {
         dexterity: 12,
         constitution: 12,
         intelligence: 11,
-        wisdom: 12, // Meets WIS 12 requirement
-        charisma: 15, // Meets CHA 15 requirement
+        wisdom: 12,
+        charisma: 15,
       });
 
       const rule = new ClassRequirementRule();
@@ -280,10 +268,10 @@ describe('ClassRequirementRules', () => {
       });
 
       context.setTemporary('adjusted-ability-scores', {
-        strength: 12, // Meets STR 12 requirement
-        dexterity: 12, // Meets DEX 12 requirement
+        strength: 12,
+        dexterity: 12,
         constitution: 12,
-        intelligence: 11, // Meets INT 11 requirement
+        intelligence: 11,
         wisdom: 10,
         charisma: 10,
       });
@@ -303,9 +291,9 @@ describe('ClassRequirementRules', () => {
 
       context.setTemporary('adjusted-ability-scores', {
         strength: 10,
-        dexterity: 16, // Meets DEX 16 requirement
+        dexterity: 16,
         constitution: 12,
-        intelligence: 15, // Meets INT 15 requirement
+        intelligence: 15,
         wisdom: 10,
         charisma: 10,
       });
@@ -320,7 +308,6 @@ describe('ClassRequirementRules', () => {
     it('should validate all OSRIC class requirements exist', () => {
       const rule = new ClassRequirementRule();
 
-      // Test that all defined character classes have requirements
       const characterClasses = [
         'Fighter',
         'Cleric',
@@ -339,7 +326,6 @@ describe('ClassRequirementRules', () => {
           race: 'Human',
         });
 
-        // Set high ability scores for canApply to work
         context.setTemporary('adjusted-ability-scores', {
           strength: 15,
           dexterity: 15,
@@ -349,7 +335,6 @@ describe('ClassRequirementRules', () => {
           charisma: 15,
         });
 
-        // Should be able to apply (has requirements defined)
         expect(rule.canApply(context, mockCommand)).toBe(true);
       }
     });
@@ -357,18 +342,14 @@ describe('ClassRequirementRules', () => {
     it('should only apply to create-character commands with class and adjusted scores', async () => {
       const rule = new ClassRequirementRule();
 
-      // Test with wrong command type
       const wrongCommand = { ...mockCommand, type: 'attack' };
       expect(rule.canApply(context, wrongCommand as unknown as typeof mockCommand)).toBe(false);
 
-      // Test with correct command type but no data
       expect(rule.canApply(context, mockCommand)).toBe(false);
 
-      // Test with partial data (missing adjusted scores)
       context.setTemporary('character-creation', { characterClass: 'Fighter' });
       expect(rule.canApply(context, mockCommand)).toBe(false);
 
-      // Test with complete data
       context.setTemporary('adjusted-ability-scores', {
         strength: 15,
         dexterity: 15,

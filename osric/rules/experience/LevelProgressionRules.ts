@@ -1,10 +1,3 @@
-/**
- * LevelProgressionRules - OSRIC Level Advancement
- *
- * Migrated from rules/experience/levelProgression.ts
- * PRESERVATION: All OSRIC level progression tables and requirements preserved exactly
- */
-
 import type { Command } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { BaseRule, type RuleResult } from '../../core/Rule';
@@ -13,12 +6,12 @@ import type { Character, CharacterClass, ClassAbility } from '../../types/entiti
 
 interface LevelUpParameters {
   characterId: string;
-  skipTraining?: boolean; // For testing or special circumstances
+  skipTraining?: boolean;
 }
 
 export class LevelProgressionRule extends BaseRule {
   readonly name = RULE_NAMES.LEVEL_PROGRESSION;
-  readonly priority = 600; // Execute after experience gain
+  readonly priority = 600;
 
   canApply(_context: GameContext, command: Command): boolean {
     return command.type === COMMAND_TYPES.LEVEL_UP;
@@ -37,7 +30,6 @@ export class LevelProgressionRule extends BaseRule {
         return this.createFailureResult(`Character ${levelData.characterId} not found`);
       }
 
-      // Check if character is eligible for level advancement
       const eligibilityCheck = this.checkLevelEligibility(character);
       if (!eligibilityCheck.eligible) {
         return this.createFailureResult(
@@ -45,11 +37,9 @@ export class LevelProgressionRule extends BaseRule {
         );
       }
 
-      // Calculate new level and benefits
       const newLevel = this.calculateNewLevel(character);
       const levelBenefits = this.calculateLevelBenefits(character, newLevel);
 
-      // Apply level advancement
       const updatedCharacter = this.applyLevelAdvancement(character, newLevel, levelBenefits);
 
       context.setEntity(levelData.characterId, updatedCharacter);
@@ -67,11 +57,7 @@ export class LevelProgressionRule extends BaseRule {
     }
   }
 
-  /**
-   * Check if character meets requirements for level advancement
-   */
   private checkLevelEligibility(character: Character): { eligible: boolean; reason?: string } {
-    // Check if character has enough experience
     const currentXP = character.experience.current;
     const requiredXP = character.experience.requiredForNextLevel;
 
@@ -82,7 +68,6 @@ export class LevelProgressionRule extends BaseRule {
       };
     }
 
-    // Check racial level limits
     const racialLimit = this.getRacialLevelLimit(character);
     if (character.experience.level >= racialLimit) {
       return {
@@ -91,7 +76,6 @@ export class LevelProgressionRule extends BaseRule {
       };
     }
 
-    // Training requirements (OSRIC)
     const trainingRequired = this.isTrainingRequired(character);
     if (trainingRequired && !this.hasCompletedTraining(character)) {
       return {
@@ -103,9 +87,6 @@ export class LevelProgressionRule extends BaseRule {
     return { eligible: true };
   }
 
-  /**
-   * Calculate the new level based on current experience
-   */
   private calculateNewLevel(character: Character): number {
     const characterClass = character.class;
     const currentXP = character.experience.current;
@@ -113,9 +94,6 @@ export class LevelProgressionRule extends BaseRule {
     return determineLevel(characterClass, currentXP);
   }
 
-  /**
-   * Calculate what benefits the character gains from leveling
-   */
   private calculateLevelBenefits(character: Character, newLevel: number): LevelBenefits {
     const oldLevel = character.experience.level;
     const benefits: LevelBenefits = {
@@ -126,31 +104,23 @@ export class LevelProgressionRule extends BaseRule {
       savingThrowsImproved: [],
     };
 
-    // Calculate hit points gained
     for (let level = oldLevel + 1; level <= newLevel; level++) {
       benefits.hitPointsGained += this.rollHitPoints(character, level);
     }
 
-    // Calculate spell progression (for spell casters)
     if (this.isSpellCaster(character.class)) {
       benefits.spellSlotsGained = this.calculateSpellProgression(character, newLevel);
     }
 
-    // Check for new class abilities
     benefits.newAbilities = this.getNewClassAbilities(character, newLevel);
 
-    // Calculate attack bonus improvements
     benefits.attackBonusGained = this.calculateAttackBonusGain(character, newLevel);
 
-    // Calculate saving throw improvements
     benefits.savingThrowsImproved = this.calculateSavingThrowImprovements(character, newLevel);
 
     return benefits;
   }
 
-  /**
-   * Apply all level advancement changes to character
-   */
   private applyLevelAdvancement(
     character: Character,
     newLevel: number,
@@ -158,21 +128,18 @@ export class LevelProgressionRule extends BaseRule {
   ): Character {
     const updatedCharacter = { ...character };
 
-    // Update level and experience
     updatedCharacter.experience = {
       ...character.experience,
       level: newLevel,
       requiredForNextLevel: getExperienceForNextLevel(character.class, newLevel),
     };
 
-    // Apply hit point gains
     updatedCharacter.hitPoints = {
       ...character.hitPoints,
       maximum: character.hitPoints.maximum + benefits.hitPointsGained,
-      current: character.hitPoints.current + benefits.hitPointsGained, // Heal on level up
+      current: character.hitPoints.current + benefits.hitPointsGained,
     };
 
-    // Apply spell slot increases
     if (Object.keys(benefits.spellSlotsGained).length > 0) {
       updatedCharacter.spellSlots = {
         ...character.spellSlots,
@@ -180,7 +147,6 @@ export class LevelProgressionRule extends BaseRule {
       };
     }
 
-    // Add new class abilities
     if (benefits.newAbilities.length > 0) {
       updatedCharacter.classAbilities = [...character.classAbilities, ...benefits.newAbilities];
     }
@@ -188,44 +154,33 @@ export class LevelProgressionRule extends BaseRule {
     return updatedCharacter;
   }
 
-  /**
-   * Roll hit points for a specific level
-   */
   private rollHitPoints(_character: Character, _level: number): number {
-    // TODO: Implement proper hit point rolling with hit dice
     const hitDie = this.getHitDie(_character.class);
     const conBonus = this.getConstitutionBonus(_character.abilities.constitution);
 
-    // For now, return average hit points + constitution bonus
     return Math.floor(hitDie / 2) + 1 + conBonus;
   }
 
-  /**
-   * Get hit die size for character class
-   */
   private getHitDie(characterClass: string): number {
     switch (characterClass.toLowerCase()) {
       case 'fighter':
       case 'paladin':
       case 'ranger':
-        return 10; // d10
+        return 10;
       case 'cleric':
       case 'druid':
-        return 8; // d8
+        return 8;
       case 'magic-user':
       case 'illusionist':
-        return 4; // d4
+        return 4;
       case 'thief':
       case 'assassin':
-        return 6; // d6
+        return 6;
       default:
-        return 6; // Default d6
+        return 6;
     }
   }
 
-  /**
-   * Get constitution hit point bonus
-   */
   private getConstitutionBonus(constitution: number): number {
     if (constitution >= 18) return 4;
     if (constitution >= 17) return 3;
@@ -236,73 +191,39 @@ export class LevelProgressionRule extends BaseRule {
     return -2;
   }
 
-  /**
-   * Check if character class can cast spells
-   */
   private isSpellCaster(characterClass: string): boolean {
     const spellCasters = ['cleric', 'druid', 'magic-user', 'illusionist'];
     return spellCasters.includes(characterClass.toLowerCase());
   }
 
-  /**
-   * Calculate spell slot progression
-   */
   private calculateSpellProgression(
     _character: Character,
     _newLevel: number
   ): Record<number, number> {
-    // This would implement OSRIC spell progression tables
-    // For now, return empty progression
     return {};
   }
 
-  /**
-   * Get new class abilities gained at this level
-   */
   private getNewClassAbilities(_character: Character, _newLevel: number): ClassAbility[] {
-    // Return new abilities gained at this level
     return [];
   }
 
-  /**
-   * Calculate attack bonus improvements
-   */
   private calculateAttackBonusGain(_character: Character, _newLevel: number): number {
-    // OSRIC THAC0 progression would be implemented here
     return 0;
   }
 
-  /**
-   * Calculate saving throw improvements
-   */
   private calculateSavingThrowImprovements(_character: Character, _newLevel: number): string[] {
-    // OSRIC saving throw progression would be implemented here
     return [];
   }
 
-  /**
-   * Get racial level limit for character
-   */
   private getRacialLevelLimit(_character: Character): number {
-    // OSRIC racial level limits would be implemented here
-    // For now, return high limit
     return 20;
   }
 
-  /**
-   * Check if training is required for level advancement
-   */
   private isTrainingRequired(_character: Character): boolean {
-    // OSRIC training rules - usually required for all level advancement
     return true;
   }
 
-  /**
-   * Check if character has completed required training
-   */
   private hasCompletedTraining(_character: Character): boolean {
-    // This would check if character has completed training
-    // For now, assume training is complete
     return true;
   }
 }
@@ -315,9 +236,6 @@ interface LevelBenefits {
   savingThrowsImproved: string[];
 }
 
-/**
- * Experience tables for each character class - OSRIC compliant
- */
 const EXPERIENCE_TABLES: Record<CharacterClass, Array<{ level: number; experience: number }>> = {
   Fighter: [
     { level: 1, experience: 0 },
@@ -538,27 +456,19 @@ const EXPERIENCE_TABLES: Record<CharacterClass, Array<{ level: number; experienc
   ],
 };
 
-/**
- * Determine a character's level based on experience points - OSRIC compliant
- */
 export function determineLevel(characterClass: CharacterClass, experiencePoints: number): number {
   const table = EXPERIENCE_TABLES[characterClass];
   if (!table) return 1;
 
-  // Start from the highest level and work backwards
   for (let i = table.length - 1; i >= 0; i--) {
     if (experiencePoints >= table[i].experience) {
       return table[i].level;
     }
   }
 
-  // If somehow below level 1 requirements, return level 1
   return 1;
 }
 
-/**
- * Get experience required for next level - OSRIC compliant
- */
 export function getExperienceForNextLevel(
   characterClass: CharacterClass,
   currentLevel: number
@@ -570,20 +480,13 @@ export function getExperienceForNextLevel(
   return nextLevelEntry ? nextLevelEntry.experience : 0;
 }
 
-/**
- * Get level progression table for a character class - OSRIC compliant
- */
 export function getLevelProgressionTable(
   characterClass: CharacterClass
 ): Array<{ level: number; experience: number }> {
   return EXPERIENCE_TABLES[characterClass] || [];
 }
 
-/**
- * Get level title for a character class at a specific level - OSRIC compliant
- */
 export function getLevelTitle(characterClass: CharacterClass, level: number): string {
-  // Simple level titles for now - can be expanded later
   const titles: Record<CharacterClass, string[]> = {
     Fighter: [
       'Veteran',
@@ -714,29 +617,23 @@ export function getLevelTitle(characterClass: CharacterClass, level: number): st
   return classTitles[titleIndex] || 'Unknown';
 }
 
-/**
- * Simple training requirements - can be expanded later
- */
 export function getTrainingRequirements(
   _characterClass: CharacterClass,
   currentLevel: number,
   targetLevel: number
 ): {
-  timeRequired: number; // in weeks
-  costRequired: number; // in gold pieces
+  timeRequired: number;
+  costRequired: number;
   trainerRequired: boolean;
 } {
   const levelsToGain = targetLevel - currentLevel;
   return {
-    timeRequired: levelsToGain * 2, // 2 weeks per level
-    costRequired: levelsToGain * currentLevel * 100, // 100 gp per current level per new level
-    trainerRequired: targetLevel > 3, // Need trainer after level 3
+    timeRequired: levelsToGain * 2,
+    costRequired: levelsToGain * currentLevel * 100,
+    trainerRequired: targetLevel > 3,
   };
 }
 
-/**
- * Check if training requirements are met
- */
 export function meetsTrainingRequirements(
   requirements: { timeRequired: number; costRequired: number; trainerRequired: boolean },
   available: { timeAvailable: number; goldAvailable: number; hasTrainer: boolean }

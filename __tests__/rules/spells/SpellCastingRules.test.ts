@@ -4,7 +4,6 @@ import type { Character, Spell } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-// Helper function for mock character creation
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return {
     id: 'test-character',
@@ -132,7 +131,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   } as Character;
 }
 
-// Helper function for mock spells
 function createMockSpell(overrides: Partial<Spell> = {}): Spell {
   return {
     name: 'Magic Missile',
@@ -166,7 +164,6 @@ describe('SpellCastingRules', () => {
     context = new GameContext(store);
     rule = new SpellCastingRules();
 
-    // Setup default test data
     const character = createMockCharacter();
     const spell = createMockSpell();
     const target = createMockCharacter({ id: 'target-1', name: 'Target' });
@@ -174,7 +171,6 @@ describe('SpellCastingRules', () => {
     context.setEntity('test-character', character);
     context.setEntity('target-1', target);
 
-    // Setup spell casting context data
     context.setTemporary('castSpell_caster', character);
     context.setTemporary('castSpell_spell', spell);
     context.setTemporary('castSpell_targets', [target]);
@@ -219,9 +215,8 @@ describe('SpellCastingRules', () => {
 
       expect(result.success).toBe(true);
 
-      // Check that caster was updated with consumed spell slot
       const updatedCaster = context.getEntity<Character>('test-character');
-      expect(updatedCaster?.memorizedSpells[1]).toHaveLength(0); // Magic Missile consumed
+      expect(updatedCaster?.memorizedSpells[1]).toHaveLength(0);
     });
 
     it('should set spell result data for command use', async () => {
@@ -369,7 +364,7 @@ describe('SpellCastingRules', () => {
       expect(spellResult).toBeDefined();
       expect(spellResult.damage).toBeDefined();
       expect(Array.isArray(spellResult.damage)).toBe(true);
-      expect(spellResult.damage?.length).toBeGreaterThan(0); // At least 1 missile
+      expect(spellResult.damage?.length).toBeGreaterThan(0);
     });
 
     it('should handle healing spells', async () => {
@@ -441,7 +436,7 @@ describe('SpellCastingRules', () => {
 
       const result = await rule.execute(context);
 
-      expect(result.success).toBe(true); // Should succeed unless component tracking implemented
+      expect(result.success).toBe(true);
     });
   });
 });

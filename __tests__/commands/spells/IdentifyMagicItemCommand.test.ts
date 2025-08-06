@@ -5,7 +5,6 @@ import type { Character, Item } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-// Helper function for mock character creation
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return {
     id: 'test-character',
@@ -108,7 +107,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   } as Character;
 }
 
-// Helper function for mock magic item creation
 function createMockMagicItem(overrides: Partial<Item> = {}): Item {
   return {
     id: 'magic-sword',
@@ -126,8 +124,6 @@ function createMockMagicItem(overrides: Partial<Item> = {}): Item {
   } as Item;
 }
 
-// Helper function for mock magic item creation
-
 describe('IdentifyMagicItemCommand', () => {
   let context: GameContext;
   let magicUser: Character;
@@ -140,7 +136,6 @@ describe('IdentifyMagicItemCommand', () => {
     magicUser = createMockCharacter({ id: 'magic-user' });
     magicItem = createMockMagicItem({ id: 'magic-item' });
 
-    // Add item to character's inventory
     magicUser.inventory = [magicItem];
 
     context.setEntity('magic-user', magicUser);
@@ -181,7 +176,6 @@ describe('IdentifyMagicItemCommand', () => {
     });
 
     it('should fail when identifier does not have item', () => {
-      // Create item not in inventory
       const otherItem = createMockMagicItem({ id: 'other-item' });
       context.setItem('other-item', otherItem);
 
@@ -503,7 +497,7 @@ describe('IdentifyMagicItemCommand', () => {
       const command = new IdentifyMagicItemCommand('magic-user', 'magic-item', 'spell');
       const cost = command.getIdentificationCost('spell', magicItem);
 
-      expect(cost).toBe(100); // Pearl component cost
+      expect(cost).toBe(100);
     });
 
     it('should calculate sage cost based on item value', () => {
@@ -515,7 +509,7 @@ describe('IdentifyMagicItemCommand', () => {
       const expensiveCost = command.getIdentificationCost('sage', expensiveItem);
 
       expect(expensiveCost).toBeGreaterThan(cheapCost);
-      expect(cheapCost).toBeGreaterThanOrEqual(50); // Minimum cost
+      expect(cheapCost).toBeGreaterThanOrEqual(50);
     });
 
     it('should return zero cost for trial method', () => {
@@ -530,7 +524,6 @@ describe('IdentifyMagicItemCommand', () => {
     it('should implement authentic OSRIC identification mechanics', () => {
       const command = new IdentifyMagicItemCommand('magic-user', 'magic-item', 'spell');
 
-      // Test OSRIC-specific requirements
       expect(command.getIdentificationTime('spell')).toBe('1 turn');
       expect(command.getIdentificationCost('spell', magicItem)).toBe(100);
       expect(command.getIdentificationChance(magicUser, 'spell', magicItem)).toBe(100);
@@ -599,11 +592,10 @@ describe('IdentifyMagicItemCommand', () => {
     });
 
     it('should handle exceptions gracefully', async () => {
-      // Create command with invalid method that might cause errors
       const command = new IdentifyMagicItemCommand('magic-user', 'magic-item', 'spell');
       const result = await command.execute(context);
 
-      expect(result.success).toBe(true); // Execute succeeds, validation happens in canExecute
+      expect(result.success).toBe(true);
     });
   });
 });

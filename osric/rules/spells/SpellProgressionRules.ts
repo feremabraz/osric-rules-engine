@@ -3,21 +3,11 @@ import { BaseRule, type RuleResult } from '../../core/Rule';
 import type { Character, SpellSlots } from '../../types';
 import { RULE_NAMES } from '../../types/constants';
 
-/**
- * Rule for handling spell progression and slot calculation in the OSRIC system.
- *
- * Preserves OSRIC spell progression mechanics:
- * - Spell slots by class and level (exact OSRIC tables)
- * - Bonus spells from high ability scores
- * - Intelligence limits for arcane casters
- * - Class-specific spell progression tables
- */
 export class SpellProgressionRules extends BaseRule {
   public readonly name = RULE_NAMES.SPELL_PROGRESSION;
   public readonly description = 'Calculates spell slots and progression by OSRIC rules';
 
   public canApply(context: GameContext): boolean {
-    // This rule applies when we need to calculate spell progression
     const character = context.getTemporary<Character>('calculateSpells_character');
     return !!character;
   }
@@ -30,10 +20,8 @@ export class SpellProgressionRules extends BaseRule {
         return this.createFailureResult('Missing character in context');
       }
 
-      // Calculate spell slots for the character
       const spellSlots = this.calculateSpellSlots(character);
 
-      // Store results
       context.setTemporary('calculateSpells_result', spellSlots);
 
       return this.createSuccessResult(`Calculated spell slots for ${character.name}`, {
@@ -46,24 +34,17 @@ export class SpellProgressionRules extends BaseRule {
     }
   }
 
-  /**
-   * Calculate total spell slots for a character based on class, level, and abilities
-   * Preserves exact OSRIC spell progression tables
-   */
   private calculateSpellSlots(character: Character): SpellSlots {
     const characterClass = character.class;
     const characterLevel = character.level;
 
-    // Get base spell slots from class progression
     let baseSlots = this.getBaseSpellSlots(characterClass, characterLevel);
 
-    // Add bonus spells from high abilities
     if (this.isDivineCaster(characterClass)) {
       const bonusSpells = this.getBonusSpellsFromWisdom(character.abilities.wisdom);
       baseSlots = this.addBonusSpells(baseSlots, bonusSpells);
     }
 
-    // Validate against intelligence limits for arcane casters
     if (this.isArcaneCaster(characterClass)) {
       baseSlots = this.applyIntelligenceLimits(baseSlots, character.abilities.intelligence);
     }
@@ -71,12 +52,7 @@ export class SpellProgressionRules extends BaseRule {
     return baseSlots;
   }
 
-  /**
-   * Get base spell slots from OSRIC class progression tables
-   * These are the exact values from the OSRIC rulebook
-   */
   private getBaseSpellSlots(characterClass: string, characterLevel: number): SpellSlots {
-    // Cap level at 20 for spell progression
     const level = Math.min(characterLevel, 20);
 
     switch (characterClass) {
@@ -93,13 +69,10 @@ export class SpellProgressionRules extends BaseRule {
       case 'Ranger':
         return this.getRangerSpellSlots(level);
       default:
-        return {}; // Non-spellcasting class
+        return {};
     }
   }
 
-  /**
-   * Magic-User spell progression - exact OSRIC table
-   */
   private getMagicUserSpellSlots(level: number): SpellSlots {
     const progression: Record<number, SpellSlots> = {
       1: { 1: 1 },
@@ -127,9 +100,6 @@ export class SpellProgressionRules extends BaseRule {
     return progression[level] || {};
   }
 
-  /**
-   * Cleric spell progression - exact OSRIC table
-   */
   private getClericSpellSlots(level: number): SpellSlots {
     const progression: Record<number, SpellSlots> = {
       1: { 1: 1 },
@@ -157,9 +127,6 @@ export class SpellProgressionRules extends BaseRule {
     return progression[level] || {};
   }
 
-  /**
-   * Druid spell progression - exact OSRIC table
-   */
   private getDruidSpellSlots(level: number): SpellSlots {
     const progression: Record<number, SpellSlots> = {
       1: { 1: 1 },
@@ -187,9 +154,6 @@ export class SpellProgressionRules extends BaseRule {
     return progression[level] || {};
   }
 
-  /**
-   * Illusionist spell progression - exact OSRIC table
-   */
   private getIllusionistSpellSlots(level: number): SpellSlots {
     const progression: Record<number, SpellSlots> = {
       1: { 1: 1 },
@@ -217,9 +181,6 @@ export class SpellProgressionRules extends BaseRule {
     return progression[level] || {};
   }
 
-  /**
-   * Paladin spell progression - starts at level 9
-   */
   private getPaladinSpellSlots(level: number): SpellSlots {
     if (level < 9) return {};
 
@@ -241,9 +202,6 @@ export class SpellProgressionRules extends BaseRule {
     return progression[level] || {};
   }
 
-  /**
-   * Ranger spell progression - starts at level 8
-   */
   private getRangerSpellSlots(level: number): SpellSlots {
     if (level < 8) return {};
 
@@ -266,24 +224,14 @@ export class SpellProgressionRules extends BaseRule {
     return progression[level] || {};
   }
 
-  /**
-   * Check if character class is a divine caster
-   */
   private isDivineCaster(characterClass: string): boolean {
     return ['Cleric', 'Druid', 'Paladin', 'Ranger'].includes(characterClass);
   }
 
-  /**
-   * Check if character class is an arcane caster
-   */
   private isArcaneCaster(characterClass: string): boolean {
     return ['Magic-User', 'Illusionist'].includes(characterClass);
   }
 
-  /**
-   * Calculate bonus spells from high wisdom for divine casters
-   * Preserves exact OSRIC wisdom bonus spell table
-   */
   private getBonusSpellsFromWisdom(wisdom: number): Record<number, number> {
     const bonusSpells: Record<number, number> = {};
 
@@ -297,9 +245,6 @@ export class SpellProgressionRules extends BaseRule {
     return bonusSpells;
   }
 
-  /**
-   * Add bonus spells to base spell slots
-   */
   private addBonusSpells(baseSlots: SpellSlots, bonusSpells: Record<number, number>): SpellSlots {
     const result = { ...baseSlots };
 
@@ -313,15 +258,11 @@ export class SpellProgressionRules extends BaseRule {
     return result;
   }
 
-  /**
-   * Apply intelligence limits for arcane casters
-   * Preserves OSRIC intelligence-based spell level restrictions
-   */
   private applyIntelligenceLimits(spellSlots: SpellSlots, intelligence: number): SpellSlots {
     const maxSpellLevel = this.getMaxSpellLevelFromIntelligence(intelligence);
 
     if (maxSpellLevel === null) {
-      return {}; // Cannot cast spells
+      return {};
     }
 
     const result: SpellSlots = {};
@@ -335,10 +276,6 @@ export class SpellProgressionRules extends BaseRule {
     return result;
   }
 
-  /**
-   * Get maximum spell level based on intelligence
-   * Preserves OSRIC intelligence table
-   */
   private getMaxSpellLevelFromIntelligence(intelligence: number): number | null {
     if (intelligence < 9) return null;
     if (intelligence <= 9) return 4;
@@ -346,6 +283,6 @@ export class SpellProgressionRules extends BaseRule {
     if (intelligence <= 14) return 6;
     if (intelligence <= 16) return 7;
     if (intelligence <= 17) return 8;
-    return 9; // Intelligence 18+
+    return 9;
   }
 }

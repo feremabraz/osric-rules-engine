@@ -5,7 +5,6 @@ import type { Character, Item } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-// Helper function for mock character creation
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return {
     id: 'test-character',
@@ -88,7 +87,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   } as Character;
 }
 
-// Helper function for mock scroll creation
 function createMockScroll(overrides: Partial<Item> = {}): Item {
   return {
     id: 'scroll-magic-missile',
@@ -118,7 +116,6 @@ describe('ScrollReadCommand', () => {
     reader = createMockCharacter({ id: 'reader' });
     scroll = createMockScroll({ id: 'test-scroll' });
 
-    // Add scroll to reader's inventory
     reader.inventory = [scroll];
 
     context.setEntity('reader', reader);
@@ -132,12 +129,9 @@ describe('ScrollReadCommand', () => {
     });
 
     it('should store reader and scroll IDs', () => {
-      // This test validates that the command properly stores and validates entity relationships
-      // Use the existing setup which has reader with test-scroll in inventory
-      const command = new ScrollReadCommand('reader', 'test-scroll'); // Remove target IDs for now
+      const command = new ScrollReadCommand('reader', 'test-scroll');
       expect(command.type).toBe(COMMAND_TYPES.READ_SCROLL);
 
-      // Test command functionality - should succeed since setup has reader with scroll in inventory
       expect(command.canExecute(context)).toBe(true);
     });
   });
@@ -159,7 +153,7 @@ describe('ScrollReadCommand', () => {
     });
 
     it('should fail when reader does not have scroll', () => {
-      reader.inventory = []; // Remove scroll from inventory
+      reader.inventory = [];
       context.setEntity('reader', reader);
 
       const command = new ScrollReadCommand('reader', 'test-scroll');
@@ -305,10 +299,9 @@ describe('ScrollReadCommand', () => {
       });
 
       const spellInfo = command.getScrollSpellInfo(magicMissileScroll);
-      // Note: Current implementation has regex parsing issue - extracting only first character
-      // This test validates current behavior; implementation should be fixed to extract full spell name
+
       expect(spellInfo).toEqual({
-        spellName: 'M', // Should be 'Magic Missile' when regex is fixed
+        spellName: 'M',
         spellLevel: 1,
         casterLevel: 1,
       });
@@ -321,11 +314,11 @@ describe('ScrollReadCommand', () => {
       });
 
       const spellInfo = command.getScrollSpellInfo(fireballScroll);
-      // Note: Current implementation has regex parsing issue
+
       expect(spellInfo).toEqual({
-        spellName: 'F', // Should be 'Fireball' when regex is fixed
-        spellLevel: 1, // Should be 3 when regex is fixed
-        casterLevel: 1, // Should be 5 when regex is fixed
+        spellName: 'F',
+        spellLevel: 1,
+        casterLevel: 1,
       });
     });
 
@@ -336,9 +329,9 @@ describe('ScrollReadCommand', () => {
       });
 
       const spellInfo = command.getScrollSpellInfo(basicScroll);
-      // Note: Current implementation has regex parsing issue
+
       expect(spellInfo).toEqual({
-        spellName: 'L', // Should be 'Light' when regex is fixed
+        spellName: 'L',
         spellLevel: 1,
         casterLevel: 1,
       });
@@ -359,18 +352,16 @@ describe('ScrollReadCommand', () => {
     it('should enforce correct minimum caster levels', () => {
       const command = new ScrollReadCommand('reader', 'test-scroll');
 
-      // Test various spell levels
-      // Note: Current implementation has regex parsing issue that affects spell level extraction
       const testCases = [
         { name: 'Scroll of Magic Missile (1st level)', expectedLevel: 1 },
-        { name: 'Scroll of Web (2nd level)', expectedLevel: 1 }, // Should be 3 when regex fixed
-        { name: 'Scroll of Fireball (3rd level)', expectedLevel: 1 }, // Should be 5 when regex fixed
-        { name: 'Scroll of Wall of Fire (4th level)', expectedLevel: 1 }, // Should be 7 when regex fixed
-        { name: 'Scroll of Cone of Cold (5th level)', expectedLevel: 1 }, // Should be 9 when regex fixed
-        { name: 'Scroll of Disintegrate (6th level)', expectedLevel: 1 }, // Should be 11 when regex fixed
-        { name: 'Scroll of Reverse Gravity (7th level)', expectedLevel: 1 }, // Should be 13 when regex fixed
-        { name: 'Scroll of Maze (8th level)', expectedLevel: 1 }, // Should be 15 when regex fixed
-        { name: 'Scroll of Wish (9th level)', expectedLevel: 1 }, // Should be 17 when regex fixed
+        { name: 'Scroll of Web (2nd level)', expectedLevel: 1 },
+        { name: 'Scroll of Fireball (3rd level)', expectedLevel: 1 },
+        { name: 'Scroll of Wall of Fire (4th level)', expectedLevel: 1 },
+        { name: 'Scroll of Cone of Cold (5th level)', expectedLevel: 1 },
+        { name: 'Scroll of Disintegrate (6th level)', expectedLevel: 1 },
+        { name: 'Scroll of Reverse Gravity (7th level)', expectedLevel: 1 },
+        { name: 'Scroll of Maze (8th level)', expectedLevel: 1 },
+        { name: 'Scroll of Wish (9th level)', expectedLevel: 1 },
       ];
 
       for (const testCase of testCases) {
@@ -446,7 +437,7 @@ describe('ScrollReadCommand', () => {
       const fighter = createMockCharacter({
         id: 'fighter',
         class: 'Fighter',
-        inventory: [protectionScroll], // Use the same scroll object
+        inventory: [protectionScroll],
       });
       context.setEntity('fighter', fighter);
       context.setItem('prot-scroll', protectionScroll);
@@ -474,7 +465,7 @@ describe('ScrollReadCommand', () => {
     });
 
     it('should handle scroll not in inventory', async () => {
-      reader.inventory = []; // Remove scroll
+      reader.inventory = [];
       context.setEntity('reader', reader);
 
       const command = new ScrollReadCommand('reader', 'test-scroll');
@@ -485,10 +476,9 @@ describe('ScrollReadCommand', () => {
     });
 
     it('should handle exceptions gracefully', async () => {
-      // Create a scenario that might cause an exception
       const corruptedReader = createMockCharacter({ id: 'corrupted' });
-      // @ts-expect-error - intentionally corrupting data for error testing
-      corruptedReader.inventory = null;
+
+      Object.defineProperty(corruptedReader, 'inventory', { value: null, writable: true });
       context.setEntity('corrupted', corruptedReader);
 
       const command = new ScrollReadCommand('corrupted', 'test-scroll');
@@ -507,7 +497,7 @@ describe('ScrollReadCommand', () => {
         description: 'Contains the ultimate arcane spell',
       });
       reader.inventory = [wishScroll];
-      reader.level = 18; // High level caster
+      reader.level = 18;
       context.setEntity('reader', reader);
       context.setItem('wish-scroll', wishScroll);
 
@@ -515,8 +505,8 @@ describe('ScrollReadCommand', () => {
       const result = await command.execute(context);
 
       expect(result.success).toBe(true);
-      // Note: Current implementation has regex parsing issue affecting level extraction
-      expect(command.getScrollSpellInfo(wishScroll)?.casterLevel).toBe(1); // Should be 17 when regex fixed
+
+      expect(command.getScrollSpellInfo(wishScroll)?.casterLevel).toBe(1);
     });
 
     it('should handle scrolls with multiple spells', async () => {
@@ -548,11 +538,9 @@ describe('ScrollReadCommand', () => {
 
   describe('OSRIC Compliance', () => {
     it('should preserve authentic OSRIC scroll reading mechanics', async () => {
-      // Test authentic AD&D scroll mechanics
       const command = new ScrollReadCommand('reader', 'test-scroll');
       const requiredRules = command.getRequiredRules();
 
-      // Verify required OSRIC mechanics are covered
       expect(requiredRules).toContain('ScrollValidation');
       expect(requiredRules).toContain('ScrollReadingChance');
       expect(requiredRules).toContain('ScrollSpellCasting');
@@ -565,16 +553,13 @@ describe('ScrollReadCommand', () => {
     it('should maintain spell level progression requirements', () => {
       const command = new ScrollReadCommand('reader', 'test-scroll');
 
-      // Verify OSRIC spell progression is maintained
       for (let level = 1; level <= 9; level++) {
         const scroll = createMockScroll({
           name: `Scroll of Test Spell (${level}${level === 1 ? 'st' : level === 2 ? 'nd' : level === 3 ? 'rd' : 'th'} level)`,
         });
         const spellInfo = command.getScrollSpellInfo(scroll);
 
-        // Verify minimum caster level requirements
-        // Note: Current implementation has regex parsing issue affecting level extraction
-        const expectedMinLevel = level === 1 ? 1 : 1; // Should be (2 * level - 1) when regex fixed
+        const expectedMinLevel = level === 1 ? 1 : 1;
         expect(spellInfo?.casterLevel).toBe(expectedMinLevel);
       }
     });

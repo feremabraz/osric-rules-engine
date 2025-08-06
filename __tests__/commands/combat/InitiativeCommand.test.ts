@@ -1,22 +1,11 @@
-/**
- * InitiativeCommand.test.ts - Tests for OSRIC Initiative Command
- *
- * Tests the initiative command functionality including:
- * - Individual and group initiative
- * - Weapon speed factor handling
- * - Spell casting initiative
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { InitiativeCommand } from '../../../osric/commands/combat/InitiativeCommand';
 import { GameContext } from '../../../osric/core/GameContext';
 import type { Character, Monster, Weapon } from '../../../osric/types/entities';
 
-// Mock dice rolling for predictable tests
-vi.spyOn(Math, 'random').mockImplementation(() => 0.5); // Always roll middle values
+vi.spyOn(Math, 'random').mockImplementation(() => 0.5);
 
-// Helper to create complete test characters
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return {
     id: 'test-character',
@@ -151,7 +140,6 @@ describe('InitiativeCommand', () => {
     testCharacter = createMockCharacter();
     testMonster = createMockMonster();
 
-    // Create test weapon
     testWeapon = {
       id: 'longsword',
       name: 'Longsword',
@@ -171,11 +159,9 @@ describe('InitiativeCommand', () => {
       twoHanded: false,
     } as Weapon;
 
-    // Add entities to context
     context.setEntity('test-character', testCharacter);
     context.setEntity('test-orc', testMonster);
 
-    // Add weapon to character's inventory
     testCharacter.inventory.push(testWeapon);
   });
 
@@ -217,7 +203,6 @@ describe('InitiativeCommand', () => {
   });
 
   test('should fail validation if entity is unconscious', () => {
-    // Make character unconscious
     testCharacter.hitPoints.current = 0;
     context.setEntity('test-character', testCharacter);
 
@@ -246,7 +231,6 @@ describe('InitiativeCommand', () => {
     expect(result.success).toBe(true);
     expect(result.message).toContain('Initiative command prepared for rule processing');
 
-    // Check that initiative context was set
     const initiativeContext = context.getTemporary('initiative-context') as InitiativeContext;
     expect(initiativeContext).toBeDefined();
     expect(initiativeContext.entities).toEqual(['test-character']);

@@ -1,44 +1,23 @@
-/**
- * OSRIC Rules Engine - Error Types
- *
- * Structured error handling with rich error objects instead of simple strings.
- * Provides better debugging, context, and error categorization.
- */
-
 import type { ErrorType } from './constants';
 
-/**
- * Structured error interface for all OSRIC operations
- */
 export interface OSRICError {
-  /** Error type from constants for categorization */
   type: ErrorType;
 
-  /** Human-readable error message */
   message: string;
 
-  /** Additional context about the error */
   context?: Record<string, unknown>;
 
-  /** Source component that generated the error */
   source?: string;
 
-  /** Detailed error information for debugging */
   details?: string[];
 
-  /** Original error if this wraps another error */
   cause?: Error | OSRICError;
 
-  /** Timestamp when error occurred */
   timestamp?: Date;
 
-  /** Suggested actions to resolve the error */
   suggestions?: string[];
 }
 
-/**
- * Error builder for creating structured errors
- */
 export class OSRICErrorBuilder {
   private error: Partial<OSRICError> = {
     timestamp: new Date(),
@@ -84,9 +63,6 @@ export class OSRICErrorBuilder {
   }
 }
 
-/**
- * Enhanced result interfaces with structured errors
- */
 export interface CommandResult {
   success: boolean;
   message: string;
@@ -107,9 +83,6 @@ export interface RuleResult {
   error?: OSRICError;
 }
 
-/**
- * Common error factory functions for frequently used errors
- */
 export const ErrorFactory = {
   entityNotFound(entityId: string, source?: string): OSRICError {
     return OSRICErrorBuilder.create('entity-not-found', `Entity with ID '${entityId}' not found`)
@@ -273,9 +246,6 @@ export const ErrorFactory = {
   },
 } as const;
 
-/**
- * Utility functions for working with OSRIC errors
- */
 export const ErrorUtils = {
   isOSRICError(error: unknown): error is OSRICError {
     return (

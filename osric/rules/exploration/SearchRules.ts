@@ -8,8 +8,8 @@ import type { Character } from '../../types/entities';
 interface SearchRequest {
   characterId: string;
   searchType: 'secret_doors' | 'hidden_objects' | 'traps' | 'tracks' | 'general';
-  area: string; // Description of area being searched
-  timeSpent: number; // in rounds
+  area: string;
+  timeSpent: number;
   thoroughness: 'hasty' | 'normal' | 'careful' | 'meticulous';
   assistingCharacterIds?: string[];
 }
@@ -53,16 +53,13 @@ export class SearchRule extends BaseRule {
       return this.createFailureResult('Character not found');
     }
 
-    // Validate search attempt
     const validation = this.validateSearch(character, data);
     if (!validation.success) {
       return this.createFailureResult(validation.message);
     }
 
-    // Calculate search result
     const result = this.performSearch(character, data, context);
 
-    // Apply search effects
     if (result.success) {
       this.applySearchEffects(character, result, context);
     }
@@ -74,12 +71,10 @@ export class SearchRule extends BaseRule {
     character: Character,
     data: SearchRequest
   ): { success: boolean; message: string } {
-    // Check if character is capable of searching
     if (character.hitPoints.current <= 0) {
       return { success: false, message: 'Character is unconscious or dead' };
     }
 
-    // Check for search-hindering status effects
     const hinderingEffects =
       character.statusEffects?.filter(
         (effect) =>
@@ -95,7 +90,6 @@ export class SearchRule extends BaseRule {
       };
     }
 
-    // Check if enough time is allocated for search type
     const minTime = this.getMinimumSearchTime(data.searchType, data.thoroughness);
     if (data.timeSpent < minTime) {
       return {
@@ -119,12 +113,10 @@ export class SearchRule extends BaseRule {
     const timeModifier = this.getTimeModifier(data.timeSpent, data.searchType);
     const assistanceModifier = this.getAssistanceModifier(data.assistingCharacterIds, context);
 
-    // Calculate final success chance
     const totalModifier =
       racialModifier + classModifier + thoroughnessModifier + timeModifier + assistanceModifier;
     const finalChance = Math.min(95, Math.max(5, baseChance + totalModifier));
 
-    // Roll for success (simulated with random)
     const roll = Math.random() * 100;
     const success = roll <= finalChance;
 
@@ -156,18 +148,16 @@ export class SearchRule extends BaseRule {
   }
 
   private getBaseSearchChance(character: Character, searchType: string): number {
-    // Base chances vary by search type
     const baseChances: Record<string, number> = {
-      secret_doors: 16.67, // 1 in 6 chance (16.67%)
-      hidden_objects: 25, // 1 in 4 chance
-      traps: 16.67, // 1 in 6 chance for non-thieves
-      tracks: 25, // 1 in 4 chance base
-      general: 50, // General searching is easier
+      secret_doors: 16.67,
+      hidden_objects: 25,
+      traps: 16.67,
+      tracks: 25,
+      general: 50,
     };
 
     const baseChance = baseChances[searchType] || 25;
 
-    // Intelligence modifier affects search success
     const intModifier = this.getIntelligenceSearchModifier(character.abilities.intelligence);
 
     return baseChance + intModifier;
@@ -185,19 +175,19 @@ export class SearchRule extends BaseRule {
   private getRacialSearchModifier(character: Character, searchType: string): number {
     const modifiers: Record<string, Record<string, number>> = {
       Elf: {
-        secret_doors: 50, // Elves have exceptional secret door detection
+        secret_doors: 50,
         hidden_objects: 20,
       },
       'Half-Elf': {
-        secret_doors: 25, // Half the elf bonus
+        secret_doors: 25,
         hidden_objects: 10,
       },
       Dwarf: {
-        traps: 20, // Dwarves are good at finding mechanical traps
-        secret_doors: 10, // Some skill with stonework
+        traps: 20,
+        secret_doors: 10,
       },
       Halfling: {
-        hidden_objects: 15, // Good at finding small things
+        hidden_objects: 15,
         traps: 10,
       },
       Gnome: {
@@ -212,7 +202,7 @@ export class SearchRule extends BaseRule {
   private getClassSearchModifier(character: Character, searchType: string): number {
     const modifiers: Record<string, Record<string, number>> = {
       Thief: {
-        traps: 40, // Thieves excel at finding traps
+        traps: 40,
         hidden_objects: 25,
         secret_doors: 15,
       },
@@ -222,12 +212,12 @@ export class SearchRule extends BaseRule {
         secret_doors: 10,
       },
       Ranger: {
-        tracks: 60, // Rangers are master trackers
+        tracks: 60,
         hidden_objects: 15,
         traps: 10,
       },
       Paladin: {
-        hidden_objects: 10, // Divine insight helps
+        hidden_objects: 10,
         secret_doors: 5,
       },
     };
@@ -250,11 +240,11 @@ export class SearchRule extends BaseRule {
     const baseTime = this.getMinimumSearchTime(searchType, 'normal');
     const timeRatio = timeSpent / baseTime;
 
-    if (timeRatio >= 3) return 20; // Spending 3x normal time
-    if (timeRatio >= 2) return 10; // Spending 2x normal time
-    if (timeRatio >= 1.5) return 5; // Spending 1.5x normal time
-    if (timeRatio >= 1) return 0; // Normal time
-    return -15; // Less than normal time
+    if (timeRatio >= 3) return 20;
+    if (timeRatio >= 2) return 10;
+    if (timeRatio >= 1.5) return 5;
+    if (timeRatio >= 1) return 0;
+    return -15;
   }
 
   private getAssistanceModifier(assistingIds: string[] | undefined, context: GameContext): number {
@@ -263,13 +253,12 @@ export class SearchRule extends BaseRule {
     }
 
     let bonus = 0;
-    const maxAssistants = 3; // Diminishing returns after 3 assistants
+    const maxAssistants = 3;
     const actualAssistants = Math.min(assistingIds.length, maxAssistants);
 
     for (let i = 0; i < actualAssistants; i++) {
       const assistant = context.getEntity<Character>(assistingIds[i]);
       if (assistant) {
-        // Each assistant provides diminishing bonus
         bonus += Math.floor(10 / (i + 1));
       }
     }
@@ -279,11 +268,11 @@ export class SearchRule extends BaseRule {
 
   private getMinimumSearchTime(searchType: string, thoroughness: string): number {
     const baseTimes: Record<string, number> = {
-      secret_doors: 10, // 1 turn base
-      hidden_objects: 3, // 3 rounds base
-      traps: 10, // 1 turn base
-      tracks: 5, // 5 rounds base
-      general: 3, // 3 rounds base
+      secret_doors: 10,
+      hidden_objects: 3,
+      traps: 10,
+      tracks: 5,
+      general: 3,
     };
 
     const thoroughnessMultipliers: Record<string, number> = {
@@ -300,22 +289,19 @@ export class SearchRule extends BaseRule {
   }
 
   private calculateActualSearchTime(timeSpent: number, thoroughness: string): number {
-    // Actual time may be modified by thoroughness
     const efficiency: Record<string, number> = {
-      hasty: 0.8, // Hasty search is less efficient
+      hasty: 0.8,
       normal: 1.0,
-      careful: 1.2, // Careful search takes a bit longer
-      meticulous: 1.5, // Meticulous search takes much longer
+      careful: 1.2,
+      meticulous: 1.5,
     };
 
     return Math.ceil(timeSpent * (efficiency[thoroughness] || 1.0));
   }
 
   private calculateSearchFatigue(character: Character, timeRequired: number): number {
-    // Searching is mentally taxing
-    const baseFatigue = Math.floor(timeRequired / 10); // 1 fatigue per 10 rounds
+    const baseFatigue = Math.floor(timeRequired / 10);
 
-    // Constitution affects fatigue resistance
     const conModifier = this.getConstitutionFatigueModifier(character.abilities.constitution);
 
     return Math.max(0, baseFatigue - conModifier);
@@ -330,8 +316,6 @@ export class SearchRule extends BaseRule {
   }
 
   private determineFoundItems(searchType: string, _area: string): string[] {
-    // This would normally check against the actual game world state
-    // For now, returning example items based on search type
     const exampleFinds: Record<string, string[]> = {
       secret_doors: ['Hidden door behind tapestry', 'Concealed passage in wall'],
       hidden_objects: ['Small gem in crevice', 'Hidden compartment', 'Buried coin pouch'],
@@ -340,10 +324,8 @@ export class SearchRule extends BaseRule {
       general: ['Unusual marking on wall', 'Loose stone', 'Strange odor'],
     };
 
-    // In a real implementation, this would check the game state for actual hidden items
     const possibleFinds = exampleFinds[searchType] || [];
 
-    // Return 1-2 items based on search success
     if (possibleFinds.length === 0) return [];
 
     const numFinds = Math.random() < 0.7 ? 1 : 2;
@@ -375,9 +357,5 @@ export class SearchRule extends BaseRule {
     _character: Character,
     _result: SearchResult,
     _context: GameContext
-  ): void {
-    // Apply search effects to the character and game state
-    // This would update character fatigue, reveal found items, etc.
-    // For now, this is a placeholder for the actual implementation
-  }
+  ): void {}
 }

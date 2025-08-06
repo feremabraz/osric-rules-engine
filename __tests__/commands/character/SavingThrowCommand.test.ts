@@ -1,32 +1,3 @@
-/**
- * SavingThrowCommand Tests - OSRIC Compliance
- *
- * Tests the SavingThrowCommand from commands/character/SavingThrowCommand.ts:
- * - All 5 OSRIC savi    it('should validate save type', async () => {
-      const command = new SavingThrowCommand({
-        characterId: 'test-character',
-        saveType: 'invalid-save-type' as any,
-      });
-
-      // Create a character that exists
-      const character = mockCharacter('test-character', 'Fighter');
-      context.setEntity('test-character', character);
-
-      const result = await command.execute(context);
-      // The command will execute but may use default behavior for invalid save types
-      expect(result.success).toBe(true); // Command doesn't validate save type, uses fallback
-    });ategories
- * - Class-based saving throw progressions
- * - Multi-class character handling
- * - Ability score modifiers (Constitution, Wisdom, Dexterity)
- * - Special class abilities (Paladin immunity, Monk resistance)
- * - Racial bonuses (Dwarf/Halfling magic resistance)
- * - Situational modifiers and difficulty scaling
- * - Parameter validation and error handling
- *
- * NOTE: This tests ONLY the command interface - rule calculations are tested separately.
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
@@ -36,7 +7,6 @@ import {
 import { GameContext } from '../../../osric/core/GameContext';
 import type { Character } from '../../../osric/types/entities';
 
-// Mock helper function to create test characters
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-char',
@@ -127,7 +97,6 @@ describe('SavingThrowCommand', () => {
     const store = createStore();
     context = new GameContext(store);
 
-    // Setup test character
     const testCharacter = createMockCharacter({
       id: 'test-character',
       name: 'Test Hero',
@@ -136,9 +105,9 @@ describe('SavingThrowCommand', () => {
       abilities: {
         strength: 14,
         dexterity: 12,
-        constitution: 16, // High constitution for poison save bonus
+        constitution: 16,
         intelligence: 10,
-        wisdom: 15, // High wisdom for mental save bonus
+        wisdom: 15,
         charisma: 11,
       },
       savingThrows: {
@@ -207,7 +176,7 @@ describe('SavingThrowCommand', () => {
         characterId: 'test-character',
         saveType: 'spell',
         situationalModifiers: {
-          magicItemBonus: 25, // Too high
+          magicItemBonus: 25,
         },
       });
 
@@ -220,7 +189,7 @@ describe('SavingThrowCommand', () => {
       const command = new SavingThrowCommand({
         characterId: 'test-character',
         saveType: 'breath-weapon',
-        targetNumber: 25, // Too high
+        targetNumber: 25,
       });
 
       const result = await command.execute(context);
@@ -373,7 +342,7 @@ describe('SavingThrowCommand', () => {
         class: 'Fighter',
         experience: { current: 0, requiredForNextLevel: 2500, level: 3 },
       });
-      // Multi-class characters use the classes property to track multiple classes
+
       multiClass.classes = { Fighter: 3, 'Magic-User': 2 };
       context.setEntity('multi-class', multiClass);
 
@@ -411,7 +380,7 @@ describe('SavingThrowCommand', () => {
     it('should handle special class resistances', async () => {
       const specialChar = createMockCharacter({
         id: 'special-char',
-        class: 'Thief', // Using Thief as base for special resistances
+        class: 'Thief',
         experience: { current: 0, requiredForNextLevel: 2250, level: 9 },
       });
       context.setEntity('special-char', specialChar);
@@ -654,7 +623,7 @@ describe('SavingThrowCommand', () => {
       });
 
       const result = await command.execute(context);
-      expect(result.success).toBe(true); // Should succeed but with proper modifier application
+      expect(result.success).toBe(true);
       expect(result.data?.modifiers).toBeDefined();
     });
 
@@ -663,7 +632,7 @@ describe('SavingThrowCommand', () => {
         characterId: 'test-character',
         saveType: 'spell',
         situationalModifiers: {
-          magicItemBonus: -15, // Invalid range
+          magicItemBonus: -15,
         },
       });
 

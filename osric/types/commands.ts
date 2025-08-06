@@ -1,24 +1,12 @@
-/**
- * Command type definitions for the OSRIC Rules Engine
- *
- * These define the structure of all commands that can be executed in the system.
- */
-
 import type { Command } from '../core/Command';
 import type { CommandType } from './constants';
 import { COMMAND_TYPES } from './constants';
 
-/**
- * Base parameters for all commands
- */
 export interface BaseCommandParams {
   readonly actorId: string;
   readonly targetIds?: string[];
 }
 
-/**
- * Character-related command types
- */
 export interface CreateCharacterParams extends BaseCommandParams {
   readonly race: string;
   readonly characterClass: string;
@@ -39,9 +27,6 @@ export interface AssignAbilityScoresParams extends BaseCommandParams {
   readonly scores: Record<string, number>;
 }
 
-/**
- * Combat-related command types
- */
 export interface AttackParams extends BaseCommandParams {
   readonly targetId: string;
   readonly weaponId?: string;
@@ -63,9 +48,6 @@ export interface UseShieldParams extends BaseCommandParams {
   readonly defensive?: boolean;
 }
 
-/**
- * Spell-related command types
- */
 export interface CastSpellParams extends BaseCommandParams {
   readonly spellName: string;
   readonly spellLevel: number;
@@ -89,9 +71,6 @@ export interface IdentifyMagicItemParams extends BaseCommandParams {
   readonly method: 'spell' | 'study';
 }
 
-/**
- * Exploration-related command types
- */
 export interface MoveParams extends BaseCommandParams {
   readonly destination: string;
   readonly movementType?: string;
@@ -195,9 +174,6 @@ export interface TreasureGenerationParams extends BaseCommandParams {
   readonly partySize?: number;
 }
 
-/**
- * NPC-related command types
- */
 export interface ReactionRollParams extends BaseCommandParams {
   readonly npcId: string;
   readonly situation?: string;
@@ -215,62 +191,42 @@ export interface LoyaltyCheckParams extends BaseCommandParams {
   readonly modifiers?: Record<string, number>;
 }
 
-/**
- * Command type registry - maps strongly-typed command types to their parameter interfaces
- */
 export interface CommandTypeRegistry {
-  // Character commands
   [COMMAND_TYPES.CREATE_CHARACTER]: CreateCharacterParams;
   [COMMAND_TYPES.LEVEL_UP]: LevelUpParams;
   [COMMAND_TYPES.MULTI_CLASS]: MultiClassParams;
   [COMMAND_TYPES.ASSIGN_ABILITY_SCORES]: AssignAbilityScoresParams;
 
-  // Combat commands
   [COMMAND_TYPES.ATTACK]: AttackParams;
   [COMMAND_TYPES.INITIATIVE]: InitiativeParams;
   [COMMAND_TYPES.GRAPPLE]: GrappleParams;
   [COMMAND_TYPES.USE_SHIELD]: UseShieldParams;
 
-  // Spell commands
   [COMMAND_TYPES.CAST_SPELL]: CastSpellParams;
   [COMMAND_TYPES.MEMORIZE_SPELL]: MemorizeSpellParams;
   [COMMAND_TYPES.READ_SCROLL]: ScrollReadParams;
   [COMMAND_TYPES.IDENTIFY_MAGIC_ITEM]: IdentifyMagicItemParams;
 
-  // Exploration commands
   [COMMAND_TYPES.MOVE]: MoveParams;
   [COMMAND_TYPES.SEARCH]: SearchParams;
   [COMMAND_TYPES.SURVIVAL_CHECK]: SurvivalCheckParams;
   [COMMAND_TYPES.ENVIRONMENTAL_HAZARD]: EnvironmentalHazardParams;
 
-  // NPC commands
   [COMMAND_TYPES.REACTION_ROLL]: ReactionRollParams;
   [COMMAND_TYPES.MORALE_CHECK]: MoraleCheckParams;
   [COMMAND_TYPES.LOYALTY_CHECK]: LoyaltyCheckParams;
 }
 
-/**
- * Type helper to get command parameters for a specific command type
- */
 export type CommandParamsFor<T extends CommandType> = T extends keyof CommandTypeRegistry
   ? CommandTypeRegistry[T]
   : never;
 
-/**
- * Union type of all command parameter types
- */
 export type CommandParams = CommandTypeRegistry[keyof CommandTypeRegistry];
 
-/**
- * Command factory interface for creating typed commands
- */
 export interface CommandFactory {
   create<T extends CommandType>(type: T, params: CommandParamsFor<T>): Command;
 }
 
-/**
- * Command metadata for validation and documentation
- */
 export interface CommandMetadata {
   readonly type: CommandType;
   readonly description: string;
@@ -280,9 +236,6 @@ export interface CommandMetadata {
   readonly category: 'character' | 'combat' | 'magic' | 'exploration' | 'npc';
 }
 
-/**
- * Registry of command metadata using strongly-typed identifiers
- */
 export const COMMAND_METADATA: Partial<Record<CommandType, CommandMetadata>> = {
   [COMMAND_TYPES.CREATE_CHARACTER]: {
     type: COMMAND_TYPES.CREATE_CHARACTER,

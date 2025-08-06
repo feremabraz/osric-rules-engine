@@ -1,15 +1,3 @@
-/**
- * WeaponVsArmorRules Tests - OSRIC Compliance
- *
- * Tests the weapon vs armor adjustment system from rules/combat/weaponVsArmor.ts:
- * - OSRIC weapon vs armor adjustment tables
- * - Weapon damage type classification (Slashing, Piercing, Bludgeoning)
- * - Armor category mapping from AC values
- * - Adjustment calculation for different weapon/armor combinations
- * - Edge cases and boundary conditions
- * - Error handling for invalid inputs
- */
-
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   applyWeaponVsArmorAdjustment,
@@ -17,7 +5,6 @@ import {
 } from '../../../osric/rules/combat/WeaponVsArmorRules';
 import type { Character, Monster, Weapon } from '../../../osric/types/entities';
 
-// Mock helper function to create test weapons
 function createMockWeapon(overrides: Partial<Weapon> = {}): Weapon {
   const defaultWeapon: Weapon = {
     id: 'long-sword',
@@ -41,7 +28,6 @@ function createMockWeapon(overrides: Partial<Weapon> = {}): Weapon {
   return { ...defaultWeapon, ...overrides };
 }
 
-// Mock helper function to create test characters
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-char',
@@ -125,14 +111,13 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return { ...defaultCharacter, ...overrides };
 }
 
-// Mock helper function to create test monsters
 function createMockMonster(overrides: Partial<Monster> = {}): Monster {
   const defaultMonster: Monster = {
     id: 'orc-1',
     name: 'Orc',
     level: 1,
     hitPoints: { current: 6, maximum: 6 },
-    armorClass: 6, // Scale mail
+    armorClass: 6,
     thac0: 19,
     experience: { current: 0, requiredForNextLevel: 0, level: 1 },
     alignment: 'Chaotic Evil',
@@ -171,7 +156,6 @@ describe('WeaponVsArmorRules', () => {
       ];
 
       for (const weapon of weapons) {
-        // Test against plate armor (AC 2) - slashing weapons get +2
         const adjustment = getWeaponVsArmorAdjustment(weapon, 2);
         expect(adjustment).toBe(2);
       }
@@ -188,7 +172,6 @@ describe('WeaponVsArmorRules', () => {
       ];
 
       for (const weapon of weapons) {
-        // Test against plate armor (AC 2) - piercing weapons get -3
         const adjustment = getWeaponVsArmorAdjustment(weapon, 2);
         expect(adjustment).toBe(-3);
       }
@@ -205,7 +188,6 @@ describe('WeaponVsArmorRules', () => {
       ];
 
       for (const weapon of weapons) {
-        // Test against plate armor (AC 2) - bludgeoning weapons get -1
         const adjustment = getWeaponVsArmorAdjustment(weapon, 2);
         expect(adjustment).toBe(-1);
       }
@@ -214,7 +196,6 @@ describe('WeaponVsArmorRules', () => {
     it('should default to slashing for unknown weapons', () => {
       const unknownWeapon = createMockWeapon({ name: 'Unknown Weapon' });
 
-      // Test against plate armor (AC 2) - should default to slashing (+2)
       const adjustment = getWeaponVsArmorAdjustment(unknownWeapon, 2);
       expect(adjustment).toBe(2);
     });
@@ -236,12 +217,11 @@ describe('WeaponVsArmorRules', () => {
         { ac: 0, expectedCategory: 'Plate' },
       ];
 
-      const testWeapon = createMockWeapon({ name: 'Sword, Long' }); // Slashing weapon
+      const testWeapon = createMockWeapon({ name: 'Sword, Long' });
 
       for (const { ac, expectedCategory } of testCases) {
         const adjustment = getWeaponVsArmorAdjustment(testWeapon, ac);
 
-        // Verify the adjustment matches expected category
         const expectedAdjustments: Record<string, number> = {
           Unarmored: 0,
           'Padded/Leather': -1,
@@ -258,9 +238,8 @@ describe('WeaponVsArmorRules', () => {
     it('should handle AC values outside normal range', () => {
       const testWeapon = createMockWeapon({ name: 'Sword, Long' });
 
-      // Test extreme AC values
-      expect(getWeaponVsArmorAdjustment(testWeapon, -5)).toBe(2); // Clamps to AC 0 (Plate)
-      expect(getWeaponVsArmorAdjustment(testWeapon, 15)).toBe(0); // Clamps to AC 10 (Unarmored)
+      expect(getWeaponVsArmorAdjustment(testWeapon, -5)).toBe(2);
+      expect(getWeaponVsArmorAdjustment(testWeapon, 15)).toBe(0);
     });
   });
 
@@ -270,12 +249,12 @@ describe('WeaponVsArmorRules', () => {
 
       it('should apply correct adjustments for all armor types', () => {
         const testCases = [
-          { ac: 10, expected: 0 }, // Unarmored
-          { ac: 8, expected: -1 }, // Padded/Leather
-          { ac: 7, expected: 0 }, // StuddedLeather/Ring
-          { ac: 5, expected: 0 }, // Scale/Chain
-          { ac: 3, expected: 1 }, // Banded/Splint
-          { ac: 2, expected: 2 }, // Plate
+          { ac: 10, expected: 0 },
+          { ac: 8, expected: -1 },
+          { ac: 7, expected: 0 },
+          { ac: 5, expected: 0 },
+          { ac: 3, expected: 1 },
+          { ac: 2, expected: 2 },
         ];
 
         for (const { ac, expected } of testCases) {
@@ -289,12 +268,12 @@ describe('WeaponVsArmorRules', () => {
 
       it('should apply correct adjustments for all armor types', () => {
         const testCases = [
-          { ac: 10, expected: 0 }, // Unarmored
-          { ac: 8, expected: 1 }, // Padded/Leather
-          { ac: 7, expected: 0 }, // StuddedLeather/Ring
-          { ac: 5, expected: -1 }, // Scale/Chain
-          { ac: 3, expected: -2 }, // Banded/Splint
-          { ac: 2, expected: -3 }, // Plate
+          { ac: 10, expected: 0 },
+          { ac: 8, expected: 1 },
+          { ac: 7, expected: 0 },
+          { ac: 5, expected: -1 },
+          { ac: 3, expected: -2 },
+          { ac: 2, expected: -3 },
         ];
 
         for (const { ac, expected } of testCases) {
@@ -308,12 +287,12 @@ describe('WeaponVsArmorRules', () => {
 
       it('should apply correct adjustments for all armor types', () => {
         const testCases = [
-          { ac: 10, expected: 0 }, // Unarmored
-          { ac: 8, expected: 0 }, // Padded/Leather
-          { ac: 7, expected: 1 }, // StuddedLeather/Ring
-          { ac: 5, expected: 2 }, // Scale/Chain
-          { ac: 3, expected: 0 }, // Banded/Splint
-          { ac: 2, expected: -1 }, // Plate
+          { ac: 10, expected: 0 },
+          { ac: 8, expected: 0 },
+          { ac: 7, expected: 1 },
+          { ac: 5, expected: 2 },
+          { ac: 3, expected: 0 },
+          { ac: 2, expected: -1 },
         ];
 
         for (const { ac, expected } of testCases) {
@@ -325,19 +304,19 @@ describe('WeaponVsArmorRules', () => {
 
   describe('Applied Weapon vs Armor Adjustments', () => {
     it('should apply adjustments to character targets', () => {
-      const character = createMockCharacter({ armorClass: 5 }); // Scale/Chain armor
+      const character = createMockCharacter({ armorClass: 5 });
       const slashingWeapon = createMockWeapon({ name: 'Sword, Long' });
 
       const adjustment = applyWeaponVsArmorAdjustment(character, slashingWeapon);
-      expect(adjustment).toBe(0); // Slashing vs Scale/Chain = 0
+      expect(adjustment).toBe(0);
     });
 
     it('should apply adjustments to monster targets', () => {
-      const monster = createMockMonster({ armorClass: 2 }); // Plate armor
+      const monster = createMockMonster({ armorClass: 2 });
       const piercingWeapon = createMockWeapon({ name: 'Spear' });
 
       const adjustment = applyWeaponVsArmorAdjustment(monster, piercingWeapon);
-      expect(adjustment).toBe(-3); // Piercing vs Plate = -3
+      expect(adjustment).toBe(-3);
     });
 
     it('should return 0 when no weapon is provided', () => {
@@ -351,10 +330,10 @@ describe('WeaponVsArmorRules', () => {
       const bludgeoningWeapon = createMockWeapon({ name: 'Mace' });
 
       const testCases = [
-        { ac: 10, expected: 0 }, // Unarmored
-        { ac: 7, expected: 1 }, // StuddedLeather/Ring
-        { ac: 5, expected: 2 }, // Scale/Chain
-        { ac: 2, expected: -1 }, // Plate
+        { ac: 10, expected: 0 },
+        { ac: 7, expected: 1 },
+        { ac: 5, expected: 2 },
+        { ac: 2, expected: -1 },
       ];
 
       for (const { ac, expected } of testCases) {
@@ -434,18 +413,16 @@ describe('WeaponVsArmorRules', () => {
     it('should handle extreme AC values', () => {
       const weapon = createMockWeapon({ name: 'Sword, Long' });
 
-      // Very low AC (better than plate)
       expect(getWeaponVsArmorAdjustment(weapon, -10)).toBe(2);
 
-      // Very high AC (worse than unarmored)
       expect(getWeaponVsArmorAdjustment(weapon, 20)).toBe(0);
     });
 
     it('should handle weapons with unusual names', () => {
       const strangeWeapons = [
         createMockWeapon({ name: '' }),
-        createMockWeapon({ name: 'sword, long' }), // Different case
-        createMockWeapon({ name: 'MACE' }), // All caps
+        createMockWeapon({ name: 'sword, long' }),
+        createMockWeapon({ name: 'MACE' }),
         createMockWeapon({ name: 'Something completely different' }),
       ];
 
@@ -454,7 +431,6 @@ describe('WeaponVsArmorRules', () => {
           getWeaponVsArmorAdjustment(weapon, 5);
         }).not.toThrow();
 
-        // Should default to slashing (0 vs chain mail)
         const adjustment = getWeaponVsArmorAdjustment(weapon, 5);
         expect(typeof adjustment).toBe('number');
       }
@@ -483,10 +459,8 @@ describe('WeaponVsArmorRules', () => {
       const weapon = createMockWeapon({ name: 'Spear' });
       const character = createMockCharacter({ armorClass: 3 });
 
-      // Direct calculation
       const directAdj = getWeaponVsArmorAdjustment(weapon, 3);
 
-      // Applied calculation
       const appliedAdj = applyWeaponVsArmorAdjustment(character, weapon);
 
       expect(directAdj).toBe(appliedAdj);

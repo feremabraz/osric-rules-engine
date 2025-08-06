@@ -10,7 +10,7 @@ interface MovementRequest {
   fromPosition: string;
   toPosition: string;
   movementType: 'walk' | 'run' | 'swim' | 'climb' | 'fly';
-  distance: number; // in feet
+  distance: number;
   terrainType?: string;
   encumbrance?: 'light' | 'moderate' | 'heavy' | 'severe';
 }
@@ -18,7 +18,7 @@ interface MovementRequest {
 interface MovementResult {
   success: boolean;
   actualDistance: number;
-  timeRequired: number; // in rounds or turns
+  timeRequired: number;
   fatigueGained: number;
   specialEffects: string[];
   message: string;
@@ -54,16 +54,13 @@ export class MovementRule extends BaseRule {
       return this.createFailureResult('Character not found');
     }
 
-    // Validate movement
     const validation = this.validateMovement(character, data);
     if (!validation.success) {
       return this.createFailureResult(validation.message);
     }
 
-    // Calculate movement result
     const result = this.calculateMovement(character, data);
 
-    // Apply movement effects
     if (result.success) {
       this.applyMovementEffects(character, result, context);
     }
@@ -75,12 +72,10 @@ export class MovementRule extends BaseRule {
     character: Character,
     data: MovementRequest
   ): { success: boolean; message: string } {
-    // Check if character is capable of movement
     if (character.hitPoints.current <= 0) {
       return { success: false, message: 'Character is unconscious or dead' };
     }
 
-    // Check for movement-restricting status effects
     const restrictingEffects =
       character.statusEffects?.filter(
         (effect) =>
@@ -96,10 +91,8 @@ export class MovementRule extends BaseRule {
       };
     }
 
-    // Check movement distance limits
     const maxMovement = this.getMaxMovementDistance(character, data.movementType);
     if (data.distance > maxMovement * 4) {
-      // Allow up to 4x normal movement with penalties
       return {
         success: false,
         message: `Distance ${data.distance} feet exceeds maximum possible movement of ${maxMovement * 4} feet`,
@@ -115,12 +108,10 @@ export class MovementRule extends BaseRule {
     const terrainModifier = this.getTerrainModifier(data.terrainType);
     const movementTypeModifier = this.getMovementTypeModifier(data.movementType);
 
-    // Calculate effective movement rate
     const effectiveMovement = Math.floor(
       baseMovement * encumbranceModifier * terrainModifier * movementTypeModifier
     );
 
-    // Determine if character can complete the movement
     const canComplete = data.distance <= effectiveMovement;
 
     if (canComplete) {
@@ -138,7 +129,6 @@ export class MovementRule extends BaseRule {
       };
     }
 
-    // Partial movement possible
     const maxPossible = effectiveMovement;
     return {
       success: false,
@@ -151,7 +141,6 @@ export class MovementRule extends BaseRule {
   }
 
   private getBaseMovementRate(character: Character): number {
-    // Base movement rates by race (in feet per round)
     const raceMovement: Record<string, number> = {
       Human: 120,
       Elf: 120,
@@ -164,20 +153,16 @@ export class MovementRule extends BaseRule {
 
     const baseRate = raceMovement[character.race] || 120;
 
-    // Apply armor penalties if wearing heavy armor
-    // This would check equipped armor from inventory
-    // For now, using a simple check
     const armorPenalty = this.getArmorMovementPenalty(character);
 
-    return Math.max(30, baseRate - armorPenalty); // Minimum 30 feet
+    return Math.max(30, baseRate - armorPenalty);
   }
 
   private getArmorMovementPenalty(character: Character): number {
-    // AC-based penalty estimation (lower AC = heavier armor in descending system)
-    if (character.armorClass <= 0) return 60; // Plate mail + shield
-    if (character.armorClass <= 2) return 30; // Chain mail
-    if (character.armorClass <= 5) return 0; // Leather or lighter
-    return 0; // No armor
+    if (character.armorClass <= 0) return 60;
+    if (character.armorClass <= 2) return 30;
+    if (character.armorClass <= 5) return 0;
+    return 0;
   }
 
   private getEncumbranceModifier(_character: Character, encumbrance?: string): number {
@@ -210,10 +195,10 @@ export class MovementRule extends BaseRule {
   private getMovementTypeModifier(movementType: string): number {
     const modifiers: Record<string, number> = {
       walk: 1.0,
-      run: 3.0, // Can run 3x normal speed but gains fatigue
-      swim: 0.25, // Swimming is much slower
-      climb: 0.25, // Climbing is very slow
-      fly: 2.0, // Flying is faster if capable
+      run: 3.0,
+      swim: 0.25,
+      climb: 0.25,
+      fly: 2.0,
     };
 
     return modifiers[movementType] || 1.0;
@@ -224,16 +209,14 @@ export class MovementRule extends BaseRule {
     movementRate: number,
     movementType: string
   ): number {
-    // Base time in rounds (10 seconds each)
     const baseTime = Math.ceil(distance / movementRate);
 
-    // Some movement types take longer
     const timeModifiers: Record<string, number> = {
       walk: 1.0,
       run: 1.0,
-      swim: 2.0, // Swimming takes more time due to technique
-      climb: 4.0, // Climbing is very time-consuming
-      fly: 0.5, // Flying is faster if no obstacles
+      swim: 2.0,
+      climb: 4.0,
+      fly: 0.5,
     };
 
     return Math.ceil(baseTime * (timeModifiers[movementType] || 1.0));
@@ -242,17 +225,14 @@ export class MovementRule extends BaseRule {
   private calculateFatigueGain(character: Character, data: MovementRequest): number {
     let baseFatigue = 0;
 
-    // Running generates fatigue
     if (data.movementType === 'run') {
-      baseFatigue = Math.floor(data.distance / 120); // 1 fatigue per 120 feet of running
+      baseFatigue = Math.floor(data.distance / 120);
     }
 
-    // Swimming and climbing are very tiring
     if (data.movementType === 'swim' || data.movementType === 'climb') {
-      baseFatigue = Math.floor(data.distance / 60); // 1 fatigue per 60 feet
+      baseFatigue = Math.floor(data.distance / 60);
     }
 
-    // Constitution modifier affects fatigue
     const conModifier = this.getConstitutionFatigueModifier(character.abilities.constitution);
 
     return Math.max(0, baseFatigue - conModifier);
@@ -300,9 +280,5 @@ export class MovementRule extends BaseRule {
     _character: Character,
     _result: MovementResult,
     _context: GameContext
-  ): void {
-    // Apply movement effects to the character
-    // This would update character position, apply fatigue, etc.
-    // For now, this is a placeholder for the actual implementation
-  }
+  ): void {}
 }

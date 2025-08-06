@@ -6,7 +6,6 @@ import { GameContext } from '../../osric/core/GameContext';
 import { SpellCastingRules } from '../../osric/rules/spells/SpellCastingRules';
 import type { Character, Spell } from '../../osric/types/entities';
 
-// Helper function to create a test wizard character (following established pattern)
 function createMockWizard(): Character {
   return {
     id: 'wizard1',
@@ -141,7 +140,6 @@ describe('Phase 4 Magic System Integration', () => {
     context = new GameContext(store);
     wizard = createMockWizard();
 
-    // Add wizard to context store
     context.setEntity(wizard.id, wizard);
   });
 
@@ -176,7 +174,6 @@ describe('Phase 4 Magic System Integration', () => {
       target.id = 'target1';
       context.setEntity(target.id, target);
 
-      // Set up context as the command would
       context.setTemporary('castSpell_caster', wizard);
       context.setTemporary('castSpell_spell', spell);
       context.setTemporary('castSpell_targets', [target]);
@@ -210,13 +207,11 @@ describe('Phase 4 Magic System Integration', () => {
       const memorizedSpell = wizard.memorizedSpells[1][0];
       const spellbookSpell = wizard.spellbook[0];
 
-      // Test memorized spell structure
       expect(memorizedSpell.name).toBeDefined();
       expect(memorizedSpell.level).toBeDefined();
       expect(memorizedSpell.components).toBeDefined();
       expect(Array.isArray(memorizedSpell.components)).toBe(true);
 
-      // Test spellbook spell structure
       expect(spellbookSpell.name).toBeDefined();
       expect(spellbookSpell.level).toBeDefined();
       expect(spellbookSpell.components).toBeDefined();

@@ -1,15 +1,3 @@
-/**
- * MagicItemCreationCommand - OSRIC Magic Item Creation System
- *
- * Handles magical item creation according to OSRIC rules:
- * - Scroll scribing with material costs and time requirements
- * - Potion brewing with ingredient gathering
- * - Weapon and armor enchantment procedures
- * - Ring and wand creation for high-level casters
- *
- * PRESERVATION: All OSRIC magic item creation mechanics preserved exactly.
- */
-
 import { BaseCommand, type CommandResult } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
@@ -27,10 +15,10 @@ export interface MagicItemCreationParameters {
     | 'rod'
     | 'staff'
     | 'miscellaneous';
-  baseItemId?: string; // For enchanting existing items
-  spellsToScribe?: string[]; // For scrolls
-  potionType?: string; // For potions
-  enchantmentLevel?: number; // +1, +2, etc. for weapons/armor
+  baseItemId?: string;
+  spellsToScribe?: string[];
+  potionType?: string;
+  enchantmentLevel?: number;
   materialComponents?: {
     name: string;
     cost: number;
@@ -73,22 +61,18 @@ export class MagicItemCreationCommand extends BaseCommand {
     try {
       const { characterId, itemType } = this.parameters;
 
-      // Get character
       const character = context.getEntity<Character>(characterId);
       if (!character) {
         return this.createFailureResult('Character not found', { characterId });
       }
 
-      // Validate character can create this item type
       const validation = this.validateCreator(character, itemType);
       if (!validation.valid) {
         return this.createFailureResult(validation.reason, { itemType });
       }
 
-      // Calculate creation requirements
       const requirements = this.calculateCreationRequirements(character, this.parameters);
 
-      // Check if character meets requirements
       const requirementCheck = this.checkRequirements(character, requirements);
       if (!requirementCheck.valid) {
         return this.createFailureResult(requirementCheck.reason, {
@@ -97,11 +81,9 @@ export class MagicItemCreationCommand extends BaseCommand {
         });
       }
 
-      // Attempt creation
       const creationResult = this.attemptCreation(character, requirements, this.parameters);
 
       if (creationResult.success && creationResult.item) {
-        // Success - deduct costs and add item
         const updatedCharacter = this.updateCharacterAfterCreation(
           character,
           requirements,
@@ -118,7 +100,6 @@ export class MagicItemCreationCommand extends BaseCommand {
         });
       }
 
-      // Creation failed - still deduct partial costs
       const failedCharacter = this.updateCharacterAfterCreation(
         character,
         requirements,
@@ -129,7 +110,7 @@ export class MagicItemCreationCommand extends BaseCommand {
 
       return this.createFailureResult(`Magic item creation failed: ${creationResult.reason}`, {
         timeSpent: requirements.timeInDays,
-        goldLost: Math.floor(requirements.totalCost * 0.75), // Lose most materials on failure
+        goldLost: Math.floor(requirements.totalCost * 0.75),
         materialsLost: creationResult.costsIncurred.materials,
       });
     } catch (error: unknown) {
@@ -149,14 +130,10 @@ export class MagicItemCreationCommand extends BaseCommand {
     return ['enchantment-rules', 'scroll-scribing-rules', 'potion-brewing-rules'];
   }
 
-  /**
-   * Validate that the character can create the specified item type
-   */
   private validateCreator(
     character: Character,
     itemType: string
   ): { valid: boolean; reason: string } {
-    // Check character class requirements for different item types
     const creatorRequirements: Record<string, { classes: string[]; minLevel: number }> = {
       scroll: { classes: ['magic-user', 'cleric', 'druid', 'illusionist'], minLevel: 1 },
       potion: { classes: ['magic-user', 'cleric', 'druid'], minLevel: 3 },
@@ -174,7 +151,6 @@ export class MagicItemCreationCommand extends BaseCommand {
       return { valid: false, reason: `Unknown item type: ${itemType}` };
     }
 
-    // Check if character has a qualifying class
     const hasValidClass = Object.keys(character.classes).some((className) =>
       requirements.classes.includes(className.toLowerCase().replace('-', '-'))
     );
@@ -186,7 +162,6 @@ export class MagicItemCreationCommand extends BaseCommand {
       };
     }
 
-    // Check level requirements
     const highestLevel = Math.max(
       ...(Object.values(character.classes).filter((level) => level !== undefined) as number[])
     );
@@ -200,9 +175,6 @@ export class MagicItemCreationCommand extends BaseCommand {
     return { valid: true, reason: '' };
   }
 
-  /**
-   * Calculate time, cost, and requirements for creation
-   */
   private calculateCreationRequirements(
     character: Character,
     parameters: MagicItemCreationParameters
@@ -214,7 +186,6 @@ export class MagicItemCreationCommand extends BaseCommand {
       assistantPresent = false,
     } = parameters;
 
-    // Base requirements by item type
     const baseRequirements: Record<string, { time: number; cost: number; level: number }> = {
       scroll: { time: 1, cost: 100, level: 1 },
       potion: { time: 7, cost: 500, level: 3 },
@@ -231,14 +202,12 @@ export class MagicItemCreationCommand extends BaseCommand {
     let timeInDays = base.time;
     let baseCost = base.cost;
 
-    // Adjust for enchantment level (weapons/armor)
     if (['weapon', 'armor'].includes(itemType) && enchantmentLevel > 1) {
       const multiplier = 2 ** (enchantmentLevel - 1);
       timeInDays *= multiplier;
       baseCost *= multiplier;
     }
 
-    // Workspace quality adjustments
     const workspaceMultipliers = {
       basic: { time: 1.0, cost: 1.0, success: 0.6 },
       good: { time: 0.9, cost: 1.1, success: 0.75 },
@@ -250,34 +219,28 @@ export class MagicItemCreationCommand extends BaseCommand {
     timeInDays = Math.ceil(timeInDays * workspace.time);
     baseCost = Math.floor(baseCost * workspace.cost);
 
-    // Assistant reduces time by 20%
     if (assistantPresent) {
       timeInDays = Math.ceil(timeInDays * 0.8);
     }
 
-    // Calculate material costs
     const materialCost = (parameters.materialComponents || []).reduce(
       (total, material) => total + material.cost * material.quantity,
       0
     );
 
-    // Calculate success chance
     const characterLevel = Math.max(
       ...(Object.values(character.classes).filter((level) => level !== undefined) as number[])
     );
     let successChance = workspace.success;
 
-    // Level bonus: +5% per level above minimum
     const levelBonus = Math.max(0, characterLevel - base.level) * 0.05;
     successChance = Math.min(0.95, successChance + levelBonus);
 
-    // Intelligence bonus for magic-users
     const magicUserLevel = character.classes['Magic-User'];
     if (magicUserLevel && character.abilities.intelligence >= 15) {
       successChance += (character.abilities.intelligence - 14) * 0.02;
     }
 
-    // Special requirements based on item type
     const specialRequirements: string[] = [];
     if (itemType === 'scroll' && parameters.spellsToScribe) {
       specialRequirements.push(`Know spells: ${parameters.spellsToScribe.join(', ')}`);
@@ -300,21 +263,16 @@ export class MagicItemCreationCommand extends BaseCommand {
     };
   }
 
-  /**
-   * Check if character meets all requirements
-   */
   private checkRequirements(
     character: Character,
     requirements: CreationRequirements
   ): { valid: boolean; reason: string; missing?: string[] } {
     const missing: string[] = [];
 
-    // Check gold
     if (character.currency.gold < requirements.totalCost) {
       missing.push(`${requirements.totalCost - character.currency.gold} gold pieces`);
     }
 
-    // Check materials availability
     const missingMaterials = (this.parameters.materialComponents || [])
       .filter((material) => !material.available)
       .map((material) => material.name);
@@ -323,7 +281,6 @@ export class MagicItemCreationCommand extends BaseCommand {
       missing.push(`Materials: ${missingMaterials.join(', ')}`);
     }
 
-    // Check spells known (for scrolls)
     if (this.parameters.itemType === 'scroll' && this.parameters.spellsToScribe) {
       const unknownSpells = this.parameters.spellsToScribe.filter(
         (spellName) => !character.spells.some((spell) => spell.name === spellName)
@@ -345,15 +302,11 @@ export class MagicItemCreationCommand extends BaseCommand {
     return { valid: true, reason: '' };
   }
 
-  /**
-   * Attempt the actual creation process
-   */
   private attemptCreation(
     character: Character,
     requirements: CreationRequirements,
     parameters: MagicItemCreationParameters
   ): CreationResult {
-    // Roll for success
     const roll = Math.random();
     const success = roll <= requirements.successChance;
 
@@ -378,7 +331,6 @@ export class MagicItemCreationCommand extends BaseCommand {
       };
     }
 
-    // Create the item
     const item = this.createMagicItem(character, parameters, requirements);
 
     return {
@@ -389,9 +341,6 @@ export class MagicItemCreationCommand extends BaseCommand {
     };
   }
 
-  /**
-   * Create the actual magic item
-   */
   private createMagicItem(
     character: Character,
     parameters: MagicItemCreationParameters,
@@ -399,7 +348,6 @@ export class MagicItemCreationCommand extends BaseCommand {
   ): Item {
     const { itemType, enchantmentLevel = 1, potionType } = parameters;
 
-    // Generate item name
     let itemName = '';
     let description = '';
     const value = requirements.totalCost;
@@ -442,9 +390,6 @@ export class MagicItemCreationCommand extends BaseCommand {
     };
   }
 
-  /**
-   * Get standard weight for item types
-   */
   private getItemWeight(itemType: string): number {
     const weights: Record<string, number> = {
       scroll: 0.1,
@@ -461,9 +406,6 @@ export class MagicItemCreationCommand extends BaseCommand {
     return weights[itemType] || 1.0;
   }
 
-  /**
-   * Update character after creation (success or failure)
-   */
   private updateCharacterAfterCreation(
     character: Character,
     requirements: CreationRequirements,
@@ -480,7 +422,6 @@ export class MagicItemCreationCommand extends BaseCommand {
       },
     };
 
-    // Add item to inventory if successful and it's a new item
     if (success && item && !this.parameters.baseItemId) {
       updatedCharacter.inventory = [...updatedCharacter.inventory, item];
     }

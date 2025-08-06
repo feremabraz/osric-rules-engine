@@ -5,7 +5,6 @@ import type { Character } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Type definitions for command result data
 interface MagicItemCreationResult {
   item: {
     name: string;
@@ -19,7 +18,6 @@ interface MagicItemCreationResult {
   goldLost?: number;
 }
 
-// Type guard function to check if result data is MagicItemCreationResult
 function isMagicItemCreationResult(data: unknown): data is MagicItemCreationResult {
   return (
     typeof data === 'object' &&
@@ -30,7 +28,6 @@ function isMagicItemCreationResult(data: unknown): data is MagicItemCreationResu
   );
 }
 
-// Helper function for mock character creation
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return {
     id: 'test-character',
@@ -154,7 +151,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   };
 }
 
-// Helper function to create cleric character
 function createMockCleric(overrides: Partial<Character> = {}): Character {
   return createMockCharacter({
     name: 'Test Cleric',
@@ -223,14 +219,12 @@ describe('MagicItemCreationCommand', () => {
     context.setEntity('test-wizard', wizard);
     context.setEntity('test-cleric', cleric);
 
-    // Store original Math.random
     originalMathRandom = Math.random;
-    // Mock Math.random to always succeed (return 0.1, which is < most success chances)
+
     Math.random = vi.fn(() => 0.1);
   });
 
   afterEach(() => {
-    // Restore original Math.random
     Math.random = originalMathRandom;
   });
 
@@ -454,7 +448,7 @@ describe('MagicItemCreationCommand', () => {
 
       const result = await command.execute(context);
       expect(result.success).toBe(true);
-      // Base cost 2000 * 2^(3-1) = 8000, so expect > 5000
+
       expect(result.data).toBeDefined();
     });
 
@@ -567,7 +561,7 @@ describe('MagicItemCreationCommand', () => {
 
     it('should reject ring creation below level 7', async () => {
       const command = new MagicItemCreationCommand({
-        characterId: 'test-wizard', // Level 5
+        characterId: 'test-wizard',
         itemType: 'ring',
       });
 
@@ -639,14 +633,12 @@ describe('MagicItemCreationCommand', () => {
       expect(resultBasic.success).toBe(true);
       expect(resultExcellent.success).toBe(true);
 
-      // Type-safe assertions
       if (
         resultBasic.data &&
         isMagicItemCreationResult(resultBasic.data) &&
         resultExcellent.data &&
         isMagicItemCreationResult(resultExcellent.data)
       ) {
-        // Excellent workspace should cost more but be more reliable
         expect(resultExcellent.data.goldSpent).toBeGreaterThan(resultBasic.data.goldSpent);
       } else {
         throw new Error('Expected MagicItemCreationResult for both results');
@@ -744,10 +736,9 @@ describe('MagicItemCreationCommand', () => {
     });
 
     it('should deduct partial costs on failure', async () => {
-      // Force failure by setting up unfavorable conditions
       const unluckyWizard = createMockCharacter({
         id: 'unlucky-wizard',
-        abilities: { ...createMockCharacter().abilities, intelligence: 8 }, // Low intelligence
+        abilities: { ...createMockCharacter().abilities, intelligence: 8 },
         currency: { platinum: 0, gold: 5000, electrum: 0, silver: 0, copper: 0 },
       });
       context.setEntity('unlucky-wizard', unluckyWizard);
@@ -756,10 +747,9 @@ describe('MagicItemCreationCommand', () => {
         characterId: 'unlucky-wizard',
         itemType: 'weapon',
         enchantmentLevel: 1,
-        workspaceQuality: 'basic', // Low success chance
+        workspaceQuality: 'basic',
       });
 
-      // Run multiple times to test failure case
       for (let i = 0; i < 10; i++) {
         const result = await command.execute(context);
         if (!result.success && result.message.includes('failed')) {
@@ -768,7 +758,6 @@ describe('MagicItemCreationCommand', () => {
           break;
         }
       }
-      // Note: Due to randomness, we can't guarantee failure, but at least test the structure
     });
   });
 
@@ -796,7 +785,6 @@ describe('MagicItemCreationCommand', () => {
     });
 
     it('should handle exceptions gracefully', async () => {
-      // Force error by corrupting context
       const corruptWizard = { ...wizard, classes: {} } as Character;
       context.setEntity('test-wizard', corruptWizard);
 
@@ -821,7 +809,7 @@ describe('MagicItemCreationCommand', () => {
 
       const result = await command.execute(context);
       expect(result.success).toBe(true);
-      expect((result.data as Record<string, unknown>).timeSpent).toBe(1); // 1 day for scroll
+      expect((result.data as Record<string, unknown>).timeSpent).toBe(1);
     });
 
     it('should implement authentic intelligence bonuses', async () => {
@@ -841,7 +829,6 @@ describe('MagicItemCreationCommand', () => {
 
       const result = await command.execute(context);
       expect(result.success).toBe(true);
-      // High intelligence should improve success rates
     });
 
     it('should preserve OSRIC level requirements', async () => {

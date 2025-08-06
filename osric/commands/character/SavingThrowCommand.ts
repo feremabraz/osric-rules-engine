@@ -1,16 +1,3 @@
-/**
- * SavingThrowCommand - OSRIC Saving Throw System
- *
- * Handles all saving throw checks according to OSRIC rules:
- * - Paralyzation, Poison, or Death Magic
- * - Petrification or Polymorph
- * - Rod, Staff, or Wand
- * - Breath Weapon
- * - Spell
- *
- * PRESERVATION: All OSRIC saving throw tables and modifiers preserved exactly.
- */
-
 import { BaseCommand, type CommandResult } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
@@ -25,17 +12,17 @@ export interface SavingThrowParameters {
     | 'breath-weapon'
     | 'spell';
   situationalModifiers?: {
-    magicItemBonus?: number; // Bonus from magic items (rings, cloaks, etc.)
-    spellBonus?: number; // Bonus from spells like Bless
-    classBonus?: number; // Special class abilities (paladin aura, etc.)
-    racialBonus?: number; // Racial saving throw bonuses
-    wisdomBonus?: number; // Wisdom bonus vs mental effects
-    dexterityBonus?: number; // Dexterity bonus vs area effects
-    constitution?: number; // Constitution for poison/death saves
-    difficulty?: 'easy' | 'normal' | 'hard' | 'very-hard'; // Situational difficulty
+    magicItemBonus?: number;
+    spellBonus?: number;
+    classBonus?: number;
+    racialBonus?: number;
+    wisdomBonus?: number;
+    dexterityBonus?: number;
+    constitution?: number;
+    difficulty?: 'easy' | 'normal' | 'hard' | 'very-hard';
   };
-  targetNumber?: number; // Override calculated target for specific effects
-  description?: string; // Description of what the save is against
+  targetNumber?: number;
+  description?: string;
 }
 
 export class SavingThrowCommand extends BaseCommand {
@@ -50,7 +37,6 @@ export class SavingThrowCommand extends BaseCommand {
       const { characterId, saveType, situationalModifiers, targetNumber, description } =
         this.parameters;
 
-      // Validate save type
       const validSaveTypes = [
         'paralyzation-poison-death',
         'petrification-polymorph',
@@ -62,7 +48,6 @@ export class SavingThrowCommand extends BaseCommand {
         return this.createFailureResult(`Invalid save type: ${saveType}`);
       }
 
-      // Validate situational modifiers
       if (situationalModifiers) {
         if (situationalModifiers.magicItemBonus !== undefined) {
           if (
@@ -74,31 +59,25 @@ export class SavingThrowCommand extends BaseCommand {
         }
       }
 
-      // Validate target number
       if (targetNumber !== undefined) {
         if (targetNumber < 2 || targetNumber > 20) {
           return this.createFailureResult('Target number must be between 2 and 20');
         }
       }
 
-      // Get the character
       const character = context.getEntity<Character>(characterId);
       if (!character) {
         return this.createFailureResult(`Character with ID "${characterId}" not found`);
       }
 
-      // Check if character is unconscious
       if (character.hitPoints.current <= 0) {
         return this.createFailureResult('Cannot make saving throws while unconscious or dead');
       }
 
-      // Set up temporary data for rules processing
       context.setTemporary('saving-throw-params', this.parameters);
 
-      // Get base saving throw number for this character and save type
       const baseSaveNumber = this.getBaseSavingThrow(character, saveType);
 
-      // Apply situational modifiers
       const modifiedSaveNumber = this.applyModifiers(
         baseSaveNumber,
         situationalModifiers,
@@ -106,14 +85,11 @@ export class SavingThrowCommand extends BaseCommand {
         character
       );
 
-      // Use target number if provided, otherwise use modified save
       const finalSaveNumber = targetNumber ?? modifiedSaveNumber;
 
-      // Roll d20
       const roll = Math.floor(Math.random() * 20) + 1;
       const success = roll >= finalSaveNumber;
 
-      // Create detailed result
       const modifierDescriptions = this.getModifierDescriptions(situationalModifiers, saveType);
       const saveDescription = description || this.getSaveTypeDescription(saveType);
       const isMultiClass = character.classes && Object.keys(character.classes).length > 1;
@@ -155,36 +131,24 @@ export class SavingThrowCommand extends BaseCommand {
     return ['saving-throws'];
   }
 
-  /**
-   * Get base saving throw number from OSRIC tables
-   */
   private getBaseSavingThrow(character: Character, saveType: string): number {
     const level = character.experience.level;
     const characterClass = character.class.toLowerCase();
 
-    // OSRIC saving throw tables by class and level
     return this.getSavingThrowByClass(characterClass, level, saveType);
   }
 
-  /**
-   * Get saving throw number by character class and level
-   */
   private getSavingThrowByClass(characterClass: string, level: number, saveType: string): number {
-    // Handle multi-class characters (use best save)
     if (characterClass.includes('/')) {
       const classes = characterClass.split('/');
       const saves = classes.map((cls) => this.getSingleClassSave(cls.trim(), level, saveType));
-      return Math.min(...saves); // Best (lowest) saving throw
+      return Math.min(...saves);
     }
 
     return this.getSingleClassSave(characterClass, level, saveType);
   }
 
-  /**
-   * Get saving throw for a single class
-   */
   private getSingleClassSave(characterClass: string, level: number, saveType: string): number {
-    // OSRIC saving throw tables
     const savingThrowTables: Record<string, Record<string, number[]>> = {
       fighter: {
         'paralyzation-poison-death': [
@@ -218,10 +182,8 @@ export class SavingThrowCommand extends BaseCommand {
       },
     };
 
-    // Get the appropriate table
     let classTable = savingThrowTables[characterClass];
 
-    // Handle classes not in table (use fighter as default)
     if (!classTable) {
       if (characterClass === 'paladin' || characterClass === 'ranger') {
         classTable = savingThrowTables.fighter;
@@ -232,23 +194,19 @@ export class SavingThrowCommand extends BaseCommand {
       } else if (characterClass === 'assassin') {
         classTable = savingThrowTables.thief;
       } else {
-        classTable = savingThrowTables.fighter; // Default
+        classTable = savingThrowTables.fighter;
       }
     }
 
     const saveArray = classTable[saveType];
     if (!saveArray) {
-      return 20; // Default high save if not found
+      return 20;
     }
 
-    // Get save for level (capped at array length)
     const tableIndex = Math.min(level - 1, saveArray.length - 1);
     return saveArray[tableIndex];
   }
 
-  /**
-   * Apply all modifiers to the base saving throw
-   */
   private applyModifiers(
     baseSave: number,
     modifiers: SavingThrowParameters['situationalModifiers'],
@@ -259,30 +217,24 @@ export class SavingThrowCommand extends BaseCommand {
 
     if (!modifiers) return modifiedSave;
 
-    // Magic item bonuses (these are typically negative = better)
     if (modifiers.magicItemBonus) {
       modifiedSave += modifiers.magicItemBonus;
     }
 
-    // Spell bonuses
     if (modifiers.spellBonus) {
       modifiedSave += modifiers.spellBonus;
     }
 
-    // Class bonuses (paladin aura, etc.)
     if (modifiers.classBonus) {
       modifiedSave += modifiers.classBonus;
     }
 
-    // Racial bonuses
     if (modifiers.racialBonus) {
       modifiedSave += modifiers.racialBonus;
     }
 
-    // Apply ability score modifiers
     modifiedSave += this.getAbilityModifiers(character, saveType, modifiers);
 
-    // Difficulty modifiers
     if (modifiers.difficulty && modifiers.difficulty !== 'normal') {
       const difficultyMod = {
         easy: -2,
@@ -292,12 +244,9 @@ export class SavingThrowCommand extends BaseCommand {
       modifiedSave += difficultyMod;
     }
 
-    return Math.max(2, Math.min(20, modifiedSave)); // Cap between 2-20
+    return Math.max(2, Math.min(20, modifiedSave));
   }
 
-  /**
-   * Get ability score modifiers for saving throws
-   */
   private getAbilityModifiers(
     character: Character,
     saveType: string,
@@ -305,13 +254,11 @@ export class SavingThrowCommand extends BaseCommand {
   ): number {
     let modifier = 0;
 
-    // Constitution bonus for poison/death saves
     if (saveType === 'paralyzation-poison-death') {
       const constitution = modifiers?.constitution ?? character.abilities.constitution;
       modifier += this.getConstitutionSaveBonus(constitution);
     }
 
-    // Wisdom bonus for mental effects (spells, some wands)
     if (saveType === 'spell' || saveType === 'rod-staff-wand') {
       if (modifiers?.wisdomBonus) {
         modifier += modifiers.wisdomBonus;
@@ -320,7 +267,6 @@ export class SavingThrowCommand extends BaseCommand {
       }
     }
 
-    // Dexterity bonus for area effects (breath weapons, some spells)
     if (saveType === 'breath-weapon') {
       if (modifiers?.dexterityBonus) {
         modifier += modifiers.dexterityBonus;
@@ -332,9 +278,6 @@ export class SavingThrowCommand extends BaseCommand {
     return modifier;
   }
 
-  /**
-   * Get constitution bonus for poison/death saves
-   */
   private getConstitutionSaveBonus(constitution: number): number {
     if (constitution >= 17) return -4;
     if (constitution >= 16) return -3;
@@ -345,9 +288,6 @@ export class SavingThrowCommand extends BaseCommand {
     return +2;
   }
 
-  /**
-   * Get wisdom bonus for mental saves
-   */
   private getWisdomSaveBonus(wisdom: number): number {
     if (wisdom >= 17) return -3;
     if (wisdom >= 15) return -2;
@@ -357,9 +297,6 @@ export class SavingThrowCommand extends BaseCommand {
     return +2;
   }
 
-  /**
-   * Get dexterity bonus for area effect saves
-   */
   private getDexteritySaveBonus(dexterity: number): number {
     if (dexterity >= 17) return -3;
     if (dexterity >= 15) return -2;
@@ -369,9 +306,6 @@ export class SavingThrowCommand extends BaseCommand {
     return +2;
   }
 
-  /**
-   * Get descriptions of applied modifiers
-   */
   private getModifierDescriptions(
     modifiers: SavingThrowParameters['situationalModifiers'],
     saveType: string
@@ -400,7 +334,6 @@ export class SavingThrowCommand extends BaseCommand {
       descriptions.push('difficulty');
     }
 
-    // Add ability score descriptions
     if (saveType === 'paralyzation-poison-death' && modifiers.constitution) {
       descriptions.push('constitution');
     }
@@ -416,9 +349,6 @@ export class SavingThrowCommand extends BaseCommand {
     return descriptions;
   }
 
-  /**
-   * Get human-readable description of save type
-   */
   private getSaveTypeDescription(saveType: string): string {
     const descriptions = {
       'paralyzation-poison-death': 'Paralyzation, Poison, or Death Magic',
@@ -431,9 +361,6 @@ export class SavingThrowCommand extends BaseCommand {
     return descriptions[saveType as keyof typeof descriptions] || saveType;
   }
 
-  /**
-   * Get special abilities affecting saving throws
-   */
   private getSpecialAbilities(character: Character): string[] {
     const abilities: string[] = [];
 
@@ -448,9 +375,6 @@ export class SavingThrowCommand extends BaseCommand {
     return abilities;
   }
 
-  /**
-   * Get racial bonuses for saving throws
-   */
   private getRacialBonuses(character: Character): string[] {
     const bonuses: string[] = [];
 
@@ -465,9 +389,6 @@ export class SavingThrowCommand extends BaseCommand {
     return bonuses;
   }
 
-  /**
-   * Get ability modifiers for saving throws
-   */
   private getAbilityModifierNames(character: Character, saveType: string): string[] {
     const modifiers: string[] = [];
 

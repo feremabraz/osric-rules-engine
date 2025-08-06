@@ -1,19 +1,3 @@
-/**
- * GainExperienceCommand Test Suite
- *
- * Tests the GainExperienceCommand implementation using systematic testing methodology.
- * Validates OSRIC-compliant experience gain mechanics including:
- * - Combat experience calculation and monster XP
- * - Treasure experience (1 GP = 1 XP rule)
- * - Story milestone experience awards
- * - Prime requisite bonuses and penalties
- * - Multi-class experience penalties
- * - Party experience sharing mechanics
- * - Class-specific experience modifiers
- *
- * Follows established testing patterns with comprehensive coverage.
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { GainExperienceCommand } from '../../../osric/commands/character/GainExperienceCommand';
@@ -29,14 +13,13 @@ describe('GainExperienceCommand', () => {
     context = new GameContext(store);
   });
 
-  // Mock character creation utility matching the actual entity types
   function createMockCharacter(overrides: Partial<Character> = {}): Character {
     const character: Character = {
       id: 'test-character',
       name: 'Test Fighter',
       race: 'Human' as CharacterRace,
       class: 'Fighter' as CharacterClass,
-      classes: { Fighter: 3 }, // Single class character
+      classes: { Fighter: 3 },
       primaryClass: 'Fighter' as CharacterClass,
       level: 3,
       hitPoints: { current: 25, maximum: 25 },
@@ -44,7 +27,7 @@ describe('GainExperienceCommand', () => {
       encumbrance: 50,
       movementRate: 120,
       abilities: {
-        strength: 16, // High strength for Fighter prime requisite bonus
+        strength: 16,
         dexterity: 14,
         constitution: 15,
         intelligence: 12,
@@ -52,14 +35,12 @@ describe('GainExperienceCommand', () => {
         charisma: 13,
       },
       abilityModifiers: {
-        // Strength modifiers
         strengthHitAdj: 1,
         strengthDamageAdj: 1,
         strengthEncumbrance: null,
         strengthOpenDoors: null,
         strengthBendBars: null,
 
-        // Dexterity modifiers
         dexterityReaction: 0,
         dexterityMissile: 0,
         dexterityDefense: 0,
@@ -69,24 +50,20 @@ describe('GainExperienceCommand', () => {
         dexterityMoveSilently: null,
         dexterityHideInShadows: null,
 
-        // Constitution modifiers
         constitutionHitPoints: 1,
         constitutionSystemShock: null,
         constitutionResurrectionSurvival: null,
         constitutionPoisonSave: null,
 
-        // Intelligence modifiers
         intelligenceLanguages: null,
         intelligenceLearnSpells: null,
         intelligenceMaxSpellLevel: null,
         intelligenceIllusionImmunity: false,
 
-        // Wisdom modifiers
         wisdomMentalSave: null,
         wisdomBonusSpells: null,
         wisdomSpellFailure: null,
 
-        // Charisma modifiers
         charismaReactionAdj: null,
         charismaLoyaltyBase: null,
         charismaMaxHenchmen: null,
@@ -135,13 +112,12 @@ describe('GainExperienceCommand', () => {
     return character;
   }
 
-  // Mock monster creation utility
   function createMockMonster(overrides: Partial<Monster> = {}): Monster {
     return {
       id: 'test-monster',
       name: 'Orc',
       level: 1,
-      hitDice: '1', // String format expected by Monster interface
+      hitDice: '1',
       hitPoints: { current: 4, maximum: 4 },
       armorClass: 6,
       thac0: 20,
@@ -295,7 +271,6 @@ describe('GainExperienceCommand', () => {
       expect(result.success).toBe(true);
       expect(result.data?.experienceAwarded).toBeGreaterThan(0);
 
-      // Verify character's experience was updated
       const updatedCharacter = context.getEntity<Character>('test-character');
       expect(updatedCharacter?.experience.current).toBeGreaterThan(character.experience.current);
     });
@@ -358,7 +333,6 @@ describe('GainExperienceCommand', () => {
       expect(result.success).toBe(true);
       expect(result.data?.experienceAwarded).toBeGreaterThan(0);
 
-      // Verify character's experience was updated
       const updatedCharacter = context.getEntity<Character>('test-character');
       expect(updatedCharacter?.experience.current).toBeGreaterThan(character.experience.current);
     });
@@ -379,7 +353,7 @@ describe('GainExperienceCommand', () => {
       const result = await command.execute(context);
 
       expect(result.success).toBe(true);
-      expect(result.data?.experienceAwarded).toBe(165); // With 10% prime requisite bonus
+      expect(result.data?.experienceAwarded).toBe(165);
     });
 
     it('should handle zero treasure value', async () => {
@@ -420,9 +394,8 @@ describe('GainExperienceCommand', () => {
       const result = await command.execute(context);
 
       expect(result.success).toBe(true);
-      expect(result.data?.experienceAwarded).toBe(550); // With 10% prime requisite bonus
+      expect(result.data?.experienceAwarded).toBe(550);
 
-      // Verify character's experience was updated
       const updatedCharacter = context.getEntity<Character>('test-character');
       expect(updatedCharacter?.experience.current).toBe(character.experience.current + 550);
     });
@@ -466,7 +439,7 @@ describe('GainExperienceCommand', () => {
       const result = await command.execute(context);
 
       expect(result.success).toBe(true);
-      expect(result.data?.experienceAwarded).toBe(110); // 100 + 10% bonus
+      expect(result.data?.experienceAwarded).toBe(110);
     });
 
     it('should apply 5% bonus for good prime requisite (13-15)', async () => {
@@ -487,7 +460,7 @@ describe('GainExperienceCommand', () => {
       const result = await command.execute(context);
 
       expect(result.success).toBe(true);
-      expect(result.data?.experienceAwarded).toBe(105); // 100 + 5% bonus
+      expect(result.data?.experienceAwarded).toBe(105);
     });
 
     it('should apply penalty for low prime requisite', async () => {
@@ -508,14 +481,14 @@ describe('GainExperienceCommand', () => {
       const result = await command.execute(context);
 
       expect(result.success).toBe(true);
-      expect(result.data?.experienceAwarded).toBe(95); // 100 - 5% penalty
+      expect(result.data?.experienceAwarded).toBe(95);
     });
   });
 
   describe('Multi-Class Experience Penalties', () => {
     it('should apply multi-class XP penalty', async () => {
       const multiClassCharacter = createMockCharacter({
-        classes: { Fighter: 3, 'Magic-User': 2 }, // Multi-class character
+        classes: { Fighter: 3, 'Magic-User': 2 },
       });
       context.setEntity('test-character', multiClassCharacter);
 
@@ -530,7 +503,7 @@ describe('GainExperienceCommand', () => {
       const result = await command.execute(context);
 
       expect(result.success).toBe(true);
-      // Should be split between classes: 200 / 2 = 100, then with prime requisite bonus
+
       expect(result.data?.experienceAwarded).toBeLessThan(200);
     });
   });
@@ -563,7 +536,6 @@ describe('GainExperienceCommand', () => {
       expect(result.data?.experienceShares).toBeDefined();
       expect(result.data?.updatedCharacters).toHaveLength(3);
 
-      // Each character should have received experience
       const updatedChar1 = context.getEntity<Character>('char-1');
       const updatedChar2 = context.getEntity<Character>('char-2');
       const updatedChar3 = context.getEntity<Character>('char-3');
@@ -619,7 +591,6 @@ describe('GainExperienceCommand', () => {
       expect(result.success).toBe(true);
       expect(result.data?.experienceShares).toBeDefined();
 
-      // Both characters should receive equal shares (after class modifiers)
       const shares = (result.data?.experienceShares as Record<string, number>) || {};
       expect(Object.keys(shares)).toContain('char-1');
       expect(Object.keys(shares)).toContain('char-2');
@@ -639,7 +610,7 @@ describe('GainExperienceCommand', () => {
         characterId: 'test-character',
         experienceSource: {
           type: 'story',
-          amount: 200, // Should push over the level threshold
+          amount: 200,
         },
       });
 
@@ -649,7 +620,6 @@ describe('GainExperienceCommand', () => {
       expect(result.data?.leveledUp).toBe(true);
       expect(result.data?.newLevel).toBe(5);
 
-      // Verify character's level was updated
       const updatedCharacter = context.getEntity<Character>('test-character');
       expect(updatedCharacter?.experience.level).toBe(5);
       expect(updatedCharacter?.experience.requiredForNextLevel).toBeGreaterThan(16000);
@@ -697,13 +667,15 @@ describe('GainExperienceCommand', () => {
       const character = createMockCharacter();
       context.setEntity('test-character', character);
 
+      const experienceSource = {
+        type: 'combat' as const,
+        amount: 100,
+      };
+      Object.defineProperty(experienceSource, 'type', { value: 'invalid', writable: true });
+
       const command = new GainExperienceCommand({
         characterId: 'test-character',
-        experienceSource: {
-          // @ts-expect-error Testing invalid type
-          type: 'invalid',
-          amount: 100,
-        },
+        experienceSource,
       });
 
       const result = await command.execute(context);
@@ -716,18 +688,16 @@ describe('GainExperienceCommand', () => {
       const character = createMockCharacter();
       context.setEntity('test-character', character);
 
-      // Create a command that might cause errors
       const command = new GainExperienceCommand({
         characterId: 'test-character',
         experienceSource: {
           type: 'story',
-          amount: -100, // Negative experience
+          amount: -100,
         },
       });
 
       const result = await command.execute(context);
 
-      // Should handle gracefully regardless of result
       expect(result.success).toBeDefined();
       expect(result.message).toBeDefined();
     });
@@ -759,7 +729,7 @@ describe('GainExperienceCommand', () => {
         characterId: 'test-character',
         experienceSource: {
           type: 'treasure',
-          treasureValue: 100, // 1 GP = 1 XP rule
+          treasureValue: 100,
         },
       });
 
@@ -767,10 +737,6 @@ describe('GainExperienceCommand', () => {
 
       expect(result.success).toBe(true);
 
-      // Should apply OSRIC rules:
-      // - Base treasure XP (100)
-      // - Prime requisite bonus (10% for Strength 16)
-      // - Final result should be 110 XP
       expect(result.data?.experienceAwarded).toBe(110);
     });
   });

@@ -1,15 +1,3 @@
-/**
- * MonsterBehaviorRules - OSRIC Monster Behavior Systems
- *
- * Handles monster behavior according to OSRIC rules:
- * - Intelligence-based reactions and tactics
- * - Alignment-based behavior patterns
- * - Morale and combat behavior
- * - Pack and social behavior
- *
- * PRESERVATION: All OSRIC monster behavior mechanics preserved exactly.
- */
-
 import type { Command } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { BaseRule, type RuleResult } from '../../core/Rule';
@@ -55,16 +43,13 @@ export class MonsterBehaviorRules extends BaseRule {
 
       const { monsterId, situation, stimuli = {} } = behaviorData;
 
-      // Get the monster
       const monster = context.getEntity<Monster>(monsterId);
       if (!monster) {
         return this.createFailureResult(`Monster with ID "${monsterId}" not found`);
       }
 
-      // Determine behavior based on OSRIC rules
       const behaviorResult = this.determineBehavior(monster, situation, stimuli);
 
-      // Update monster with behavior modifications if needed
       if (behaviorResult.modifiedMonster) {
         context.setEntity(monsterId, behaviorResult.modifiedMonster);
       }
@@ -81,9 +66,6 @@ export class MonsterBehaviorRules extends BaseRule {
     }
   }
 
-  /**
-   * Determine monster behavior based on OSRIC intelligence and situation
-   */
   private determineBehavior(
     monster: Monster,
     situation: string,
@@ -102,7 +84,6 @@ export class MonsterBehaviorRules extends BaseRule {
     const suggestedActions: string[] = [];
     const modifications: string[] = [];
 
-    // Base behavior by intelligence (OSRIC rules)
     switch (intelligence) {
       case 'non-intelligent':
         behavior = this.determineAnimalBehavior(situation, stimuli);
@@ -131,10 +112,8 @@ export class MonsterBehaviorRules extends BaseRule {
         break;
     }
 
-    // Alignment modifications
     this.applyAlignmentModifications(alignment, suggestedActions, modifications);
 
-    // Morale effects
     if (morale <= 4) {
       modifications.push('Low morale - likely to flee');
       suggestedActions.push('Check morale frequently');
@@ -146,11 +125,7 @@ export class MonsterBehaviorRules extends BaseRule {
     return { behavior, suggestedActions, modifications };
   }
 
-  /**
-   * Get intelligence level from monster
-   */
   private getIntelligenceLevel(monster: Monster): string {
-    // For now, derive from hit dice - more sophisticated monsters are more intelligent
     const hdMatch = monster.hitDice.match(/^(\d+)/);
     const baseHD = hdMatch ? Number.parseInt(hdMatch[1]) : 1;
 
@@ -162,9 +137,6 @@ export class MonsterBehaviorRules extends BaseRule {
     return 'highly-intelligent';
   }
 
-  /**
-   * Determine animal/non-intelligent behavior
-   */
   private determineAnimalBehavior(situation: string, stimuli: Stimuli): string {
     if (situation === 'combat') {
       return stimuli.healthStatus === 'near-death' ? 'flee' : 'fight-basic';
@@ -178,9 +150,6 @@ export class MonsterBehaviorRules extends BaseRule {
     return 'cautious';
   }
 
-  /**
-   * Determine semi-intelligent behavior
-   */
   private determineSemiIntelligentBehavior(
     situation: string,
     stimuli: Stimuli,
@@ -193,7 +162,6 @@ export class MonsterBehaviorRules extends BaseRule {
       return situation === 'combat' ? 'defensive' : 'cautious';
     }
 
-    // Use stimuli for neutral alignment behavior
     if (stimuli.nearbyEnemies && stimuli.nearbyEnemies > (stimuli.nearbyAllies || 0)) {
       return 'retreat';
     }
@@ -201,9 +169,6 @@ export class MonsterBehaviorRules extends BaseRule {
     return situation === 'combat' ? 'cautious' : 'neutral';
   }
 
-  /**
-   * Determine low-intelligent behavior
-   */
   private determineLowIntelligentBehavior(
     situation: string,
     stimuli: Stimuli,
@@ -221,9 +186,6 @@ export class MonsterBehaviorRules extends BaseRule {
     return alignment.includes('Evil') ? 'threatening' : 'wary';
   }
 
-  /**
-   * Determine intelligent behavior
-   */
   private determineIntelligentBehavior(
     situation: string,
     stimuli: Stimuli,
@@ -249,19 +211,14 @@ export class MonsterBehaviorRules extends BaseRule {
     return 'intelligent-assessment';
   }
 
-  /**
-   * Determine genius-level behavior
-   */
   private determineGeniusBehavior(
     situation: string,
     stimuli: Stimuli,
     alignment: string,
     morale: number
   ): string {
-    // Genius-level creatures use complex strategy considering all factors
     const numericalAdvantage = (stimuli.nearbyAllies || 0) > (stimuli.nearbyEnemies || 0);
 
-    // Critical health overrides other considerations
     if (stimuli.healthStatus === 'near-death') {
       return 'strategic-retreat';
     }
@@ -289,9 +246,6 @@ export class MonsterBehaviorRules extends BaseRule {
     return 'calculating';
   }
 
-  /**
-   * Apply alignment-based behavior modifications
-   */
   private applyAlignmentModifications(
     alignment: string,
     actions: string[],

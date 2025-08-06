@@ -1,15 +1,3 @@
-/**
- * ScrollScribingRules - OSRIC Scroll Creation System
- *
- * Handles magical scroll creation according to OSRIC rules:
- * - Spell transcription procedures
- * - Material component requirements (inks, parchments, etc.)
- * - Time and cost calculations
- * - Success chance determination
- *
- * PRESERVATION: All OSRIC scroll scribing mechanics preserved exactly.
- */
-
 import type { Command } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { BaseRule, type RuleResult } from '../../core/Rule';
@@ -27,7 +15,7 @@ interface ScrollScribingContext {
     cost: number;
     required: boolean;
   }[];
-  timeModifier?: number; // Multiplier for base time
+  timeModifier?: number;
   assistantPresent?: boolean;
 }
 
@@ -54,14 +42,12 @@ export class ScrollScribingRules extends BaseRule {
   readonly priority = 90;
 
   async execute(_context: GameContext, command: Command): Promise<RuleResult> {
-    // Extract scroll scribing context from command
     const scribingContext = this.extractScribingContext(command);
     if (!scribingContext) {
       return this.createFailureResult('Invalid scroll scribing context', {});
     }
 
     try {
-      // Validate scribe capabilities
       const validation = this.validateScribe(scribingContext.scribe, scribingContext.spellToScribe);
       if (!validation.success) {
         return this.createFailureResult(validation.reason, {
@@ -70,11 +56,9 @@ export class ScrollScribingRules extends BaseRule {
         });
       }
 
-      // Calculate material requirements and costs
       const materials = this.calculateMaterials(scribingContext);
       const timeRequired = this.calculateScribingTime(scribingContext);
 
-      // Check if scribe has required resources
       const resourceCheck = this.checkResources(scribingContext.scribe, materials, timeRequired);
       if (!resourceCheck.success) {
         return this.createFailureResult(resourceCheck.reason, {
@@ -82,7 +66,6 @@ export class ScrollScribingRules extends BaseRule {
         });
       }
 
-      // Attempt scroll creation
       const scribingResult = this.performScrollScribing(scribingContext, materials, timeRequired);
 
       if (scribingResult.success && scribingResult.scroll) {
@@ -111,23 +94,14 @@ export class ScrollScribingRules extends BaseRule {
   }
 
   canApply(_context: GameContext, command: Command): boolean {
-    // This rule applies to scroll scribing commands
     return command.type === 'scroll-scribing' || command.type === 'magic-item-creation';
   }
 
-  /**
-   * Extract scroll scribing context from command (placeholder)
-   */
   private extractScribingContext(_command: Command): ScrollScribingContext | null {
-    // In a real implementation, this would extract from command parameters
     return null;
   }
 
-  /**
-   * Validate that the character can scribe the specified spell
-   */
   private validateScribe(scribe: Character, spell: Spell): { success: boolean; reason: string } {
-    // Check if character is a spellcaster
     const magicUserLevel = scribe.classes['Magic-User'];
     const clericLevel = scribe.classes.Cleric;
     const druidLevel = scribe.classes.Druid;
@@ -140,7 +114,6 @@ export class ScrollScribingRules extends BaseRule {
       };
     }
 
-    // Check if character class matches spell class
     const characterCanCastSpell = this.canCharacterCastSpell(scribe, spell);
     if (!characterCanCastSpell) {
       return {
@@ -149,7 +122,6 @@ export class ScrollScribingRules extends BaseRule {
       };
     }
 
-    // Check if character knows the spell
     const knowsSpell = scribe.spells.some((knownSpell) => knownSpell.name === spell.name);
     if (!knowsSpell) {
       return {
@@ -158,7 +130,6 @@ export class ScrollScribingRules extends BaseRule {
       };
     }
 
-    // Check minimum level requirement (must be able to cast the spell)
     const characterLevel = this.getHighestCasterLevel(scribe);
     const minimumLevelForSpell = this.getMinimumLevelForSpell(spell);
 
@@ -169,7 +140,6 @@ export class ScrollScribingRules extends BaseRule {
       };
     }
 
-    // Check ability score requirements for complex spells
     if (spell.level >= 4) {
       const requiredStat = ['Magic-User', 'Illusionist'].includes(spell.class)
         ? scribe.abilities.intelligence
@@ -190,9 +160,6 @@ export class ScrollScribingRules extends BaseRule {
     return { success: true, reason: '' };
   }
 
-  /**
-   * Check if character can cast spells of the given class
-   */
   private canCharacterCastSpell(character: Character, spell: Spell): boolean {
     const classMapping = {
       'Magic-User': ['Magic-User'],
@@ -207,9 +174,6 @@ export class ScrollScribingRules extends BaseRule {
     );
   }
 
-  /**
-   * Get the highest caster level for the character
-   */
   private getHighestCasterLevel(character: Character): number {
     const casterLevels = [
       character.classes['Magic-User'] || 0,
@@ -221,11 +185,7 @@ export class ScrollScribingRules extends BaseRule {
     return Math.max(...casterLevels);
   }
 
-  /**
-   * Get minimum character level required to cast a spell
-   */
   private getMinimumLevelForSpell(spell: Spell): number {
-    // OSRIC spell level to character level mapping
     const spellLevelToCharacterLevel = {
       1: 1,
       2: 3,
@@ -241,13 +201,9 @@ export class ScrollScribingRules extends BaseRule {
     return spellLevelToCharacterLevel[spell.level as keyof typeof spellLevelToCharacterLevel] || 1;
   }
 
-  /**
-   * Calculate material requirements for scroll scribing
-   */
   private calculateMaterials(context: ScrollScribingContext): ScrollMaterials {
     const { spellToScribe, scrollQuality, inkType, parchmentType } = context;
 
-    // Ink costs based on spell level and ink quality
     const inkCosts = {
       basic: 10 * spellToScribe.level,
       magical: 25 * spellToScribe.level,
@@ -262,7 +218,6 @@ export class ScrollScribingRules extends BaseRule {
       legendary: 0.3,
     };
 
-    // Parchment costs based on quality
     const parchmentCosts = {
       papyrus: 5,
       vellum: 15,
@@ -277,7 +232,6 @@ export class ScrollScribingRules extends BaseRule {
       'dragon-skin': 200,
     };
 
-    // Quality modifiers
     const qualityMultipliers = {
       normal: 1.0,
       fine: 1.5,
@@ -287,7 +241,6 @@ export class ScrollScribingRules extends BaseRule {
 
     const qualityMultiplier = qualityMultipliers[scrollQuality];
 
-    // Additional components based on spell level
     const additionalComponents = [];
     if (spellToScribe.level >= 3) {
       additionalComponents.push({
@@ -328,16 +281,11 @@ export class ScrollScribingRules extends BaseRule {
     };
   }
 
-  /**
-   * Calculate time required for scribing
-   */
   private calculateScribingTime(context: ScrollScribingContext): number {
     const { spellToScribe, scrollQuality, timeModifier = 1.0, assistantPresent = false } = context;
 
-    // Base time: 1 day per spell level
     let baseTime = spellToScribe.level;
 
-    // Quality modifiers
     const qualityTimeMultipliers = {
       normal: 1.0,
       fine: 1.5,
@@ -347,10 +295,8 @@ export class ScrollScribingRules extends BaseRule {
 
     baseTime *= qualityTimeMultipliers[scrollQuality];
 
-    // Apply custom time modifier
     baseTime *= timeModifier;
 
-    // Assistant reduces time by 25%
     if (assistantPresent) {
       baseTime *= 0.75;
     }
@@ -358,9 +304,6 @@ export class ScrollScribingRules extends BaseRule {
     return Math.ceil(baseTime);
   }
 
-  /**
-   * Check if scribe has required resources
-   */
   private checkResources(
     scribe: Character,
     materials: ScrollMaterials,
@@ -368,18 +311,15 @@ export class ScrollScribingRules extends BaseRule {
   ): { success: boolean; reason: string; missing?: string[] } {
     const missing: string[] = [];
 
-    // Calculate total cost
     const totalCost =
       materials.ink.cost +
       materials.parchment.cost +
       materials.additionalComponents.reduce((sum, comp) => sum + comp.cost, 0);
 
-    // Check gold
     if (scribe.currency.gold < totalCost) {
       missing.push(`${totalCost - scribe.currency.gold} additional gold pieces`);
     }
 
-    // Check time availability (placeholder - in full implementation would check character schedule)
     if (timeRequired > 30) {
       missing.push(`Scribing requires ${timeRequired} days - ensure adequate time available`);
     }
@@ -395,9 +335,6 @@ export class ScrollScribingRules extends BaseRule {
     return { success: true, reason: '' };
   }
 
-  /**
-   * Perform the actual scroll scribing process
-   */
   private performScrollScribing(
     context: ScrollScribingContext,
     materials: ScrollMaterials,
@@ -411,35 +348,26 @@ export class ScrollScribingRules extends BaseRule {
     materialsLost?: string[];
     canRetry?: boolean;
   } {
-    // Calculate success chance
     let successChance = this.calculateBaseSuccessChance(context);
 
-    // Apply material bonuses
     successChance += materials.ink.bonusToSuccess;
 
-    // Parchment quality bonus
-    const parchmentBonus = materials.parchment.durability / 1000; // 0.05 to 0.2 bonus
+    const parchmentBonus = materials.parchment.durability / 1000;
     successChance += parchmentBonus;
 
-    // Spell level penalty
     successChance -= (context.spellToScribe.level - 1) * 0.05;
 
-    // Ensure success chance is within bounds
     successChance = Math.max(0.1, Math.min(0.95, successChance));
 
-    // Roll for success
     const roll = Math.random();
     const success = roll <= successChance;
 
     if (success) {
-      // Create the scroll
       const scroll = this.createScroll(context, materials);
 
-      // Determine quality level achieved
       const qualityRoll = Math.random();
       let qualityLevel = context.scrollQuality;
 
-      // 10% chance for improved quality
       if (qualityRoll >= 0.9) {
         const qualityLevels: Array<'normal' | 'fine' | 'exceptional' | 'masterwork'> = [
           'normal',
@@ -461,22 +389,18 @@ export class ScrollScribingRules extends BaseRule {
       };
     }
 
-    // Determine failure consequences
     const failureRoll = Math.random();
     let timeWasted = timeRequired;
     let materialsLost: string[] = [];
     let canRetry = true;
 
     if (failureRoll <= 0.1) {
-      // Critical failure - all materials lost, no retry possible
       materialsLost = [materials.ink.type, materials.parchment.type];
       canRetry = false;
     } else if (failureRoll <= 0.3) {
-      // Major failure - most materials lost
       materialsLost = [materials.ink.type];
       timeWasted = Math.floor(timeRequired * 0.75);
     } else {
-      // Minor failure - some time wasted, materials can be reused
       timeWasted = Math.floor(timeRequired * 0.5);
     }
 
@@ -496,23 +420,17 @@ export class ScrollScribingRules extends BaseRule {
     };
   }
 
-  /**
-   * Calculate base success chance for scribing
-   */
   private calculateBaseSuccessChance(context: ScrollScribingContext): number {
-    // Base success chance depends on character level and abilities
     const characterLevel = this.getHighestCasterLevel(context.scribe);
-    let baseChance = 0.4 + characterLevel * 0.03; // 40% + 3% per level
+    let baseChance = 0.4 + characterLevel * 0.03;
 
-    // Ability score bonus
     const relevantAbility = ['Magic-User', 'Illusionist'].includes(context.spellToScribe.class)
       ? context.scribe.abilities.intelligence
       : context.scribe.abilities.wisdom;
 
-    const abilityBonus = Math.max(0, relevantAbility - 12) * 0.02; // +2% per point above 12
+    const abilityBonus = Math.max(0, relevantAbility - 12) * 0.02;
     baseChance += abilityBonus;
 
-    // Assistant bonus
     if (context.assistantPresent) {
       baseChance += 0.1;
     }
@@ -520,14 +438,10 @@ export class ScrollScribingRules extends BaseRule {
     return baseChance;
   }
 
-  /**
-   * Create the finished scroll item
-   */
   private createScroll(context: ScrollScribingContext, _materials: ScrollMaterials): Item {
     const { spellToScribe, scrollQuality } = context;
 
-    // Calculate scroll value
-    const baseValue = spellToScribe.level * spellToScribe.level * 100; // Exponential value increase
+    const baseValue = spellToScribe.level * spellToScribe.level * 100;
     const qualityMultipliers = {
       normal: 1.0,
       fine: 1.5,
@@ -537,8 +451,7 @@ export class ScrollScribingRules extends BaseRule {
 
     const value = Math.floor(baseValue * qualityMultipliers[scrollQuality]);
 
-    // Determine number of uses
-    let charges = 1; // Most scrolls are single-use
+    let charges = 1;
     if (scrollQuality === 'exceptional') charges = 2;
     if (scrollQuality === 'masterwork') charges = 3;
 

@@ -5,7 +5,6 @@ import { GameContext } from '../../osric/core/GameContext';
 import { BaseRule, type RuleResult } from '../../osric/core/Rule';
 import { RuleChain, type RuleChainConfig } from '../../osric/core/RuleChain';
 
-// Mock command for testing
 class TestCommand extends BaseCommand {
   readonly type = 'test-command';
 
@@ -30,7 +29,6 @@ class TestCommand extends BaseCommand {
   }
 }
 
-// Mock rules for testing
 class TestRule extends BaseRule {
   readonly name = 'test-rule';
   readonly priority = 100;
@@ -50,7 +48,7 @@ class TestRule extends BaseRule {
 
 class HighPriorityRule extends BaseRule {
   readonly name = 'high-priority-rule';
-  readonly priority = 10; // Lower number = higher priority
+  readonly priority = 10;
 
   async execute(context: GameContext, _command: TestCommand): Promise<RuleResult> {
     const executionOrder = (context.getTemporary('execution-order') as string[]) || [];
@@ -66,7 +64,7 @@ class HighPriorityRule extends BaseRule {
 
 class LowPriorityRule extends BaseRule {
   readonly name = 'low-priority-rule';
-  readonly priority = 200; // Higher number = lower priority
+  readonly priority = 200;
 
   async execute(context: GameContext, _command: TestCommand): Promise<RuleResult> {
     const executionOrder = (context.getTemporary('execution-order') as string[]) || [];
@@ -112,10 +110,9 @@ class OSRICAttackRule extends BaseRule {
   readonly priority = 10;
 
   async execute(context: GameContext, _command: TestCommand): Promise<RuleResult> {
-    // Simulate OSRIC attack roll calculation
     const baseThac0 = 20;
     const targetAC = 5;
-    const attackRoll = 15; // Simulated roll
+    const attackRoll = 15;
     const strengthBonus = 1;
 
     const totalAttack = attackRoll + strengthBonus;
@@ -140,7 +137,7 @@ class OSRICAttackRule extends BaseRule {
 
 class OSRICDamageRule extends BaseRule {
   readonly name = 'osric-damage-rule';
-  readonly priority = 20; // Executes after attack rule
+  readonly priority = 20;
 
   async execute(context: GameContext, _command: TestCommand): Promise<RuleResult> {
     const isHit = context.getTemporary('is-hit') as boolean;
@@ -149,9 +146,8 @@ class OSRICDamageRule extends BaseRule {
       return this.createSuccessResult('No damage - attack missed');
     }
 
-    // Simulate OSRIC damage calculation
-    const baseDamage = 8; // 1d8 longsword
-    const strengthBonus = 2; // 18 strength
+    const baseDamage = 8;
+    const strengthBonus = 2;
     const totalDamage = baseDamage + strengthBonus;
 
     context.setTemporary('base-damage', baseDamage);
@@ -264,12 +260,11 @@ describe('RuleChain', () => {
 
   describe('Rule Execution Order', () => {
     it('should execute rules in priority order (lower number = higher priority)', async () => {
-      // Create RuleChain with clearTemporary: false to preserve execution tracking
       const testRuleChain = new RuleChain({ clearTemporary: false });
 
-      testRuleChain.addRule(new LowPriorityRule()); // priority 200
-      testRuleChain.addRule(new HighPriorityRule()); // priority 10
-      testRuleChain.addRule(new TestRule()); // priority 100
+      testRuleChain.addRule(new LowPriorityRule());
+      testRuleChain.addRule(new HighPriorityRule());
+      testRuleChain.addRule(new TestRule());
 
       gameContext.setTemporary('execution-order', []);
       const command = new TestCommand('priority-test');
@@ -312,11 +307,10 @@ describe('RuleChain', () => {
         }
       }
 
-      // Create RuleChain with clearTemporary: false to preserve execution tracking
       const testRuleChain = new RuleChain({ clearTemporary: false });
 
-      testRuleChain.addRule(new SamePriorityRule2()); // Added first
-      testRuleChain.addRule(new SamePriorityRule1()); // Added second
+      testRuleChain.addRule(new SamePriorityRule2());
+      testRuleChain.addRule(new SamePriorityRule1());
 
       gameContext.setTemporary('execution-order', []);
       const command = new TestCommand('same-priority-test');
@@ -324,27 +318,24 @@ describe('RuleChain', () => {
       await testRuleChain.execute(command, gameContext);
 
       const executionOrder = gameContext.getTemporary('execution-order') as string[];
-      // Should maintain addition order when priorities are equal
+
       expect(executionOrder).toEqual(['same-2', 'same-1']);
     });
   });
 
   describe('Rule Execution Conditions', () => {
     it('should only execute rules that can apply', async () => {
-      // Create RuleChain with clearTemporary: false to preserve execution tracking
       const testRuleChain = new RuleChain({ clearTemporary: false });
 
       testRuleChain.addRule(new ConditionalRule());
       testRuleChain.addRule(new TestRule());
 
-      // First test without allowing conditional rule
       const command = new TestCommand('conditional-test');
       await testRuleChain.execute(command, gameContext);
 
       expect(gameContext.getTemporary('conditional-rule-executed')).toBe(null);
       expect(gameContext.getTemporary('test-rule-executed')).toBe(true);
 
-      // Reset and test with conditional rule allowed
       gameContext.clearTemporary();
       gameContext.setTemporary('allow-conditional', true);
 
@@ -355,7 +346,6 @@ describe('RuleChain', () => {
     });
 
     it('should skip non-applicable rules without error', async () => {
-      // Create RuleChain with clearTemporary: false to preserve execution tracking
       const testRuleChain = new RuleChain({ clearTemporary: false });
 
       class NonApplicableRule extends BaseRule {
@@ -367,7 +357,7 @@ describe('RuleChain', () => {
         }
 
         canApply(): boolean {
-          return false; // Never applies
+          return false;
         }
       }
 
@@ -391,8 +381,8 @@ describe('RuleChain', () => {
       };
 
       ruleChain = new RuleChain(config);
-      ruleChain.addRule(new FailingRule()); // priority 50, will fail
-      ruleChain.addRule(new TestRule()); // priority 100, should not execute
+      ruleChain.addRule(new FailingRule());
+      ruleChain.addRule(new TestRule());
 
       const command = new TestCommand('stop-on-failure-test');
       const result = await ruleChain.execute(command, gameContext);
@@ -403,13 +393,12 @@ describe('RuleChain', () => {
     });
 
     it('should continue on failure when configured to do so', async () => {
-      // Create a non-critical failing rule for this test
       class NonCriticalFailingRule extends BaseRule {
         readonly name = 'non-critical-failing-rule';
         readonly priority = 50;
 
         async execute(): Promise<RuleResult> {
-          return this.createFailureResult('This rule always fails', undefined, false); // non-critical
+          return this.createFailureResult('This rule always fails', undefined, false);
         }
 
         canApply(): boolean {
@@ -424,15 +413,15 @@ describe('RuleChain', () => {
       };
 
       ruleChain = new RuleChain(config);
-      ruleChain.addRule(new NonCriticalFailingRule()); // priority 50, will fail but not stop chain
-      ruleChain.addRule(new TestRule()); // priority 100, should execute
+      ruleChain.addRule(new NonCriticalFailingRule());
+      ruleChain.addRule(new TestRule());
 
       const command = new TestCommand('continue-on-failure-test');
       const result = await ruleChain.execute(command, gameContext);
 
-      expect(result.success).toBe(false); // Overall result is failure due to one failing rule
+      expect(result.success).toBe(false);
       expect(result.message).toContain('This rule always fails');
-      expect(gameContext.getTemporary('test-rule-executed')).toBe(true); // But other rules executed
+      expect(gameContext.getTemporary('test-rule-executed')).toBe(true);
     });
 
     it('should handle critical failures correctly', async () => {
@@ -581,25 +570,21 @@ describe('RuleChain', () => {
 
   describe('OSRIC-Specific Features', () => {
     it('should handle OSRIC combat rule chains correctly', async () => {
-      // Create a rule chain that preserves temporary calculations
       const osricCombatChain = new RuleChain({ clearTemporary: false });
 
-      // Create a typical OSRIC combat chain: Attack -> Damage
-      osricCombatChain.addRule(new OSRICAttackRule()); // priority 10
-      osricCombatChain.addRule(new OSRICDamageRule()); // priority 20
+      osricCombatChain.addRule(new OSRICAttackRule());
+      osricCombatChain.addRule(new OSRICDamageRule());
 
       const command = new TestCommand('osric-combat-test');
       const result = await osricCombatChain.execute(command, gameContext);
 
       expect(result.success).toBe(true);
 
-      // Verify OSRIC attack calculations were preserved
       expect(gameContext.getTemporary('attack-roll')).toBe(15);
-      expect(gameContext.getTemporary('total-attack')).toBe(16); // 15 + 1 strength
-      expect(gameContext.getTemporary('hit-threshold')).toBe(15); // 20 - 5 AC
+      expect(gameContext.getTemporary('total-attack')).toBe(16);
+      expect(gameContext.getTemporary('hit-threshold')).toBe(15);
       expect(gameContext.getTemporary('is-hit')).toBe(true);
 
-      // Verify OSRIC damage calculations were preserved
       expect(gameContext.getTemporary('base-damage')).toBe(8);
       expect(gameContext.getTemporary('damage-bonus')).toBe(2);
       expect(gameContext.getTemporary('total-damage')).toBe(10);
@@ -611,7 +596,6 @@ describe('RuleChain', () => {
         readonly priority = 10;
 
         async execute(context: GameContext): Promise<RuleResult> {
-          // Simulate OSRIC spell level and slot checking
           const casterLevel = 3;
           const spellLevel = 2;
           const availableSlots = 1;
@@ -640,8 +624,7 @@ describe('RuleChain', () => {
             return this.createFailureResult('Cannot cast spell');
           }
 
-          // Simulate spell effect
-          const damage = 12; // 3d4 magic missile
+          const damage = 12;
           context.setTemporary('spell-damage', damage);
 
           return this.createSuccessResult(`Spell cast for ${damage} damage`);
@@ -652,7 +635,6 @@ describe('RuleChain', () => {
         }
       }
 
-      // Create a rule chain that preserves temporary calculations
       const osricSpellChain = new RuleChain({ clearTemporary: false });
       osricSpellChain.addRule(new OSRICSpellCheckRule());
       osricSpellChain.addRule(new OSRICSpellEffectRule());
@@ -673,18 +655,16 @@ describe('RuleChain', () => {
         readonly priority = 10;
 
         async execute(context: GameContext): Promise<RuleResult> {
-          // Simulate OSRIC ability check with proper modifiers
           const strengthScore = 18;
           const roll = 12;
 
-          // OSRIC strength modifiers
           let modifier = 0;
           if (strengthScore >= 18) modifier = 3;
           else if (strengthScore >= 16) modifier = 2;
           else if (strengthScore >= 15) modifier = 1;
 
           const totalCheck = roll + modifier;
-          const success = totalCheck >= 15; // Example DC
+          const success = totalCheck >= 15;
 
           context.setTemporary('strength-score', strengthScore);
           context.setTemporary('ability-roll', roll);
@@ -702,7 +682,6 @@ describe('RuleChain', () => {
         }
       }
 
-      // Create a rule chain that preserves temporary calculations
       const osricAbilityChain = new RuleChain({ clearTemporary: false });
       osricAbilityChain.addRule(new OSRICAbilityCheckRule());
 
@@ -711,8 +690,8 @@ describe('RuleChain', () => {
 
       expect(result.success).toBe(true);
       expect(gameContext.getTemporary('strength-score')).toBe(18);
-      expect(gameContext.getTemporary('ability-modifier')).toBe(3); // OSRIC 18 strength modifier
-      expect(gameContext.getTemporary('total-check')).toBe(15); // 12 + 3
+      expect(gameContext.getTemporary('ability-modifier')).toBe(3);
+      expect(gameContext.getTemporary('total-check')).toBe(15);
       expect(gameContext.getTemporary('check-success')).toBe(true);
     });
   });
@@ -735,7 +714,7 @@ describe('RuleChain', () => {
 
     it('should detect duplicate rule names', () => {
       ruleChain.addRule(new TestRule());
-      ruleChain.addRule(new TestRule()); // Duplicate name
+      ruleChain.addRule(new TestRule());
 
       const validation = ruleChain.validate();
       expect(validation.valid).toBe(false);
@@ -827,8 +806,8 @@ describe('RuleChain', () => {
       const command = new TestCommand('error-continue-test');
       const result = await ruleChain.execute(command, gameContext);
 
-      expect(result.success).toBe(false); // Overall failure due to error
-      expect(gameContext.getTemporary('test-rule-executed')).toBe(true); // But other rules executed
+      expect(result.success).toBe(false);
+      expect(gameContext.getTemporary('test-rule-executed')).toBe(true);
     });
   });
 });

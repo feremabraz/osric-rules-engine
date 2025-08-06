@@ -1,22 +1,11 @@
-/**
- * AttackCommand.test.ts - Tests for OSRIC Attack Command
- *
- * Tests the complete attack command functionality including:
- * - Basic attack validation and execution
- * - Attack with weapons and modifiers
- * - Attack command integration with rules
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { AttackCommand } from '../../../osric/commands/combat/AttackCommand';
 import { GameContext } from '../../../osric/core/GameContext';
 import type { Character, Monster, Weapon } from '../../../osric/types/entities';
 
-// Mock dice rolling for predictable tests
-vi.spyOn(Math, 'random').mockImplementation(() => 0.5); // Always roll middle values
+vi.spyOn(Math, 'random').mockImplementation(() => 0.5);
 
-// Helper to create complete test characters
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return {
     id: 'test-character',
@@ -151,7 +140,6 @@ describe('AttackCommand', () => {
     testCharacter = createMockCharacter();
     testMonster = createMockMonster();
 
-    // Create test weapon
     testWeapon = {
       id: 'longsword',
       name: 'Longsword',
@@ -171,11 +159,9 @@ describe('AttackCommand', () => {
       twoHanded: false,
     } as Weapon;
 
-    // Add entities to context
     context.setEntity('test-character', testCharacter);
     context.setEntity('test-orc', testMonster);
 
-    // Add weapon to character's inventory
     testCharacter.inventory.push(testWeapon);
   });
 
@@ -231,7 +217,6 @@ describe('AttackCommand', () => {
   });
 
   test('should fail validation if attacker is unconscious', () => {
-    // Make character unconscious
     testCharacter.hitPoints.current = 0;
     context.setEntity('test-character', testCharacter);
 
@@ -247,7 +232,6 @@ describe('AttackCommand', () => {
   });
 
   test('should fail validation if attacker is paralyzed', () => {
-    // Add paralyzed status effect
     testCharacter.statusEffects.push({
       name: 'Paralyzed',
       duration: 5,
@@ -284,7 +268,6 @@ describe('AttackCommand', () => {
     expect(result.success).toBe(true);
     expect(result.message).toContain('Attack command prepared for rule processing');
 
-    // Check that attack context was set
     const attackContext = context.getTemporary('attack-context') as AttackContext;
     expect(attackContext).toBeDefined();
     expect(attackContext.attacker.id).toBe('test-character');
@@ -314,7 +297,6 @@ describe('AttackCommand', () => {
       {
         attackerId: 'test-character',
         targetId: 'test-orc',
-        // No weaponId specified
       },
       'test-character'
     );

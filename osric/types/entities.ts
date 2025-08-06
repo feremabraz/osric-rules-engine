@@ -1,11 +1,3 @@
-/**
- * Core entity types for the OSRIC Rules Engine
- *
- * These types are extracted and preserved from the original rules/types.ts
- * maintaining all OSRIC AD&D 1st Edition domain knowledge and values.
- */
-
-// Basic OSRIC types - PRESERVE ALL VALUES
 export interface AbilityScores {
   strength: number;
   dexterity: number;
@@ -69,14 +61,12 @@ export const SavingThrowTypes = [
 
 export type SavingThrowType = (typeof SavingThrowTypes)[number];
 
-// Experience tracking
 export interface Experience {
   current: number;
   requiredForNextLevel: number;
   level: number;
 }
 
-// Currency system
 export interface Currency {
   platinum: number;
   gold: number;
@@ -85,16 +75,14 @@ export interface Currency {
   copper: number;
 }
 
-// Status effects
 export interface StatusEffect {
   name: string;
-  duration: number; // In rounds, turns, or days
+  duration: number;
   effect: string;
   savingThrow: SavingThrowType | null;
   endCondition: string | null;
 }
 
-// Base character interface - PRESERVE ALL PROPERTIES
 export interface BaseCharacter {
   id: string;
   name: string;
@@ -103,25 +91,22 @@ export interface BaseCharacter {
     current: number;
     maximum: number;
   };
-  armorClass: number; // Descending AC system (lower is better)
-  thac0: number; // "To Hit Armor Class 0"
+  armorClass: number;
+  thac0: number;
   experience: Experience;
   alignment: Alignment;
   inventory: Item[];
-  position: string; // e.g., "near goblin" or "crossing the bridge"
-  statusEffects: StatusEffect[]; // Active effects/conditions
+  position: string;
+  statusEffects: StatusEffect[];
 }
 
-// Ability score modifiers - PRESERVE ALL OSRIC CALCULATIONS
 export interface AbilityScoreModifiers {
-  // Strength
   strengthHitAdj: number | null;
   strengthDamageAdj: number | null;
   strengthEncumbrance: number | null;
   strengthOpenDoors: number | null;
   strengthBendBars: number | null;
 
-  // Dexterity
   dexterityReaction: number | null;
   dexterityMissile: number | null;
   dexterityDefense: number | null;
@@ -131,36 +116,30 @@ export interface AbilityScoreModifiers {
   dexterityMoveSilently: number | null;
   dexterityHideInShadows: number | null;
 
-  // Constitution
   constitutionHitPoints: number | null;
   constitutionSystemShock: number | null;
   constitutionResurrectionSurvival: number | null;
   constitutionPoisonSave: number | null;
 
-  // Intelligence
   intelligenceLanguages: number | null;
   intelligenceLearnSpells: number | null;
   intelligenceMaxSpellLevel: number | null;
   intelligenceIllusionImmunity: boolean;
 
-  // Wisdom
   wisdomMentalSave: number | null;
-  wisdomBonusSpells: Record<number, number> | null; // Level -> Count
+  wisdomBonusSpells: Record<number, number> | null;
   wisdomSpellFailure: number | null;
 
-  // Charisma
   charismaReactionAdj: number | null;
   charismaLoyaltyBase: number | null;
   charismaMaxHenchmen: number | null;
 }
 
-// Spell system types
-export type SpellSlots = Record<number, number>; // Level -> Count
+export type SpellSlots = Record<number, number>;
 
 export const SpellClasses = ['Magic-User', 'Cleric', 'Druid', 'Illusionist'] as const;
 export type SpellClass = (typeof SpellClasses)[number];
 
-// Thief skills - PRESERVE OSRIC PERCENTAGES
 export interface ThiefSkills {
   pickPockets: number;
   openLocks: number;
@@ -170,26 +149,22 @@ export interface ThiefSkills {
   hideInShadows: number;
   hearNoise: number;
   climbWalls: number;
-  readLanguages: number | null; // Higher level ability
+  readLanguages: number | null;
 }
 
-// Age categories for aging effects
 export const AgeCategories = ['Young', 'Adult', 'Middle-Aged', 'Old', 'Venerable'] as const;
 export type AgeCategory = (typeof AgeCategories)[number];
 
-// Weapon proficiency
 export interface WeaponProficiency {
   weapon: string;
-  penalty: number; // Penalty for non-proficient use
+  penalty: number;
 }
 
-// Turn undead table - PRESERVE OSRIC TABLES
 export interface TurnUndeadTable {
-  level: number; // Cleric level
-  results: Record<string, number>; // Undead type -> result needed on 2d6
+  level: number;
+  results: Record<string, number>;
 }
 
-// Full Character interface - PRESERVE ALL OSRIC PROPERTIES
 export interface Character extends BaseCharacter {
   race: CharacterRace;
   class: CharacterClass;
@@ -200,11 +175,11 @@ export interface Character extends BaseCharacter {
   currency: Currency;
   encumbrance: number;
   movementRate: number;
-  classes: Partial<Record<CharacterClass, number>>; // For multi-classing with level per class
-  primaryClass: CharacterClass | null; // For dual-classing
+  classes: Partial<Record<CharacterClass, number>>;
+  primaryClass: CharacterClass | null;
   spellSlots: SpellSlots;
-  memorizedSpells: Record<number, Spell[]>; // Level -> Spells
-  spellbook: Spell[]; // For Magic-Users and Illusionists
+  memorizedSpells: Record<number, Spell[]>;
+  spellbook: Spell[];
   thiefSkills: ThiefSkills | null;
   turnUndead: TurnUndeadTable | null;
   languages: string[];
@@ -215,14 +190,12 @@ export interface Character extends BaseCharacter {
   classAbilities: ClassAbility[];
   proficiencies: WeaponProficiency[];
   secondarySkills: CharacterSecondarySkill[];
-  weaponSpecializations?: WeaponSpecialization[]; // Optional weapon specializations for fighters
+  weaponSpecializations?: WeaponSpecialization[];
 }
 
-// Creature sizes
 export const CreatureSizes = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan'] as const;
 export type CreatureSize = (typeof CreatureSizes)[number];
 
-// Movement types
 export const MovementTypes = ['Walk', 'Fly', 'Swim', 'Burrow', 'Climb'] as const;
 export type MovementTypeValue = (typeof MovementTypes)[number];
 
@@ -231,16 +204,14 @@ export interface MovementType {
   rate: number;
 }
 
-// Monster frequency
 export const MonsterFrequencies = ['Common', 'Uncommon', 'Rare', 'Very Rare', 'Unique'] as const;
 export type MonsterFrequency = (typeof MonsterFrequencies)[number];
 
-// Monster interface - PRESERVE ALL OSRIC MONSTER PROPERTIES
 export interface Monster extends BaseCharacter {
-  hitDice: string; // e.g., "3+1" for 3d8+1
-  damagePerAttack: string[]; // e.g., ["1d8", "1d6/1d6"] for a monster with multiple attacks
+  hitDice: string;
+  damagePerAttack: string[];
   morale: number;
-  treasure: string; // OSRIC treasure type (A, B, C, etc.)
+  treasure: string;
   specialAbilities: string[];
   xpValue: number;
   size: CreatureSize;
@@ -250,22 +221,20 @@ export interface Monster extends BaseCharacter {
   organization: string;
   diet: string;
   ecology: string;
-  exceptional?: boolean; // Flag for unique or particularly challenging monsters
+  exceptional?: boolean;
 }
 
-// Items - PRESERVE ALL OSRIC ITEM PROPERTIES
 export interface Item {
   id: string;
   name: string;
-  weight: number; // in coins (10 coins = 0.5 kg, converted from 1 pound)
+  weight: number;
   description: string;
-  value: number; // in gold pieces
+  value: number;
   equipped: boolean;
   magicBonus: number | null;
   charges: number | null;
 }
 
-// Weapon types and properties - PRESERVE OSRIC VALUES
 export const WeaponTypes = ['Melee', 'Ranged'] as const;
 export type WeaponType = (typeof WeaponTypes)[number];
 
@@ -273,28 +242,26 @@ export const WeaponSizes = ['Small', 'Medium', 'Large'] as const;
 export type WeaponSize = (typeof WeaponSizes)[number];
 
 export interface Weapon extends Item {
-  damage: string; // e.g., "1d8" for longsword
+  damage: string;
   type: WeaponType;
   size: WeaponSize;
-  speed: number; // Weapon speed factor (lower is faster)
+  speed: number;
   allowedClasses: CharacterClass[];
-  damageVsLarge: string | null; // Different damage vs. large creatures
-  range: [number, number, number] | null; // For ranged weapons [short, medium, long]
+  damageVsLarge: string | null;
+  range: [number, number, number] | null;
   twoHanded: boolean;
 }
 
-// Armor types - PRESERVE OSRIC VALUES
 export const ArmorTypes = ['Shield', 'Armor'] as const;
 export type ArmorType = (typeof ArmorTypes)[number];
 
 export interface Armor extends Item {
-  armorClass: number; // AC provided
+  armorClass: number;
   type: ArmorType;
   allowedClasses: CharacterClass[];
   movementPenalty: number | null;
 }
 
-// Spell interface - PRESERVE ALL OSRIC SPELL MECHANICS
 export interface Spell {
   name: string;
   level: number;
@@ -315,10 +282,9 @@ export interface SpellResult {
   damage: number[] | null;
   healing: number[] | null;
   statusEffects: StatusEffect[] | null;
-  narrative: string; // Describes the result of the spell in the world
+  narrative: string;
 }
 
-// Racial and class abilities - PRESERVE OSRIC MECHANICS
 export interface RacialAbility {
   name: string;
   description: string;
@@ -328,12 +294,11 @@ export interface RacialAbility {
 export interface ClassAbility {
   name: string;
   description: string;
-  level: number; // Level at which this ability is gained
+  level: number;
   class: CharacterClass;
   effect: (character: Character, target?: Character | Monster) => ActionResult;
 }
 
-// Action result interface
 export interface ActionResult {
   success: boolean;
   message: string;
@@ -341,7 +306,6 @@ export interface ActionResult {
   effects: string[] | null;
 }
 
-// Combat result interface - PRESERVE OSRIC COMBAT MECHANICS
 export interface CombatResult {
   hit: boolean;
   damage: number[];
@@ -350,13 +314,11 @@ export interface CombatResult {
   specialEffects: StatusEffect[] | null;
 }
 
-// Placeholder for secondary skills (will be imported from character module)
 export interface CharacterSecondarySkill {
   skill: string;
   level: string;
 }
 
-// Placeholder for weapon specialization (will be imported from combat module)
 export interface WeaponSpecialization {
   weapon: string;
   bonuses: Record<string, number>;

@@ -1,17 +1,3 @@
-/**
- * TurnUndeadRules Tests - OSRIC Compliance
- *
- * Tests the TurnUndeadRule for proper OSRIC turn undead mechanics:
- * - OSRIC turn undead table calculations (2d6 system)
- * - Class validation (Cleric, Paladin, Druid)
- * - Level difference calculations and target numbers
- * - Holy symbol requirements and validation
- * - Turn attempt limits and restrictions
- * - Special rules for different undead types
- * - Turn vs Destroy determination logic
- * - Edge cases and error scenarios
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { GameContext } from '../../../osric/core/GameContext';
@@ -19,7 +5,6 @@ import type { RuleResult } from '../../../osric/core/Rule';
 import { TurnUndeadRule } from '../../../osric/rules/character/TurnUndeadRules';
 import type { Character, Monster } from '../../../osric/types/entities';
 
-// Type definition for TurnUndeadRule result data
 interface TurnUndeadRuleResultData {
   characterId: string;
   effectiveLevel: number;
@@ -38,12 +23,10 @@ interface TurnUndeadRuleResultData {
   turnLimit: number;
 }
 
-// Helper function to safely cast rule result data
 function getTurnUndeadRuleData(result: RuleResult): TurnUndeadRuleResultData {
   return result.data as unknown as TurnUndeadRuleResultData;
 }
 
-// Mock helper function to create test characters
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-char',
@@ -138,7 +121,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return { ...defaultCharacter, ...overrides };
 }
 
-// Mock helper function to create test undead monsters
 function createMockUndead(overrides: Partial<Monster> = {}): Monster {
   const defaultUndead: Monster = {
     id: 'skeleton-1',
@@ -153,7 +135,7 @@ function createMockUndead(overrides: Partial<Monster> = {}): Monster {
     inventory: [],
     position: 'dungeon',
     statusEffects: [],
-    // Monster-specific properties
+
     damagePerAttack: ['1d4'],
     morale: 12,
     treasure: 'Nil',
@@ -171,7 +153,6 @@ function createMockUndead(overrides: Partial<Monster> = {}): Monster {
   return { ...defaultUndead, ...overrides };
 }
 
-// Mock command for testing
 class MockTurnUndeadCommand {
   readonly type = 'turn-undead';
   readonly actorId = 'test-character';
@@ -205,7 +186,6 @@ describe('TurnUndeadRules', () => {
     turnUndeadRule = new TurnUndeadRule();
     mockCommand = new MockTurnUndeadCommand();
 
-    // Setup test cleric
     const testCleric = createMockCharacter({
       id: 'test-character',
       name: 'Brother Marcus',
@@ -216,14 +196,13 @@ describe('TurnUndeadRules', () => {
         dexterity: 10,
         constitution: 14,
         intelligence: 11,
-        wisdom: 16, // High wisdom for clerics
+        wisdom: 16,
         charisma: 13,
       },
     });
 
     context.setEntity('test-character', testCleric);
 
-    // Setup test undead
     const skeleton = createMockUndead({
       id: 'skeleton-1',
       name: 'Skeleton',
@@ -298,7 +277,7 @@ describe('TurnUndeadRules', () => {
 
       expect(result.success).toBe(true);
       expect(result.data?.canAttempt).toBe(true);
-      expect(result.data?.effectiveLevel).toBe(3); // Level 5 paladin turns as level 3 cleric
+      expect(result.data?.effectiveLevel).toBe(3);
     });
 
     it('should reject low-level Paladin attempts', async () => {
@@ -344,7 +323,7 @@ describe('TurnUndeadRules', () => {
     it('should reject non-clerical classes', async () => {
       const fighter = createMockCharacter({
         class: 'Fighter',
-        inventory: [], // No holy symbol
+        inventory: [],
       });
       context.setEntity('test-character', fighter);
 
@@ -361,7 +340,7 @@ describe('TurnUndeadRules', () => {
 
     it('should handle multi-class with cleric', async () => {
       const multiClass = createMockCharacter({
-        class: 'Cleric', // Use single class since multi-class strings aren't supported
+        class: 'Cleric',
         experience: { current: 3000, requiredForNextLevel: 6000, level: 3 },
       });
       context.setEntity('test-character', multiClass);
@@ -394,7 +373,7 @@ describe('TurnUndeadRules', () => {
 
     it('should warn about missing holy symbol', async () => {
       const clericNoSymbol = createMockCharacter({
-        inventory: [], // No holy symbol
+        inventory: [],
       });
       context.setEntity('test-character', clericNoSymbol);
 
@@ -431,7 +410,6 @@ describe('TurnUndeadRules', () => {
     });
 
     it('should handle automatic turns for weak undead', async () => {
-      // High level cleric vs very weak undead
       const highCleric = createMockCharacter({
         class: 'Cleric',
         experience: { current: 55000, requiredForNextLevel: 110000, level: 10 },
@@ -440,7 +418,7 @@ describe('TurnUndeadRules', () => {
 
       context.setTemporary('turn-undead-params', {
         characterId: 'test-character',
-        targetUndeadIds: ['skeleton-1'], // 1 HD vs level 10 = +9 difference
+        targetUndeadIds: ['skeleton-1'],
       });
 
       const result = await turnUndeadRule.execute(context, mockCommand);
@@ -452,7 +430,6 @@ describe('TurnUndeadRules', () => {
     });
 
     it('should handle impossible turns', async () => {
-      // Low level cleric vs powerful undead
       const lowCleric = createMockCharacter({
         class: 'Cleric',
         experience: { current: 0, requiredForNextLevel: 1550, level: 1 },
@@ -462,7 +439,7 @@ describe('TurnUndeadRules', () => {
       const vampire = createMockUndead({
         id: 'vampire',
         name: 'Vampire',
-        hitDice: '8+3', // Very high HD
+        hitDice: '8+3',
       });
       context.setEntity('vampire', vampire);
 
@@ -480,7 +457,6 @@ describe('TurnUndeadRules', () => {
     });
 
     it('should calculate various difficulty levels', async () => {
-      // Test different turn chances based on level difference
       const testCases = [
         { clericLevel: 5, undeadHD: '3', expectedRange: '7+ on 2d6' },
         { clericLevel: 4, undeadHD: '3', expectedRange: '10+ on 2d6' },
@@ -550,7 +526,7 @@ describe('TurnUndeadRules', () => {
 
       expect(result.success).toBe(true);
       const data = getTurnUndeadRuleData(result);
-      expect(data.targetUndead[0].hitDice).toBe(5); // 4+bonus becomes 5
+      expect(data.targetUndead[0].hitDice).toBe(5);
     });
 
     it('should parse hit dice with penalties', async () => {
@@ -569,7 +545,7 @@ describe('TurnUndeadRules', () => {
 
       expect(result.success).toBe(true);
       const data = getTurnUndeadRuleData(result);
-      expect(data.targetUndead[0].hitDice).toBe(2); // 2-penalty still counts as 2
+      expect(data.targetUndead[0].hitDice).toBe(2);
     });
   });
 
@@ -735,9 +711,9 @@ describe('TurnUndeadRules', () => {
 
       const result = await turnUndeadRule.execute(context, mockCommand);
 
-      expect(result.success).toBe(true); // Should handle gracefully
+      expect(result.success).toBe(true);
       const data = getTurnUndeadRuleData(result);
-      expect(data.targetUndead[0].hitDice).toBe(1); // Default to 1 HD
+      expect(data.targetUndead[0].hitDice).toBe(1);
     });
 
     it('should handle multiple target validation', async () => {
@@ -760,10 +736,9 @@ describe('TurnUndeadRules', () => {
     });
 
     it('should handle exceptions gracefully', async () => {
-      // Trigger an exception by providing malformed data
       context.setTemporary('turn-undead-params', {
         characterId: 'test-character',
-        targetUndeadIds: null, // Will cause an error
+        targetUndeadIds: null,
       });
 
       const result = await turnUndeadRule.execute(context, mockCommand);

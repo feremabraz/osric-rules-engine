@@ -1,15 +1,3 @@
-/**
- * TerrainNavigationCommand - Navigate through different terrain types
- *
- * Handles terrain-based navigation including:
- * - Movement rate modifications by terrain type
- * - Getting lost in difficult terrain
- * - Route finding and navigation checks
- * - Time calculations for overland travel
- *
- * OSRIC Integration: Complete wilderness navigation system
- */
-
 import { BaseCommand, type CommandResult } from '../../core/Command';
 import { rollDice } from '../../core/Dice';
 import type { GameContext } from '../../core/GameContext';
@@ -18,20 +6,20 @@ import type { Character } from '../../types/entities';
 
 export interface TerrainType {
   name: string;
-  movementModifier: number; // Multiplier for movement rate (1.0 = normal)
-  gettingLostChance: number; // Base percentage chance of getting lost
-  visibilityDistance: number; // Maximum visibility in this terrain (in feet)
+  movementModifier: number;
+  gettingLostChance: number;
+  visibilityDistance: number;
   description: string;
 }
 
 export interface NavigationParameters {
   characterId: string;
   terrainType: TerrainType;
-  distance: number; // Distance to travel in miles
+  distance: number;
   navigationMethod: 'landmark' | 'compass' | 'stars' | 'ranger-tracking' | 'none';
   weatherConditions?: {
-    visibility: number; // Current visibility in feet
-    movementPenalty: number; // Weather-based movement penalty
+    visibility: number;
+    movementPenalty: number;
   };
   hasMap: boolean;
   timeOfDay: 'dawn' | 'day' | 'dusk' | 'night';
@@ -56,13 +44,11 @@ export class TerrainNavigationCommand extends BaseCommand {
         timeOfDay,
       } = this.parameters;
 
-      // Get the character
       const character = context.getEntity<Character>(characterId);
       if (!character) {
         return this.createFailureResult(`Character with ID "${characterId}" not found`);
       }
 
-      // Calculate movement rate with terrain and weather modifiers
       const baseMovementRate = character.movementRate;
       let effectiveMovementRate = baseMovementRate * terrainType.movementModifier;
 
@@ -70,10 +56,8 @@ export class TerrainNavigationCommand extends BaseCommand {
         effectiveMovementRate *= 1 + weatherConditions.movementPenalty / 100;
       }
 
-      // Calculate travel time
       const travelTime = this.calculateTravelTime(distance, effectiveMovementRate);
 
-      // Check for getting lost
       const navigationResult = this.checkNavigation(
         character,
         terrainType,
@@ -83,7 +67,6 @@ export class TerrainNavigationCommand extends BaseCommand {
         timeOfDay
       );
 
-      // Calculate actual distance covered (may be longer if lost)
       const actualDistance = navigationResult.gotLost
         ? distance * navigationResult.extraDistanceMultiplier
         : distance;
@@ -94,16 +77,13 @@ export class TerrainNavigationCommand extends BaseCommand {
           }
         : travelTime;
 
-      // Generate encounters or interesting events
       const events = this.generateTravelEvents(character, terrainType, actualTime);
 
-      // Apply fatigue if applicable
       const updatedCharacter = this.applyTravelFatigue(character, actualTime, terrainType);
       if (updatedCharacter !== character) {
         context.setEntity(characterId, updatedCharacter);
       }
 
-      // Generate descriptive message
       const message = this.createNavigationMessage(
         character,
         terrainType,
@@ -115,7 +95,6 @@ export class TerrainNavigationCommand extends BaseCommand {
         events
       );
 
-      // Prepare result data
       const resultData = {
         characterId,
         terrainType: terrainType.name,
@@ -147,19 +126,14 @@ export class TerrainNavigationCommand extends BaseCommand {
   }
 
   getRequiredRules(): string[] {
-    return []; // This command implements its own logic
+    return [];
   }
 
-  /**
-   * Calculate travel time based on distance and movement rate
-   */
   private calculateTravelTime(
     distance: number,
     movementRate: number
   ): { hours: number; description: string } {
-    // OSRIC: Standard overland movement is 24 miles per day for humans
-    // Movement rate affects this proportionally
-    const baseHumanRate = 120; // 12" movement rate for humans
+    const baseHumanRate = 120;
     const dailyDistance = 24 * (movementRate / baseHumanRate);
 
     const hours = (distance / dailyDistance) * 24;
@@ -178,9 +152,6 @@ export class TerrainNavigationCommand extends BaseCommand {
     return { hours, description };
   }
 
-  /**
-   * Check for navigation success and getting lost
-   */
   private checkNavigation(
     character: Character,
     terrain: TerrainType,
@@ -197,7 +168,6 @@ export class TerrainNavigationCommand extends BaseCommand {
     const baseChance = terrain.gettingLostChance;
     let navigationBonus = 0;
 
-    // Apply navigation method modifiers
     switch (method) {
       case 'compass':
         navigationBonus += 25;
@@ -206,7 +176,7 @@ export class TerrainNavigationCommand extends BaseCommand {
         if (timeOfDay === 'night') {
           navigationBonus += 20;
         } else {
-          navigationBonus -= 10; // Can't use stars during day
+          navigationBonus -= 10;
         }
         break;
       case 'landmark':
@@ -216,7 +186,7 @@ export class TerrainNavigationCommand extends BaseCommand {
         if (character.class === 'Ranger') {
           navigationBonus += 30;
         } else {
-          navigationBonus += 10; // Basic tracking knowledge
+          navigationBonus += 10;
         }
         break;
       case 'none':
@@ -224,16 +194,13 @@ export class TerrainNavigationCommand extends BaseCommand {
         break;
     }
 
-    // Map bonus
     if (hasMap) {
       navigationBonus += 20;
     }
 
-    // Wisdom modifier
     const wisdomMod = Math.floor((character.abilities.wisdom - 10) / 2);
     navigationBonus += wisdomMod * 5;
 
-    // Weather penalties
     if (weather) {
       if (weather.visibility < 1000) {
         navigationBonus -= 20;
@@ -242,25 +209,21 @@ export class TerrainNavigationCommand extends BaseCommand {
       }
     }
 
-    // Time of day penalties
     if (timeOfDay === 'night' && method !== 'stars') {
       navigationBonus -= 15;
     } else if (timeOfDay === 'dusk' || timeOfDay === 'dawn') {
       navigationBonus -= 5;
     }
 
-    // Calculate final chance of getting lost
     const finalChance = Math.max(1, Math.min(95, baseChance - navigationBonus));
 
-    // Roll for getting lost
     const roll = rollDice(1, 100).result;
     const gotLost = roll <= finalChance;
 
-    // If lost, determine how much extra distance
     let extraDistanceMultiplier = 1.0;
     if (gotLost) {
       const severity = rollDice(1, 6).result;
-      extraDistanceMultiplier = 1.0 + severity * 0.2; // 1.2x to 2.2x distance
+      extraDistanceMultiplier = 1.0 + severity * 0.2;
     }
 
     const details = gotLost
@@ -270,9 +233,6 @@ export class TerrainNavigationCommand extends BaseCommand {
     return { gotLost, extraDistanceMultiplier, navigationBonus, details };
   }
 
-  /**
-   * Generate random travel events based on terrain and time
-   */
   private generateTravelEvents(
     character: Character,
     terrain: TerrainType,
@@ -280,7 +240,6 @@ export class TerrainNavigationCommand extends BaseCommand {
   ): Array<{ type: string; description: string }> {
     const events: Array<{ type: string; description: string }> = [];
 
-    // Chance for events increases with travel time
     const eventChance = Math.min(50, travelTime.hours * 2);
 
     if (rollDice(1, 100).result <= eventChance) {
@@ -291,13 +250,9 @@ export class TerrainNavigationCommand extends BaseCommand {
     return events;
   }
 
-  /**
-   * Determine what type of event occurs based on terrain
-   */
   private determineEventType(terrain: TerrainType): string {
     const roll = rollDice(1, 20).result;
 
-    // Event tables vary by terrain type
     if (terrain.name.toLowerCase().includes('forest')) {
       if (roll <= 5) return 'animal-encounter';
       if (roll <= 8) return 'natural-obstacle';
@@ -323,7 +278,6 @@ export class TerrainNavigationCommand extends BaseCommand {
       return 'peaceful-travel';
     }
 
-    // Plains, roads, etc.
     if (roll <= 3) return 'animal-encounter';
     if (roll <= 6) return 'weather-change';
     if (roll <= 10) return 'discovery';
@@ -331,9 +285,6 @@ export class TerrainNavigationCommand extends BaseCommand {
     return 'peaceful-travel';
   }
 
-  /**
-   * Generate a specific event based on type
-   */
   private generateEvent(
     _character: Character,
     terrain: TerrainType,
@@ -390,30 +341,23 @@ export class TerrainNavigationCommand extends BaseCommand {
     }
   }
 
-  /**
-   * Apply fatigue effects from long travel
-   */
   private applyTravelFatigue(
     character: Character,
     travelTime: { hours: number },
     terrain: TerrainType
   ): Character {
-    // No fatigue for short trips
     if (travelTime.hours < 8) {
       return character;
     }
 
-    // Calculate fatigue based on time and terrain difficulty
-    const fatigueHours = travelTime.hours - 8; // First 8 hours are free
-    const terrainDifficulty = 2.0 - terrain.movementModifier; // Higher number = more difficult
+    const fatigueHours = travelTime.hours - 8;
+    const terrainDifficulty = 2.0 - terrain.movementModifier;
     const fatiguePoints = Math.floor(fatigueHours * terrainDifficulty);
 
     if (fatiguePoints > 0) {
-      // In a real implementation, this would apply temporary ability score penalties
-      // For now, we'll just note the fatigue in the character's temporary conditions
       return {
         ...character,
-        // This would need a proper fatigue system implementation
+
         hitPoints: {
           ...character.hitPoints,
           current: Math.max(1, character.hitPoints.current - Math.floor(fatiguePoints / 2)),
@@ -424,9 +368,6 @@ export class TerrainNavigationCommand extends BaseCommand {
     return character;
   }
 
-  /**
-   * Create descriptive message for navigation result
-   */
   private createNavigationMessage(
     character: Character,
     terrain: TerrainType,
@@ -452,13 +393,10 @@ export class TerrainNavigationCommand extends BaseCommand {
     return message;
   }
 
-  /**
-   * Predefined terrain types with OSRIC-authentic values
-   */
   static readonly TERRAIN_TYPES: Record<string, TerrainType> = {
     road: {
       name: 'Road',
-      movementModifier: 1.5, // Roads increase movement speed
+      movementModifier: 1.5,
       gettingLostChance: 5,
       visibilityDistance: 3000,
       description: 'Well-maintained road with clear path',

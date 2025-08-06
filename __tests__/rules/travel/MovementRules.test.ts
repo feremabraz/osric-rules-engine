@@ -1,14 +1,3 @@
-/**
- * MovementRules Tests - OSRIC Compliance
- *
- * Tests the MovementRule for proper movement mechanics according to OSRIC:
- * - Base movement rates by race and armor
- * - Encumbrance effects on movement
- * - Terrain movement modifiers
- * - Special movement types (flying, swimming, etc.)
- * - Edge cases and error scenarios
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { GameContext } from '../../../osric/core/GameContext';
@@ -16,7 +5,6 @@ import { MovementRule } from '../../../osric/rules/exploration/MovementRules';
 import { COMMAND_TYPES } from '../../../osric/types/constants';
 import type { Character } from '../../../osric/types/entities';
 
-// Mock helper function to create test characters
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-char',
@@ -79,7 +67,7 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
     spells: [],
     currency: { platinum: 0, gold: 0, electrum: 0, silver: 0, copper: 0 },
     encumbrance: 0,
-    movementRate: 120, // Standard human movement
+    movementRate: 120,
     classes: { Fighter: 1 },
     primaryClass: null,
     spellSlots: {},
@@ -100,7 +88,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return { ...defaultCharacter, ...overrides };
 }
 
-// Mock command for testing
 class MockMovementCommand {
   readonly type = COMMAND_TYPES.MOVE;
   readonly actorId = 'test-character';
@@ -134,11 +121,10 @@ describe('MovementRules', () => {
     movementRule = new MovementRule();
     mockCommand = new MockMovementCommand();
 
-    // Setup test character
     const testCharacter = createMockCharacter({
       id: 'test-character',
       name: 'Test Hero',
-      movementRate: 120, // 120 feet per turn
+      movementRate: 120,
       encumbrance: 0,
     });
 
@@ -147,7 +133,6 @@ describe('MovementRules', () => {
 
   describe('Rule Application', () => {
     it('should apply to movement commands', () => {
-      // Setup proper movement request data that the rule expects
       context.setTemporary('movement-request-params', {
         characterId: 'test-character',
         fromPosition: 'start-location',
@@ -196,7 +181,7 @@ describe('MovementRules', () => {
         fromPosition: 'start',
         toPosition: 'end',
         movementType: 'walk',
-        distance: 60, // 60 feet
+        distance: 60,
         terrainType: 'clear',
       });
 
@@ -211,7 +196,7 @@ describe('MovementRules', () => {
       const halfling = createMockCharacter({
         id: 'halfling-char',
         race: 'Halfling',
-        movementRate: 90, // Halflings move slower
+        movementRate: 90,
       });
       context.setEntity('halfling-char', halfling);
 
@@ -234,7 +219,7 @@ describe('MovementRules', () => {
       const elf = createMockCharacter({
         id: 'elf-char',
         race: 'Elf',
-        movementRate: 120, // Same as human but different modifiers
+        movementRate: 120,
       });
       context.setEntity('elf-char', elf);
 
@@ -258,7 +243,7 @@ describe('MovementRules', () => {
     it('should reduce movement when heavily encumbered', async () => {
       const encumberedChar = createMockCharacter({
         id: 'encumbered-char',
-        encumbrance: 100, // Heavy load
+        encumbrance: 100,
         movementRate: 120,
       });
       context.setEntity('encumbered-char', encumberedChar);
@@ -282,7 +267,7 @@ describe('MovementRules', () => {
     it('should handle different encumbrance levels', async () => {
       const lightlyEncumbered = createMockCharacter({
         id: 'light-enc',
-        encumbrance: 30, // Light load
+        encumbrance: 30,
         movementRate: 120,
       });
       context.setEntity('light-enc', lightlyEncumbered);
@@ -306,7 +291,7 @@ describe('MovementRules', () => {
     it('should prevent movement when overloaded', async () => {
       const overloadedChar = createMockCharacter({
         id: 'overloaded-char',
-        encumbrance: 200, // Excessive load
+        encumbrance: 200,
         movementRate: 120,
       });
       context.setEntity('overloaded-char', overloadedChar);
@@ -316,14 +301,13 @@ describe('MovementRules', () => {
         fromPosition: 'start',
         toPosition: 'end',
         movementType: 'walk',
-        distance: 30, // Reasonable distance to test encumbrance limits
+        distance: 30,
         terrainType: 'clear',
         encumbrance: 'severe',
       });
 
       const result = await movementRule.execute(context, mockCommand);
 
-      // Since the rule allows movement with severe encumbrance, expect success
       expect(result.success).toBe(true);
       expect(result.message).toContain('successfully');
     });
@@ -352,7 +336,7 @@ describe('MovementRules', () => {
         fromPosition: 'start',
         toPosition: 'end',
         movementType: 'walk',
-        distance: 30, // Shorter distance for difficult swamp
+        distance: 30,
         terrainType: 'swamp',
       });
 
@@ -369,7 +353,7 @@ describe('MovementRules', () => {
         toPosition: 'end',
         movementType: 'walk',
         distance: 120,
-        terrainType: 'clear', // Roads treated as clear terrain
+        terrainType: 'clear',
       });
 
       const result = await movementRule.execute(context, mockCommand);
@@ -384,7 +368,7 @@ describe('MovementRules', () => {
         fromPosition: 'start',
         toPosition: 'end',
         movementType: 'walk',
-        distance: 30, // Short distance for mountain terrain
+        distance: 30,
         terrainType: 'mountain',
       });
 
@@ -418,7 +402,7 @@ describe('MovementRules', () => {
         fromPosition: 'start',
         toPosition: 'end',
         movementType: 'walk',
-        distance: 120, // Full movement rate distance
+        distance: 120,
         terrainType: 'clear',
       });
 
@@ -434,7 +418,7 @@ describe('MovementRules', () => {
         fromPosition: 'start',
         toPosition: 'end',
         movementType: 'walk',
-        distance: 60, // Reasonable distance for daily travel
+        distance: 60,
         terrainType: 'clear',
       });
 
@@ -449,7 +433,7 @@ describe('MovementRules', () => {
     it('should handle flying movement', async () => {
       const flyingChar = createMockCharacter({
         id: 'flying-char',
-        racialAbilities: [], // Empty for simplicity
+        racialAbilities: [],
       });
       context.setEntity('flying-char', flyingChar);
 
@@ -474,13 +458,13 @@ describe('MovementRules', () => {
         fromPosition: 'start',
         toPosition: 'end',
         movementType: 'swim',
-        distance: 7, // Swimming allows ~7 feet (120 * 0.25 * 0.25 = 7.5)
+        distance: 7,
         terrainType: 'underwater',
       });
 
       const result = await movementRule.execute(context, mockCommand);
 
-      expect(result.success).toBe(true); // Should succeed for achievable distance
+      expect(result.success).toBe(true);
       expect(result.message).toContain('successfully');
     });
 
@@ -490,7 +474,7 @@ describe('MovementRules', () => {
         fromPosition: 'start',
         toPosition: 'end',
         movementType: 'climb',
-        distance: 30, // Climbing is very slow
+        distance: 30,
         terrainType: 'clear',
       });
 
@@ -505,7 +489,7 @@ describe('MovementRules', () => {
     it('should handle slowed movement from spells', async () => {
       const slowedChar = createMockCharacter({
         id: 'slowed-char',
-        statusEffects: [], // Empty, test checks will verify effect presence in result data
+        statusEffects: [],
       });
       context.setEntity('slowed-char', slowedChar);
 
@@ -527,7 +511,7 @@ describe('MovementRules', () => {
     it('should handle haste movement bonus', async () => {
       const hastedChar = createMockCharacter({
         id: 'hasted-char',
-        statusEffects: [], // Empty, test checks will verify effect presence in result data
+        statusEffects: [],
       });
       context.setEntity('hasted-char', hastedChar);
 
@@ -607,7 +591,7 @@ describe('MovementRules', () => {
         fromPosition: 'start',
         toPosition: 'end',
         movementType: 'walk',
-        distance: 1000, // Very long distance that exceeds maximum
+        distance: 1000,
         terrainType: 'clear',
       });
 
@@ -624,12 +608,12 @@ describe('MovementRules', () => {
         toPosition: 'end',
         movementType: 'walk',
         distance: 60,
-        terrainType: 'clear', // Use valid terrain instead of unknown
+        terrainType: 'clear',
       });
 
       const result = await movementRule.execute(context, mockCommand);
 
-      expect(result.success).toBe(true); // Should work with valid terrain
+      expect(result.success).toBe(true);
       expect(result.message).toContain('successfully');
     });
   });
@@ -641,7 +625,7 @@ describe('MovementRules', () => {
         fromPosition: 'start',
         toPosition: 'end',
         movementType: 'walk',
-        distance: 37, // Odd number
+        distance: 37,
         terrainType: 'clear',
       });
 
@@ -657,7 +641,7 @@ describe('MovementRules', () => {
         fromPosition: 'start',
         toPosition: 'end',
         movementType: 'walk',
-        distance: 120, // Exactly at movement rate
+        distance: 120,
         terrainType: 'clear',
       });
 
@@ -673,13 +657,12 @@ describe('MovementRules', () => {
         fromPosition: 'start',
         toPosition: 'end',
         movementType: 'walk',
-        distance: 120, // Exactly at movement rate
+        distance: 120,
         terrainType: 'clear',
       });
 
       const result = await movementRule.execute(context, mockCommand);
 
-      // Should succeed for movement at exactly the limit
       expect(result.success).toBe(true);
       expect(result.message).toContain('successfully');
     });

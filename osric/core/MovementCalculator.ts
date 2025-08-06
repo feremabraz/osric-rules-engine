@@ -1,21 +1,8 @@
-/**
- * MovementCalculator - OSRIC Movement Rules Integration
- *
- * Handles movement calculations according to OSRIC rules,
- * integrating positioning system with game mechanics.
- *
- * PRESERVATION: Maintains OSRIC movement rates, encumbrance,
- * terrain effects, and time tracking as specified in the rules.
- */
-
 import type { GridSystem } from './GridSystem';
 import type { Position } from './Position';
 import type { Direction } from './Position';
 import { PositionUtils } from './Position';
 
-/**
- * Movement types from OSRIC
- */
 export enum MovementType {
   Walking = 'walking',
   Running = 'running',
@@ -26,13 +13,10 @@ export enum MovementType {
   Crawling = 'crawling',
 }
 
-/**
- * Terrain types that affect movement
- */
 export enum TerrainType {
   Clear = 'clear',
-  Difficult = 'difficult', // Rubble, dense forest
-  Treacherous = 'treacherous', // Ice, mud
+  Difficult = 'difficult',
+  Treacherous = 'treacherous',
   Impassable = 'impassable',
   Water = 'water',
   Lava = 'lava',
@@ -42,35 +26,26 @@ export enum TerrainType {
   Desert = 'desert',
 }
 
-/**
- * Movement result
- */
 export interface MovementResult {
   success: boolean;
   finalPosition: Position;
-  timeElapsed: number; // In rounds/turns
-  movementUsed: number; // Movement points consumed
+  timeElapsed: number;
+  movementUsed: number;
   path?: Position[];
   terrainEncountered?: TerrainType[];
   penalties?: string[];
 }
 
-/**
- * Character movement capabilities
- */
 export interface MovementCapabilities {
-  baseMovementRate: number; // In feet per round
-  runningMultiplier: number; // Usually 3x for humans
-  encumbranceModifier: number; // 0.5 to 1.0
+  baseMovementRate: number;
+  runningMultiplier: number;
+  encumbranceModifier: number;
   flyingSpeed?: number;
   swimmingSpeed?: number;
   climbingSpeed?: number;
-  specialMovement?: string[]; // Spider climb, etc.
+  specialMovement?: string[];
 }
 
-/**
- * Movement context for calculations
- */
 export interface MovementContext {
   character: {
     capabilities: MovementCapabilities;
@@ -78,7 +53,7 @@ export interface MovementContext {
     facing?: Direction;
   };
   environment: {
-    terrain: Map<string, TerrainType>; // Position key -> terrain
+    terrain: Map<string, TerrainType>;
     lighting: 'bright' | 'dim' | 'dark';
     weather?: string;
     indoor: boolean;
@@ -90,9 +65,6 @@ export interface MovementContext {
   };
 }
 
-/**
- * OSRIC Movement Calculator
- */
 export class MovementCalculator {
   private gridSystem?: GridSystem;
 
@@ -100,9 +72,6 @@ export class MovementCalculator {
     this.gridSystem = gridSystem;
   }
 
-  /**
-   * Calculate movement between two positions
-   */
   calculateMovement(
     from: Position,
     to: Position,
@@ -127,13 +96,12 @@ export class MovementCalculator {
     const totalCost = this.calculateMovementCost(distance, terrainModifiers, movementType);
 
     if (totalCost > movementRate) {
-      // Find how far we can actually move
       const reachablePosition = this.findReachablePosition(from, to, movementRate, context);
 
       return {
         success: false,
         finalPosition: reachablePosition,
-        timeElapsed: 1, // One round
+        timeElapsed: 1,
         movementUsed: movementRate,
         path: this.calculatePath(from, reachablePosition) || [from],
         terrainEncountered: this.getTerrainTypes(
@@ -161,9 +129,6 @@ export class MovementCalculator {
     };
   }
 
-  /**
-   * Get base movement rate for character
-   */
   private getEffectiveMovementRate(movementType: MovementType, context: MovementContext): number {
     const base = context.character.capabilities.baseMovementRate;
     const encumbrance = context.character.capabilities.encumbranceModifier;
@@ -175,7 +140,7 @@ export class MovementCalculator {
         rate *= context.character.capabilities.runningMultiplier;
         break;
       case MovementType.Charging:
-        rate *= 2; // OSRIC charging rules
+        rate *= 2;
         break;
       case MovementType.Swimming:
         rate = context.character.capabilities.swimmingSpeed || base * 0.25;
@@ -189,12 +154,10 @@ export class MovementCalculator {
       case MovementType.Crawling:
         rate *= 0.25;
         break;
-      default: // MovementType.Walking and others
-        // Rate already calculated
+      default:
         break;
     }
 
-    // Environmental modifiers
     if (context.environment.lighting === 'dim') {
       rate *= 0.75;
     } else if (context.environment.lighting === 'dark') {
@@ -204,9 +167,6 @@ export class MovementCalculator {
     return Math.floor(rate);
   }
 
-  /**
-   * Calculate distance considering grid system
-   */
   private calculateDistance(from: Position, to: Position): number {
     if (this.gridSystem) {
       return this.gridSystem.getDistance(from, to);
@@ -215,21 +175,14 @@ export class MovementCalculator {
     return PositionUtils.euclideanDistance(from, to);
   }
 
-  /**
-   * Calculate path considering grid system
-   */
   private calculatePath(from: Position, to: Position): Position[] | null {
     if (this.gridSystem) {
       return this.gridSystem.findPath(from, to);
     }
 
-    // Simple straight line path
     return [from, to];
   }
 
-  /**
-   * Calculate terrain movement modifiers
-   */
   private calculateTerrainModifiers(
     path: Position[],
     terrainMap: Map<string, TerrainType>
@@ -242,13 +195,12 @@ export class MovementCalculator {
 
       switch (terrain) {
         case TerrainType.Clear:
-          // No modifier
           break;
         case TerrainType.Difficult:
-          modifier *= 2; // Costs double movement
+          modifier *= 2;
           break;
         case TerrainType.Treacherous:
-          modifier *= 3; // Costs triple movement
+          modifier *= 3;
           break;
         case TerrainType.Marsh:
           modifier *= 2.5;
@@ -263,7 +215,7 @@ export class MovementCalculator {
           modifier *= 1.5;
           break;
         case TerrainType.Water:
-          modifier *= 4; // Unless swimming
+          modifier *= 4;
           break;
         case TerrainType.Impassable:
           return Number.POSITIVE_INFINITY;
@@ -275,9 +227,6 @@ export class MovementCalculator {
     return modifier;
   }
 
-  /**
-   * Calculate total movement cost
-   */
   private calculateMovementCost(
     distance: number,
     terrainModifier: number,
@@ -289,18 +238,14 @@ export class MovementCalculator {
 
     let cost = distance * terrainModifier;
 
-    // Movement type adjustments
     switch (movementType) {
       case MovementType.Flying:
-        // Flying ignores most terrain
         cost = distance;
         break;
       case MovementType.Swimming:
-        // Swimming in water is normal speed
         cost = distance;
         break;
       case MovementType.Charging:
-        // Charging requires straight line
         cost = distance;
         break;
     }
@@ -308,9 +253,6 @@ export class MovementCalculator {
     return Math.ceil(cost);
   }
 
-  /**
-   * Calculate time elapsed based on movement
-   */
   private calculateTimeElapsed(
     movementUsed: number,
     movementRate: number,
@@ -318,24 +260,19 @@ export class MovementCalculator {
     inCombat: boolean
   ): number {
     if (inCombat) {
-      // Combat movement - usually 1 round
       return 1;
     }
 
-    // Exploration movement
     const baseTime = movementUsed / movementRate;
 
     switch (movementType) {
       case MovementType.Running:
         return Math.max(1, Math.ceil(baseTime));
-      default: // MovementType.Walking and others
+      default:
         return Math.max(1, Math.ceil(baseTime));
     }
   }
 
-  /**
-   * Find the furthest reachable position
-   */
   private findReachablePosition(
     from: Position,
     to: Position,
@@ -367,9 +304,6 @@ export class MovementCalculator {
     return lastReachable;
   }
 
-  /**
-   * Get terrain types encountered along path
-   */
   private getTerrainTypes(path: Position[], terrainMap: Map<string, TerrainType>): TerrainType[] {
     const terrainTypes: TerrainType[] = [];
 
@@ -385,35 +319,28 @@ export class MovementCalculator {
     return terrainTypes;
   }
 
-  /**
-   * Check if movement is valid (considering OSRIC rules)
-   */
   validateMovement(
     from: Position,
     to: Position,
     movementType: MovementType,
     context: MovementContext
   ): { valid: boolean; reason?: string } {
-    // Check basic path validity
     const path = this.calculatePath(from, to);
     if (!path) {
       return { valid: false, reason: 'No valid path' };
     }
 
-    // Check movement type restrictions
     if (movementType === MovementType.Charging) {
       const distance = this.calculateDistance(from, to);
       if (distance < 10) {
         return { valid: false, reason: 'Charge requires minimum 10-foot movement' };
       }
 
-      // Charging must be in straight line (simplified check)
       if (path.length > 2) {
         return { valid: false, reason: 'Charge must be in straight line' };
       }
     }
 
-    // Check terrain validity
     const terrainTypes = this.getTerrainTypes(path, context.environment.terrain);
     if (terrainTypes.includes(TerrainType.Impassable)) {
       return { valid: false, reason: 'Path contains impassable terrain' };
@@ -426,9 +353,6 @@ export class MovementCalculator {
     return { valid: true };
   }
 
-  /**
-   * Calculate movement for an entire party
-   */
   calculatePartyMovement(
     partyPositions: Position[],
     destination: Position,

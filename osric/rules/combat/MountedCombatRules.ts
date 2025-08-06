@@ -1,16 +1,3 @@
-/**
- * MountedCombatRules.ts - OSRIC Mounted Combat Rules
- *
- * Implements the complete OSRIC mounted combat system including:
- * - Mounted charge attacks with lance damage bonuses
- * - Mount movement and positioning rules
- * - Dismounting and falling damage from flying mounts
- * - Mount encumbrance and agility effects
- * - Aerial combat integration for flying mounts
- *
- * PRESERVATION: All OSRIC mounted combat mechanics preserved exactly.
- */
-
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
@@ -22,12 +9,12 @@ import type {
 } from '../../types/entities';
 
 export enum AerialAgilityLevel {
-  Drifting = 1, // e.g., levitate
-  Poor = 2, // e.g., dragon
-  Average = 3, // e.g., sphinx
-  Good = 4, // e.g., flying carpet
-  Excellent = 5, // e.g., pegasus
-  Perfect = 6, // e.g., genie, air elemental
+  Drifting = 1,
+  Poor = 2,
+  Average = 3,
+  Good = 4,
+  Excellent = 5,
+  Perfect = 6,
 }
 
 export interface Mount {
@@ -48,7 +35,7 @@ export interface Mount {
     max: number;
   };
   isEncumbered: boolean;
-  mountedBy: string | null; // Character ID of the rider
+  mountedBy: string | null;
 }
 
 interface MountedCombatContext {
@@ -76,17 +63,14 @@ export class MountedChargeRule extends BaseRule {
       return this.createFailureResult('Invalid mounted charge parameters');
     }
 
-    // Check if mounted charge is possible
     const canCharge = this.canMountedCharge(rider, mount);
 
     if (!canCharge.allowed) {
       return this.createFailureResult(`Cannot mounted charge: ${canCharge.reason}`);
     }
 
-    // Process the mounted charge
     const chargeResult = this.resolveMountedCharge(rider, mount, target, weapon);
 
-    // Store results
     context.setTemporary('mounted-charge-result', chargeResult);
     context.setTemporary('damage-multiplier', chargeResult.damageMultiplier);
 
@@ -95,7 +79,7 @@ export class MountedChargeRule extends BaseRule {
       undefined,
       undefined,
       undefined,
-      chargeResult.damageMultiplier > 1 // Continue if damage multiplier applied
+      chargeResult.damageMultiplier > 1
     );
   }
 
@@ -107,9 +91,6 @@ export class MountedChargeRule extends BaseRule {
     return mountedContext !== null && mountedContext.isChargeAttack === true;
   }
 
-  /**
-   * Checks if a character can perform a mounted charge
-   */
   private canMountedCharge(
     rider: CharacterData,
     mount: Mount
@@ -117,7 +98,6 @@ export class MountedChargeRule extends BaseRule {
     allowed: boolean;
     reason?: string;
   } {
-    // Check if mount is capable of charging
     if (mount.isEncumbered) {
       return {
         allowed: false,
@@ -125,7 +105,6 @@ export class MountedChargeRule extends BaseRule {
       };
     }
 
-    // Check if mount has enough hit points
     if (mount.hitPoints.current <= mount.hitPoints.maximum * 0.25) {
       return {
         allowed: false,
@@ -133,7 +112,6 @@ export class MountedChargeRule extends BaseRule {
       };
     }
 
-    // Check if character is properly mounted
     if (mount.mountedBy !== rider.id) {
       return {
         allowed: false,
@@ -141,7 +119,6 @@ export class MountedChargeRule extends BaseRule {
       };
     }
 
-    // Check if rider is too encumbered
     if (rider.encumbrance >= 0.9) {
       return {
         allowed: false,
@@ -152,9 +129,6 @@ export class MountedChargeRule extends BaseRule {
     return { allowed: true };
   }
 
-  /**
-   * Handles mounted charge attack
-   */
   private resolveMountedCharge(
     rider: CharacterData,
     mount: Mount,
@@ -165,19 +139,16 @@ export class MountedChargeRule extends BaseRule {
     damageMultiplier: number;
     movementBonus: number;
   } {
-    // Check if using a lance (only weapon that gets full charge bonus)
     const isLance = weapon.name.toLowerCase().includes('lance');
     const isSpear = weapon.name.toLowerCase().includes('spear');
 
-    // Calculate damage multiplier
     let damageMultiplier = 1;
     if (isLance) {
-      damageMultiplier = 2; // Lance does double damage on charge
+      damageMultiplier = 2;
     } else if (isSpear) {
-      damageMultiplier = 1.5; // Spear does 1.5x damage on charge
+      damageMultiplier = 1.5;
     }
 
-    // Calculate movement bonus (double movement for charge)
     const movementBonus = mount.movementRate;
 
     const message = `${rider.name} charges on ${mount.name} with ${weapon.name}${
@@ -204,10 +175,8 @@ export class MountedCombatRule extends BaseRule {
 
     const { rider, mount } = mountedContext;
 
-    // Apply mounted combat modifiers
     const modifiers = this.getMountedCombatModifiers(rider, mount);
 
-    // Store modifiers for use by other rules
     context.setTemporary('mounted-combat-modifiers', modifiers);
 
     return this.createSuccessResult(
@@ -227,9 +196,6 @@ export class MountedCombatRule extends BaseRule {
     );
   }
 
-  /**
-   * Get mounted combat modifiers
-   */
   private getMountedCombatModifiers(
     _rider: CharacterData,
     mount: Mount
@@ -243,32 +209,28 @@ export class MountedCombatRule extends BaseRule {
     let damageBonus = 0;
     let acBonus = 0;
 
-    // Height advantage against infantry
     attackBonus += 1;
 
-    // Stability penalty if mount is moving fast
     if (mount.isEncumbered) {
       attackBonus -= 1;
     }
 
-    // Flying mount bonuses
     if (mount.flying) {
-      attackBonus += 1; // Altitude advantage
-      acBonus += 1; // Harder to hit when airborne
+      attackBonus += 1;
+      acBonus += 1;
     }
 
-    // Mount size modifiers
     switch (mount.size) {
       case 'Large':
         damageBonus += 1;
         break;
       case 'Huge':
         damageBonus += 2;
-        acBonus -= 1; // Easier to hit
+        acBonus -= 1;
         break;
       case 'Gargantuan':
         damageBonus += 3;
-        acBonus -= 2; // Much easier to hit
+        acBonus -= 2;
         break;
     }
 
@@ -293,13 +255,10 @@ export class DismountRule extends BaseRule {
 
     const { rider, mount } = mountedContext;
 
-    // Process the dismount
     const dismountResult = this.resolveDismount(rider, mount);
 
-    // Store results
     context.setTemporary('dismount-result', dismountResult);
 
-    // Clear mounted state
     context.setTemporary('mounted-context', null);
 
     return this.createSuccessResult(
@@ -307,7 +266,7 @@ export class DismountRule extends BaseRule {
       undefined,
       undefined,
       undefined,
-      dismountResult.requiresFallingCheck // Stop chain if falling damage needed
+      dismountResult.requiresFallingCheck
     );
   }
 
@@ -318,9 +277,6 @@ export class DismountRule extends BaseRule {
     return mountedContext !== null && mountedContext.isDismounting === true;
   }
 
-  /**
-   * Handles dismounting from a mount
-   */
   private resolveDismount(
     rider: CharacterData,
     mount: Mount
@@ -336,10 +292,8 @@ export class DismountRule extends BaseRule {
       };
     }
 
-    // Clear mount association
     mount.mountedBy = null;
 
-    // Check for falling damage if dismounting while flying
     if (mount.flying) {
       const fallingDistance = this.calculateFallingDistance(mount);
 
@@ -356,11 +310,7 @@ export class DismountRule extends BaseRule {
     };
   }
 
-  /**
-   * Calculate falling distance based on mount size and type
-   */
   private calculateFallingDistance(mount: Mount): number {
-    // Base height by mount size
     const sizeHeights: Record<string, number> = {
       Small: 5,
       Medium: 10,
@@ -403,9 +353,6 @@ export class MountedCombatEligibilityRule extends BaseRule {
     return rider !== null && mount !== null;
   }
 
-  /**
-   * Check all requirements for mounted combat
-   */
   private checkMountedCombatEligibility(
     rider: CharacterData,
     mount: Mount
@@ -416,7 +363,6 @@ export class MountedCombatEligibilityRule extends BaseRule {
   } {
     const restrictions: string[] = [];
 
-    // Check if properly mounted
     if (mount.mountedBy !== rider.id) {
       return {
         canFight: false,
@@ -424,7 +370,6 @@ export class MountedCombatEligibilityRule extends BaseRule {
       };
     }
 
-    // Check mount condition
     if (mount.hitPoints.current <= 0) {
       return {
         canFight: false,
@@ -432,18 +377,13 @@ export class MountedCombatEligibilityRule extends BaseRule {
       };
     }
 
-    // Check for mount panic or uncontrolled state
     if (mount.hitPoints.current <= mount.hitPoints.maximum * 0.25) {
       restrictions.push('Mount may panic due to low hit points');
     }
 
-    // Check encumbrance
     if (mount.isEncumbered) {
       restrictions.push('Mount movement and agility reduced due to encumbrance');
     }
-
-    // Check rider proficiency (simplified - would check for Riding skill)
-    // This would integrate with the proficiency system
 
     return {
       canFight: true,

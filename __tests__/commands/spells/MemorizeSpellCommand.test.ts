@@ -4,7 +4,6 @@ import { MemorizeSpellCommand } from '../../../osric/commands/spells/MemorizeSpe
 import { GameContext } from '../../../osric/core/GameContext';
 import type { Character, Spell } from '../../../osric/types/entities';
 
-// Helper function to create a test wizard character
 function createMockWizard(overrides: Partial<Character> = {}): Character {
   const baseCharacter: Character = {
     id: 'wizard1',
@@ -206,7 +205,6 @@ describe('MemorizeSpellCommand', () => {
       expect(result.success).toBe(true);
       expect(result.message).toContain('Test Wizard memorizes Magic Missile');
 
-      // Verify temporary data is set for rules processing
       expect(context.getTemporary('memorizeSpell_caster')).toBeDefined();
       expect(context.getTemporary('memorizeSpell_spell')).toBeDefined();
       expect(context.getTemporary('memorizeSpell_level')).toBe(1);
@@ -219,7 +217,6 @@ describe('MemorizeSpellCommand', () => {
       expect(result.success).toBe(true);
       expect(result.message).toContain('Test Wizard memorizes Web');
 
-      // Verify spell data is accessible
       const spell = context.getTemporary('memorizeSpell_spell') as Spell;
       expect(spell.name).toBe('Web');
       expect(spell.level).toBe(2);
@@ -307,7 +304,6 @@ describe('MemorizeSpellCommand', () => {
 
       expect(result.success).toBe(true);
 
-      // Verify intelligence data is accessible for rules
       const caster = context.getTemporary('memorizeSpell_caster') as Character;
       expect(caster.abilityModifiers.intelligenceLearnSpells).toBe(35);
     });
@@ -318,11 +314,10 @@ describe('MemorizeSpellCommand', () => {
 
       expect(result.success).toBe(true);
 
-      // Verify spell slot data is available for rules
       const caster = context.getTemporary('memorizeSpell_caster') as Character;
       expect(caster.spellSlots).toBeDefined();
-      expect(caster.spellSlots[1]).toBe(4); // 4 first level slots
-      expect(caster.memorizedSpells[1]).toHaveLength(0); // Currently empty
+      expect(caster.spellSlots[1]).toBe(4);
+      expect(caster.memorizedSpells[1]).toHaveLength(0);
     });
 
     it('should specify required rules correctly', async () => {
@@ -347,7 +342,6 @@ describe('MemorizeSpellCommand', () => {
 
       expect(result.success).toBe(true);
 
-      // Verify location data is accessible
       const caster = context.getTemporary('memorizeSpell_caster') as Character;
       expect(caster.position).toBe('town');
     });
@@ -371,7 +365,6 @@ describe('MemorizeSpellCommand', () => {
 
       expect(result.success).toBe(true);
 
-      // Verify status effects are accessible for rest validation
       const caster = context.getTemporary('memorizeSpell_caster') as Character;
       expect(caster.statusEffects).toHaveLength(1);
       expect(caster.statusEffects[0].name).toBe('Fatigued');
@@ -385,7 +378,6 @@ describe('MemorizeSpellCommand', () => {
 
       expect(result.success).toBe(true);
 
-      // Verify all required data is set for rules processing
       const caster = context.getTemporary('memorizeSpell_caster') as Character;
       const spell = context.getTemporary('memorizeSpell_spell') as Spell;
       const level = context.getTemporary('memorizeSpell_level');

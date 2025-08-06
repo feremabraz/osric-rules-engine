@@ -1,21 +1,9 @@
-/**
- * ExperienceGainRules Tests - OSRIC Compliance
- *
- * Tests the ExperienceGainRule for proper XP calculations according to OSRIC mechanics:
- * - Combat XP from monster HD and special abilities
- * - Treasure XP from gold piece value
- * - Story milestone XP awards
- * - Class-specific XP penalties and bonuses
- * - Edge cases and error scenarios
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { GameContext } from '../../../osric/core/GameContext';
 import { ExperienceGainRule } from '../../../osric/rules/experience/ExperienceGainRules';
 import type { Character } from '../../../osric/types/entities';
 
-// Mock helper function to create test characters (copied from GameContext.test.ts)
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-char',
@@ -99,7 +87,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return { ...defaultCharacter, ...overrides };
 }
 
-// Mock command for testing
 class MockExperienceCommand {
   readonly type = 'gain-experience';
   readonly actorId = 'test-character';
@@ -133,12 +120,11 @@ describe('ExperienceGainRules', () => {
     experienceRule = new ExperienceGainRule();
     mockCommand = new MockExperienceCommand();
 
-    // Setup test character using mock helper
     const testCharacter = createMockCharacter({
       id: 'test-character',
       name: 'Test Hero',
       abilities: {
-        strength: 16, // Higher strength for testing prime requisite bonus
+        strength: 16,
         dexterity: 12,
         constitution: 14,
         intelligence: 10,
@@ -157,7 +143,6 @@ describe('ExperienceGainRules', () => {
     });
 
     it('should not apply to other command types', () => {
-      // Create a different command type
       class OtherCommand {
         readonly type = 'cast-spell';
         readonly actorId = 'test-character';
@@ -188,7 +173,6 @@ describe('ExperienceGainRules', () => {
 
   describe('Combat Experience Calculation', () => {
     it('should calculate basic monster XP correctly', async () => {
-      // Setup experience gain data with proper Monster objects
       context.setTemporary('experience-gain-params', {
         characterId: 'test-character',
         experienceSource: {
@@ -197,9 +181,9 @@ describe('ExperienceGainRules', () => {
             {
               id: 'goblin-1',
               name: 'Goblin',
-              hitDice: '1-1', // Less than 1 HD = 5 XP
+              hitDice: '1-1',
               specialAbilities: [],
-              // Required Monster properties
+
               level: 1,
               hitPoints: { current: 3, maximum: 3 },
               armorClass: 6,
@@ -288,9 +272,9 @@ describe('ExperienceGainRules', () => {
             {
               id: 'goblin-2',
               name: 'Goblin',
-              hitDice: '1-1', // Less than 1 HD = 5 XP
+              hitDice: '1-1',
               specialAbilities: [],
-              // Required Monster properties (shortened for this test)
+
               level: 1,
               hitPoints: { current: 3, maximum: 3 },
               armorClass: 6,
@@ -355,7 +339,7 @@ describe('ExperienceGainRules', () => {
       const result = await experienceRule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      // XP should be divided by 2 for party of 2
+
       expect(result.data?.experienceGained).toBeGreaterThan(0);
     });
   });
@@ -374,7 +358,7 @@ describe('ExperienceGainRules', () => {
       const result = await experienceRule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      // Character has strength 16, so gets +10% bonus: 1000 + 100 = 1100
+
       expect(result.data?.experienceGained).toBe(1100);
       expect(result.message).toContain('experience points');
     });
@@ -409,7 +393,7 @@ describe('ExperienceGainRules', () => {
       const result = await experienceRule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      // Character has strength 16, so gets +10% bonus: 500 + 50 = 550
+
       expect(result.data?.experienceGained).toBe(550);
       expect(result.message).toContain('experience points');
     });
@@ -432,7 +416,6 @@ describe('ExperienceGainRules', () => {
 
   describe('Prime Requisite Bonuses', () => {
     it('should apply 10% bonus for strength 16+ (Fighter)', async () => {
-      // Character already has strength 16 from beforeEach
       context.setTemporary('experience-gain-params', {
         characterId: 'test-character',
         experienceSource: {
@@ -444,13 +427,12 @@ describe('ExperienceGainRules', () => {
       const result = await experienceRule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      // Should get 1100 XP (1000 + 10% bonus)
+
       expect(result.data?.experienceGained).toBe(1100);
       expect(result.data?.modifiers).toContain('Prime requisite +10%: 100 XP');
     });
 
     it('should apply penalty for low prime requisite', async () => {
-      // Create character with low strength
       const lowStrCharacter = createMockCharacter({
         id: 'low-str-character',
         abilities: { ...createMockCharacter().abilities, strength: 7 },
@@ -468,20 +450,19 @@ describe('ExperienceGainRules', () => {
       const result = await experienceRule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      // Should get penalty for low strength
+
       expect(result.data?.experienceGained).toBeLessThan(1000);
     });
   });
 
   describe('Multi-Class Penalties', () => {
     it('should apply multi-class XP penalty', async () => {
-      // Create multi-class character
       const multiClassChar = createMockCharacter({
         id: 'multi-class-character',
-        class: 'Fighter', // Primary class for type checking
+        class: 'Fighter',
         classes: { Fighter: 1, 'Magic-User': 1 },
       });
-      // Manually set the multi-class indicator in class field after creation
+
       Object.assign(multiClassChar, { class: 'Fighter/Magic-User' });
       context.setEntity('multi-class-character', multiClassChar);
 
@@ -496,7 +477,7 @@ describe('ExperienceGainRules', () => {
       const result = await experienceRule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      // Should get penalty for multi-class (1000 / 2 = 500 XP)
+
       expect(result.data?.experienceGained).toBeLessThan(1000);
       expect(
         (result.data?.modifiers as string[])?.some((mod: string) =>
@@ -508,7 +489,6 @@ describe('ExperienceGainRules', () => {
 
   describe('Error Handling', () => {
     it('should handle missing experience data', async () => {
-      // Don't set any experience-gain-params
       const result = await experienceRule.execute(context, mockCommand);
 
       expect(result.success).toBe(false);
@@ -564,7 +544,7 @@ describe('ExperienceGainRules', () => {
 
       const updatedCharacter = context.getEntity<Character>('test-character');
       if (updatedCharacter) {
-        expect(updatedCharacter.experience.current).toBe(initialXP + 550); // 500 + 10% bonus
+        expect(updatedCharacter.experience.current).toBe(initialXP + 550);
       }
       expect(result.data?.newTotal).toBe(initialXP + 550);
     });

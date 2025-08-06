@@ -1,16 +1,3 @@
-/**
- * WeaponSpecializationRules.ts - OSRIC Weapon Specialization Rules
- *
- * Implements the complete OSRIC weapon specialization system including:
- * - Fighter-class specialization requirements
- * - To-hit and damage bonuses for specialized weapons
- * - Rate of attack improvements from specialization
- * - Double specialization for melee weapons
- * - Weapon proficiency slot costs
- *
- * PRESERVATION: All OSRIC specialization mechanics preserved exactly.
- */
-
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
@@ -83,9 +70,6 @@ export class WeaponSpecializationRule extends BaseRule {
     return specContext !== null;
   }
 
-  /**
-   * Check if a character can specialize in a weapon
-   */
   private checkSpecializationEligibility(
     character: CharacterData,
     weapon: Weapon
@@ -95,7 +79,6 @@ export class WeaponSpecializationRule extends BaseRule {
     slotCost: number;
     reason?: string;
   } {
-    // Only fighters and their subclasses can specialize
     const specializationClasses: CharacterClass[] = ['Fighter', 'Paladin', 'Ranger'];
 
     if (!specializationClasses.includes(character.class)) {
@@ -107,7 +90,6 @@ export class WeaponSpecializationRule extends BaseRule {
       };
     }
 
-    // Check if the character is proficient with the weapon
     const isProficient = character.proficiencies?.some(
       (p) => p.weapon.toLowerCase() === weapon.name.toLowerCase()
     );
@@ -131,9 +113,6 @@ export class WeaponSpecializationRule extends BaseRule {
     };
   }
 
-  /**
-   * Calculate specialization bonuses for a character and weapon
-   */
   private calculateSpecializationBonuses(
     character: CharacterData,
     weapon: Weapon
@@ -166,9 +145,6 @@ export class WeaponSpecializationRule extends BaseRule {
     };
   }
 
-  /**
-   * Get character's specialization level with a weapon
-   */
   private getSpecializationLevel(character: CharacterData, weapon: Weapon): SpecializationLevel {
     if (!character.weaponSpecializations) return SpecializationLevel.NONE;
 
@@ -178,7 +154,6 @@ export class WeaponSpecializationRule extends BaseRule {
 
     if (!spec) return SpecializationLevel.NONE;
 
-    // Check if this is a double specialization based on bonuses
     if (spec.bonuses.attackBonus >= 3) {
       return SpecializationLevel.DOUBLE_SPECIALIZED;
     }
@@ -190,54 +165,41 @@ export class WeaponSpecializationRule extends BaseRule {
     return SpecializationLevel.NONE;
   }
 
-  /**
-   * Get to-hit bonus from weapon specialization
-   */
   private getSpecializationHitBonus(specLevel: SpecializationLevel): number {
     switch (specLevel) {
       case SpecializationLevel.SPECIALIZED:
-        return 1; // +1 to hit for regular specialization
+        return 1;
       case SpecializationLevel.DOUBLE_SPECIALIZED:
-        return 3; // +3 to hit for double specialization
+        return 3;
       default:
         return 0;
     }
   }
 
-  /**
-   * Get damage bonus from weapon specialization
-   */
   private getSpecializationDamageBonus(specLevel: SpecializationLevel, weapon: Weapon): number {
     switch (specLevel) {
       case SpecializationLevel.SPECIALIZED:
         if (weapon.type === 'Melee') {
-          return 2; // +2 damage for melee specialization
+          return 2;
         }
-        return 1; // +1 damage for ranged specialization
+        return 1;
       case SpecializationLevel.DOUBLE_SPECIALIZED:
-        return 3; // +3 damage for double specialization (melee only)
+        return 3;
       default:
         return 0;
     }
   }
 
-  /**
-   * Get base attack rate for character (without specialization)
-   */
   private getBaseAttackRate(character: CharacterData): number {
     const isFighterClass = ['Fighter', 'Paladin', 'Ranger'].includes(character.class);
 
     if (!isFighterClass) return 1;
 
-    // Base fighter progression
-    if (character.level >= 13) return 2; // 2/1
-    if (character.level >= 7) return 1.5; // 3/2
-    return 1; // 1/1
+    if (character.level >= 13) return 2;
+    if (character.level >= 7) return 1.5;
+    return 1;
   }
 
-  /**
-   * Get specialized attack rate
-   */
   private getSpecializedAttackRate(
     character: CharacterData,
     specLevel: SpecializationLevel
@@ -246,43 +208,31 @@ export class WeaponSpecializationRule extends BaseRule {
 
     if (!isFighterClass) return 1;
 
-    // Get level tier (0: levels 1-6, 1: levels 7-12, 2: levels 13+)
     const levelTier = character.level >= 13 ? 2 : character.level >= 7 ? 1 : 0;
 
-    // Attack rates table indexed by [specializationLevel][levelTier]
     const attacksTable = [
-      // NONE (unspecialized)
       [1, 1.5, 2],
-      // SPECIALIZED
-      [1.5, 2, 2.5], // 3/2, 2/1, 5/2 attacks
-      // DOUBLE_SPECIALIZED
-      [2, 2.5, 3], // 2/1, 5/2, 3/1 attacks
+
+      [1.5, 2, 2.5],
+
+      [2, 2.5, 3],
     ];
 
     return attacksTable[specLevel][levelTier];
   }
 
-  /**
-   * Get specialization slot cost
-   */
   private getSpecializationSlotCost(weapon: Weapon): number {
     if (weapon.type === 'Melee' || weapon.name.toLowerCase().includes('crossbow')) {
-      return 1; // Melee weapons and crossbows cost 1 slot
+      return 1;
     }
-    return 2; // Other missile weapons cost 2 slots
+    return 2;
   }
 
-  /**
-   * Check if a weapon is eligible for double specialization
-   */
   private canDoubleSpecialize(weapon: Weapon): boolean {
-    // Double specialization is only allowed for melee weapons
-    // excluding polearms and two-handed swords
     if (weapon.type !== 'Melee') {
       return false;
     }
 
-    // Exclude two-handed weapons like polearms and two-handed swords
     if (weapon.twoHanded) {
       return false;
     }
@@ -321,9 +271,6 @@ export class SpecializationRequirementRule extends BaseRule {
     return character !== null && weapon !== null;
   }
 
-  /**
-   * Check all requirements for weapon specialization
-   */
   private checkSpecializationRequirements(
     character: CharacterData,
     weapon: Weapon
@@ -333,12 +280,10 @@ export class SpecializationRequirementRule extends BaseRule {
   } {
     const missing: string[] = [];
 
-    // Must be fighter, paladin, or ranger
     if (!['Fighter', 'Paladin', 'Ranger'].includes(character.class)) {
       missing.push('Must be Fighter, Paladin, or Ranger');
     }
 
-    // Must be proficient with the weapon
     const isProficient = character.proficiencies?.some(
       (p) => p.weapon.toLowerCase() === weapon.name.toLowerCase()
     );
@@ -347,7 +292,6 @@ export class SpecializationRequirementRule extends BaseRule {
       missing.push('Must be proficient with weapon');
     }
 
-    // Must have enough weapon proficiency slots
     const slotCost =
       weapon.type === 'Melee' || weapon.name.toLowerCase().includes('crossbow') ? 1 : 2;
     const availableSlots = this.calculateAvailableProficiencySlots(character);
@@ -356,10 +300,8 @@ export class SpecializationRequirementRule extends BaseRule {
       missing.push(`Need ${slotCost} proficiency slots (${availableSlots} available)`);
     }
 
-    // For double specialization, must already be specialized
     const currentSpecLevel = this.getCurrentSpecializationLevel(character, weapon);
     if (currentSpecLevel === SpecializationLevel.NONE) {
-      // This is for initial specialization, which is fine
     }
 
     return {
@@ -368,32 +310,23 @@ export class SpecializationRequirementRule extends BaseRule {
     };
   }
 
-  /**
-   * Calculate available proficiency slots for a character
-   */
   private calculateAvailableProficiencySlots(character: CharacterData): number {
-    // Base slots by class
-    let baseSlots = 4; // Default for fighters
+    let baseSlots = 4;
 
     if (character.class === 'Paladin' || character.class === 'Ranger') {
-      baseSlots = 3; // Paladins and Rangers get fewer slots
+      baseSlots = 3;
     }
 
-    // Additional slots every few levels (varies by class)
     const additionalSlots = Math.floor((character.level - 1) / 3);
 
     const totalSlots = baseSlots + additionalSlots;
 
-    // Count used slots
     const usedSlots =
       (character.proficiencies?.length || 0) + (character.weaponSpecializations?.length || 0);
 
     return Math.max(0, totalSlots - usedSlots);
   }
 
-  /**
-   * Get current specialization level with a weapon
-   */
   private getCurrentSpecializationLevel(
     character: CharacterData,
     weapon: Weapon
@@ -406,7 +339,6 @@ export class SpecializationRequirementRule extends BaseRule {
 
     if (!spec) return SpecializationLevel.NONE;
 
-    // Determine level based on bonuses
     if (spec.bonuses.attackBonus >= 3) {
       return SpecializationLevel.DOUBLE_SPECIALIZED;
     }

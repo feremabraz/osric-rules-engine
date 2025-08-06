@@ -1,20 +1,3 @@
-/**
- * SearchRules Tests - OSRIC Compliance
- *
- * Tests the SearchRule for proper search mechanics according to OSRIC:
- * - Secret door detection by race and class
- * - Trap detection and search times
- * - Treasure      context.setTemporary('search-request-params', {
-        characterId: 'test-character',
-        searchType: 'secret_doors',
-        area: 'stone wall',
-        timeSpent: 10,
-        thoroughness: 'normal',
-      });tem searching
- * - Search skill modifiers
- * - Edge cases and error scenarios
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { GameContext } from '../../../osric/core/GameContext';
@@ -22,7 +5,6 @@ import { SearchRule } from '../../../osric/rules/exploration/SearchRules';
 import { COMMAND_TYPES } from '../../../osric/types/constants';
 import type { Character } from '../../../osric/types/entities';
 
-// Mock helper function to create test characters
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-char',
@@ -106,7 +88,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return { ...defaultCharacter, ...overrides };
 }
 
-// Mock command for testing
 class MockSearchCommand {
   readonly type = COMMAND_TYPES.SEARCH;
   readonly actorId = 'test-character';
@@ -140,7 +121,6 @@ describe('SearchRules', () => {
     searchRule = new SearchRule();
     mockCommand = new MockSearchCommand();
 
-    // Setup test character
     const testCharacter = createMockCharacter({
       id: 'test-character',
       name: 'Test Hero',
@@ -148,8 +128,8 @@ describe('SearchRules', () => {
         strength: 12,
         dexterity: 14,
         constitution: 13,
-        intelligence: 15, // Good for searching
-        wisdom: 16, // Good for perception
+        intelligence: 15,
+        wisdom: 16,
         charisma: 10,
       },
     });
@@ -206,13 +186,12 @@ describe('SearchRules', () => {
         characterId: 'test-character',
         searchType: 'secret_doors',
         area: 'wall-section',
-        timeSpent: 10, // 1 turn
+        timeSpent: 10,
       });
 
       const result = await searchRule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      // Simplified: SearchRule implements basic search functionality
     });
 
     it('should give elves bonuses for secret door detection', async () => {
@@ -233,7 +212,6 @@ describe('SearchRules', () => {
       const result = await searchRule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      // Simplified: SearchRule handles all character races
     });
 
     it('should handle automatic elf detection when passing by', async () => {
@@ -247,7 +225,7 @@ describe('SearchRules', () => {
         characterId: 'passing-elf',
         searchType: 'secret_doors',
         area: 'corridor',
-        timeSpent: 0, // Just passing by
+        timeSpent: 0,
         casualDetection: true,
       });
 
@@ -260,7 +238,7 @@ describe('SearchRules', () => {
     it('should handle concealed doors differently from secret doors', async () => {
       context.setTemporary('search-request-params', {
         characterId: 'test-character',
-        searchType: 'secret_doors', // Use supported type
+        searchType: 'secret_doors',
         area: 'wall-section',
         timeSpent: 10,
       });
@@ -339,9 +317,9 @@ describe('SearchRules', () => {
     it('should handle searching for hidden treasure', async () => {
       context.setTemporary('search-request-params', {
         characterId: 'test-character',
-        searchType: 'hidden_objects', // Use supported type
+        searchType: 'hidden_objects',
         area: 'room',
-        timeSpent: 30, // Thorough search
+        timeSpent: 30,
       });
 
       const result = await searchRule.execute(context, mockCommand);
@@ -353,7 +331,7 @@ describe('SearchRules', () => {
     it('should find items based on search thoroughness', async () => {
       context.setTemporary('search-request-params', {
         characterId: 'test-character',
-        searchType: 'hidden_objects', // Use supported type
+        searchType: 'hidden_objects',
         area: 'debris-pile',
         timeSpent: 20,
       });
@@ -367,7 +345,7 @@ describe('SearchRules', () => {
     it('should handle searching bodies and containers', async () => {
       context.setTemporary('search-request-params', {
         characterId: 'test-character',
-        searchType: 'hidden_objects', // Use supported type
+        searchType: 'hidden_objects',
         area: 'backpack',
         timeSpent: 5,
       });
@@ -385,7 +363,7 @@ describe('SearchRules', () => {
         characterId: 'test-character',
         searchType: 'secret_doors',
         area: 'wall-section',
-        timeSpent: 30, // 3 turns
+        timeSpent: 30,
       });
 
       const result = await searchRule.execute(context, mockCommand);
@@ -399,7 +377,7 @@ describe('SearchRules', () => {
         characterId: 'test-character',
         searchType: 'traps',
         area: 'door',
-        timeSpent: 10, // Minimum time for traps
+        timeSpent: 10,
         thoroughness: 'hasty',
       });
 
@@ -435,7 +413,7 @@ describe('SearchRules', () => {
     it('should handle light conditions affecting search', async () => {
       context.setTemporary('search-request-params', {
         characterId: 'test-character',
-        searchType: 'hidden_objects', // Use supported type
+        searchType: 'hidden_objects',
         area: 'room',
         timeSpent: 10,
       });
@@ -451,7 +429,7 @@ describe('SearchRules', () => {
         characterId: 'test-character',
         searchType: 'secret_doors',
         area: 'wall-section',
-        timeSpent: 20, // Takes longer in dark
+        timeSpent: 20,
       });
 
       const result = await searchRule.execute(context, mockCommand);
@@ -485,9 +463,9 @@ describe('SearchRules', () => {
     it('should handle listening for sounds', async () => {
       context.setTemporary('search-request-params', {
         characterId: 'test-character',
-        searchType: 'general', // Use supported type
+        searchType: 'general',
         area: 'door',
-        timeSpent: 3, // Minimum for general searching
+        timeSpent: 3,
       });
 
       const result = await searchRule.execute(context, mockCommand);
@@ -516,9 +494,9 @@ describe('SearchRules', () => {
 
       context.setTemporary('search-request-params', {
         characterId: 'listening-thief',
-        searchType: 'general', // Use supported type
+        searchType: 'general',
         area: 'door',
-        timeSpent: 3, // Minimum for general searching
+        timeSpent: 3,
       });
 
       const result = await searchRule.execute(context, mockCommand);
@@ -537,9 +515,9 @@ describe('SearchRules', () => {
 
       context.setTemporary('search-request-params', {
         characterId: 'mage',
-        searchType: 'hidden_objects', // Use supported type
+        searchType: 'hidden_objects',
         area: 'herb-garden',
-        timeSpent: 10, // Reasonable time
+        timeSpent: 10,
       });
 
       const result = await searchRule.execute(context, mockCommand);
@@ -553,7 +531,7 @@ describe('SearchRules', () => {
     it('should handle missing search data', async () => {
       const result = await searchRule.execute(context, mockCommand);
 
-      expect(result.success).toBe(false); // Error condition should return false
+      expect(result.success).toBe(false);
       expect(result.message).toContain('No search request data provided');
     });
 
@@ -567,7 +545,7 @@ describe('SearchRules', () => {
 
       const result = await searchRule.execute(context, mockCommand);
 
-      expect(result.success).toBe(false); // Error condition should return false
+      expect(result.success).toBe(false);
       expect(result.message).toContain('Character not found');
     });
 
@@ -595,7 +573,7 @@ describe('SearchRules', () => {
 
       const result = await searchRule.execute(context, mockCommand);
 
-      expect(result.success).toBe(false); // Invalid time should return false
+      expect(result.success).toBe(false);
       expect(result.message).toContain('requires at least');
     });
 

@@ -6,7 +6,6 @@ import { BaseRule, type RuleResult } from '../../osric/core/Rule';
 import { RuleChain } from '../../osric/core/RuleChain';
 import { RuleEngine, type RuleEngineConfig } from '../../osric/core/RuleEngine';
 
-// Helper function to create mock character entities (same as Command.test.ts)
 import type {
   AbilityScores,
   Alignment,
@@ -98,7 +97,6 @@ const createMockCharacter = (id: string, name: string): CharacterData => ({
   secondarySkills: [],
 });
 
-// Mock command for testing
 class TestCommand extends BaseCommand {
   readonly type = 'test-command';
 
@@ -111,7 +109,6 @@ class TestCommand extends BaseCommand {
   }
 
   async execute(_context: GameContext): Promise<CommandResult> {
-    // This would normally delegate to RuleEngine, but for testing we'll simulate
     return this.createSuccessResult(`Test command executed with: ${this.testData}`);
   }
 
@@ -124,9 +121,8 @@ class TestCommand extends BaseCommand {
   }
 }
 
-// Mock critical command for testing
 class CriticalTestCommand extends BaseCommand {
-  readonly type = 'death-save'; // This should be treated as critical
+  readonly type = 'death-save';
 
   constructor(actorId = 'dying-actor') {
     super(actorId);
@@ -145,13 +141,11 @@ class CriticalTestCommand extends BaseCommand {
   }
 }
 
-// Mock rules for testing
 class TestRule extends BaseRule {
   readonly name = 'test-rule';
   readonly priority = 100;
 
   async execute(context: GameContext, command: TestCommand): Promise<RuleResult> {
-    // Add a small delay to ensure measurable execution time
     await new Promise((resolve) => setTimeout(resolve, 1));
 
     const testData = command.testData;
@@ -181,7 +175,7 @@ class FailingRule extends BaseRule {
 
 class HighPriorityRule extends BaseRule {
   readonly name = 'high-priority-rule';
-  readonly priority = 10; // Lower number = higher priority
+  readonly priority = 10;
 
   async execute(context: GameContext, _command: TestCommand): Promise<RuleResult> {
     const executionOrder = (context.getTemporary('execution-order') as string[]) || [];
@@ -197,7 +191,7 @@ class HighPriorityRule extends BaseRule {
 
 class LowPriorityRule extends BaseRule {
   readonly name = 'low-priority-rule';
-  readonly priority = 200; // Higher number = lower priority
+  readonly priority = 200;
 
   async execute(context: GameContext, _command: TestCommand): Promise<RuleResult> {
     const executionOrder = (context.getTemporary('execution-order') as string[]) || [];
@@ -213,7 +207,7 @@ class LowPriorityRule extends BaseRule {
 
 class DeathSaveRule extends BaseRule {
   readonly name = 'death-save-rule';
-  readonly priority = 1; // Highest priority for critical rules
+  readonly priority = 1;
 
   async execute(context: GameContext, _command: CriticalTestCommand): Promise<RuleResult> {
     context.setTemporary('death-save-executed', true);
@@ -225,7 +219,6 @@ class DeathSaveRule extends BaseRule {
   }
 }
 
-// Separate rule that fails for testing batch processing stop behavior
 class FailingDeathSaveRule extends BaseRule {
   readonly name = 'failing-death-save-rule';
   readonly priority = 1;
@@ -250,7 +243,6 @@ describe('RuleEngine', () => {
     gameContext = new GameContext(store);
     ruleEngine = new RuleEngine();
 
-    // Set up mock entities that tests will need
     const testActor = createMockCharacter('test-actor', 'Test Actor');
     const dyingActor = createMockCharacter('dying-actor', 'Dying Actor');
     const failingActor = createMockCharacter('failing-actor', 'Failing Actor');
@@ -337,12 +329,10 @@ describe('RuleEngine', () => {
 
   describe('Command Processing', () => {
     it('should process commands through appropriate rule chains', async () => {
-      // Set up rule chain
       const testChain = new RuleChain();
       testChain.addRule(new TestRule());
       ruleEngine.registerRuleChain('test-command', testChain);
 
-      // Process command
       const command = new TestCommand('hello-world');
       const result = await ruleEngine.process(command, gameContext);
 
@@ -361,15 +351,13 @@ describe('RuleEngine', () => {
     });
 
     it('should respect rule execution priority', async () => {
-      // Set up rule chain with different priorities
       const testChain = new RuleChain();
-      testChain.addRule(new LowPriorityRule()); // priority 200
-      testChain.addRule(new HighPriorityRule()); // priority 10
-      testChain.addRule(new TestRule()); // priority 100
+      testChain.addRule(new LowPriorityRule());
+      testChain.addRule(new HighPriorityRule());
+      testChain.addRule(new TestRule());
 
       ruleEngine.registerRuleChain('test-command', testChain);
 
-      // Process command
       gameContext.setTemporary('execution-order', []);
       const command = new TestCommand('priority-test');
       await ruleEngine.process(command, gameContext);
@@ -379,14 +367,13 @@ describe('RuleEngine', () => {
     });
 
     it('should handle rule chain failures', async () => {
-      // Set up rule chain with failing rule
       const testChain = new RuleChain({
         stopOnFailure: true,
         mergeResults: true,
         clearTemporary: false,
       });
       testChain.addRule(new FailingRule());
-      testChain.addRule(new TestRule()); // This should not execute
+      testChain.addRule(new TestRule());
 
       ruleEngine.registerRuleChain('test-command', testChain);
 
@@ -401,12 +388,10 @@ describe('RuleEngine', () => {
 
   describe('Batch Processing', () => {
     it('should process multiple commands in batch', async () => {
-      // Set up rule chain
       const testChain = new RuleChain();
       testChain.addRule(new TestRule());
       ruleEngine.registerRuleChain('test-command', testChain);
 
-      // Process batch
       const commands = [
         new TestCommand('batch-1'),
         new TestCommand('batch-2'),
@@ -422,25 +407,23 @@ describe('RuleEngine', () => {
     });
 
     it('should stop batch processing on critical commands', async () => {
-      // Set up rule chains
       const testChain = new RuleChain();
       testChain.addRule(new TestRule());
       ruleEngine.registerRuleChain('test-command', testChain);
 
       const criticalChain = new RuleChain();
-      criticalChain.addRule(new FailingDeathSaveRule()); // Use the failing version
+      criticalChain.addRule(new FailingDeathSaveRule());
       ruleEngine.registerRuleChain('death-save', criticalChain);
 
-      // Process batch with critical command in middle
       const commands = [
         new TestCommand('before-critical'),
-        new CriticalTestCommand(), // This should stop batch processing
-        new TestCommand('after-critical'), // This should not execute
+        new CriticalTestCommand(),
+        new TestCommand('after-critical'),
       ];
 
       const results = await ruleEngine.processBatch(commands, gameContext);
 
-      expect(results).toHaveLength(2); // Only first two commands processed
+      expect(results).toHaveLength(2);
       expect(results[1].message).toContain('Critical command encountered');
     });
   });
@@ -451,7 +434,6 @@ describe('RuleEngine', () => {
       testChain.addRule(new TestRule());
       ruleEngine.registerRuleChain('test-command', testChain);
 
-      // Process some commands
       await ruleEngine.process(new TestCommand('test-1'), gameContext);
       await ruleEngine.process(new TestCommand('test-2'), gameContext);
 
@@ -459,7 +441,7 @@ describe('RuleEngine', () => {
 
       expect(metrics.commandsProcessed).toBe(2);
       expect(metrics.averageExecutionTime).toBeGreaterThan(0);
-      expect(metrics.successRate).toBe(1.0); // 100% success
+      expect(metrics.successRate).toBe(1.0);
       expect(metrics.ruleChainUsage['test-command']).toBe(2);
     });
 
@@ -472,7 +454,6 @@ describe('RuleEngine', () => {
       failingChain.addRule(new FailingRule());
       ruleEngine.registerRuleChain('failing-command', failingChain);
 
-      // Create a failing command type for testing
       class FailingCommand extends BaseCommand {
         readonly type = 'failing-command';
 
@@ -492,7 +473,6 @@ describe('RuleEngine', () => {
         }
       }
 
-      // Process mixed success/failure commands
       await ruleEngine.process(new TestCommand('success'), gameContext);
       await ruleEngine.process(new FailingCommand(), gameContext);
       await ruleEngine.process(new TestCommand('success'), gameContext);
@@ -500,7 +480,7 @@ describe('RuleEngine', () => {
       const metrics = ruleEngine.getMetrics();
 
       expect(metrics.commandsProcessed).toBe(3);
-      expect(metrics.successRate).toBeCloseTo(0.67, 2); // 2/3 success rate
+      expect(metrics.successRate).toBeCloseTo(0.67, 2);
     });
 
     it('should reset metrics', async () => {
@@ -531,18 +511,16 @@ describe('RuleEngine', () => {
       criticalChain.addRule(new DeathSaveRule());
       ruleEngine.registerRuleChain('death-save', criticalChain);
 
-      // Test that critical commands are handled properly in batch processing
       const commands = [
         new TestCommand('before-critical'),
-        new CriticalTestCommand(), // This should be processed but stop batch if it fails
+        new CriticalTestCommand(),
         new TestCommand('after-critical'),
       ];
 
       const results = await ruleEngine.processBatch(commands, gameContext);
 
-      // Since our critical command succeeds, all commands should be processed
       expect(results).toHaveLength(3);
-      expect(results[1].success).toBe(true); // Critical command succeeds
+      expect(results[1].success).toBe(true);
     });
 
     it('should preserve temporary data for rule communication', async () => {
@@ -590,16 +568,14 @@ describe('RuleEngine', () => {
       const result = await ruleEngine.process(new TestCommand('communication-test'), gameContext);
 
       expect(result.success).toBe(true);
-      expect(gameContext.getTemporary('total-attack')).toBe(17); // 15 + 2
+      expect(gameContext.getTemporary('total-attack')).toBe(17);
     });
 
     it('should validate rule engine completeness', () => {
-      // Test that RuleEngine can be validated for completeness
       const validation = ruleEngine.validate();
-      expect(validation.valid).toBe(false); // No rule chains registered
+      expect(validation.valid).toBe(false);
       expect(validation.errors).toContain('No rule chains registered');
 
-      // Add a rule chain and validate again
       const testChain = new RuleChain();
       testChain.addRule(new TestRule());
       ruleEngine.registerRuleChain('test-command', testChain);

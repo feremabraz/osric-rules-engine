@@ -9,10 +9,6 @@ import type {
 } from '../../types/SpellTypes';
 import type { Character, Item, Spell } from '../../types/entities';
 
-/**
- * Rule for detailed spell component management
- * Based on OSRIC advanced spell component system
- */
 export class SpellComponentManagementRule extends BaseRule {
   name = 'spell-component-management';
   description = 'Manage detailed spell components and their availability';
@@ -34,24 +30,19 @@ export class SpellComponentManagementRule extends BaseRule {
     const missingComponents: string[] = [];
     const consumedComponents: MaterialComponent[] = [];
 
-    // Check Verbal component
     if (spell.componentRequirements.includes('V')) {
-      // Check if silenced (simplified check)
       if (caster.statusEffects?.some((effect) => effect.name.toLowerCase().includes('silence'))) {
         missingComponents.push('Verbal (silenced)');
       }
     }
 
-    // Check Somatic component
     if (spell.componentRequirements.includes('S')) {
-      // Simplified hand occupation check
-      const hasHandsFree = true; // Would need more detailed equipment system
+      const hasHandsFree = true;
 
       if (!hasHandsFree) {
         missingComponents.push('Somatic (hands occupied)');
       }
 
-      // Check for paralysis or binding
       if (
         caster.statusEffects?.some(
           (effect) =>
@@ -63,7 +54,6 @@ export class SpellComponentManagementRule extends BaseRule {
       }
     }
 
-    // Check Material components
     if (spell.componentRequirements.includes('M')) {
       for (const component of spell.detailedMaterialComponents) {
         const hasComponent = caster.inventory.some((item: Item) =>
@@ -71,7 +61,6 @@ export class SpellComponentManagementRule extends BaseRule {
         );
 
         if (!hasComponent) {
-          // Check if component can be substituted with spell component pouch
           const hasSpellPouch = caster.inventory.some(
             (item: Item) =>
               item.name.toLowerCase().includes('spell component pouch') ||
@@ -93,7 +82,6 @@ export class SpellComponentManagementRule extends BaseRule {
       );
     }
 
-    // Consume material components
     if (consumedComponents.length > 0) {
       for (const component of consumedComponents) {
         const itemIndex = caster.inventory.findIndex((item: Item) =>
@@ -122,10 +110,6 @@ export class SpellComponentManagementRule extends BaseRule {
   }
 }
 
-/**
- * Rule for advanced spell failure and backfire effects
- * Based on OSRIC spell failure mechanics
- */
 export class SpellFailureRule extends BaseRule {
   name = 'spell-failure';
   description = 'Handle spell failure and backfire effects';
@@ -150,22 +134,18 @@ export class SpellFailureRule extends BaseRule {
 
     const { caster, spell, failureRoll, failureChance, backfireChance = 0 } = spellAttempt;
 
-    // Check if spell failed
     const spellFailed = failureRoll > 100 - failureChance;
 
     if (!spellFailed) {
       return this.createSuccessResult(`${caster.name} successfully casts "${spell.name}"`);
     }
 
-    // Spell failed - check for backfire
     const backfireRoll = rollDice(1, 100);
     const backfireFailed = backfireRoll.result <= backfireChance;
 
     if (backfireFailed) {
-      // Determine backfire effect based on spell level
       const backfireEffect = this.determineBackfireEffect(spell.level);
 
-      // Apply backfire effect
       this.applyBackfireEffect(caster, backfireEffect, context);
 
       const message =
@@ -213,7 +193,7 @@ export class SpellFailureRule extends BaseRule {
     }
     if (adjustedRoll <= 15) {
       return {
-        description: 'Wild magic surge - random spell effect in 3m radius', // converted from 10ft
+        description: 'Wild magic surge - random spell effect in 3m radius',
         effect: 'wild_surge',
       };
     }
@@ -247,10 +227,8 @@ export class SpellFailureRule extends BaseRule {
         }
         break;
       case 'lose_spell_slot':
-        // Implementation would depend on spell slot system
         break;
       case 'lose_turn': {
-        // Add stunned status effect
         const stunnedEffect = {
           name: 'Stunned',
           duration: 1,
@@ -263,7 +241,6 @@ export class SpellFailureRule extends BaseRule {
         break;
       }
       case 'wild_surge':
-        // Mark for wild magic surge processing
         context.setTemporary('wildMagicSurge', { caster: caster.id, radius: 10 });
         break;
     }
@@ -272,10 +249,6 @@ export class SpellFailureRule extends BaseRule {
   }
 }
 
-/**
- * Rule for spell duration and concentration management
- * Based on OSRIC concentration mechanics
- */
 export class SpellConcentrationRule extends BaseRule {
   name = 'spell-concentration';
   description = 'Manage spell concentration and duration';
@@ -290,7 +263,7 @@ export class SpellConcentrationRule extends BaseRule {
       caster: Character;
       spell: Spell;
       distraction: 'damage' | 'spell' | 'environmental' | 'movement';
-      distractionSeverity: number; // 1-10 scale
+      distractionSeverity: number;
     }>('concentrationCheck');
 
     if (!concentrationCheck) {
@@ -299,11 +272,10 @@ export class SpellConcentrationRule extends BaseRule {
 
     const { caster, spell, distraction, distractionSeverity } = concentrationCheck;
 
-    // Base concentration DC based on distraction type
     let baseDC = 10;
     switch (distraction) {
       case 'damage':
-        baseDC = Math.max(10, distractionSeverity); // DC = damage taken
+        baseDC = Math.max(10, distractionSeverity);
         break;
       case 'spell':
         baseDC = 10 + spell.level;
@@ -316,14 +288,11 @@ export class SpellConcentrationRule extends BaseRule {
         break;
     }
 
-    // Constitution modifier
     const constitutionModifier = Math.floor((caster.abilities.constitution - 10) / 2);
 
-    // Concentration proficiency (simplified check)
     const proficiencyBonus = caster.level ? Math.ceil(caster.level / 4) + 1 : 2;
-    const hasConcentrationProficiency = false; // Would need skill system implementation
+    const hasConcentrationProficiency = false;
 
-    // Roll concentration check
     const concentrationRoll = rollDice(1, 20);
     const totalRoll =
       concentrationRoll.result +
@@ -347,12 +316,10 @@ export class SpellConcentrationRule extends BaseRule {
       });
     }
 
-    // Concentration broken - end spell effect
     const message =
       `${caster.name} loses concentration on "${spell.name}" ` +
       `(rolled ${concentrationRoll.result} + ${constitutionModifier} ${hasConcentrationProficiency ? `+ ${proficiencyBonus}` : ''} = ${totalRoll} vs DC ${baseDC}). Spell effect ends.`;
 
-    // Mark spell as ended
     context.setTemporary('spellEnded', { caster: caster.id, spell: spell.name });
 
     return this.createFailureResult(message, {
@@ -366,10 +333,6 @@ export class SpellConcentrationRule extends BaseRule {
   }
 }
 
-/**
- * Rule for advanced spell interactions and counterspells
- * Based on OSRIC spell interaction mechanics
- */
 export class SpellInteractionRule extends BaseRule {
   name = 'spell-interaction';
   description = 'Handle spell interactions and counterspells';
@@ -414,14 +377,12 @@ export class SpellInteractionRule extends BaseRule {
     counterspell: Spell,
     caster: Character
   ): Promise<RuleResult> {
-    // Counterspell must be cast at same level or higher
     if (counterspell.level < targetSpell.level) {
       return this.createFailureResult(
         `Counterspell level ${counterspell.level} cannot counter level ${targetSpell.level} spell`
       );
     }
 
-    // If same level, automatic success
     if (counterspell.level >= targetSpell.level) {
       const message = `${caster.name} successfully counters "${targetSpell.name}" with "${counterspell.name}"`;
 
@@ -433,7 +394,6 @@ export class SpellInteractionRule extends BaseRule {
       });
     }
 
-    // This shouldn't be reached given the logic above, but included for completeness
     return this.createFailureResult('Counterspell failed');
   }
 
@@ -443,7 +403,6 @@ export class SpellInteractionRule extends BaseRule {
     caster: Character,
     _target?: Character
   ): Promise<RuleResult> {
-    // Dispel magic check: 1d20 + caster level vs DC (11 + spell level)
     const casterLevel = caster.level || 1;
     const dispelDC = 11 + targetSpell.level;
 
@@ -488,7 +447,6 @@ export class SpellInteractionRule extends BaseRule {
     interactingSpell: Spell,
     _caster: Character
   ): Promise<RuleResult> {
-    // Check for specific spell interactions
     const interactions = this.getSpellInteractions(targetSpell.name, interactingSpell.name);
 
     if (interactions.length === 0) {
@@ -497,7 +455,7 @@ export class SpellInteractionRule extends BaseRule {
       );
     }
 
-    const interaction = interactions[0]; // Take first matching interaction
+    const interaction = interactions[0];
 
     const message = `Spell interaction: "${targetSpell.name}" and "${interactingSpell.name}" - ${interaction.effect}`;
 
@@ -513,7 +471,6 @@ export class SpellInteractionRule extends BaseRule {
     spell1: string,
     spell2: string
   ): Array<{ type: string; effect: string }> {
-    // Define common spell interactions
     const interactions: Record<string, Record<string, { type: string; effect: string }>> = {
       fireball: {
         'ice storm': {
@@ -552,10 +509,6 @@ export class SpellInteractionRule extends BaseRule {
   }
 }
 
-/**
- * Rule for spell research complexity and advanced requirements
- * Based on OSRIC advanced spell research system
- */
 export class AdvancedSpellResearchRule extends BaseRule {
   name = 'advanced-spell-research';
   description = 'Handle complex spell research requirements';
@@ -582,12 +535,10 @@ export class AdvancedSpellResearchRule extends BaseRule {
     const { researcher, spellName, spellLevel, complexity, specialRequirements, researchType } =
       researchProject;
 
-    // Calculate base requirements
-    let baseTime = spellLevel * 4; // weeks
-    let baseCost = spellLevel * spellLevel * 500; // gold
+    let baseTime = spellLevel * 4;
+    let baseCost = spellLevel * spellLevel * 500;
     let baseSuccessChance = 60;
 
-    // Apply complexity modifiers
     switch (complexity) {
       case 'simple':
         baseTime *= 1;
@@ -611,7 +562,6 @@ export class AdvancedSpellResearchRule extends BaseRule {
         break;
     }
 
-    // Apply research type modifiers
     switch (researchType) {
       case 'modify':
         baseTime *= 0.75;
@@ -619,7 +569,6 @@ export class AdvancedSpellResearchRule extends BaseRule {
         baseSuccessChance += 10;
         break;
       case 'create':
-        // Base values
         break;
       case 'reverse':
         baseTime *= 1.5;
@@ -628,7 +577,6 @@ export class AdvancedSpellResearchRule extends BaseRule {
         break;
     }
 
-    // Check special requirements
     const unmetRequirements: string[] = [];
     for (const requirement of specialRequirements) {
       if (!this.checkSpecialRequirement(researcher, requirement)) {
@@ -642,7 +590,6 @@ export class AdvancedSpellResearchRule extends BaseRule {
       );
     }
 
-    // Intelligence and level bonuses
     const intelligenceBonus = Math.floor((researcher.abilities.intelligence - 15) / 2);
     const levelBonus = Math.floor((researcher.level || 1) / 3);
 
@@ -679,22 +626,19 @@ export class AdvancedSpellResearchRule extends BaseRule {
         );
 
       case 'rare components':
-        return researcher.currency.gold >= 1000; // Simplified check
+        return researcher.currency.gold >= 1000;
 
       case 'laboratory':
-        // Would need more detailed equipment system
-        return false; // Simplified
+        return false;
 
       case 'assistant spellcaster':
-        // Would need to check for available assistant
-        return true; // Simplified
+        return true;
 
       case 'divine blessing':
         return researcher.class === 'Cleric' && researcher.level >= 9;
 
       case 'planar knowledge':
-        // Would need skill system implementation
-        return false; // Simplified
+        return false;
 
       default:
         return false;

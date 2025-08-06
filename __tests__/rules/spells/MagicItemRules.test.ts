@@ -9,7 +9,6 @@ import type { Character } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-// Helper function for mock character creation
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return {
     id: 'test-character',
@@ -92,7 +91,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   } as Character;
 }
 
-// Helper function for mock magic items
 function createMockMagicItem(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'test-wand',
@@ -389,7 +387,7 @@ describe('MagicItemSavingThrowRule', () => {
         name: 'Plate Mail +1',
         magicBonus: 1,
       });
-      // Remove itemType to let implementation determine it
+
       const { itemType, ...armorWithoutItemType } = armor;
       const savingThrowData = {
         item: armorWithoutItemType,
@@ -515,7 +513,7 @@ describe('MagicItemIdentificationRule', () => {
 
   describe('execute - identify spell', () => {
     it('should handle identify spell with pearl', async () => {
-      const character = createMockCharacter({ level: 20 }); // Very high level for better success chance
+      const character = createMockCharacter({ level: 20 });
       const item = createMockMagicItem({ charges: 50 });
       const identificationAttempt = {
         character,
@@ -533,7 +531,7 @@ describe('MagicItemIdentificationRule', () => {
       expect(result.data?.constitutionLoss).toBe(8);
 
       const updatedCharacter = context.getEntity<Character>('test-character');
-      expect(updatedCharacter?.abilities.constitution).toBe(8); // 16 - 8
+      expect(updatedCharacter?.abilities.constitution).toBe(8);
       expect(updatedCharacter?.statusEffects).toHaveLength(1);
       expect(updatedCharacter?.statusEffects[0].name).toContain('Constitution Loss');
     });
@@ -557,7 +555,7 @@ describe('MagicItemIdentificationRule', () => {
     });
 
     it('should provide item type information when successful', async () => {
-      const character = createMockCharacter({ level: 20 }); // Very high level
+      const character = createMockCharacter({ level: 20 });
       const item = createMockMagicItem({
         charges: 80,
         magicBonus: 2,
@@ -576,7 +574,7 @@ describe('MagicItemIdentificationRule', () => {
       const result = await rule.execute(context);
 
       expect(result.success).toBe(true);
-      // Test passes for both success and failure cases
+
       expect(result.data).toBeDefined();
     });
   });

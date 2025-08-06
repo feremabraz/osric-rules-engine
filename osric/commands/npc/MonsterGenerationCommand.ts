@@ -1,15 +1,3 @@
-/**
- * MonsterGenerationCommand - OSRIC Random Encounter Generation
- *
- * Handles random monster generation according to OSRIC rules:
- * - Random encounter tables by terrain type
- * - Monster number appearing
- * - Reaction and morale checks
- * - Treasure generation for defeated monsters
- *
- * PRESERVATION: All OSRIC encounter generation mechanics preserved exactly.
- */
-
 import { BaseCommand, type CommandResult } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
@@ -27,17 +15,17 @@ export interface MonsterGenerationParameters {
     | 'arctic'
     | 'ocean'
     | 'city';
-  encounterLevel: number; // 1-10+ for determining appropriate monsters
-  partySize: number; // For balancing encounters
+  encounterLevel: number;
+  partySize: number;
   timeOfDay?: 'day' | 'night' | 'dawn' | 'dusk';
   weather?: 'clear' | 'rain' | 'storm' | 'fog' | 'snow';
   specialConditions?: {
-    guardedArea?: boolean; // Areas with specific guardians
-    lair?: boolean; // Monster lair encounters
-    wandering?: boolean; // Wandering monster check
-    civilized?: boolean; // Near settlements
+    guardedArea?: boolean;
+    lair?: boolean;
+    wandering?: boolean;
+    civilized?: boolean;
   };
-  forceMonsterType?: string; // Force specific monster for testing
+  forceMonsterType?: string;
 }
 
 export interface MonsterTemplate {
@@ -68,7 +56,6 @@ export class MonsterGenerationCommand extends BaseCommand {
         forceMonsterType,
       } = this.parameters;
 
-      // Validate parameters
       if (encounterLevel < 1 || encounterLevel > 20) {
         return this.createFailureResult('Encounter level must be between 1 and 20');
       }
@@ -77,7 +64,6 @@ export class MonsterGenerationCommand extends BaseCommand {
         return this.createFailureResult('Party size must be between 1 and 12');
       }
 
-      // Set up context data for rules to process
       context.setTemporary('monster-generation-params', {
         terrainType,
         encounterLevel,
@@ -88,7 +74,6 @@ export class MonsterGenerationCommand extends BaseCommand {
         forceMonsterType,
       });
 
-      // Generate monsters based on terrain and encounter level
       const generatedMonsters = await this.generateMonsters(
         terrainType,
         encounterLevel,
@@ -97,7 +82,6 @@ export class MonsterGenerationCommand extends BaseCommand {
         forceMonsterType
       );
 
-      // Store generated monsters in context
       for (const monster of generatedMonsters) {
         context.setEntity(monster.id, monster);
       }
@@ -121,7 +105,6 @@ export class MonsterGenerationCommand extends BaseCommand {
   }
 
   canExecute(_context: GameContext): boolean {
-    // Monster generation can always execute if parameters are valid
     return true;
   }
 
@@ -129,11 +112,7 @@ export class MonsterGenerationCommand extends BaseCommand {
     return ['monster-behavior', 'special-abilities', 'treasure-generation'];
   }
 
-  /**
-   * Helper method to get basic monster stats by HD
-   */
   private getMonsterStatsByHD(hitDice: string): { thac0: number; saves: Record<string, number> } {
-    // Parse HD string like "2+1" or "4"
     const hdMatch = hitDice.match(/^(\d+)([+-]\d+)?$/);
     if (!hdMatch) {
       return { thac0: 20, saves: { death: 16, wands: 17, paralysis: 18, breath: 20, spells: 19 } };
@@ -141,7 +120,6 @@ export class MonsterGenerationCommand extends BaseCommand {
 
     const baseHD = Number.parseInt(hdMatch[1]);
 
-    // OSRIC THAC0 by HD table
     let thac0: number;
     if (baseHD <= 1) thac0 = 20;
     else if (baseHD <= 2) thac0 = 19;
@@ -161,15 +139,11 @@ export class MonsterGenerationCommand extends BaseCommand {
     else if (baseHD <= 16) thac0 = 5;
     else thac0 = 4;
 
-    // OSRIC saving throws by HD (as fighter equivalent)
     const saves = this.getSavesByHD(baseHD);
 
     return { thac0, saves };
   }
 
-  /**
-   * Generate monsters based on terrain and encounter parameters
-   */
   private async generateMonsters(
     terrainType: string,
     encounterLevel: number,
@@ -177,20 +151,16 @@ export class MonsterGenerationCommand extends BaseCommand {
     _specialConditions: Record<string, boolean>,
     forceMonsterType?: string
   ): Promise<Monster[]> {
-    // If forcing a specific monster type, create that
     if (forceMonsterType) {
       return [this.createMonsterByType(forceMonsterType, encounterLevel)];
     }
 
-    // Get terrain-appropriate monsters for the encounter level
     const possibleMonsters = this.getMonstersByTerrain(terrainType, encounterLevel);
 
     if (possibleMonsters.length === 0) {
-      // Fallback to generic monsters
       return [this.createGenericMonster(encounterLevel)];
     }
 
-    // Select random monster(s) from the table
     const selectedMonster = possibleMonsters[Math.floor(Math.random() * possibleMonsters.length)];
     const numberAppearing = this.rollNumberAppearing(selectedMonster.numberAppearing, partySize);
 
@@ -202,11 +172,7 @@ export class MonsterGenerationCommand extends BaseCommand {
     return monsters;
   }
 
-  /**
-   * Get monsters appropriate for terrain and level
-   */
   private getMonstersByTerrain(terrainType: string, encounterLevel: number): MonsterTemplate[] {
-    // OSRIC encounter tables by terrain - simplified version
     const encounterTables: Record<string, MonsterTemplate[]> = {
       dungeon: [
         { name: 'Goblin', hitDice: '1-1', armorClass: 6, numberAppearing: '2d4', level: 1 },
@@ -234,22 +200,16 @@ export class MonsterGenerationCommand extends BaseCommand {
         { name: 'Lion', hitDice: '5+2', armorClass: 6, numberAppearing: '1d8', level: 5 },
         { name: 'Centaur', hitDice: '4', armorClass: 5, numberAppearing: '1d12', level: 4 },
       ],
-      // Add more terrains as needed
     };
 
     const terrain = encounterTables[terrainType] || encounterTables.dungeon;
 
-    // Filter by appropriate level (within 2 levels)
     return terrain.filter(
       (monster) => monster.level >= encounterLevel - 2 && monster.level <= encounterLevel + 2
     );
   }
 
-  /**
-   * Roll number appearing based on dice notation
-   */
   private rollNumberAppearing(notation: string, partySize: number): number {
-    // Parse dice notation like "2d4", "1d8", etc.
     const match = notation.match(/^(\d+)d(\d+)([+-]\d+)?$/);
     if (!match) return 1;
 
@@ -262,15 +222,11 @@ export class MonsterGenerationCommand extends BaseCommand {
       total += Math.floor(Math.random() * dieSize) + 1;
     }
 
-    // Adjust for party size - larger parties get more monsters
     const sizeAdjustment = partySize > 4 ? Math.floor(partySize / 4) : 0;
 
     return Math.max(1, total + modifier + sizeAdjustment);
   }
 
-  /**
-   * Create a monster from a template
-   */
   private createMonsterFromTemplate(template: MonsterTemplate, index: number): Monster {
     const hitPoints = this.rollHitPoints(template.hitDice);
     const stats = this.getMonsterStatsByHD(template.hitDice);
@@ -288,8 +244,8 @@ export class MonsterGenerationCommand extends BaseCommand {
       position: 'unknown',
       statusEffects: [],
       hitDice: template.hitDice,
-      damagePerAttack: ['1d6'], // Default attack
-      morale: 8, // Default morale
+      damagePerAttack: ['1d6'],
+      morale: 8,
       treasure: 'None',
       specialAbilities: template.specialAbilities || [],
       xpValue: this.calculateXPValue(template.hitDice),
@@ -304,16 +260,12 @@ export class MonsterGenerationCommand extends BaseCommand {
     };
   }
 
-  /**
-   * Calculate XP value for a monster based on hit dice
-   */
   private calculateXPValue(hitDice: string): number {
     const match = hitDice.match(/^(\d+)([+-]\d+)?$/);
     if (!match) return 10;
 
     const baseHD = Number.parseInt(match[1]);
 
-    // OSRIC XP values by HD
     if (baseHD <= 1) return 10;
     if (baseHD === 2) return 20;
     if (baseHD === 3) return 35;
@@ -327,11 +279,7 @@ export class MonsterGenerationCommand extends BaseCommand {
     return 10;
   }
 
-  /**
-   * Create a specific monster by type
-   */
   private createMonsterByType(monsterType: string, level: number): Monster {
-    // Create a basic monster of the specified type
     const hitPoints = Math.max(1, level * 4 + Math.floor(Math.random() * 8));
     const stats = this.getMonsterStatsByHD(`${level}`);
 
@@ -364,18 +312,11 @@ export class MonsterGenerationCommand extends BaseCommand {
     };
   }
 
-  /**
-   * Create a generic monster when no specific table exists
-   */
   private createGenericMonster(level: number): Monster {
     return this.createMonsterByType('Generic Creature', level);
   }
 
-  /**
-   * Roll hit points based on hit dice notation
-   */
   private rollHitPoints(hitDice: string): number {
-    // Parse HD like "2+1", "4", "1-1"
     const match = hitDice.match(/^(\d+)([+-]\d+)?$/);
     if (!match) return 1;
 
@@ -384,15 +325,12 @@ export class MonsterGenerationCommand extends BaseCommand {
 
     let total = 0;
     for (let i = 0; i < numDice; i++) {
-      total += Math.floor(Math.random() * 8) + 1; // d8 hit dice
+      total += Math.floor(Math.random() * 8) + 1;
     }
 
     return Math.max(1, total + modifier);
   }
 
-  /**
-   * Get saving throws by HD using OSRIC fighter progression
-   */
   private getSavesByHD(hd: number): Record<string, number> {
     if (hd <= 1) return { death: 14, wands: 15, paralysis: 16, breath: 17, spells: 18 };
     if (hd <= 3) return { death: 13, wands: 14, paralysis: 15, breath: 16, spells: 17 };

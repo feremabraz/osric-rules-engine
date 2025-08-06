@@ -1,16 +1,3 @@
-/**
- * CreateCharacterCommand - OSRIC Character Creation Command
- *
- * Implements the complete OSRIC character creation process including:
- * - Ability score generation (multiple methods)
- * - Racial adjustments and requirements validation
- * - Class requirement checking
- * - Multi-class validation
- * - Character data initialization
- *
- * PRESERVATION: All OSRIC character creation rules and values are preserved exactly.
- */
-
 import { BaseCommand, type CommandResult } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
@@ -28,7 +15,7 @@ export interface CreateCharacterParameters {
   characterClass: CharacterClass;
   alignment: Alignment;
   abilityScoreMethod: 'standard3d6' | 'arranged3d6' | '4d6dropLowest';
-  arrangedScores?: AbilityScores; // Only used with arranged methods
+  arrangedScores?: AbilityScores;
   background?: {
     age?: number;
     height?: string;
@@ -43,14 +30,13 @@ export class CreateCharacterCommand extends BaseCommand {
 
   constructor(
     private parameters: CreateCharacterParameters,
-    actorId = 'game-master' // Usually GM creates characters
+    actorId = 'game-master'
   ) {
     super(actorId);
   }
 
   async execute(context: GameContext): Promise<CommandResult> {
     try {
-      // Validate basic parameters
       const validationResult = this.validateParameters();
       if (!validationResult.valid) {
         return this.createFailureResult(
@@ -58,20 +44,12 @@ export class CreateCharacterCommand extends BaseCommand {
         );
       }
 
-      // Create character through rule chain execution
       const characterId = this.generateCharacterId();
 
-      // Store creation parameters in temporary context for rules to use
       context.setTemporary('character-creation', {
         characterId,
         ...this.parameters,
       });
-
-      // Rules will be executed by RuleEngine:
-      // 1. AbilityScoreGenerationRules - Generate/validate ability scores
-      // 2. RacialAbilityRules - Apply racial adjustments
-      // 3. ClassRequirementRules - Validate class requirements
-      // 4. CharacterInitializationRules - Set up character data
 
       return this.createSuccessResult(`Character creation initiated for ${this.parameters.name}`, {
         characterId,
@@ -87,7 +65,6 @@ export class CreateCharacterCommand extends BaseCommand {
   }
 
   canExecute(_context: GameContext): boolean {
-    // Basic validation - detailed validation happens in execute()
     return this.parameters.name.length > 0;
   }
 
@@ -103,7 +80,6 @@ export class CreateCharacterCommand extends BaseCommand {
   private validateParameters(): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
 
-    // Validate name
     if (!this.parameters.name || this.parameters.name.trim().length === 0) {
       errors.push('Character name is required');
     }
@@ -112,7 +88,6 @@ export class CreateCharacterCommand extends BaseCommand {
       errors.push('Character name must be 50 characters or less');
     }
 
-    // Validate race
     const validRaces: CharacterRace[] = [
       'Human',
       'Dwarf',
@@ -126,7 +101,6 @@ export class CreateCharacterCommand extends BaseCommand {
       errors.push(`Invalid race: ${this.parameters.race}`);
     }
 
-    // Validate class
     const validClasses: CharacterClass[] = [
       'Fighter',
       'Paladin',
@@ -142,7 +116,6 @@ export class CreateCharacterCommand extends BaseCommand {
       errors.push(`Invalid character class: ${this.parameters.characterClass}`);
     }
 
-    // Validate alignment
     const validAlignments: Alignment[] = [
       'Lawful Good',
       'Lawful Neutral',
@@ -158,18 +131,15 @@ export class CreateCharacterCommand extends BaseCommand {
       errors.push(`Invalid alignment: ${this.parameters.alignment}`);
     }
 
-    // Validate ability score method
     const validMethods = ['standard3d6', 'arranged3d6', '4d6dropLowest'];
     if (!validMethods.includes(this.parameters.abilityScoreMethod)) {
       errors.push(`Invalid ability score generation method: ${this.parameters.abilityScoreMethod}`);
     }
 
-    // If using arranged scores method, validate they're provided
     if (this.parameters.abilityScoreMethod === 'arranged3d6' && !this.parameters.arrangedScores) {
       errors.push('Arranged scores must be provided when using arranged3d6 generation method');
     }
 
-    // Validate arranged scores if provided
     if (this.parameters.arrangedScores) {
       const scores = this.parameters.arrangedScores;
       const abilities: (keyof AbilityScores)[] = [
@@ -196,32 +166,21 @@ export class CreateCharacterCommand extends BaseCommand {
   }
 
   private generateCharacterId(): string {
-    // Generate a unique character ID
     const timestamp = Date.now();
     const random = Math.floor(Math.random() * 1000);
     return `char_${timestamp}_${random}`;
   }
 
-  // Public getter for parameters (useful for rules)
   get creationParameters(): CreateCharacterParameters {
     return { ...this.parameters };
   }
 }
 
-/**
- * Helper function to create character creation commands
- */
 export function createCharacter(parameters: CreateCharacterParameters): CreateCharacterCommand {
   return new CreateCharacterCommand(parameters);
 }
 
-/**
- * Pre-configured character creation templates for common OSRIC character types
- */
 export const CharacterTemplates = {
-  /**
-   * Human Fighter - Classic warrior build
-   */
   humanFighter: (name: string): CreateCharacterParameters => ({
     name,
     race: 'Human',
@@ -230,20 +189,14 @@ export const CharacterTemplates = {
     abilityScoreMethod: '4d6dropLowest',
   }),
 
-  /**
-   * Elf Fighter/Magic-User - Classic multi-class
-   */
   elfFighterMagicUser: (name: string): CreateCharacterParameters => ({
     name,
     race: 'Elf',
-    characterClass: 'Fighter', // Multi-class handling in rules
+    characterClass: 'Fighter',
     alignment: 'Chaotic Good',
     abilityScoreMethod: '4d6dropLowest',
   }),
 
-  /**
-   * Halfling Thief - Sneaky scout
-   */
   halflingThief: (name: string): CreateCharacterParameters => ({
     name,
     race: 'Halfling',
@@ -252,9 +205,6 @@ export const CharacterTemplates = {
     abilityScoreMethod: 'arranged3d6',
   }),
 
-  /**
-   * Human Cleric - Divine spellcaster
-   */
   humanCleric: (name: string): CreateCharacterParameters => ({
     name,
     race: 'Human',
@@ -263,9 +213,6 @@ export const CharacterTemplates = {
     abilityScoreMethod: 'standard3d6',
   }),
 
-  /**
-   * Dwarf Fighter - Hardy warrior
-   */
   dwarfFighter: (name: string): CreateCharacterParameters => ({
     name,
     race: 'Dwarf',

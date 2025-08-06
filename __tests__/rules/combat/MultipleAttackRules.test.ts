@@ -1,15 +1,3 @@
-/**
- * MultipleAttackRules.test.ts - Tests for OSRIC Multiple Attack Rules
- *
- * Tests the complete OSRIC multiple attack system including:
- * - Fighter multiple attacks by level
- * - Weapon specialization attack bonuses
- * - Attacks vs creatures with less than 1 HD
- * - Attack sequence modifiers and penalties
- * - Fractional attack tracking across rounds
- * - Attack precedence rules
- */
-
 import type { Command } from '@osric/core/Command';
 import { GameContext } from '@osric/core/GameContext';
 import { AttackPrecedenceRule, MultipleAttackRule } from '@osric/rules/combat/MultipleAttackRules';
@@ -18,7 +6,6 @@ import type { Alignment, Character, CharacterClass, Monster, Weapon } from '@osr
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-// Mock character data
 const createMockCharacter = (level: number, characterClass: CharacterClass): Character => ({
   id: 'test-char',
   name: 'Test Character',
@@ -109,7 +96,6 @@ const createMockCharacter = (level: number, characterClass: CharacterClass): Cha
   statusEffects: [],
 });
 
-// Mock monster data
 const createMockMonster = (hitDice: string): Monster => ({
   id: 'test-monster',
   name: 'Test Monster',
@@ -137,7 +123,6 @@ const createMockMonster = (hitDice: string): Monster => ({
   ecology: 'Standard',
 });
 
-// Mock weapon data
 const createMockWeapon = (name: string): Weapon => ({
   id: 'test-weapon',
   name,
@@ -157,7 +142,6 @@ const createMockWeapon = (name: string): Weapon => ({
   twoHanded: false,
 });
 
-// Mock attack command
 const createMockAttackCommand = (): Command => ({
   type: COMMAND_TYPES.ATTACK,
   execute: async () => ({ success: true, message: 'Mock attack executed' }),
@@ -239,7 +223,7 @@ describe('MultipleAttackRule', () => {
         weapon: createMockWeapon('longsword'),
       });
 
-      expect(rule.canApply(context, command)).toBe(false); // Single attack
+      expect(rule.canApply(context, command)).toBe(false);
     });
 
     it('should give 1.5 attacks to mid-level fighters (levels 7-12)', async () => {
@@ -256,7 +240,7 @@ describe('MultipleAttackRule', () => {
 
       const result = await rule.execute(context, command);
       expect(result.success).toBe(true);
-      // Level 7 fighter gets 1.5 attacks, should be at least 1 but could be more depending on implementation
+
       const attacksThisRound = context.getTemporary('attacks-this-round');
       expect(attacksThisRound).toBeGreaterThanOrEqual(1);
     });
@@ -329,7 +313,7 @@ describe('MultipleAttackRule', () => {
   describe('Attacks vs Creatures with Less Than 1 HD', () => {
     it('should give fighters attacks equal to their level vs < 1 HD creatures', async () => {
       const fighter = createMockCharacter(7, 'Fighter');
-      const weakMonster = createMockMonster('0.5'); // Less than 1 HD
+      const weakMonster = createMockMonster('0.5');
 
       context.setTemporary('attack-context', {
         attacker: fighter,
@@ -346,7 +330,7 @@ describe('MultipleAttackRule', () => {
 
     it('should work with 0.25 HD creatures', async () => {
       const fighter = createMockCharacter(5, 'Fighter');
-      const veryWeakMonster = createMockMonster('0.25'); // Less than 1 HD
+      const veryWeakMonster = createMockMonster('0.25');
 
       context.setTemporary('attack-context', {
         attacker: fighter,
@@ -363,7 +347,7 @@ describe('MultipleAttackRule', () => {
 
     it('should not apply special rule vs 1+ HD creatures', () => {
       const fighter = createMockCharacter(7, 'Fighter');
-      const normalMonster = createMockMonster('1'); // 1 HD, not less than 1
+      const normalMonster = createMockMonster('1');
 
       context.setTemporary('attack-context', {
         attacker: fighter,
@@ -371,7 +355,6 @@ describe('MultipleAttackRule', () => {
         weapon: createMockWeapon('longsword'),
       });
 
-      // Should use normal fighter progression (1.5 attacks at level 7)
       expect(rule.canApply(context, command)).toBe(true);
     });
   });
@@ -383,7 +366,7 @@ describe('MultipleAttackRule', () => {
         {
           weapon: 'longsword',
           bonuses: {
-            attackRate: 1, // Specialized level
+            attackRate: 1,
             hitBonus: 1,
             damageBonus: 2,
           },
@@ -402,7 +385,7 @@ describe('MultipleAttackRule', () => {
 
       const result = await rule.execute(context, command);
       expect(result.success).toBe(true);
-      expect(context.getTemporary('attacks-this-round')).toBe(2); // 2/1 at level 7 specialized
+      expect(context.getTemporary('attacks-this-round')).toBe(2);
     });
 
     it('should handle double specialization bonuses', async () => {
@@ -411,7 +394,7 @@ describe('MultipleAttackRule', () => {
         {
           weapon: 'longsword',
           bonuses: {
-            attackRate: 2, // Double specialized level
+            attackRate: 2,
             hitBonus: 3,
             damageBonus: 4,
           },
@@ -430,9 +413,9 @@ describe('MultipleAttackRule', () => {
 
       const result = await rule.execute(context, command);
       expect(result.success).toBe(true);
-      // Double specialization should provide at least 2 attacks, could be more
+
       const attacksThisRound = context.getTemporary('attacks-this-round');
-      expect(attacksThisRound).toBeGreaterThanOrEqual(2); // 5/2 at level 7 double specialized
+      expect(attacksThisRound).toBeGreaterThanOrEqual(2);
     });
 
     it('should not apply specialization bonuses for non-specialized weapons', async () => {
@@ -453,14 +436,14 @@ describe('MultipleAttackRule', () => {
       context.setTemporary('attack-context', {
         attacker: fighter,
         target: monster,
-        weapon: createMockWeapon('mace'), // Different weapon
+        weapon: createMockWeapon('mace'),
       });
 
       expect(rule.canApply(context, command)).toBe(true);
 
       const result = await rule.execute(context, command);
       expect(result.success).toBe(true);
-      // Should use base fighter progression (1.5 attacks)
+
       expect(context.getTemporary('attacks-this-round')).toBeLessThan(2);
     });
   });
@@ -468,7 +451,7 @@ describe('MultipleAttackRule', () => {
   describe('Monster Multiple Attacks', () => {
     it('should handle monsters with multiple damage entries', async () => {
       const multiAttackMonster = createMockMonster('3');
-      multiAttackMonster.damagePerAttack = ['1d6', '1d6', '1d4']; // 3 attacks
+      multiAttackMonster.damagePerAttack = ['1d6', '1d6', '1d4'];
 
       const character = createMockCharacter(5, 'Fighter');
 
@@ -486,7 +469,6 @@ describe('MultipleAttackRule', () => {
 
     it('should default to 1 attack for monsters without damage arrays', async () => {
       const singleAttackMonster = createMockMonster('2');
-      // No damagePerAttack array defined
 
       const character = createMockCharacter(5, 'Fighter');
 
@@ -495,13 +477,13 @@ describe('MultipleAttackRule', () => {
         target: character,
       });
 
-      expect(rule.canApply(context, command)).toBe(false); // Single attack
+      expect(rule.canApply(context, command)).toBe(false);
     });
   });
 
   describe('Fractional Attack Tracking', () => {
     it('should carry over fractional attacks between rounds', async () => {
-      const fighter = createMockCharacter(7, 'Fighter'); // 1.5 attacks per round
+      const fighter = createMockCharacter(7, 'Fighter');
       const monster = createMockMonster('2');
 
       context.setTemporary('attack-context', {
@@ -510,23 +492,21 @@ describe('MultipleAttackRule', () => {
         weapon: createMockWeapon('longsword'),
         roundState: {
           currentRound: 1,
-          fractionalAttacksCarriedOver: 0.5, // Half attack from previous round
+          fractionalAttacksCarriedOver: 0.5,
         },
       });
 
       const result = await rule.execute(context, command);
       expect(result.success).toBe(true);
 
-      // 1.5 + 0.5 carried = 2 attacks this round
       expect(context.getTemporary('attacks-this-round')).toBe(2);
 
-      // Should carry 0 fractional attacks to next round (or null if not implemented)
       const fractionalCarried = context.getTemporary('fractional-attacks-carried');
       expect(fractionalCarried === null || fractionalCarried === 0).toBe(true);
     });
 
     it('should accumulate fractional attacks correctly', async () => {
-      const fighter = createMockCharacter(7, 'Fighter'); // 1.5 attacks per round
+      const fighter = createMockCharacter(7, 'Fighter');
       const monster = createMockMonster('2');
 
       context.setTemporary('attack-context', {
@@ -535,17 +515,15 @@ describe('MultipleAttackRule', () => {
         weapon: createMockWeapon('longsword'),
         roundState: {
           currentRound: 1,
-          fractionalAttacksCarriedOver: 0, // No carried attacks
+          fractionalAttacksCarriedOver: 0,
         },
       });
 
       const result = await rule.execute(context, command);
       expect(result.success).toBe(true);
 
-      // 1.5 attacks = 1 attack this round
       expect(context.getTemporary('attacks-this-round')).toBe(1);
 
-      // Should carry 0.5 fractional attacks to next round
       expect(context.getTemporary('fractional-attacks-carried')).toBe(0.5);
     });
   });
@@ -564,7 +542,6 @@ describe('MultipleAttackRule', () => {
       context.setTemporary('attack-context', {
         attacker: fighter,
         target: monster,
-        // No weapon specified
       });
 
       const result = await rule.execute(context, command);
@@ -611,7 +588,7 @@ describe('AttackPrecedenceRule', () => {
 
   describe('Multiple Attack Precedence', () => {
     it('should give fighters with multiple attacks precedence (-1)', async () => {
-      const fighter = createMockCharacter(13, 'Fighter'); // Gets 2 attacks
+      const fighter = createMockCharacter(13, 'Fighter');
       const monster = createMockMonster('2');
 
       context.setTemporary('attack-context', {
@@ -627,7 +604,7 @@ describe('AttackPrecedenceRule', () => {
     });
 
     it('should give normal precedence (0) to single attack fighters', async () => {
-      const fighter = createMockCharacter(5, 'Fighter'); // Gets 1 attack
+      const fighter = createMockCharacter(5, 'Fighter');
       const monster = createMockMonster('2');
 
       context.setTemporary('attack-context', {
@@ -638,7 +615,7 @@ describe('AttackPrecedenceRule', () => {
 
       const result = await rule.execute(context, command);
       expect(result.success).toBe(true);
-      // Check if precedence is set (could be null if not implemented)
+
       const precedence = context.getTemporary('attack-precedence');
       expect(precedence === null || precedence === 0).toBe(true);
       expect(result.message).toContain('Normal initiative order applies');
@@ -656,7 +633,7 @@ describe('AttackPrecedenceRule', () => {
 
       const result = await rule.execute(context, command);
       expect(result.success).toBe(true);
-      // Check if precedence is set (could be null if not implemented)
+
       const precedence = context.getTemporary('attack-precedence');
       expect(precedence === null || precedence === 0).toBe(true);
       expect(result.message).toContain('Normal initiative order applies');
@@ -664,7 +641,7 @@ describe('AttackPrecedenceRule', () => {
 
     it('should handle monsters with multiple attacks', async () => {
       const multiAttackMonster = createMockMonster('3');
-      multiAttackMonster.damagePerAttack = ['1d6', '1d6']; // 2 attacks
+      multiAttackMonster.damagePerAttack = ['1d6', '1d6'];
 
       const character = createMockCharacter(5, 'Fighter');
 
@@ -681,7 +658,7 @@ describe('AttackPrecedenceRule', () => {
 
   describe('Paladin and Ranger Precedence', () => {
     it('should give Paladins with multiple attacks precedence', async () => {
-      const paladin = createMockCharacter(13, 'Paladin'); // Gets 2 attacks
+      const paladin = createMockCharacter(13, 'Paladin');
       const monster = createMockMonster('2');
 
       context.setTemporary('attack-context', {
@@ -696,7 +673,7 @@ describe('AttackPrecedenceRule', () => {
     });
 
     it('should give Rangers with multiple attacks precedence', async () => {
-      const ranger = createMockCharacter(13, 'Ranger'); // Gets 2 attacks
+      const ranger = createMockCharacter(13, 'Ranger');
       const monster = createMockMonster('2');
 
       context.setTemporary('attack-context', {

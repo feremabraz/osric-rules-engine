@@ -1,20 +1,3 @@
-/**
- * TurnUndeadCommand Tests - OSRIC Compliance
- *
- * Tests the TurnUndeadCommand from commands/character/TurnUndeadCommand.ts:
- * - OSRIC turn undead table (2d6 system)
- * - Cleric vs undead HD calculations
- * - Paladin turn undead (level-2 as cleric)
- * - Turn vs Destroy vs Command mechanics
- * - Multiple undead handling and mass attempts
- * - Holy symbol requirements
- * - Situational modifiers (blessed symbols, consecrated ground)
- * - Parameter validation and error handling
- *
- * NOTE: This tests ONLY the command interface - rule validation is tested separately.
- */
-
-// Type definition for TurnUndeadCommand result data
 interface TurnUndeadResultData {
   characterId: string;
   targetUndeadIds: string[];
@@ -35,7 +18,6 @@ interface TurnUndeadResultData {
   modifiers: string[];
 }
 
-// Helper function to safely cast command result data
 function getTurnUndeadData(result: CommandResult): TurnUndeadResultData {
   return result.data as unknown as TurnUndeadResultData;
 }
@@ -50,7 +32,6 @@ import type { CommandResult } from '../../../osric/core/Command';
 import { GameContext } from '../../../osric/core/GameContext';
 import type { Character, Monster } from '../../../osric/types/entities';
 
-// Mock helper function to create test characters
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-char',
@@ -145,7 +126,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return { ...defaultCharacter, ...overrides };
 }
 
-// Mock helper function to create test undead monsters
 function createMockUndead(overrides: Partial<Monster> = {}): Monster {
   const defaultUndead: Monster = {
     id: 'skeleton-1',
@@ -160,7 +140,7 @@ function createMockUndead(overrides: Partial<Monster> = {}): Monster {
     inventory: [],
     position: 'dungeon',
     statusEffects: [],
-    // Monster-specific properties
+
     damagePerAttack: ['1d4'],
     morale: 12,
     treasure: 'Nil',
@@ -186,33 +166,27 @@ describe('TurnUndeadCommand', () => {
     const store = createStore();
     context = new GameContext(store);
 
-    // Store original Math.random
     originalMathRandom = Math.random;
-    // Mock Math.random to return 0.5, which gives us:
-    // - dice1 = Math.floor(0.5 * 6) + 1 = 3 + 1 = 4
-    // - dice2 = Math.floor(0.5 * 6) + 1 = 3 + 1 = 4
-    // - total = 8 (which should be successful for most turn attempts)
+
     Math.random = vi.fn(() => 0.5);
 
-    // Setup test cleric
     const testCleric = createMockCharacter({
       id: 'test-cleric',
       name: 'Brother Marcus',
       class: 'Cleric',
-      experience: { current: 0, requiredForNextLevel: 1550, level: 8 }, // Level 8 automatically turns 1 HD undead
+      experience: { current: 0, requiredForNextLevel: 1550, level: 8 },
       abilities: {
         strength: 12,
         dexterity: 10,
         constitution: 14,
         intelligence: 11,
-        wisdom: 16, // High wisdom for clerics
+        wisdom: 16,
         charisma: 13,
       },
     });
 
     context.setEntity('test-cleric', testCleric);
 
-    // Setup test undead
     const skeleton = createMockUndead({
       id: 'skeleton-1',
       name: 'Skeleton',
@@ -237,7 +211,6 @@ describe('TurnUndeadCommand', () => {
   });
 
   afterEach(() => {
-    // Restore original Math.random
     Math.random = originalMathRandom;
   });
 
@@ -280,7 +253,7 @@ describe('TurnUndeadCommand', () => {
         characterId: 'test-cleric',
         targetUndeadIds: ['skeleton-1'],
         situationalModifiers: {
-          holySymbolBonus: 15, // Too high
+          holySymbolBonus: 15,
         },
       });
 
@@ -294,19 +267,17 @@ describe('TurnUndeadCommand', () => {
     it('should successfully turn weak undead', async () => {
       const command = new TurnUndeadCommand({
         characterId: 'test-cleric',
-        targetUndeadIds: ['skeleton-1'], // 1 HD vs level 8 cleric
+        targetUndeadIds: ['skeleton-1'],
       });
 
       const result = await command.execute(context);
       expect(result.success).toBe(true);
 
       const data = getTurnUndeadData(result);
-      expect(data.overallResult).toMatch(/turned|destroyed/); // Level 8 cleric will destroy weak undead
-      // Level 8 cleric automatically destroys 1 HD undead, so no dice roll needed
+      expect(data.overallResult).toMatch(/turned|destroyed/);
     });
 
     it('should destroy very weak undead', async () => {
-      // High level cleric vs very weak undead
       const highLevelCleric = createMockCharacter({
         id: 'high-cleric',
         class: 'Cleric',
@@ -316,7 +287,7 @@ describe('TurnUndeadCommand', () => {
 
       const command = new TurnUndeadCommand({
         characterId: 'high-cleric',
-        targetUndeadIds: ['skeleton-1'], // 1 HD vs level 8 cleric
+        targetUndeadIds: ['skeleton-1'],
       });
 
       const result = await command.execute(context);
@@ -345,17 +316,17 @@ describe('TurnUndeadCommand', () => {
     it('should process undead in HD order (weakest first)', async () => {
       const command = new TurnUndeadCommand({
         characterId: 'test-cleric',
-        targetUndeadIds: ['wight-1', 'skeleton-1', 'zombie-1'], // Mixed order
+        targetUndeadIds: ['wight-1', 'skeleton-1', 'zombie-1'],
         massAttempt: true,
       });
 
       const result = await command.execute(context);
       expect(result.success).toBe(true);
-      // Should process in order: skeleton (1 HD), zombie (2 HD), wight (4+3 HD)
+
       const data = getTurnUndeadData(result);
       expect(data.individualResults[0].hitDice).toBe(1);
       expect(data.individualResults[1].hitDice).toBe(2);
-      expect(data.individualResults[2].hitDice).toBe(5); // 4+3 becomes 5
+      expect(data.individualResults[2].hitDice).toBe(5);
     });
   });
 
@@ -368,7 +339,7 @@ describe('TurnUndeadCommand', () => {
 
       const result = await command.execute(context);
       expect(result.success).toBe(true);
-      expect(result.data?.turnLevel).toBe(8); // Cleric level 8
+      expect(result.data?.turnLevel).toBe(8);
     });
 
     it('should handle Paladin turn undead (level-2)', async () => {
@@ -386,7 +357,7 @@ describe('TurnUndeadCommand', () => {
 
       const result = await command.execute(context);
       expect(result.success).toBe(true);
-      expect(result.data?.turnLevel).toBe(3); // Paladin level 5 turns as level 3 cleric
+      expect(result.data?.turnLevel).toBe(3);
     });
 
     it('should reject low-level Paladin turn attempts', async () => {
@@ -411,7 +382,7 @@ describe('TurnUndeadCommand', () => {
       const fighter = createMockCharacter({
         id: 'fighter',
         class: 'Fighter',
-        inventory: [], // No holy symbol
+        inventory: [],
       });
       context.setEntity('fighter', fighter);
 
@@ -458,7 +429,7 @@ describe('TurnUndeadCommand', () => {
         characterId: 'test-cleric',
         targetUndeadIds: ['skeleton-1'],
         situationalModifiers: {
-          holySymbolBonus: 2, // Blessed holy symbol
+          holySymbolBonus: 2,
         },
       });
 
@@ -475,7 +446,7 @@ describe('TurnUndeadCommand', () => {
         characterId: 'test-cleric',
         targetUndeadIds: ['skeleton-1'],
         situationalModifiers: {
-          spellBonus: 1, // Bless spell
+          spellBonus: 1,
         },
       });
 
@@ -489,7 +460,7 @@ describe('TurnUndeadCommand', () => {
         characterId: 'test-cleric',
         targetUndeadIds: ['skeleton-1'],
         situationalModifiers: {
-          areaBonus: 3, // Consecrated ground
+          areaBonus: 3,
         },
       });
 
@@ -514,9 +485,7 @@ describe('TurnUndeadCommand', () => {
 
       const data = getTurnUndeadData(result);
       expect(data.modifiers).toHaveLength(3);
-      expect(data.rollResult.modified).toBe(
-        data.rollResult.total + 4 // +1+1+2
-      );
+      expect(data.rollResult.modified).toBe(data.rollResult.total + 4);
     });
   });
 
@@ -539,7 +508,6 @@ describe('TurnUndeadCommand', () => {
     });
 
     it('should calculate level difference correctly', async () => {
-      // Level 8 cleric vs 1 HD undead = +7 difference (automatic turn/destroy)
       const command = new TurnUndeadCommand({
         characterId: 'test-cleric',
         targetUndeadIds: ['skeleton-1'],
@@ -547,13 +515,12 @@ describe('TurnUndeadCommand', () => {
 
       const result = await command.execute(context);
       expect(result.success).toBe(true);
-      // Result depends on roll, but should process correctly
+
       const data = getTurnUndeadData(result);
       expect(data.individualResults[0].hitDice).toBe(1);
     });
 
     it('should handle impossible turns', async () => {
-      // Low level cleric vs high HD undead
       const lowCleric = createMockCharacter({
         id: 'low-cleric',
         class: 'Cleric',
@@ -564,7 +531,7 @@ describe('TurnUndeadCommand', () => {
       const vampire = createMockUndead({
         id: 'vampire',
         name: 'Vampire',
-        hitDice: '8+3', // Very high HD
+        hitDice: '8+3',
       });
       context.setEntity('vampire', vampire);
 
@@ -590,7 +557,7 @@ describe('TurnUndeadCommand', () => {
 
       const result = await command.execute(context);
       expect(result.success).toBe(true);
-      // Duration should be provided for turned undead
+
       const data = getTurnUndeadData(result);
       if (data.individualResults[0].effect === 'turned') {
         expect(data.individualResults[0].duration).toBeGreaterThan(0);
@@ -598,7 +565,6 @@ describe('TurnUndeadCommand', () => {
     });
 
     it('should affect multiple undead of same type', async () => {
-      // Create multiple skeletons
       const skeleton2 = createMockUndead({
         id: 'skeleton-2',
         name: 'Skeleton',
@@ -688,7 +654,7 @@ describe('TurnUndeadCommand', () => {
         characterId: 'test-cleric',
         targetUndeadIds: ['skeleton-1'],
         situationalModifiers: {
-          holySymbolBonus: -10, // Invalid range
+          holySymbolBonus: -10,
           spellBonus: 3,
         },
       });
@@ -699,12 +665,11 @@ describe('TurnUndeadCommand', () => {
     });
 
     it('should handle exceptions gracefully', async () => {
-      // Create a command that will cause an error during execution
       const command = new TurnUndeadCommand({
         characterId: 'test-cleric',
         targetUndeadIds: ['skeleton-1'],
         situationalModifiers: {
-          holySymbolBonus: 10, // This will trigger validation error
+          holySymbolBonus: 10,
         },
       });
 

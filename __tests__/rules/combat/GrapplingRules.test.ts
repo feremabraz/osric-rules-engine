@@ -1,12 +1,3 @@
-/**
- * GrapplingRules.test.ts
- *
- * Comprehensive tests for OSRIC Grappling System Rules
- * Tests grapple attacks, strength comparisons, and grapple effects
- *
- * OSRIC Reference: Chapter on Combat - Grappling and Overbearing
- */
-
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import {
@@ -19,19 +10,16 @@ import { COMMAND_TYPES } from '@osric/types/constants';
 import type { Character, Monster, StatusEffect } from '@osric/types/entities';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Test-specific interface for monsters with strength
 interface TestMonster extends Monster {
   strength?: number;
 }
 
-// Mock implementations
 const createMockGameContext = (): GameContext =>
   ({
     getTemporary: vi.fn(),
     setTemporary: vi.fn(),
     getCharacter: vi.fn(),
     getMonster: vi.fn(),
-    // Add other required GameContext methods as needed
   }) as unknown as GameContext;
 
 const createMockCommand = (type: string = COMMAND_TYPES.GRAPPLE): Command =>
@@ -39,7 +27,6 @@ const createMockCommand = (type: string = COMMAND_TYPES.GRAPPLE): Command =>
     type,
     action: 'grapple',
     target: 'target',
-    // Add other required Command properties as needed
   }) as unknown as Command;
 
 const createMockCharacter = (overrides: Partial<Character> = {}): Character => ({
@@ -162,8 +149,7 @@ describe('GrappleAttackRule', () => {
     mockContext = createMockGameContext();
     mockCommand = createMockCommand();
 
-    // Mock Math.random for consistent d20 rolls
-    vi.spyOn(Math, 'random').mockReturnValue(0.5); // Always roll 11
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
   });
 
   afterEach(() => {
@@ -205,8 +191,7 @@ describe('GrappleAttackRule', () => {
       situationalModifiers: 0,
     });
 
-    // Mock high roll (11 + 1 str bonus = 12, needs 13 to hit AC 6)
-    vi.spyOn(Math, 'random').mockReturnValue(0.65); // Roll 14
+    vi.spyOn(Math, 'random').mockReturnValue(0.65);
 
     const result = await rule.execute(mockContext, mockCommand);
 
@@ -216,8 +201,8 @@ describe('GrappleAttackRule', () => {
       'grapple-attack-result',
       expect.objectContaining({
         hit: true,
-        attackRoll: 15, // 14 + 1 str bonus
-        targetNumber: 13, // 19 - 6
+        attackRoll: 15,
+        targetNumber: 13,
       })
     );
   });
@@ -233,8 +218,7 @@ describe('GrappleAttackRule', () => {
       situationalModifiers: 0,
     });
 
-    // Mock low roll (1 + 1 str bonus = 2, needs 13 to hit AC 6)
-    vi.spyOn(Math, 'random').mockReturnValue(0.05); // Roll 2
+    vi.spyOn(Math, 'random').mockReturnValue(0.05);
 
     const result = await rule.execute(mockContext, mockCommand);
 
@@ -279,7 +263,7 @@ describe('GrappleAttackRule', () => {
         charismaReactionAdj: null,
         charismaLoyaltyBase: null,
         charismaMaxHenchmen: null,
-      }, // High strength bonus
+      },
       thac0: 19,
     });
     const target = createMockMonster({ armorClass: 6 });
@@ -291,8 +275,7 @@ describe('GrappleAttackRule', () => {
       situationalModifiers: 0,
     });
 
-    // Mock roll that would miss without str bonus (10 + 3 = 13, exactly hits)
-    vi.spyOn(Math, 'random').mockReturnValue(0.5); // Roll 11
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
 
     const result = await rule.execute(mockContext, mockCommand);
 
@@ -301,7 +284,7 @@ describe('GrappleAttackRule', () => {
       'grapple-attack-result',
       expect.objectContaining({
         hit: true,
-        attackRoll: 14, // 11 + 3 str bonus
+        attackRoll: 14,
       })
     );
   });
@@ -318,8 +301,7 @@ describe('GrappleAttackRule', () => {
       situationalModifiers: 0,
     });
 
-    // Mock roll that needs charge bonus (9 + 1 str + 2 charge = 12, needs 13)
-    vi.spyOn(Math, 'random').mockReturnValue(0.45); // Roll 10
+    vi.spyOn(Math, 'random').mockReturnValue(0.45);
 
     const result = await rule.execute(mockContext, mockCommand);
 
@@ -328,7 +310,7 @@ describe('GrappleAttackRule', () => {
       'grapple-attack-result',
       expect.objectContaining({
         hit: true,
-        attackRoll: 13, // 10 + 1 str + 2 charge
+        attackRoll: 13,
       })
     );
   });
@@ -341,7 +323,7 @@ describe('GrappleAttackRule', () => {
       attacker,
       target,
       grappleType: 'standard',
-      situationalModifiers: 2, // Favorable conditions
+      situationalModifiers: 2,
     });
 
     const result = await rule.execute(mockContext, mockCommand);
@@ -350,7 +332,7 @@ describe('GrappleAttackRule', () => {
     expect(mockContext.setTemporary).toHaveBeenCalledWith(
       'grapple-attack-result',
       expect.objectContaining({
-        attackRoll: 14, // 11 + 1 str + 2 situational
+        attackRoll: 14,
       })
     );
   });
@@ -565,7 +547,7 @@ describe('StrengthComparisonRule', () => {
         charisma: 13,
       },
     });
-    const target = { name: 'Basic Monster', hitPoints: { current: 10 } }; // No strength
+    const target = { name: 'Basic Monster', hitPoints: { current: 10 } };
 
     (mockContext.getTemporary as ReturnType<typeof vi.fn>).mockReturnValue({
       attacker,
@@ -580,7 +562,7 @@ describe('StrengthComparisonRule', () => {
       'strength-comparison-result',
       expect.objectContaining({
         attackerStrength: 16,
-        targetStrength: 12, // Default strength
+        targetStrength: 12,
       })
     );
   });
@@ -596,8 +578,7 @@ describe('GrappleEffectRule', () => {
     mockContext = createMockGameContext();
     mockCommand = createMockCommand();
 
-    // Mock Math.random for consistent damage rolls
-    vi.spyOn(Math, 'random').mockReturnValue(0.7); // Always roll 1 damage
+    vi.spyOn(Math, 'random').mockReturnValue(0.7);
   });
 
   afterEach(() => {
@@ -641,7 +622,7 @@ describe('GrappleEffectRule', () => {
     expect(attacker.statusEffects).toEqual(
       expect.arrayContaining([expect.objectContaining({ name: 'Grappling' })])
     );
-    expect(target.hitPoints.current).toBe(9); // 1 damage
+    expect(target.hitPoints.current).toBe(9);
   });
 
   it('should apply reversal effects when defender grapples', async () => {
@@ -695,7 +676,7 @@ describe('GrappleEffectRule', () => {
         }),
       ])
     );
-    expect(target.hitPoints.current).toBe(7); // 1 damage
+    expect(target.hitPoints.current).toBe(7);
   });
 
   it('should apply mutual grapple in stalemate', async () => {
@@ -737,16 +718,14 @@ describe('GrappleEffectRule', () => {
       return null;
     });
 
-    // Test 0 damage
-    vi.spyOn(Math, 'random').mockReturnValue(0.3); // Roll 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.3);
     await rule.execute(mockContext, mockCommand);
-    expect(target.hitPoints.current).toBe(10); // No damage
+    expect(target.hitPoints.current).toBe(10);
 
-    // Reset and test 1 damage
     target.hitPoints.current = 10;
-    vi.spyOn(Math, 'random').mockReturnValue(0.7); // Roll 1
+    vi.spyOn(Math, 'random').mockReturnValue(0.7);
     await rule.execute(mockContext, mockCommand);
-    expect(target.hitPoints.current).toBe(9); // 1 damage
+    expect(target.hitPoints.current).toBe(9);
   });
 
   it('should create proper status effect details', async () => {
@@ -797,7 +776,6 @@ describe('GrappleEffectRule', () => {
 
 describe('OSRIC Grappling Integration', () => {
   it('should maintain OSRIC grappling outcome consistency', () => {
-    // Test enum values match OSRIC expectations
     expect(GrapplingOutcome.ATTACKER_GRAPPLES).toBe('attacker_grapples');
     expect(GrapplingOutcome.DEFENDER_GRAPPLES).toBe('defender_grapples');
     expect(GrapplingOutcome.OVERBEARING_SUCCESS).toBe('overbearing_success');
@@ -810,7 +788,6 @@ describe('OSRIC Grappling Integration', () => {
     const comparisonRule = new StrengthComparisonRule();
     const effectRule = new GrappleEffectRule();
 
-    // Verify execution order
     expect(attackRule.priority).toBeLessThan(comparisonRule.priority);
     expect(comparisonRule.priority).toBeLessThan(effectRule.priority);
   });
@@ -818,7 +795,6 @@ describe('OSRIC Grappling Integration', () => {
   it('should preserve OSRIC damage range (0-1)', () => {
     const _effectRule = new GrappleEffectRule();
 
-    // Test damage generation multiple times
     for (let i = 0; i < 100; i++) {
       const damage = Math.floor(Math.random() * 2);
       expect(damage).toBeGreaterThanOrEqual(0);

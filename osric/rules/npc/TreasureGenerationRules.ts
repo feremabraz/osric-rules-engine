@@ -47,7 +47,7 @@ export interface MagicItem {
 }
 
 export interface TreasureContext {
-  treasureType: string; // A through Z
+  treasureType: string;
   monsterHitDice: number;
   numberAppearing: number;
   environment: string;
@@ -84,9 +84,6 @@ export class TreasureGenerationRules extends BaseRule {
     }
   }
 
-  /**
-   * Generate treasure based on OSRIC treasure type tables
-   */
   private generateTreasure(context: TreasureContext): TreasureHoard {
     const treasure: TreasureHoard = {
       copperPieces: 0,
@@ -100,36 +97,28 @@ export class TreasureGenerationRules extends BaseRule {
       totalValue: 0,
     };
 
-    // Generate coins based on treasure type
     this.generateCoins(treasure, context.treasureType, context.numberAppearing);
 
-    // Generate gems based on treasure type
     this.generateGems(treasure, context.treasureType, context.monsterHitDice);
 
-    // Generate jewelry based on treasure type
     this.generateJewelry(treasure, context.treasureType, context.monsterHitDice);
 
-    // Generate magic items based on treasure type and monster power
     this.generateMagicItems(treasure, context);
 
-    // Calculate total value
     treasure.totalValue = this.calculateTotalValue(treasure);
 
     return treasure;
   }
 
-  /**
-   * Generate coins according to OSRIC treasure tables
-   */
   private generateCoins(
     treasure: TreasureHoard,
     treasureType: string,
     numberAppearing: number
   ): void {
-    const multiplier = Math.max(1, Math.floor(numberAppearing / 10)); // Scale with group size
+    const multiplier = Math.max(1, Math.floor(numberAppearing / 10));
 
     switch (treasureType.toUpperCase()) {
-      case 'A': // Hoard treasure - high value
+      case 'A':
         treasure.copperPieces = this.rollDice(1, 6) * 1000 * multiplier;
         treasure.silverPieces = this.rollDice(1, 6) * 1000 * multiplier;
         treasure.electrumPieces = this.rollDice(1, 6) * 1000 * multiplier;
@@ -137,60 +126,57 @@ export class TreasureGenerationRules extends BaseRule {
         treasure.platinumPieces = this.rollDice(1, 6) * 100 * multiplier;
         break;
 
-      case 'B': // Large creature treasure
+      case 'B':
         treasure.copperPieces = this.rollDice(1, 8) * 1000 * multiplier;
         treasure.silverPieces = this.rollDice(1, 6) * 1000 * multiplier;
         treasure.electrumPieces = this.rollDice(1, 4) * 1000 * multiplier;
         treasure.goldPieces = this.rollDice(1, 3) * 1000 * multiplier;
         break;
 
-      case 'C': // Medium creature treasure
+      case 'C':
         treasure.copperPieces = this.rollDice(1, 12) * 1000 * multiplier;
         treasure.silverPieces = this.rollDice(1, 4) * 1000 * multiplier;
         treasure.electrumPieces = this.rollDice(1, 4) * 1000 * multiplier;
         break;
 
-      case 'D': // Small group treasure
+      case 'D':
         treasure.copperPieces = this.rollDice(1, 8) * 1000 * multiplier;
         treasure.silverPieces = this.rollDice(1, 12) * 1000 * multiplier;
         treasure.goldPieces = this.rollDice(1, 6) * 1000 * multiplier;
         break;
 
-      case 'E': // Individual treasure
+      case 'E':
         treasure.copperPieces = this.rollDice(1, 10) * 1000 * multiplier;
         treasure.silverPieces = this.rollDice(1, 12) * 1000 * multiplier;
         treasure.electrumPieces = this.rollDice(1, 6) * 1000 * multiplier;
         treasure.goldPieces = this.rollDice(1, 8) * 1000 * multiplier;
         break;
 
-      case 'F': // Magic user treasure
+      case 'F':
         treasure.silverPieces = this.rollDice(2, 10) * 1000 * multiplier;
         treasure.electrumPieces = this.rollDice(1, 8) * 1000 * multiplier;
         treasure.goldPieces = this.rollDice(1, 12) * 1000 * multiplier;
         break;
 
-      case 'G': // Small treasure
+      case 'G':
         treasure.goldPieces = this.rollDice(10, 4) * 100 * multiplier;
         treasure.platinumPieces = this.rollDice(1, 6) * 10 * multiplier;
         break;
 
-      case 'H': // Minimal treasure
+      case 'H':
         treasure.copperPieces = this.rollDice(3, 8) * 1000 * multiplier;
         treasure.silverPieces = this.rollDice(1, 100) * 100 * multiplier;
         treasure.electrumPieces = this.rollDice(1, 4) * 10 * multiplier;
         treasure.goldPieces = this.rollDice(1, 6) * 100 * multiplier;
         break;
 
-      default: // Default to type C
+      default:
         treasure.copperPieces = this.rollDice(1, 12) * 1000 * multiplier;
         treasure.silverPieces = this.rollDice(1, 4) * 1000 * multiplier;
         treasure.electrumPieces = this.rollDice(1, 4) * 1000 * multiplier;
     }
   }
 
-  /**
-   * Generate gems based on treasure type and monster power
-   */
   private generateGems(treasure: TreasureHoard, treasureType: string, hitDice: number): void {
     let gemChance = 0;
     let gemCount = 0;
@@ -237,9 +223,6 @@ export class TreasureGenerationRules extends BaseRule {
     }
   }
 
-  /**
-   * Generate individual gem
-   */
   private generateGem(hitDice: number): TreasureGem {
     const gemTypes = [
       {
@@ -303,23 +286,20 @@ export class TreasureGenerationRules extends BaseRule {
       },
     ];
 
-    // Higher HD monsters have better gems
     let typeIndex = Math.min(gemTypes.length - 1, Math.floor(hitDice / 3));
     if (this.rollDice(1, 100) <= 10 + hitDice) {
-      // Chance for upgrade
       typeIndex = Math.min(gemTypes.length - 1, typeIndex + 1);
     }
 
     const gemType = gemTypes[typeIndex];
     const description = gemType.descriptions[this.rollDice(1, gemType.descriptions.length) - 1];
 
-    // Value variation
     const valueMod = this.rollDice(1, 100);
     let value = gemType.baseValue;
     if (valueMod <= 10) {
-      value = Math.floor(value * 0.5); // Flawed
+      value = Math.floor(value * 0.5);
     } else if (valueMod >= 90) {
-      value = Math.floor(value * 1.5); // Exceptional
+      value = Math.floor(value * 1.5);
     }
 
     return {
@@ -329,9 +309,6 @@ export class TreasureGenerationRules extends BaseRule {
     };
   }
 
-  /**
-   * Generate jewelry
-   */
   private generateJewelry(treasure: TreasureHoard, treasureType: string, hitDice: number): void {
     let jewelryChance = 0;
     let jewelryCount = 0;
@@ -378,9 +355,6 @@ export class TreasureGenerationRules extends BaseRule {
     }
   }
 
-  /**
-   * Generate individual jewelry item
-   */
   private generateJewelryItem(hitDice: number): TreasureJewelry {
     const jewelryTypes = [
       'anklet',
@@ -415,10 +389,8 @@ export class TreasureGenerationRules extends BaseRule {
 
     const jewelryType = jewelryTypes[this.rollDice(1, jewelryTypes.length) - 1];
 
-    // Better materials for higher HD monsters
     let materialIndex = Math.max(0, Math.min(materials.length - 1, Math.floor(hitDice / 4)));
     if (this.rollDice(1, 20) <= hitDice) {
-      // Chance for upgrade
       materialIndex = Math.min(materials.length - 1, materialIndex + 1);
     }
 
@@ -433,9 +405,6 @@ export class TreasureGenerationRules extends BaseRule {
     };
   }
 
-  /**
-   * Generate magic items based on treasure type and context
-   */
   private generateMagicItems(treasure: TreasureHoard, context: TreasureContext): void {
     let magicChance = 0;
     let magicCount = 0;
@@ -475,7 +444,6 @@ export class TreasureGenerationRules extends BaseRule {
         break;
     }
 
-    // Adjust chance based on monster HD and party level
     magicChance += Math.floor(context.monsterHitDice / 2);
     magicChance += Math.floor(context.partyLevel / 3);
 
@@ -486,9 +454,6 @@ export class TreasureGenerationRules extends BaseRule {
     }
   }
 
-  /**
-   * Generate individual magic item
-   */
   private generateMagicItem(context: TreasureContext): MagicItem {
     const itemTypes: Array<{ type: MagicItem['type']; weight: number }> = [
       { type: 'weapon', weight: 25 },
@@ -519,9 +484,6 @@ export class TreasureGenerationRules extends BaseRule {
     return this.createSpecificMagicItem(selectedType, context);
   }
 
-  /**
-   * Create specific magic item based on type
-   */
   private createSpecificMagicItem(type: MagicItem['type'], context: TreasureContext): MagicItem {
     const rarityRoll = this.rollDice(1, 100) + context.monsterHitDice + context.partyLevel;
     let rarity: MagicItem['rarity'] = 'common';
@@ -554,9 +516,6 @@ export class TreasureGenerationRules extends BaseRule {
     }
   }
 
-  /**
-   * Create magic weapon
-   */
   private createMagicWeapon(rarity: MagicItem['rarity']): MagicItem {
     const weapons = ['sword', 'dagger', 'mace', 'axe', 'bow', 'spear', 'hammer'];
     const weapon = weapons[this.rollDice(1, weapons.length) - 1];
@@ -576,9 +535,6 @@ export class TreasureGenerationRules extends BaseRule {
     };
   }
 
-  /**
-   * Create magic armor
-   */
   private createMagicArmor(rarity: MagicItem['rarity']): MagicItem {
     const armors = ['leather', 'chain mail', 'scale mail', 'plate mail', 'shield'];
     const armor = armors[this.rollDice(1, armors.length) - 1];
@@ -598,9 +554,6 @@ export class TreasureGenerationRules extends BaseRule {
     };
   }
 
-  /**
-   * Create magic potion
-   */
   private createMagicPotion(rarity: MagicItem['rarity']): MagicItem {
     const potions = [
       'healing',
@@ -623,9 +576,6 @@ export class TreasureGenerationRules extends BaseRule {
     };
   }
 
-  /**
-   * Create magic scroll
-   */
   private createMagicScroll(rarity: MagicItem['rarity']): MagicItem {
     const spellLevel =
       rarity === 'common'
@@ -646,9 +596,6 @@ export class TreasureGenerationRules extends BaseRule {
     };
   }
 
-  /**
-   * Create magic ring
-   */
   private createMagicRing(rarity: MagicItem['rarity']): MagicItem {
     const rings = [
       'protection',
@@ -670,9 +617,6 @@ export class TreasureGenerationRules extends BaseRule {
     };
   }
 
-  /**
-   * Create magic wand
-   */
   private createMagicWand(rarity: MagicItem['rarity']): MagicItem {
     const wands = ['magic missiles', 'lightning bolts', 'fireballs', 'ice storms', 'polymorph'];
     const wand = wands[this.rollDice(1, wands.length) - 1];
@@ -687,9 +631,6 @@ export class TreasureGenerationRules extends BaseRule {
     };
   }
 
-  /**
-   * Create magic rod
-   */
   private createMagicRod(rarity: MagicItem['rarity']): MagicItem {
     const rods = ['cancellation', 'lordly might', 'resurrection', 'rulership', 'absorption'];
     const rod = rods[this.rollDice(1, rods.length) - 1];
@@ -702,9 +643,6 @@ export class TreasureGenerationRules extends BaseRule {
     };
   }
 
-  /**
-   * Create magic staff
-   */
   private createMagicStaff(rarity: MagicItem['rarity']): MagicItem {
     const staves = ['power', 'wizardry', 'the magi', 'striking', 'healing'];
     const staff = staves[this.rollDice(1, staves.length) - 1];
@@ -719,9 +657,6 @@ export class TreasureGenerationRules extends BaseRule {
     };
   }
 
-  /**
-   * Create miscellaneous magic item
-   */
   private createMiscellaneousMagicItem(rarity: MagicItem['rarity']): MagicItem {
     const items = [
       'bag of holding',
@@ -743,26 +678,19 @@ export class TreasureGenerationRules extends BaseRule {
     };
   }
 
-  /**
-   * Calculate total treasure value in gold pieces
-   */
   private calculateTotalValue(treasure: TreasureHoard): number {
     let total = 0;
 
-    // Coins (convert to gp value)
     total += treasure.copperPieces * 0.01;
     total += treasure.silverPieces * 0.1;
     total += treasure.electrumPieces * 0.5;
     total += treasure.goldPieces;
     total += treasure.platinumPieces * 5;
 
-    // Gems
     total += treasure.gems.reduce((sum, gem) => sum + gem.value, 0);
 
-    // Jewelry
     total += treasure.jewelry.reduce((sum, jewelry) => sum + jewelry.value, 0);
 
-    // Magic items (rough value estimation)
     total += treasure.magicItems.reduce((sum, item) => {
       let value = 0;
       switch (item.rarity) {
@@ -791,13 +719,9 @@ export class TreasureGenerationRules extends BaseRule {
     return Math.floor(total);
   }
 
-  /**
-   * Create a description of the treasure hoard
-   */
   private describeTreasure(treasure: TreasureHoard): string {
     const descriptions: string[] = [];
 
-    // Coins
     if (treasure.copperPieces > 0) descriptions.push(`${treasure.copperPieces} copper pieces`);
     if (treasure.silverPieces > 0) descriptions.push(`${treasure.silverPieces} silver pieces`);
     if (treasure.electrumPieces > 0)
@@ -806,7 +730,6 @@ export class TreasureGenerationRules extends BaseRule {
     if (treasure.platinumPieces > 0)
       descriptions.push(`${treasure.platinumPieces} platinum pieces`);
 
-    // Gems and jewelry
     if (treasure.gems.length > 0) {
       descriptions.push(
         `${treasure.gems.length} gems: ${treasure.gems.map((g) => g.description).join(', ')}`
@@ -818,7 +741,6 @@ export class TreasureGenerationRules extends BaseRule {
       );
     }
 
-    // Magic items
     if (treasure.magicItems.length > 0) {
       descriptions.push(
         `${treasure.magicItems.length} magic items: ${treasure.magicItems.map((m) => m.name).join(', ')}`
@@ -828,9 +750,6 @@ export class TreasureGenerationRules extends BaseRule {
     return descriptions.join('; ');
   }
 
-  /**
-   * Simple dice rolling utility
-   */
   private rollDice(count: number, sides: number): number {
     let total = 0;
     for (let i = 0; i < count; i++) {

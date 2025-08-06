@@ -1,16 +1,3 @@
-/**
- * GainExperienceCommand - Award Experience Points
- *
- * Handles awarding experience points from various sources:
- * - Combat (monster defeats)
- * - Treasure acquisition
- * - Story milestones
- * - Class-specific bonuses/penalties
- * - Party sharing calculations
- *
- * PRESERVATION: All OSRIC experience rules and calculations preserved exactly.
- */
-
 import { BaseCommand, type CommandResult } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { calculateGroupXP, calculateMonsterXP } from '../../core/MonsterXP';
@@ -25,17 +12,17 @@ export interface GainExperienceParameters {
   characterId: string;
   experienceSource: {
     type: 'combat' | 'treasure' | 'story' | 'other';
-    amount?: number; // For direct XP awards (treasure, story)
-    monsters?: Monster[]; // For combat XP calculation
-    treasureValue?: number; // Gold pieces for treasure XP (1 gp = 1 XP)
-    description?: string; // Description of the experience source
+    amount?: number;
+    monsters?: Monster[];
+    treasureValue?: number;
+    description?: string;
   };
   partyShare?: {
     enabled: boolean;
-    partyMemberIds: string[]; // Character IDs to share XP with
-    shareRatio?: number; // Custom share ratio (default: equal shares)
+    partyMemberIds: string[];
+    shareRatio?: number;
   };
-  applyClassModifiers?: boolean; // Apply class-specific XP bonuses/penalties
+  applyClassModifiers?: boolean;
 }
 
 export class GainExperienceCommand extends BaseCommand {
@@ -54,13 +41,11 @@ export class GainExperienceCommand extends BaseCommand {
         applyClassModifiers = true,
       } = this.parameters;
 
-      // Get the character
       const character = context.getEntity<Character>(characterId);
       if (!character) {
         return this.createFailureResult(`Character with ID "${characterId}" not found`);
       }
 
-      // Calculate base experience points
       let baseExperiencePoints = 0;
 
       switch (experienceSource.type) {
@@ -70,7 +55,7 @@ export class GainExperienceCommand extends BaseCommand {
           }
           const groupXP = calculateGroupXP({
             monsters: experienceSource.monsters,
-            characters: [character], // Single character
+            characters: [character],
             encounterDifficulty: 'normal',
           });
           baseExperiencePoints = groupXP.get(character.id) || 0;
@@ -79,7 +64,6 @@ export class GainExperienceCommand extends BaseCommand {
 
         case 'treasure':
           if (experienceSource.treasureValue) {
-            // OSRIC rule: 1 gp = 1 XP
             baseExperiencePoints = Math.floor(experienceSource.treasureValue);
           } else if (experienceSource.amount) {
             baseExperiencePoints = experienceSource.amount;
@@ -97,13 +81,11 @@ export class GainExperienceCommand extends BaseCommand {
           );
       }
 
-      // Apply class-specific modifiers if enabled
       let finalExperiencePoints = baseExperiencePoints;
       if (applyClassModifiers) {
         finalExperiencePoints = this.applyClassExperienceModifiers(character, baseExperiencePoints);
       }
 
-      // Handle party sharing
       if (partyShare?.enabled && partyShare.partyMemberIds.length > 0) {
         const shareResult = this.calculatePartyExperienceShare(
           context,
@@ -116,7 +98,6 @@ export class GainExperienceCommand extends BaseCommand {
           return shareResult;
         }
 
-        // Apply experience to all party members
         const updatedCharacters: string[] = [];
         for (const [memberId, memberXP] of Object.entries(shareResult.experienceShares || {})) {
           const member = context.getEntity<Character>(memberId);
@@ -149,7 +130,6 @@ export class GainExperienceCommand extends BaseCommand {
         );
       }
 
-      // Apply experience to single character
       const newExperienceTotal = character.experience.current + finalExperiencePoints;
       const newLevel = determineLevel(character.class, newExperienceTotal);
       const requiredForNext = getExperienceForNextLevel(character.class, newLevel);
@@ -191,54 +171,38 @@ export class GainExperienceCommand extends BaseCommand {
     return ['experience-gain', 'level-progression'];
   }
 
-  /**
-   * Apply class-specific experience modifiers
-   */
   private applyClassExperienceModifiers(character: Character, baseXP: number): number {
     let modifiedXP = baseXP;
 
-    // Multi-class characters split XP between classes
     const classEntries = Object.entries(character.classes || {});
     if (classEntries.length > 1) {
-      // OSRIC rule: Multi-class characters split XP equally among all classes
       modifiedXP = Math.floor(baseXP / classEntries.length);
     }
 
-    // Prime requisite bonuses (from OSRIC)
-    // Characters with high prime requisites get XP bonuses
     const primeRequisiteBonus = this.calculatePrimeRequisiteBonus(character);
     modifiedXP = Math.floor(modifiedXP * primeRequisiteBonus);
 
     return modifiedXP;
   }
 
-  /**
-   * Calculate prime requisite bonus for experience
-   */
   private calculatePrimeRequisiteBonus(character: Character): number {
-    // OSRIC rules for prime requisite experience bonuses
     const primeRequisites = this.getPrimeRequisites(character.class);
 
     if (primeRequisites.length === 0) return 1.0;
 
-    // For classes with multiple prime requisites, use the average
     const totalScore = primeRequisites.reduce((sum, stat) => {
       return sum + character.abilities[stat];
     }, 0);
 
     const averageScore = totalScore / primeRequisites.length;
 
-    // OSRIC experience bonuses based on prime requisite scores
-    if (averageScore >= 16) return 1.1; // +10%
-    if (averageScore >= 13) return 1.05; // +5%
-    if (averageScore <= 8) return 0.95; // -5%
+    if (averageScore >= 16) return 1.1;
+    if (averageScore >= 13) return 1.05;
+    if (averageScore <= 8) return 0.95;
 
-    return 1.0; // No bonus/penalty
+    return 1.0;
   }
 
-  /**
-   * Get prime requisites for a character class
-   */
   private getPrimeRequisites(characterClass: string): Array<keyof Character['abilities']> {
     const primeRequisiteMap: Record<string, Array<keyof Character['abilities']>> = {
       Fighter: ['strength'],
@@ -255,9 +219,6 @@ export class GainExperienceCommand extends BaseCommand {
     return primeRequisiteMap[characterClass] || [];
   }
 
-  /**
-   * Calculate party experience sharing
-   */
   private calculatePartyExperienceShare(
     context: GameContext,
     totalXP: number,
@@ -266,7 +227,6 @@ export class GainExperienceCommand extends BaseCommand {
   ): CommandResult & { experienceShares?: Record<string, number> } {
     const experienceShares: Record<string, number> = {};
 
-    // Validate all party members exist
     const validMembers: Character[] = [];
     for (const memberId of partyMemberIds) {
       const member = context.getEntity<Character>(memberId);
@@ -286,16 +246,12 @@ export class GainExperienceCommand extends BaseCommand {
       };
     }
 
-    // Calculate shares (default: equal shares)
     if (!shareRatio) {
-      // Equal shares for all party members
       const sharePerMember = Math.floor(totalXP / validMembers.length);
       for (const member of validMembers) {
         experienceShares[member.id] = sharePerMember;
       }
     } else {
-      // Custom share ratio (implementation would depend on specific sharing rules)
-      // For now, fall back to equal shares
       const sharePerMember = Math.floor(totalXP / validMembers.length);
       for (const member of validMembers) {
         experienceShares[member.id] = sharePerMember;

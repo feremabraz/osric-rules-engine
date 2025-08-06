@@ -1,16 +1,3 @@
-/**
- * SearchCommand - Character Search Actions
- *
- * Handles search actions including:
- * - Secret door detection
- * - Trap finding
- * - Hidden object discovery
- * - Time consumption
- * - Success/failure resolution
- *
- * PRESERVATION: All OSRIC search rules preserved exactly.
- */
-
 import { BaseCommand, type CommandResult } from '../../core/Command';
 import { rollDice } from '../../core/Dice';
 import type { GameContext } from '../../core/GameContext';
@@ -21,10 +8,10 @@ export interface SearchParameters {
   characterId: string;
   searchType: 'secret-doors' | 'traps' | 'hidden-objects' | 'general';
   target?: {
-    area: string; // Description of area being searched
-    specificTarget?: string; // Specific object or feature to search for
+    area: string;
+    specificTarget?: string;
   };
-  timeSpent: number; // Time in minutes
+  timeSpent: number;
   thoroughness: 'quick' | 'normal' | 'careful' | 'meticulous';
 }
 
@@ -39,29 +26,22 @@ export class SearchCommand extends BaseCommand {
     try {
       const { characterId, searchType, target, timeSpent, thoroughness } = this.parameters;
 
-      // Get the character
       const character = context.getEntity<Character>(characterId);
       if (!character) {
         return this.createFailureResult(`Character with ID "${characterId}" not found`);
       }
 
-      // Calculate search modifiers
       const searchModifiers = this.calculateSearchModifiers(character, searchType, thoroughness);
 
-      // Determine base chance of success
       const baseChance = this.getBaseSearchChance(character, searchType);
 
-      // Calculate final success chance
       const finalChance = Math.min(95, Math.max(5, baseChance + searchModifiers.total));
 
-      // Roll for search success
       const searchRoll = rollDice(1, 100);
       const isSuccessful = searchRoll.result <= finalChance;
 
-      // Calculate time taken
       const actualTime = this.calculateSearchTime(timeSpent, thoroughness, isSuccessful);
 
-      // Generate search results
       const searchResults = this.generateSearchResults(
         character,
         searchType,
@@ -70,13 +50,10 @@ export class SearchCommand extends BaseCommand {
         target
       );
 
-      // Apply search effects to character
       const updatedCharacter = this.applySearchEffects(character, actualTime);
 
-      // Update character in context
       context.setEntity(characterId, updatedCharacter);
 
-      // Prepare result data
       const resultData = {
         characterId,
         searchType,
@@ -118,9 +95,6 @@ export class SearchCommand extends BaseCommand {
     return ['search-mechanics', 'secret-door-detection', 'trap-finding', 'thief-skills'];
   }
 
-  /**
-   * Calculate modifiers for search attempt
-   */
   private calculateSearchModifiers(character: Character, searchType: string, thoroughness: string) {
     const modifiers = {
       race: 0,
@@ -130,37 +104,33 @@ export class SearchCommand extends BaseCommand {
       total: 0,
     };
 
-    // Racial modifiers (OSRIC rules)
     switch (character.race) {
       case 'Elf':
         if (searchType === 'secret-doors') {
-          modifiers.race = 10; // Elves have 1 in 6 chance (16.67%) base vs 1 in 20 (5%) for others
+          modifiers.race = 10;
         }
         break;
       case 'Dwarf':
         if (searchType === 'traps' || searchType === 'hidden-objects') {
-          modifiers.race = 5; // Dwarves are good at finding stonework traps
+          modifiers.race = 5;
         }
         break;
     }
 
-    // Class modifiers
     switch (character.class) {
       case 'Thief':
         if (searchType === 'traps') {
-          // Use thief's find traps skill if available
           const findTrapsSkill = character.thiefSkills?.findTraps || 0;
-          modifiers.class = Math.floor(findTrapsSkill / 5); // Convert percentage to modifier
+          modifiers.class = Math.floor(findTrapsSkill / 5);
         }
         break;
       case 'Ranger':
         if (searchType === 'hidden-objects') {
-          modifiers.class = 10; // Rangers are good at tracking and finding hidden things
+          modifiers.class = 10;
         }
         break;
     }
 
-    // Thoroughness modifiers
     switch (thoroughness) {
       case 'quick':
         modifiers.thoroughness = -20;
@@ -176,49 +146,39 @@ export class SearchCommand extends BaseCommand {
         break;
     }
 
-    // Wisdom modifier
     const wisdomScore = character.abilities.wisdom;
     if (wisdomScore >= 16) modifiers.wisdom = 5;
     else if (wisdomScore >= 13) modifiers.wisdom = 2;
     else if (wisdomScore <= 8) modifiers.wisdom = -5;
     else if (wisdomScore <= 5) modifiers.wisdom = -10;
 
-    // Calculate total
     modifiers.total = modifiers.race + modifiers.class + modifiers.thoroughness + modifiers.wisdom;
 
     return modifiers;
   }
 
-  /**
-   * Get base chance of search success
-   */
   private getBaseSearchChance(character: Character, searchType: string): number {
     switch (searchType) {
       case 'secret-doors':
-        // OSRIC base chance: 1 in 6 for most characters
-        return character.race === 'Elf' ? 33 : 16; // Elves get 2 in 6 chance
+        return character.race === 'Elf' ? 33 : 16;
 
       case 'traps':
-        // Base chance depends on class
         if (character.class === 'Thief') {
           return character.thiefSkills?.findTraps || 25;
         }
-        return 10; // Non-thieves have poor chance
+        return 10;
 
       case 'hidden-objects':
-        return 20; // Base 20% chance for hidden objects
+        return 20;
 
       case 'general':
-        return 25; // General searching has moderate success rate
+        return 25;
 
       default:
         return 15;
     }
   }
 
-  /**
-   * Calculate actual time taken for search
-   */
   private calculateSearchTime(
     baseTime: number,
     thoroughness: string,
@@ -241,7 +201,6 @@ export class SearchCommand extends BaseCommand {
         break;
     }
 
-    // Successful searches might take less time if you find what you're looking for quickly
     if (wasSuccessful) {
       timeMultiplier *= 0.75;
     }
@@ -250,9 +209,6 @@ export class SearchCommand extends BaseCommand {
     return { value: finalTime, unit: 'minutes' };
   }
 
-  /**
-   * Generate search results based on success/failure
-   */
   private generateSearchResults(
     character: Character,
     searchType: string,
@@ -298,10 +254,8 @@ export class SearchCommand extends BaseCommand {
           break;
       }
     } else {
-      // Failed search consequences
       findings.push('Search revealed nothing of interest');
 
-      // Chance of triggering what you were looking for
       if (searchType === 'traps') {
         const triggerRoll = rollDice(1, 20);
         if (triggerRoll.result <= 2) {
@@ -312,7 +266,6 @@ export class SearchCommand extends BaseCommand {
         }
       }
 
-      // Inefficient search wastes extra time
       if (modifiers.total < -10) {
         consequences.push({
           type: 'time-wasted',
@@ -324,25 +277,13 @@ export class SearchCommand extends BaseCommand {
     return { findings, consequences };
   }
 
-  /**
-   * Apply search effects to character
-   */
   private applySearchEffects(
     character: Character,
     _timeTaken: { value: number; unit: string }
   ): Character {
-    // For now, just return the character unchanged
-    // In a full implementation, this might apply fatigue, update position, etc.
-
-    // Store the time spent searching in temporary data for tracking
-    // This would be used by the game master to track dungeon time
-
     return character;
   }
 
-  /**
-   * Create descriptive message for search result
-   */
   private createSearchMessage(
     character: Character,
     searchType: string,

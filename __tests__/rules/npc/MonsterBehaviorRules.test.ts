@@ -42,13 +42,10 @@ describe('MonsterBehaviorRules', () => {
       ecology: 'Temperate',
     };
 
-    // Note: The apply method doesn't exist on MonsterBehaviorRules
-    // This test may need to be updated based on the actual API
     expect(monster.alignment).toBe('True Neutral');
     expect(monster.hitPoints.current).toBe(20);
     expect(monster.hitPoints.maximum).toBe(20);
-    // Note: The apply method doesn't exist on MonsterBehaviorRules
-    // This test may need to be updated based on the actual API
+
     expect(monster.alignment).toBe('True Neutral');
     expect(monster.hitPoints.current).toBe(20);
     expect(monster.hitPoints.maximum).toBe(20);
@@ -85,50 +82,36 @@ describe('MonsterBehaviorRules', () => {
       ecology: 'Any',
     };
 
-    // Note: The apply method doesn't exist on MonsterBehaviorRules
-    // This test may need to be updated based on the actual API
     expect(monster.alignment).toBe('Chaotic Evil');
     expect(monster.hitPoints.current).toBe(55);
     expect(monster.hitPoints.maximum).toBe(55);
   });
 
   it('should handle different situations appropriately', async () => {
-    // Note: MonsterBehaviorRules.apply method doesn't exist
-    // This test needs to be implemented based on the actual API
     const rules = new MonsterBehaviorRules();
     expect(rules).toBeDefined();
 
-    // Placeholder test until the actual API is implemented
     expect(true).toBe(true);
   });
 
   it('should factor in alignment when determining behavior', async () => {
-    // Note: MonsterBehaviorRules.apply method doesn't exist
-    // This test needs to be implemented based on the actual API
     const rules = new MonsterBehaviorRules();
     expect(rules).toBeDefined();
 
-    // Placeholder test until the actual API is implemented
     expect(true).toBe(true);
   });
 
   it('should handle negotiation situation', async () => {
-    // Note: MonsterBehaviorRules.apply method doesn't exist
-    // This test needs to be implemented based on the actual API
     const rules = new MonsterBehaviorRules();
     expect(rules).toBeDefined();
 
-    // Placeholder test until the actual API is implemented
     expect(true).toBe(true);
   });
 
   it('should consider morale and loyalty factors', async () => {
-    // Note: MonsterBehaviorRules.apply method doesn't exist
-    // This test needs to be implemented based on the actual API
     const rules = new MonsterBehaviorRules();
     expect(rules).toBeDefined();
 
-    // Placeholder test until the actual API is implemented
     expect(true).toBe(true);
   });
 });

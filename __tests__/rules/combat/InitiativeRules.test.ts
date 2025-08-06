@@ -1,19 +1,3 @@
-/**
- * InitiativeRules Tests - OSRIC Compliance
- *
- * Tests the InitiativeRollRule for proper initiative calculations according to OSRIC mechanics:
- * - Individual vs group initiative options
- * - Dexterity reaction adjustments
- * - Weapon speed   });
-
-  describe('InitiativeRollRule', () => {tors
- * - Spell casting time modifiers
- * - Circumstance modifiers (surprise, readied actions)
- * - Initiative order determination
- * - Multi-attack handling
- * - Edge cases and error scenarios
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { GameContext } from '../../../osric/core/GameContext';
@@ -25,7 +9,6 @@ import {
 import { COMMAND_TYPES } from '../../../osric/types/constants';
 import type { Character, Monster, Spell, Weapon } from '../../../osric/types/entities';
 
-// Initiative result interface for type safety
 interface InitiativeResult {
   entity: Character | Monster;
   naturalRoll: number;
@@ -35,7 +18,6 @@ interface InitiativeResult {
   initiative: number;
 }
 
-// Initiative order interface for type safety
 interface InitiativeOrder {
   activeEntities: Array<{
     entityId: string;
@@ -51,7 +33,6 @@ interface InitiativeOrder {
   roundNumber: number;
 }
 
-// Mock helper function to create test characters
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-char',
@@ -69,7 +50,7 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
     class: 'Fighter',
     abilities: {
       strength: 16,
-      dexterity: 14, // +1 reaction adjustment
+      dexterity: 14,
       constitution: 10,
       intelligence: 10,
       wisdom: 10,
@@ -81,7 +62,7 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
       strengthEncumbrance: null,
       strengthOpenDoors: null,
       strengthBendBars: null,
-      dexterityReaction: 1, // +1 to initiative
+      dexterityReaction: 1,
       dexterityMissile: null,
       dexterityDefense: -1,
       dexterityPickPockets: null,
@@ -135,7 +116,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return { ...defaultCharacter, ...overrides };
 }
 
-// Mock helper function to create test monsters
 function createMockMonster(overrides: Partial<Monster> = {}): Monster {
   const defaultMonster: Monster = {
     id: 'test-monster',
@@ -167,7 +147,6 @@ function createMockMonster(overrides: Partial<Monster> = {}): Monster {
   return { ...defaultMonster, ...overrides };
 }
 
-// Mock helper function to create test weapons
 function createMockWeapon(overrides: Partial<Weapon> = {}): Weapon {
   const defaultWeapon: Weapon = {
     id: 'test-weapon',
@@ -176,7 +155,7 @@ function createMockWeapon(overrides: Partial<Weapon> = {}): Weapon {
     size: 'Medium',
     damage: '1d8',
     damageVsLarge: '1d12',
-    speed: 5, // Weapon speed factor
+    speed: 5,
     allowedClasses: ['Fighter', 'Paladin', 'Ranger'],
     range: null,
     twoHanded: false,
@@ -191,13 +170,12 @@ function createMockWeapon(overrides: Partial<Weapon> = {}): Weapon {
   return { ...defaultWeapon, ...overrides };
 }
 
-// Mock helper function to create test spells
 function createMockSpell(overrides: Partial<Spell> = {}): Spell {
   const defaultSpell: Spell = {
     name: 'Magic Missile',
     level: 1,
     class: 'Magic-User',
-    castingTime: '1 segment', // Fast casting spell
+    castingTime: '1 segment',
     range: '150 feet',
     duration: 'Instantaneous',
     areaOfEffect: '1 target',
@@ -217,7 +195,6 @@ function createMockSpell(overrides: Partial<Spell> = {}): Spell {
   return { ...defaultSpell, ...overrides };
 }
 
-// Mock command that implements the Command interface
 class MockInitiativeCommand {
   readonly type = COMMAND_TYPES.INITIATIVE;
   readonly actorId = 'test-actor';
@@ -245,8 +222,8 @@ describe('InitiativeRules', () => {
   let store: ReturnType<typeof createStore>;
   let mockCommand: MockInitiativeCommand;
   let initiativeRule: InitiativeRollRule;
-  let _surpriseRule: SurpriseCheckRule; // Used in chain tests
-  let orderRule: InitiativeOrderRule; // Used in chain tests
+  let _surpriseRule: SurpriseCheckRule;
+  let orderRule: InitiativeOrderRule;
 
   beforeEach(() => {
     store = createStore();
@@ -266,7 +243,6 @@ describe('InitiativeRules', () => {
       });
       const monster = createMockMonster({ name: 'Slow Monster' });
 
-      // Set up initiative context
       context.setTemporary('initiative-context', {
         entities: [fighter, monster],
         initiativeType: 'individual',
@@ -286,20 +262,19 @@ describe('InitiativeRules', () => {
       expect(Array.isArray(initiativeResults)).toBe(true);
       expect(initiativeResults).toHaveLength(2);
 
-      // Check that each entity has initiative components
       const fighterResult = initiativeResults.find((r) => r.entity.name === 'Fast Fighter');
       expect(fighterResult).toBeDefined();
       if (fighterResult) {
         expect(fighterResult.naturalRoll).toBeGreaterThanOrEqual(1);
         expect(fighterResult.naturalRoll).toBeLessThanOrEqual(10);
-        expect(fighterResult.modifiers).toBe(-2); // -2 from dexterity (OSRIC: lower is better)
+        expect(fighterResult.modifiers).toBe(-2);
         expect(fighterResult.initiative).toBe(fighterResult.naturalRoll - 2);
       }
     });
 
     it('should apply weapon speed factors', async () => {
       const fighter = createMockCharacter({ name: 'Fighter' });
-      const dagger = createMockWeapon({ name: 'Dagger', speed: 2 }); // Fast weapon
+      const dagger = createMockWeapon({ name: 'Dagger', speed: 2 });
 
       context.setTemporary('initiative-context', {
         entities: [fighter],
@@ -319,7 +294,7 @@ describe('InitiativeRules', () => {
       expect(fighterResult.weaponSpeedFactor).toBe(2);
       expect(fighterResult.initiative).toBeGreaterThan(
         fighterResult.naturalRoll + fighterResult.modifiers
-      ); // Weapon speed INCREASES initiative (worse)
+      );
     });
 
     it('should handle spell casting time modifiers', async () => {
@@ -347,7 +322,7 @@ describe('InitiativeRules', () => {
 
       const initiativeResults = context.getTemporary('initiative-results') as InitiativeResult[];
       const wizardResult = initiativeResults[0];
-      // Should have casting time penalty applied (higher initiative number)
+
       expect(wizardResult.initiative).toBeGreaterThan(
         wizardResult.naturalRoll + wizardResult.modifiers
       );
@@ -356,7 +331,7 @@ describe('InitiativeRules', () => {
     it('should apply surprise modifiers', async () => {
       const character = createMockCharacter({
         name: 'Surprised Character',
-        // Remove dexterity modifiers to isolate surprise effects
+
         abilityModifiers: { ...createMockCharacter().abilityModifiers, dexterityReaction: 0 },
       });
       const monster = createMockMonster({ name: 'Surprising Monster' });
@@ -367,8 +342,8 @@ describe('InitiativeRules', () => {
         entityWeapons: {},
         entitySpells: {},
         circumstanceModifiers: {
-          [character.id]: 2, // Surprised penalty (positive is worse)
-          [monster.id]: -2, // Surprise bonus (negative is better)
+          [character.id]: 2,
+          [monster.id]: -2,
         },
         isFirstRound: true,
       });
@@ -381,8 +356,8 @@ describe('InitiativeRules', () => {
       const charResult = initiativeResults.find((r) => r.entity.name === 'Surprised Character');
       const monsterResult = initiativeResults.find((r) => r.entity.name === 'Surprising Monster');
 
-      expect(charResult?.modifiers).toBe(2); // Surprise penalty only
-      expect(monsterResult?.modifiers).toBe(-2); // Surprise bonus only
+      expect(charResult?.modifiers).toBe(2);
+      expect(monsterResult?.modifiers).toBe(-2);
     });
 
     it('should handle group initiative', async () => {
@@ -405,11 +380,9 @@ describe('InitiativeRules', () => {
       expect(result.success).toBe(true);
 
       const initiativeResults = context.getTemporary('initiative-results') as InitiativeResult[];
-      // The group initiative implementation may group differently than expected
-      // Based on the code, it checks for 'race' vs 'species' but monsters don't have 'species'
+
       expect(initiativeResults.length).toBeGreaterThan(0);
 
-      // Check that we have results for all entities
       expect(initiativeResults.length).toBeLessThanOrEqual(4);
     });
 
@@ -426,7 +399,7 @@ describe('InitiativeRules', () => {
       });
 
       context.setTemporary('initiative-context', {
-        entities: [slowCharacter, fastCharacter], // Order doesn't matter
+        entities: [slowCharacter, fastCharacter],
         initiativeType: 'individual',
         entityWeapons: {},
         entitySpells: {},
@@ -434,11 +407,9 @@ describe('InitiativeRules', () => {
         isFirstRound: true,
       });
 
-      // First run initiative roll
       const rollResult = await initiativeRule.execute(context, mockCommand);
       expect(rollResult.success).toBe(true);
 
-      // Then run order rule
       const orderResult = await orderRule.execute(context, mockCommand);
       expect(orderResult.success).toBe(true);
 
@@ -448,7 +419,6 @@ describe('InitiativeRules', () => {
       expect(Array.isArray(initiativeOrder.activeEntities)).toBe(true);
       expect(initiativeOrder.activeEntities).toHaveLength(2);
 
-      // Should be sorted by initiative (lowest first in OSRIC - better initiative)
       if (initiativeOrder.activeEntities.length >= 2) {
         expect(initiativeOrder.activeEntities[0].initiative).toBeLessThanOrEqual(
           initiativeOrder.activeEntities[1].initiative
@@ -457,7 +427,6 @@ describe('InitiativeRules', () => {
     });
 
     it('should handle ties in initiative', async () => {
-      // Mock dice to return same values
       const char1 = createMockCharacter({ name: 'Character 1' });
       const char2 = createMockCharacter({ name: 'Character 2' });
 
@@ -470,30 +439,24 @@ describe('InitiativeRules', () => {
         isFirstRound: true,
       });
 
-      // First run initiative roll
       const rollResult = await initiativeRule.execute(context, mockCommand);
       expect(rollResult.success).toBe(true);
 
-      // Then run order rule
       const orderResult = await orderRule.execute(context, mockCommand);
       expect(orderResult.success).toBe(true);
 
       const initiativeOrder = context.getTemporary('initiative-order') as InitiativeOrder;
       expect(initiativeOrder.activeEntities).toHaveLength(2);
-      // Should handle ties gracefully (in OSRIC, tied initiatives act simultaneously)
     });
 
     it('should only apply to initiative commands with context', () => {
-      // Test with wrong command type
       const wrongCommand = { ...mockCommand, type: 'move' };
       expect(initiativeRule.canApply(context, wrongCommand as unknown as typeof mockCommand)).toBe(
         false
       );
 
-      // Test with correct command type but no context
       expect(initiativeRule.canApply(context, mockCommand)).toBe(false);
 
-      // Test with complete context
       context.setTemporary('initiative-context', {
         entities: [createMockCharacter()],
         initiativeType: 'individual',
@@ -506,7 +469,6 @@ describe('InitiativeRules', () => {
     });
 
     it('should fail gracefully without initiative context', async () => {
-      // No initiative context set
       const result = await initiativeRule.execute(context, mockCommand);
 
       expect(result.success).toBe(false);
@@ -514,7 +476,6 @@ describe('InitiativeRules', () => {
     });
 
     it('should preserve OSRIC initiative mechanics exactly', async () => {
-      // Test exact OSRIC mechanics: d10 + dexterity reaction + weapon speed
       const osricFighter = createMockCharacter({
         name: 'OSRIC Fighter',
         abilities: { ...createMockCharacter().abilities, dexterity: 16 },
@@ -541,14 +502,11 @@ describe('InitiativeRules', () => {
       const initiativeResults = context.getTemporary('initiative-results') as InitiativeResult[];
       const fighterResult = initiativeResults[0];
 
-      // OSRIC: d10 base roll
       expect(fighterResult.naturalRoll).toBeGreaterThanOrEqual(1);
       expect(fighterResult.naturalRoll).toBeLessThanOrEqual(10);
 
-      // OSRIC: +2 dexterity reaction adjustment becomes -2 modifier (lower is better)
       expect(fighterResult.modifiers).toBe(-2);
 
-      // OSRIC: weapon speed factor increases initiative (worse)
       expect(fighterResult.weaponSpeedFactor).toBe(5);
       expect(fighterResult.initiative).toBe(fighterResult.naturalRoll - 2 + 5);
     });
@@ -556,7 +514,7 @@ describe('InitiativeRules', () => {
     it('should handle multiple attacks per round', async () => {
       const highLevelFighter = createMockCharacter({
         name: 'High Level Fighter',
-        level: 7, // Multiple attacks
+        level: 7,
         class: 'Fighter',
       });
 
@@ -573,7 +531,6 @@ describe('InitiativeRules', () => {
 
       expect(result.success).toBe(true);
 
-      // Should note multiple attacks capability
       expect(result.message).toContain('Initiative rolled');
     });
   });

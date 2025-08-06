@@ -1,10 +1,3 @@
-/**
- * ClassRequirementRules - OSRIC Character Class Requirements
- *
- * Migrated from rules/character/classRequirements.ts
- * PRESERVATION: All OSRIC class requirements and level limits preserved exactly
- */
-
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
@@ -20,7 +13,7 @@ interface CharacterCreationData {
 
 export class ClassRequirementRule extends BaseRule {
   readonly name = RULE_NAMES.CLASS_REQUIREMENTS;
-  readonly priority = 25; // Execute after ability generation and racial adjustments
+  readonly priority = 25;
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
     const creationData = context.getTemporary('character-creation') as CharacterCreationData;
@@ -30,7 +23,6 @@ export class ClassRequirementRule extends BaseRule {
       return this.createFailureResult('Missing ability scores or character creation data');
     }
 
-    // Check class requirements
     const meetsRequirements = this.meetsClassRequirements(
       abilityScores,
       creationData.characterClass
@@ -41,11 +33,10 @@ export class ClassRequirementRule extends BaseRule {
       return this.createFailureResult(
         `Character does not meet class requirements for ${creationData.characterClass}. Required: ${requirements}`,
         undefined,
-        true // Critical failure - character creation should stop
+        true
       );
     }
 
-    // Check racial level limits
     const levelLimits = this.getRacialLevelLimits(creationData.race, creationData.characterClass);
 
     return this.createSuccessResult(
@@ -68,10 +59,6 @@ export class ClassRequirementRule extends BaseRule {
     return abilityScores != null && creationData != null;
   }
 
-  /**
-   * Check if ability scores meet class requirements
-   * PRESERVED: Exact implementation from original rules/character/classRequirements.ts
-   */
   private meetsClassRequirements(
     abilityScores: AbilityScores,
     characterClass: CharacterClass
@@ -89,9 +76,6 @@ export class ClassRequirementRule extends BaseRule {
     );
   }
 
-  /**
-   * Get class requirements as human-readable string
-   */
   private getClassRequirements(characterClass: CharacterClass): string {
     const req = CLASS_MINIMUM_SCORES[characterClass];
     if (!req) return 'Unknown';
@@ -107,10 +91,6 @@ export class ClassRequirementRule extends BaseRule {
     return parts.join(', ');
   }
 
-  /**
-   * Get racial level limits for a character class
-   * PRESERVED: Exact implementation from original
-   */
   private getRacialLevelLimits(
     race: CharacterRace,
     characterClass: CharacterClass
@@ -123,13 +103,6 @@ export class ClassRequirementRule extends BaseRule {
   }
 }
 
-// ===== PRESERVED OSRIC DATA TABLES =====
-// From original rules/character/classRequirements.ts
-
-/**
- * Minimum ability scores required for each class
- * PRESERVED: Exact values from OSRIC (limited to defined CharacterClass types)
- */
 const CLASS_MINIMUM_SCORES: Record<CharacterClass, AbilityScores> = {
   Fighter: {
     strength: 9,
@@ -213,13 +186,6 @@ const CLASS_MINIMUM_SCORES: Record<CharacterClass, AbilityScores> = {
   },
 };
 
-/**
- * Racial level limits for each class combination
- * PRESERVED: Exact values from OSRIC (limited to defined CharacterClass types)
- * 'Unlimited' means no level restriction
- * Number means maximum level allowed
- * Missing entry means class is prohibited for that race
- */
 const RACIAL_LEVEL_LIMITS: Record<
   CharacterRace,
   Partial<Record<CharacterClass, number | 'Unlimited'>>

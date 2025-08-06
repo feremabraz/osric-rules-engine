@@ -4,10 +4,6 @@ import { BaseRule, type RuleResult } from '../../core/Rule';
 import type { IdentificationResult } from '../../types/SpellTypes';
 import type { Character, Item } from '../../types/entities';
 
-/**
- * Rule for calculating initial charges on newly found magic items
- * Based on OSRIC magic item charge mechanics
- */
 export class MagicItemChargeCalculationRule extends BaseRule {
   name = 'magic-item-charge-calculation';
   description = 'Calculate initial charges for newly found magic items';
@@ -27,10 +23,8 @@ export class MagicItemChargeCalculationRule extends BaseRule {
     let charges = 0;
     let chargeFormula = '';
 
-    // Calculate charges based on OSRIC rules
     switch (item.itemType.toLowerCase()) {
       case 'wand': {
-        // Wands: 101 - 1d20 charges
         const wandRoll = rollDice(1, 20);
         charges = 101 - wandRoll.result;
         chargeFormula = '101 - 1d20';
@@ -38,7 +32,6 @@ export class MagicItemChargeCalculationRule extends BaseRule {
       }
 
       case 'rod': {
-        // Rods: 51 - 1d10 charges
         const rodRoll = rollDice(1, 10);
         charges = 51 - rodRoll.result;
         chargeFormula = '51 - 1d10';
@@ -46,7 +39,6 @@ export class MagicItemChargeCalculationRule extends BaseRule {
       }
 
       case 'staff': {
-        // Staves: 26 - 1d6 charges
         const staffRoll = rollDice(1, 6);
         charges = 26 - staffRoll.result;
         chargeFormula = '26 - 1d6';
@@ -62,13 +54,11 @@ export class MagicItemChargeCalculationRule extends BaseRule {
         });
     }
 
-    // Update the item with calculated charges
     const updatedItem = {
       ...item,
       charges,
     };
 
-    // Store the updated item for retrieval
     context.setTemporary('updatedMagicItem', updatedItem);
 
     const message = `${item.name} (${item.itemType}) has ${charges} charges (${chargeFormula})`;
@@ -82,10 +72,6 @@ export class MagicItemChargeCalculationRule extends BaseRule {
   }
 }
 
-/**
- * Rule for using charges from magic items
- * Based on OSRIC charge usage and disintegration mechanics
- */
 export class MagicItemChargeUsageRule extends BaseRule {
   name = 'magic-item-charge-usage';
   description = 'Handle using charges from magic items';
@@ -103,7 +89,6 @@ export class MagicItemChargeUsageRule extends BaseRule {
       return this.createFailureResult('Missing item or user information');
     }
 
-    // Check if item uses charges
     if (item.charges === null || item.charges === undefined) {
       return this.createSuccessResult(`${item.name} doesn't use charges`, {
         itemName: item.name,
@@ -112,11 +97,9 @@ export class MagicItemChargeUsageRule extends BaseRule {
       });
     }
 
-    // Check if item has charges remaining
     if (item.charges <= 0) {
       const message = `${item.name} has no charges left and disintegrates into dust!`;
 
-      // Remove item from user's inventory
       if (user.inventory) {
         const itemIndex = user.inventory.findIndex((invItem) => invItem.id === item.id);
         if (itemIndex >= 0) {
@@ -132,7 +115,6 @@ export class MagicItemChargeUsageRule extends BaseRule {
       });
     }
 
-    // Use one charge
     const newCharges = item.charges - 1;
     const disintegrated = newCharges === 0;
 
@@ -147,7 +129,6 @@ export class MagicItemChargeUsageRule extends BaseRule {
     if (disintegrated) {
       message = `${item.name} is used one final time and disintegrates into dust!`;
 
-      // Remove item from user's inventory
       if (user.inventory) {
         const itemIndex = user.inventory.findIndex((invItem) => invItem.id === item.id);
         if (itemIndex >= 0) {
@@ -167,10 +148,6 @@ export class MagicItemChargeUsageRule extends BaseRule {
   }
 }
 
-/**
- * Rule for magic item saving throws against destructive effects
- * Based on OSRIC item saving throw tables
- */
 export class MagicItemSavingThrowRule extends BaseRule {
   name = 'magic-item-saving-throw';
   description = 'Handle magic item saving throws against destructive effects';
@@ -183,10 +160,10 @@ export class MagicItemSavingThrowRule extends BaseRule {
     staff: 13,
     wand: 15,
     artifact: 13,
-    armor: 11, // Standard armor
-    armorPowerful: 8, // +5 armor
-    sword: 9, // Standard magic sword
-    swordHoly: 7, // Holy Sword
+    armor: 11,
+    armorPowerful: 8,
+    sword: 9,
+    swordHoly: 7,
     miscMagic: 12,
   };
 
@@ -207,27 +184,22 @@ export class MagicItemSavingThrowRule extends BaseRule {
 
     const { item, effectType } = savingThrowData;
 
-    // Determine item type for saving throw purposes
     const itemType = this.determineItemType(item);
 
-    // Get base target roll
     const baseTarget = this.ITEM_SAVING_THROWS[itemType];
 
-    // Apply effect type modifiers
     let adjustedTarget = baseTarget;
     switch (effectType) {
       case 'dispel_magic':
-        adjustedTarget += 2; // Easier to save against dispel
+        adjustedTarget += 2;
         break;
       case 'antimagic_field':
-        adjustedTarget += 4; // Much easier to save against antimagic field
+        adjustedTarget += 4;
         break;
       case 'rod_of_cancellation':
-        // No modifier - full difficulty
         break;
     }
 
-    // Roll the saving throw
     const savingThrowRoll = rollDice(1, 20);
     const success = savingThrowRoll.result >= adjustedTarget;
 
@@ -259,7 +231,6 @@ export class MagicItemSavingThrowRule extends BaseRule {
       magicBonus?: number;
     };
 
-    // Check specific item types first
     if (extendedItem.itemType) {
       switch (extendedItem.itemType.toLowerCase()) {
         case 'potion':
@@ -279,7 +250,6 @@ export class MagicItemSavingThrowRule extends BaseRule {
       }
     }
 
-    // Check general types
     if (extendedItem.type === 'Armor') {
       return extendedItem.magicBonus === 5 ? 'armorPowerful' : 'armor';
     }
@@ -288,7 +258,6 @@ export class MagicItemSavingThrowRule extends BaseRule {
       return extendedItem.isHoly ? 'swordHoly' : 'sword';
     }
 
-    // Default to miscellaneous magic
     return 'miscMagic';
   }
 
@@ -300,10 +269,6 @@ export class MagicItemSavingThrowRule extends BaseRule {
   }
 }
 
-/**
- * Rule for identifying magic items through various methods
- * Based on OSRIC identification mechanics
- */
 export class MagicItemIdentificationRule extends BaseRule {
   name = 'magic-item-identification';
   description = 'Handle magic item identification through different methods';
@@ -343,7 +308,6 @@ export class MagicItemIdentificationRule extends BaseRule {
         return this.createFailureResult('Unknown identification method');
     }
 
-    // Apply constitution loss if applicable
     if (result.constitutionLoss > 0) {
       const updatedCharacter = {
         ...character,
@@ -355,7 +319,7 @@ export class MagicItemIdentificationRule extends BaseRule {
           ...character.statusEffects,
           {
             name: 'Constitution Loss (Identification)',
-            duration: result.constitutionLoss * 8, // 8 hours per point lost
+            duration: result.constitutionLoss * 8,
             description: `Lost ${result.constitutionLoss} constitution from magical identification`,
             effect: 'constitution_drain',
             savingThrow: null,
@@ -383,7 +347,6 @@ export class MagicItemIdentificationRule extends BaseRule {
     item: Item,
     hasPearl: boolean
   ): IdentificationResult {
-    // Requires pearl worth 100gp
     if (!hasPearl) {
       return {
         success: false,
@@ -397,7 +360,6 @@ export class MagicItemIdentificationRule extends BaseRule {
       };
     }
 
-    // Calculate success chance: 15% + 5% per caster level
     const baseChance = 15;
     const levelBonus = character.level * 5;
     const totalChance = baseChance + levelBonus;
@@ -405,7 +367,6 @@ export class MagicItemIdentificationRule extends BaseRule {
     const successRoll = rollDice(1, 100);
     const success = successRoll.result <= totalChance;
 
-    // Standard constitution loss from Identify spell
     const constitutionLoss = 8;
 
     if (!success) {
@@ -421,17 +382,14 @@ export class MagicItemIdentificationRule extends BaseRule {
       };
     }
 
-    // Successful identification
     const propertiesRevealed = [
       `Item type: ${this.getItemType(item)}`,
       `Magic bonus: ${item.magicBonus || 0}`,
     ];
 
-    // Command word detection
     const commandWordRoll = rollDice(1, 100);
     const commandWordRevealed = commandWordRoll.result <= totalChance;
 
-    // Charge estimation
     let estimatedCharges: number | null = null;
     if (item.charges !== null && item.charges !== undefined) {
       const actualCharges = item.charges;
@@ -442,7 +400,6 @@ export class MagicItemIdentificationRule extends BaseRule {
       estimatedCharges = minEstimate + estimateRoll.result;
     }
 
-    // Curse detection (1% per caster level)
     const curseRoll = rollDice(1, 100);
     const curseDetected = curseRoll.result <= character.level;
 
@@ -459,7 +416,6 @@ export class MagicItemIdentificationRule extends BaseRule {
   }
 
   private performArcaneStudy(character: Character, item: Item): IdentificationResult {
-    // Intelligence-based identification
     const baseChance = 10;
     const intModifier = character.abilities.intelligence - 10;
     const intelligenceBonus = intModifier * 5;
@@ -469,7 +425,6 @@ export class MagicItemIdentificationRule extends BaseRule {
     const successRoll = rollDice(1, 100);
     const success = successRoll.result <= totalChance;
 
-    // Possible constitution loss from study
     const constitutionRoll = rollDice(1, 10);
     const constitutionLoss = constitutionRoll.result === 1 ? rollDice(1, 3).result : 0;
 
@@ -491,7 +446,6 @@ export class MagicItemIdentificationRule extends BaseRule {
       `Magic bonus: ${item.magicBonus || 0}`,
     ];
 
-    // Additional properties based on intelligence
     if (character.abilities.intelligence >= 15) {
       propertiesRevealed.push(`Estimated value: ${this.estimateItemValue(item)} gp`);
     }
@@ -500,12 +454,10 @@ export class MagicItemIdentificationRule extends BaseRule {
       propertiesRevealed.push(`Origin: ${this.determineItemOrigin(item)}`);
     }
 
-    // Command word chance
     const commandWordChance = 20 + (character.abilities.intelligence - 10) * 2;
     const commandWordRoll = rollDice(1, 100);
     const commandWordRevealed = commandWordRoll.result <= commandWordChance;
 
-    // Charge estimation
     let estimatedCharges: number | null = null;
     if (item.charges !== null && item.charges !== undefined) {
       const accuracyModifier = Math.max(0.05, 0.5 - character.abilities.intelligence * 0.02);
@@ -516,7 +468,6 @@ export class MagicItemIdentificationRule extends BaseRule {
       estimatedCharges = minEstimate + estimateRoll.result;
     }
 
-    // Curse detection
     const curseDetectionChance = (character.abilities.intelligence - 10) * 2;
     const curseRoll = rollDice(1, 100);
     const curseDetected = curseRoll.result <= curseDetectionChance;
@@ -534,7 +485,6 @@ export class MagicItemIdentificationRule extends BaseRule {
   }
 
   private performDivineKnowledge(character: Character, item: Item): IdentificationResult {
-    // Divine classes can gain insight through prayer/meditation
     const isDivine = ['Cleric', 'Druid', 'Paladin'].includes(character.class);
 
     if (!isDivine) {
@@ -550,7 +500,6 @@ export class MagicItemIdentificationRule extends BaseRule {
       };
     }
 
-    // Wisdom-based chance
     const baseChance = 5;
     const wisdomBonus = (character.abilities.wisdom - 10) * 3;
     const levelBonus = character.level * 2;
@@ -572,14 +521,12 @@ export class MagicItemIdentificationRule extends BaseRule {
       };
     }
 
-    // Divine knowledge provides basic information
     const propertiesRevealed = [
       `Item nature: ${this.getItemType(item)}`,
       `Magical aura: ${item.magicBonus ? 'Strong' : 'Moderate'}`,
       `Divine insight: ${this.getDivineInsight(item)}`,
     ];
 
-    // High chance to detect curses/evil
     const curseRoll = rollDice(1, 100);
     const curseDetected = curseRoll.result <= character.abilities.wisdom * 3;
 
@@ -587,11 +534,11 @@ export class MagicItemIdentificationRule extends BaseRule {
       success: true,
       itemIdentified: true,
       propertiesRevealed,
-      commandWordRevealed: false, // Divine knowledge doesn't reveal command words
-      estimatedCharges: null, // Divine knowledge doesn't estimate charges precisely
+      commandWordRevealed: false,
+      estimatedCharges: null,
       actualCharges: item.charges || null,
       curseDetected,
-      constitutionLoss: 0, // No constitution loss for divine knowledge
+      constitutionLoss: 0,
     };
   }
 
@@ -629,7 +576,6 @@ export class MagicItemIdentificationRule extends BaseRule {
       'Elemental infusion',
     ];
 
-    // Deterministic selection based on item id
     const seed = item.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return origins[seed % origins.length];
   }
@@ -644,7 +590,6 @@ export class MagicItemIdentificationRule extends BaseRule {
       'Sanctified through prayer',
     ];
 
-    // Deterministic selection
     const seed = item.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return insights[seed % insights.length];
   }

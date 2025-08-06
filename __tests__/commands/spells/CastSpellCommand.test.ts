@@ -4,7 +4,6 @@ import { CastSpellCommand } from '../../../osric/commands/spells/CastSpellComman
 import { GameContext } from '../../../osric/core/GameContext';
 import type { Character, Spell } from '../../../osric/types/entities';
 
-// Helper function to create a test wizard character
 function createMockWizard(overrides: Partial<Character> = {}): Character {
   const baseCharacter: Character = {
     id: 'wizard1',
@@ -169,7 +168,6 @@ function createMockWizard(overrides: Partial<Character> = {}): Character {
   return { ...baseCharacter, ...overrides };
 }
 
-// Helper function to create a test target character
 function createMockTarget(overrides: Partial<Character> = {}): Character {
   const baseTarget: Character = {
     id: 'target1',
@@ -278,7 +276,6 @@ describe('CastSpellCommand', () => {
       expect(result.success).toBe(true);
       expect(result.message).toContain('Test Wizard casts Magic Missile');
 
-      // Verify temporary data is set for rules processing
       expect(context.getTemporary('castSpell_caster')).toBeDefined();
       expect(context.getTemporary('castSpell_spell')).toBeDefined();
       expect(context.getTemporary('castSpell_targets')).toBeDefined();
@@ -291,7 +288,6 @@ describe('CastSpellCommand', () => {
       expect(result.success).toBe(true);
       expect(result.message).toContain('Test Wizard casts Shield');
 
-      // Verify spell data is accessible
       const spell = context.getTemporary('castSpell_spell') as Spell;
       expect(spell.name).toBe('Shield');
     });
@@ -303,7 +299,6 @@ describe('CastSpellCommand', () => {
       expect(result.success).toBe(true);
       expect(result.message).toContain('Test Wizard casts Web');
 
-      // Verify targets are set correctly
       const targets = context.getTemporary('castSpell_targets') as Character[];
       expect(targets).toHaveLength(1);
       expect(targets[0].name).toBe('Test Target');
@@ -339,7 +334,6 @@ describe('CastSpellCommand', () => {
     });
 
     it('should fail if no spell slots available', async () => {
-      // Use up all first level slots
       const wizardNoSlots = createMockWizard({
         memorizedSpells: { 1: [], 2: [], 3: [] },
       });
@@ -368,7 +362,6 @@ describe('CastSpellCommand', () => {
 
       expect(result.success).toBe(true);
 
-      // Verify all required data is set for rules processing
       const caster = context.getTemporary('castSpell_caster') as Character;
       const spell = context.getTemporary('castSpell_spell') as Spell;
       const targets = context.getTemporary('castSpell_targets') as Character[];

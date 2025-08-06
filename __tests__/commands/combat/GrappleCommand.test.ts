@@ -1,22 +1,11 @@
-/**
- * GrappleCommand.test.ts - Tests for OSRIC Grapple Command
- *
- * Tests the grapple command functionality including:
- * - Grapple attack validation and execution
- * - Overbearing attack handling
- * - Charge attack prerequisites
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { GrappleCommand } from '../../../osric/commands/combat/GrappleCommand';
 import { GameContext } from '../../../osric/core/GameContext';
 import type { Character, Monster } from '../../../osric/types/entities';
 
-// Mock dice rolling for predictable tests
-vi.spyOn(Math, 'random').mockImplementation(() => 0.5); // Always roll middle values
+vi.spyOn(Math, 'random').mockImplementation(() => 0.5);
 
-// Helper to create complete test characters
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return {
     id: 'test-character',
@@ -148,7 +137,6 @@ describe('GrappleCommand', () => {
     testCharacter = createMockCharacter();
     testMonster = createMockMonster();
 
-    // Add entities to context
     context.setEntity('test-character', testCharacter);
     context.setEntity('test-orc', testMonster);
   });
@@ -207,7 +195,6 @@ describe('GrappleCommand', () => {
   });
 
   test('should fail validation if attacker is unconscious', () => {
-    // Make character unconscious
     testCharacter.hitPoints.current = 0;
     context.setEntity('test-character', testCharacter);
 
@@ -224,7 +211,6 @@ describe('GrappleCommand', () => {
   });
 
   test('should fail validation if attacker is already grappling', () => {
-    // Add grappling status effect
     testCharacter.statusEffects.push({
       name: 'Grappling',
       duration: -1,
@@ -275,7 +261,6 @@ describe('GrappleCommand', () => {
     expect(result.success).toBe(true);
     expect(result.message).toContain('Grapple command prepared for rule processing');
 
-    // Check that grapple context was set
     const grappleContext = context.getTemporary('grapple-context') as GrappleContext;
     expect(grappleContext).toBeDefined();
     expect(grappleContext.attacker.id).toBe('test-character');
@@ -379,7 +364,6 @@ describe('GrappleCommand', () => {
   });
 
   test('should fail validation if target is already grappled', () => {
-    // Add grappled status effect to target
     testMonster.statusEffects.push({
       name: 'Grappled',
       duration: -1,

@@ -99,7 +99,6 @@ describe('MonsterGenerationCommand', () => {
     expect(smallResult.success).toBe(true);
     expect(largeResult.success).toBe(true);
 
-    // Both should generate valid encounters
     expect(smallResult.data).toBeDefined();
     expect(largeResult.data).toBeDefined();
   });

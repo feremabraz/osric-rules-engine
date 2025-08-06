@@ -1,17 +1,3 @@
-/**
- * MoveCommand - Character Movement
- *
- * Handles character movement with:
- * - Movement rate validation
- * - Terrain modifier application
- * - Encumbrance effects
- * - Position tracking
- * - Time tracking
- * - Environmental effects
- *
- * PRESERVATION: All OSRIC movement rules preserved exactly.
- */
-
 import { BaseCommand, type CommandResult } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
@@ -21,17 +7,17 @@ export interface MoveParameters {
   characterId: string;
   movement: {
     type: 'walk' | 'run' | 'sneak' | 'fly' | 'swim' | 'climb';
-    distance: number; // Distance in meters
-    direction?: string; // Optional direction description
-    destination?: string; // Optional destination description
+    distance: number;
+    direction?: string;
+    destination?: string;
   };
   terrain: {
     type: 'Normal' | 'Difficult' | 'Very Difficult' | 'Impassable';
-    environment: string; // e.g., 'Wilderness', 'Dungeon', 'Urban'
-    environmentalFeature?: string; // e.g., "dense undergrowth", "steep incline"
+    environment: string;
+    environmentalFeature?: string;
   };
-  timeScale: 'combat' | 'exploration' | 'overland'; // Affects movement rates
-  forcedMarch?: boolean; // Attempt to move faster with exhaustion risk
+  timeScale: 'combat' | 'exploration' | 'overland';
+  forcedMarch?: boolean;
 }
 
 export class MoveCommand extends BaseCommand {
@@ -45,21 +31,17 @@ export class MoveCommand extends BaseCommand {
     try {
       const { characterId, movement, terrain, timeScale, forcedMarch = false } = this.parameters;
 
-      // Get the character
       const character = context.getEntity<Character>(characterId);
       if (!character) {
         return this.createFailureResult(`Character with ID "${characterId}" not found`);
       }
 
-      // Validate movement type against terrain
       if (!this.isTerrainNavigable(terrain.type, movement.type)) {
         return this.createFailureResult(`Cannot ${movement.type} through ${terrain.type} terrain`);
       }
 
-      // Calculate movement rates based on time scale
       const movementRates = this.calculateMovementRates(character, timeScale);
 
-      // Apply terrain adjustments
       const adjustedMovementRate = this.calculateTerrainAdjustedMovement(
         movementRates.baseRate,
         terrain.type,
@@ -67,14 +49,12 @@ export class MoveCommand extends BaseCommand {
         terrain.environmentalFeature
       );
 
-      // Apply movement type modifiers
       const finalMovementRate = this.applyMovementTypeModifiers(
         adjustedMovementRate,
         movement.type,
         forcedMarch
       );
 
-      // Validate if character can move the requested distance
       const movementValidation = this.validateMovementDistance(
         movement.distance,
         finalMovementRate,
@@ -85,10 +65,8 @@ export class MoveCommand extends BaseCommand {
         return this.createFailureResult(movementValidation.reason || 'Movement not possible');
       }
 
-      // Calculate time taken
       const timeTaken = this.calculateTimeTaken(movement.distance, finalMovementRate, timeScale);
 
-      // Calculate movement effects
       const movementEffects = this.calculateMovementEffects(
         movement,
         terrain,
@@ -96,13 +74,10 @@ export class MoveCommand extends BaseCommand {
         timeTaken
       );
 
-      // Update character position
       const finalCharacter = this.applyMovementEffects(character, movement);
 
-      // Update character in context
       context.setEntity(characterId, finalCharacter);
 
-      // Prepare result
       const resultData = {
         characterId,
         movement,
@@ -131,37 +106,25 @@ export class MoveCommand extends BaseCommand {
     return ['movement-rates', 'terrain-effects', 'encumbrance', 'environmental-hazards'];
   }
 
-  /**
-   * Check if terrain is navigable by a specific movement type
-   */
   private isTerrainNavigable(terrainType: string, movementType: string): boolean {
-    // Impassable terrain cannot be navigated by normal walking
     if (terrainType === 'Impassable' && movementType === 'walk') {
       return false;
     }
 
-    // Flying can navigate all terrain except in enclosed spaces
     if (movementType === 'fly') {
       return true;
     }
 
-    // Swimming requires water
     if (movementType === 'swim') {
-      // Would need more context about the terrain to determine if swimming is possible
       return false;
     }
 
-    // Default to true for other cases
     return true;
   }
 
-  /**
-   * Calculate base movement rates for different time scales
-   */
   private calculateMovementRates(character: Character, timeScale: string) {
-    // Use character's current movement rate or calculate basic rates
-    const baseMovementRate = character.movementRate || 36; // Default 36m per turn for humans
-    const combatRate = Math.floor(baseMovementRate / 3); // Rough conversion to combat rounds
+    const baseMovementRate = character.movementRate || 36;
+    const combatRate = Math.floor(baseMovementRate / 3);
 
     switch (timeScale) {
       case 'combat':
@@ -169,16 +132,12 @@ export class MoveCommand extends BaseCommand {
       case 'exploration':
         return { baseRate: baseMovementRate, unit: 'meters per turn' };
       case 'overland':
-        // Overland travel: exploration rate * 48 turns per day / 1000 for km per day
         return { baseRate: (baseMovementRate * 48) / 1000, unit: 'kilometers per day' };
       default:
         return { baseRate: baseMovementRate, unit: 'meters per turn' };
     }
   }
 
-  /**
-   * Apply terrain adjustments to movement
-   */
   private calculateTerrainAdjustedMovement(
     baseMovementRate: number,
     terrainType: string,
@@ -187,7 +146,6 @@ export class MoveCommand extends BaseCommand {
   ): number {
     let adjustedRate = baseMovementRate;
 
-    // Apply base terrain type multiplier
     switch (terrainType) {
       case 'Normal':
         adjustedRate *= 1.0;
@@ -203,7 +161,6 @@ export class MoveCommand extends BaseCommand {
         break;
     }
 
-    // Apply environmental modifiers
     if (environment === 'Wilderness') {
       if (environmentalFeature?.includes('marsh')) adjustedRate *= 0.5;
       if (environmentalFeature?.includes('forest')) adjustedRate *= 0.75;
@@ -213,9 +170,6 @@ export class MoveCommand extends BaseCommand {
     return Math.round(adjustedRate);
   }
 
-  /**
-   * Apply modifiers based on movement type
-   */
   private applyMovementTypeModifiers(
     baseRate: number,
     movementType: string,
@@ -225,27 +179,23 @@ export class MoveCommand extends BaseCommand {
 
     switch (movementType) {
       case 'run':
-        modifiedRate *= 3; // Triple movement rate but with restrictions
+        modifiedRate *= 3;
         break;
       case 'sneak':
-        modifiedRate *= 0.5; // Half movement rate for stealth
+        modifiedRate *= 0.5;
         break;
       case 'swim':
-        modifiedRate *= 0.25; // Quarter rate for swimming (if possible)
+        modifiedRate *= 0.25;
         break;
       case 'climb':
-        modifiedRate *= 0.25; // Quarter rate for climbing
+        modifiedRate *= 0.25;
         break;
       case 'fly':
-        // Flying movement depends on character abilities
-        // For now, assume normal rate if flight is possible
         break;
       default:
-        // Normal walking movement, no modifier
         break;
     }
 
-    // Forced march increases rate but adds exhaustion risk
     if (forcedMarch) {
       modifiedRate *= 1.5;
     }
@@ -253,15 +203,11 @@ export class MoveCommand extends BaseCommand {
     return Math.round(modifiedRate);
   }
 
-  /**
-   * Validate if the character can move the requested distance
-   */
   private validateMovementDistance(
     requestedDistance: number,
     movementRate: number,
     timeScale: string
   ): { canMove: boolean; reason?: string } {
-    // In combat, movement is limited per round
     if (timeScale === 'combat' && requestedDistance > movementRate) {
       return {
         canMove: false,
@@ -269,7 +215,6 @@ export class MoveCommand extends BaseCommand {
       };
     }
 
-    // For exploration and overland, allow movement up to reasonable limits
     const maxDistance = timeScale === 'overland' ? movementRate : movementRate * 10;
 
     if (requestedDistance > maxDistance) {
@@ -282,9 +227,6 @@ export class MoveCommand extends BaseCommand {
     return { canMove: true };
   }
 
-  /**
-   * Calculate time taken for movement
-   */
   private calculateTimeTaken(
     distance: number,
     movementRate: number,
@@ -292,19 +234,16 @@ export class MoveCommand extends BaseCommand {
   ): { value: number; unit: string } {
     switch (timeScale) {
       case 'combat': {
-        // Combat rounds (1 minute each)
         const rounds = Math.ceil(distance / movementRate);
         return { value: rounds, unit: 'rounds' };
       }
 
       case 'exploration': {
-        // Exploration turns (10 minutes each)
         const turns = Math.ceil(distance / movementRate);
         return { value: turns * 10, unit: 'minutes' };
       }
 
       case 'overland': {
-        // Days of travel
         const days = distance / movementRate;
         return { value: Math.round(days * 10) / 10, unit: 'days' };
       }
@@ -314,9 +253,6 @@ export class MoveCommand extends BaseCommand {
     }
   }
 
-  /**
-   * Calculate effects of movement
-   */
   private calculateMovementEffects(
     movement: MoveParameters['movement'],
     terrain: MoveParameters['terrain'],
@@ -329,19 +265,16 @@ export class MoveCommand extends BaseCommand {
       risks: [] as string[],
     };
 
-    // Running causes fatigue
     if (movement.type === 'run') {
       effects.fatigue += 1;
       effects.statusEffects.push('Fatigued from running');
     }
 
-    // Forced march causes exhaustion risk
     if (forcedMarch) {
       effects.fatigue += 2;
       effects.statusEffects.push('Risk of exhaustion from forced march');
     }
 
-    // Difficult terrain may cause additional fatigue
     if (terrain.type === 'Difficult' || terrain.type === 'Very Difficult') {
       effects.fatigue += 1;
       effects.statusEffects.push('Tired from difficult terrain');
@@ -350,16 +283,12 @@ export class MoveCommand extends BaseCommand {
     return effects;
   }
 
-  /**
-   * Apply movement effects to character
-   */
   private applyMovementEffects(
     character: Character,
     movement: MoveParameters['movement']
   ): Character {
     const updatedCharacter = { ...character };
 
-    // Update position
     if (movement.destination) {
       updatedCharacter.position = movement.destination;
     }
@@ -367,9 +296,6 @@ export class MoveCommand extends BaseCommand {
     return updatedCharacter;
   }
 
-  /**
-   * Create descriptive message for movement result
-   */
   private createMovementMessage(
     character: Character,
     movement: MoveParameters['movement'],

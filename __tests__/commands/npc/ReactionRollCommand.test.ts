@@ -1,21 +1,9 @@
-/**
- * ReactionRollCommand Tests - OSRIC Compliance
- *
- * Tests the ReactionRollCommand for proper NPC reaction command execution:
- * - Command setup and context data preparation
- * - Entity validation and error handling
- * - Integration with ReactionRules
- * - Proper command result handling
- * - Edge cases and error scenarios
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ReactionRollCommand } from '../../../osric/commands/npc/ReactionRollCommand';
 import { GameContext } from '../../../osric/core/GameContext';
 import type { Character } from '../../../osric/types/entities';
 
-// Mock helper function to create test characters
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-char',
@@ -100,7 +88,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return defaultCharacter;
 }
 
-// Mock NPC entity for testing
 function createMockNPC(overrides: Partial<Character> = {}): Character {
   return createMockCharacter({
     id: 'test-npc',
@@ -120,7 +107,6 @@ describe('ReactionRollCommand', () => {
     const store = createStore();
     context = new GameContext(store);
 
-    // Create test entities
     character = createMockCharacter({
       id: 'test-character',
       name: 'Test Hero',
@@ -132,7 +118,6 @@ describe('ReactionRollCommand', () => {
       name: 'Village Elder',
     });
 
-    // Store entities in context
     context.setEntity('test-character', character);
     context.setEntity('test-npc', npc);
   });
@@ -200,7 +185,6 @@ describe('ReactionRollCommand', () => {
     });
 
     it('should fail execution when entities are missing', async () => {
-      // Create a fresh context without adding any entities
       const emptyStore = createStore();
       const emptyContext = new GameContext(emptyStore);
 
@@ -226,7 +210,6 @@ describe('ReactionRollCommand', () => {
 
       await command.execute(context);
 
-      // Check that context data was set up correctly
       const params = context.getTemporary('reaction-roll-params');
       expect(params).toBeDefined();
       expect(params).toHaveProperty('characterId', 'test-character');
@@ -237,7 +220,6 @@ describe('ReactionRollCommand', () => {
     });
 
     it('should handle rule execution failure', async () => {
-      // Create command with invalid character to trigger rule failure
       const command = new ReactionRollCommand('invalid-character', 'test-npc', 'first_meeting');
 
       const result = await command.execute(context);
@@ -277,7 +259,7 @@ describe('ReactionRollCommand', () => {
       const result = await command.execute(context);
 
       expect(result.success).toBe(true);
-      expect(result.message).toContain('+'); // Should show positive modifier
+      expect(result.message).toContain('+');
     });
 
     it('should pass threat modifiers to rules', async () => {
@@ -288,7 +270,7 @@ describe('ReactionRollCommand', () => {
       const result = await command.execute(context);
 
       expect(result.success).toBe(true);
-      expect(result.message).toContain('-'); // Should show negative modifier
+      expect(result.message).toContain('-');
     });
 
     it('should pass complex modifier combinations', async () => {
@@ -353,7 +335,6 @@ describe('ReactionRollCommand', () => {
     it('should validate entities before execution', async () => {
       const command = new ReactionRollCommand('test-character', 'test-npc', 'first_meeting');
 
-      // Verify entities exist before execution
       expect(context.hasEntity('test-character')).toBe(true);
       expect(context.hasEntity('test-npc')).toBe(true);
 
@@ -394,7 +375,6 @@ describe('ReactionRollCommand', () => {
       const result = await command.execute(context);
 
       expect(result.success).toBe(true);
-      // Rules should handle capping extreme values
     });
   });
 

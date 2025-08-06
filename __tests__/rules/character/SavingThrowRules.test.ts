@@ -1,24 +1,9 @@
-/**
- * SavingThrowRules Tests - OSRIC Compliance
- *
- * Tests the SavingThrowRule for proper OSRIC saving throw mechanics:
- * - OSRIC saving throw table progressions for all classes
- * - Ability score modifiers (Con/Wis/Dex) application
- * - Multi-class best save calculation
- * - Special class abilities and immunities
- * - Racial bonuses and resistances
- * - Situational modifier stacking
- * - Validation of save attempts and restrictions
- * - Edge cases and error scenarios
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { GameContext } from '../../../osric/core/GameContext';
 import { SavingThrowRule } from '../../../osric/rules/character/SavingThrowRules';
 import type { Character } from '../../../osric/types/entities';
 
-// Mock helper function to create test characters
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-char',
@@ -102,7 +87,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return { ...defaultCharacter, ...overrides };
 }
 
-// Mock command for testing
 class MockSavingThrowCommand {
   readonly type = 'saving-throw';
   readonly actorId = 'test-character';
@@ -136,7 +120,6 @@ describe('SavingThrowRules', () => {
     savingThrowRule = new SavingThrowRule();
     mockCommand = new MockSavingThrowCommand();
 
-    // Setup test character
     const testCharacter = createMockCharacter({
       id: 'test-character',
       name: 'Test Hero',
@@ -145,9 +128,9 @@ describe('SavingThrowRules', () => {
       abilities: {
         strength: 14,
         dexterity: 12,
-        constitution: 16, // High constitution for poison save bonus
+        constitution: 16,
         intelligence: 10,
-        wisdom: 15, // High wisdom for mental save bonus
+        wisdom: 15,
         charisma: 11,
       },
     });
@@ -206,7 +189,7 @@ describe('SavingThrowRules', () => {
       const result = await savingThrowRule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      expect(result.data?.baseSave).toBe(16); // Fighter level 1 poison save
+      expect(result.data?.baseSave).toBe(16);
       expect(result.data?.characterId).toBe('test-character');
     });
 
@@ -225,7 +208,7 @@ describe('SavingThrowRules', () => {
       const result = await savingThrowRule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      expect(result.data?.baseSave).toBe(14); // Cleric level 2 spell save
+      expect(result.data?.baseSave).toBe(14);
     });
 
     it('should calculate Magic-User saving throws correctly', async () => {
@@ -243,7 +226,7 @@ describe('SavingThrowRules', () => {
       const result = await savingThrowRule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      expect(result.data?.baseSave).toBe(10); // Magic-User level 3 rod/staff/wand save
+      expect(result.data?.baseSave).toBe(10);
     });
 
     it('should calculate Thief saving throws correctly', async () => {
@@ -261,17 +244,17 @@ describe('SavingThrowRules', () => {
       const result = await savingThrowRule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      expect(result.data?.baseSave).toBe(14); // Thief level 4 breath weapon save
+      expect(result.data?.baseSave).toBe(14);
     });
   });
 
   describe('Multi-Class Saving Throws', () => {
     it('should use best save for multi-class characters', async () => {
       const multiClass = createMockCharacter({
-        class: 'Fighter', // Primary class
+        class: 'Fighter',
         experience: { current: 0, requiredForNextLevel: 2500, level: 3 },
       });
-      // Multi-class characters use the classes property to track multiple classes
+
       multiClass.classes = { Fighter: 3, Thief: 2 };
       context.setEntity('test-character', multiClass);
 
@@ -501,7 +484,7 @@ describe('SavingThrowRules', () => {
         characterId: 'test-character',
         saveType: 'rod-staff-wand',
         situationalModifiers: {
-          racialBonus: 4, // Dwarf vs magic
+          racialBonus: 4,
         },
       });
 
@@ -550,7 +533,7 @@ describe('SavingThrowRules', () => {
         characterId: 'test-character',
         saveType: 'spell',
         situationalModifiers: {
-          magicItemBonus: -20, // Extreme bonus that would push below 2
+          magicItemBonus: -20,
         },
       });
 
@@ -590,7 +573,7 @@ describe('SavingThrowRules', () => {
       const result = await savingThrowRule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      expect(result.data?.baseSave).toBeDefined(); // Should use Fighter table
+      expect(result.data?.baseSave).toBeDefined();
     });
   });
 
@@ -639,16 +622,16 @@ describe('SavingThrowRules', () => {
 
       const result = await savingThrowRule.execute(context, mockCommand);
 
-      expect(result.success).toBe(true); // Rule should handle invalid types gracefully
-      expect(result.data?.baseSave).toBe(20); // Default high save
+      expect(result.success).toBe(true);
+      expect(result.data?.baseSave).toBe(20);
     });
 
     it('should handle extreme ability scores', async () => {
       const extremeCharacter = createMockCharacter({
         abilities: {
           ...createMockCharacter().abilities,
-          constitution: 25, // Beyond normal range
-          wisdom: 3, // Very low wisdom
+          constitution: 25,
+          wisdom: 3,
         },
       });
       context.setEntity('test-character', extremeCharacter);
@@ -679,14 +662,13 @@ describe('SavingThrowRules', () => {
       const result = await savingThrowRule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      expect(result.data?.baseSave).toBeDefined(); // Should cap at level 20 tables
+      expect(result.data?.baseSave).toBeDefined();
     });
 
     it('should handle exceptions gracefully', async () => {
-      // Trigger an exception by providing malformed data
       context.setTemporary('saving-throw-params', {
         characterId: 'test-character',
-        saveType: null, // Will cause an error
+        saveType: null,
       });
 
       const result = await savingThrowRule.execute(context, mockCommand);

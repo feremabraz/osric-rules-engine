@@ -17,7 +17,6 @@ import type {
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-// Helper function for mock character creation (CRITICAL)
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return {
     id: 'test-character',
@@ -28,7 +27,7 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
     alignment: 'Chaotic Neutral',
     abilities: {
       strength: 12,
-      dexterity: 16, // Good dexterity for thief skills
+      dexterity: 16,
       constitution: 14,
       intelligence: 13,
       wisdom: 11,
@@ -36,7 +35,7 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
     },
     hitPoints: { current: 18, maximum: 18 },
     experience: { current: 2500, requiredForNextLevel: 5000, level: 3 },
-    armorClass: 7, // Leather armor
+    armorClass: 7,
     thac0: 18,
     inventory: [
       {
@@ -129,7 +128,6 @@ describe('ThiefSkillRule', () => {
     });
 
     it('should not apply to other command types', () => {
-      // Mock command with different type
       const mockCommand = {
         type: 'other-command-type',
       } as Command;
@@ -151,7 +149,6 @@ describe('ThiefSkillRule', () => {
       };
       const command = new ThiefSkillCheckCommand(params);
 
-      // Set temporary data as the command would
       context.setTemporary('thief-skill-params', params);
 
       const result = await rule.execute(context, command);
@@ -210,7 +207,6 @@ describe('ThiefSkillRule', () => {
       expect(result.success).toBe(true);
 
       if (result.data) {
-        // Level 1 thief should have ~85% climb walls base
         expect(result.data.baseChance).toBeGreaterThan(80);
         expect(result.data.baseChance).toBeLessThan(90);
       }
@@ -232,7 +228,6 @@ describe('ThiefSkillRule', () => {
       expect(result.success).toBe(true);
 
       if (result.data) {
-        // Should include racial modifiers
         expect(result.data.modifiers).toBeDefined();
         const modifiers = result.data.modifiers as Array<{
           source: string;
@@ -248,7 +243,7 @@ describe('ThiefSkillRule', () => {
       const highDexCharacter = createMockCharacter({
         abilities: {
           strength: 12,
-          dexterity: 18, // Very high dexterity
+          dexterity: 18,
           constitution: 14,
           intelligence: 13,
           wisdom: 11,
@@ -269,7 +264,6 @@ describe('ThiefSkillRule', () => {
       expect(result.success).toBe(true);
 
       if (result.data) {
-        // Should include ability score modifiers
         expect(result.data.modifiers).toBeDefined();
         const modifiers = result.data.modifiers as Array<{
           source: string;
@@ -299,7 +293,6 @@ describe('ThiefSkillRule', () => {
       expect(result.success).toBe(true);
 
       if (result.data) {
-        // Should include various situational modifiers
         const modifiers = result.data.modifiers as Array<{
           source: string;
           modifier: number;
@@ -317,7 +310,7 @@ describe('ThiefSkillRule', () => {
       const params: ThiefSkillCheckParameters = {
         characterId: 'test-character',
         skillType: 'pick-locks',
-        targetDifficulty: 150, // Extreme override
+        targetDifficulty: 150,
       };
       const command = new ThiefSkillCheckCommand(params);
 
@@ -327,7 +320,6 @@ describe('ThiefSkillRule', () => {
       expect(result.success).toBe(true);
 
       if (result.data) {
-        // Should cap at 99%
         expect(result.data.finalChance).toBeLessThanOrEqual(99);
       }
     });
@@ -348,7 +340,6 @@ describe('ThiefSkillRule', () => {
       expect(result.success).toBe(true);
 
       if (result.data) {
-        // Should work for assassins
         expect(result.data.canAttempt).toBe(true);
       }
     });
@@ -421,8 +412,6 @@ describe('ThiefSkillRule', () => {
       };
       const command = new ThiefSkillCheckCommand(params);
 
-      // Don't set temporary data to simulate missing data
-
       const result = await rule.execute(context, command);
       expect(result.success).toBe(false);
       expect(result.message).toContain('No thief skill check data');
@@ -443,10 +432,9 @@ describe('ThiefSkillRule', () => {
     });
 
     it('should handle unexpected errors gracefully', async () => {
-      // Create invalid skill data to trigger error
       const invalidParams = {
         characterId: 'test-character',
-        skillType: null, // Invalid skill type
+        skillType: null,
       };
       const command = new ThiefSkillCheckCommand({ characterId: 'test', skillType: 'pick-locks' });
 
@@ -460,7 +448,6 @@ describe('ThiefSkillRule', () => {
 
   describe('OSRIC Compliance', () => {
     it('should implement OSRIC skill progression tables', async () => {
-      // Test progression across levels for key skills
       const levels = [1, 5, 10, 15];
 
       for (const level of levels) {
@@ -482,7 +469,6 @@ describe('ThiefSkillRule', () => {
         expect(result.success).toBe(true);
 
         if (result.data) {
-          // Higher levels should generally have better base chances
           expect(result.data.baseChance).toBeGreaterThan(0);
           expect(result.data.baseChance).toBeLessThanOrEqual(99);
         }
@@ -512,7 +498,6 @@ describe('ThiefSkillRule', () => {
         expect(result.success).toBe(true);
 
         if (result.data) {
-          // Should include racial modifiers
           expect(result.data.modifiers).toBeDefined();
           const modifiers = result.data.modifiers as Array<{
             source: string;
@@ -521,7 +506,7 @@ describe('ThiefSkillRule', () => {
           }>;
           const racialMod = modifiers.find((mod) => mod.source === 'racial');
           if (racialMod) {
-            expect(racialMod.modifier).toBeGreaterThan(0); // Should have positive racial modifier
+            expect(racialMod.modifier).toBeGreaterThan(0);
           }
         }
       }
@@ -549,7 +534,7 @@ describe('ThiefSkillRule', () => {
 
         const params: ThiefSkillCheckParameters = {
           characterId: 'test-character',
-          skillType: 'pick-locks', // Dexterity-based skill
+          skillType: 'pick-locks',
         };
         const command = new ThiefSkillCheckCommand(params);
 
@@ -571,7 +556,6 @@ describe('ThiefSkillRule', () => {
             } else if (test.expectedPositive) {
               expect(abilityMod.modifier).toBeGreaterThan(0);
             }
-            // Neutral case doesn't require ability modifier
           }
         }
       }
@@ -581,7 +565,6 @@ describe('ThiefSkillRule', () => {
       const character = createMockCharacter();
       context.setEntity('test-character', character);
 
-      // Test both extreme cases
       const extremeCases = [
         { targetDifficulty: 200, expectMax: 99 },
         { targetDifficulty: -100, expectMin: 1 },

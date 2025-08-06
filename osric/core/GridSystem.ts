@@ -1,19 +1,6 @@
-/**
- * GridSystem - Abstract Grid System Interface
- *
- * Provides a grid-agnostic interface that different grid types
- * (square, hexagonal, triangular) can implement.
- *
- * PRESERVATION: Allows games to choose grid types appropriate
- * for their map design while maintaining consistent positioning APIs.
- */
-
 import type { Position, PositionBounds } from './Position';
 import { Direction } from './Position';
 
-/**
- * Grid cell representation
- */
 export interface GridCell {
   position: Position;
   neighbors?: Position[];
@@ -21,9 +8,6 @@ export interface GridCell {
   blocked?: boolean;
 }
 
-/**
- * Grid movement result
- */
 export interface GridMovementResult {
   valid: boolean;
   finalPosition: Position;
@@ -32,9 +16,6 @@ export interface GridMovementResult {
   blocked?: Position[];
 }
 
-/**
- * Abstract grid system interface
- */
 export abstract class GridSystem {
   protected gridSize: number;
   protected bounds?: PositionBounds;
@@ -44,54 +25,24 @@ export abstract class GridSystem {
     this.bounds = bounds;
   }
 
-  /**
-   * Get valid neighbors for a position
-   */
   abstract getNeighbors(position: Position): Position[];
 
-  /**
-   * Calculate movement cost between adjacent positions
-   */
   abstract getMovementCost(from: Position, to: Position): number;
 
-  /**
-   * Calculate distance between positions in grid units
-   */
   abstract getDistance(from: Position, to: Position): number;
 
-  /**
-   * Get the nearest valid grid position
-   */
   abstract snapToGrid(position: Position): Position;
 
-  /**
-   * Check if a position is valid on this grid
-   */
   abstract isValidPosition(position: Position): boolean;
 
-  /**
-   * Convert a direction to the nearest grid-appropriate direction
-   */
   abstract normalizeDirection(direction: Direction): Direction;
 
-  /**
-   * Get all positions within a range
-   */
   abstract getPositionsInRange(center: Position, range: number): Position[];
 
-  /**
-   * Check if there's a clear line of sight between positions
-   */
   abstract hasLineOfSight(from: Position, to: Position): boolean;
 
-  /**
-   * Find a path between two positions
-   */
   abstract findPath(from: Position, to: Position, maxCost?: number): Position[] | null;
 
-  /**
-   * Get grid information
-   */
   getGridSize(): number {
     return this.gridSize;
   }
@@ -104,9 +55,6 @@ export abstract class GridSystem {
     this.bounds = bounds;
   }
 
-  /**
-   * Check if position is within grid bounds
-   */
   isWithinBounds(position: Position): boolean {
     if (!this.bounds) return true;
 
@@ -121,21 +69,18 @@ export abstract class GridSystem {
   }
 }
 
-/**
- * Simple square grid implementation
- */
 export class SquareGrid extends GridSystem {
   getNeighbors(position: Position): Position[] {
     const neighbors: Position[] = [];
     const offsets = [
-      { x: 0, y: 1 }, // North
-      { x: 1, y: 1 }, // Northeast
-      { x: 1, y: 0 }, // East
-      { x: 1, y: -1 }, // Southeast
-      { x: 0, y: -1 }, // South
-      { x: -1, y: -1 }, // Southwest
-      { x: -1, y: 0 }, // West
-      { x: -1, y: 1 }, // Northwest
+      { x: 0, y: 1 },
+      { x: 1, y: 1 },
+      { x: 1, y: 0 },
+      { x: 1, y: -1 },
+      { x: 0, y: -1 },
+      { x: -1, y: -1 },
+      { x: -1, y: 0 },
+      { x: -1, y: 1 },
     ];
 
     for (const offset of offsets) {
@@ -158,12 +103,11 @@ export class SquareGrid extends GridSystem {
     const dy = Math.abs(to.y - from.y);
     const dz = Math.abs((to.z || 0) - (from.z || 0));
 
-    // Diagonal movement costs more
-    if (dx === 1 && dy === 1) return 1.4; // √2 ≈ 1.4
+    if (dx === 1 && dy === 1) return 1.4;
     if (dx === 1 || dy === 1) return 1;
     if (dz === 1) return 1;
 
-    return Number.POSITIVE_INFINITY; // Not adjacent
+    return Number.POSITIVE_INFINITY;
   }
 
   getDistance(from: Position, to: Position): number {
@@ -187,7 +131,6 @@ export class SquareGrid extends GridSystem {
   }
 
   normalizeDirection(direction: Direction): Direction {
-    // Square grid supports all 8 directions
     return direction;
   }
 
@@ -207,14 +150,11 @@ export class SquareGrid extends GridSystem {
   }
 
   hasLineOfSight(from: Position, to: Position): boolean {
-    // Simple line of sight - check if no solid obstacles in path
-    // This is a simplified version; games should implement proper line tracing
     const path = this.findPath(from, to);
     return path !== null;
   }
 
   findPath(from: Position, to: Position, maxCost = 100): Position[] | null {
-    // Simple A* pathfinding implementation
     const openSet = new Set<string>();
     const closedSet = new Set<string>();
     const cameFrom = new Map<string, Position>();
@@ -235,7 +175,6 @@ export class SquareGrid extends GridSystem {
     fScore.set(startKey, this.getDistance(from, to));
 
     while (openSet.size > 0) {
-      // Find position with lowest fScore
       let current = '';
       let lowestF = Number.POSITIVE_INFINITY;
 
@@ -248,7 +187,6 @@ export class SquareGrid extends GridSystem {
       }
 
       if (current === goalKey) {
-        // Reconstruct path
         const path: Position[] = [];
         let currentPos = current;
 
@@ -289,24 +227,21 @@ export class SquareGrid extends GridSystem {
       }
     }
 
-    return null; // No path found
+    return null;
   }
 }
 
-/**
- * Simple hexagonal grid implementation
- */
 export class HexGrid extends GridSystem {
   getNeighbors(position: Position): Position[] {
     const neighbors: Position[] = [];
-    // Hex grid has 6 neighbors (offset coordinates)
+
     const offsets = [
-      { x: 1, y: 0 }, // East
-      { x: 0, y: 1 }, // Northeast (even cols) / Southeast (odd cols)
-      { x: -1, y: 1 }, // Northwest (even cols) / North (odd cols)
-      { x: -1, y: 0 }, // West
-      { x: -1, y: -1 }, // Southwest (even cols) / South (odd cols)
-      { x: 0, y: -1 }, // Southeast (even cols) / Southwest (odd cols)
+      { x: 1, y: 0 },
+      { x: 0, y: 1 },
+      { x: -1, y: 1 },
+      { x: -1, y: 0 },
+      { x: -1, y: -1 },
+      { x: 0, y: -1 },
     ];
 
     for (const offset of offsets) {
@@ -325,7 +260,6 @@ export class HexGrid extends GridSystem {
   }
 
   getMovementCost(from: Position, to: Position): number {
-    // All hex movements are equal cost
     const neighbors = this.getNeighbors(from);
     const isNeighbor = neighbors.some(
       (neighbor) => neighbor.x === to.x && neighbor.y === to.y && (neighbor.z || 0) === (to.z || 0)
@@ -335,7 +269,6 @@ export class HexGrid extends GridSystem {
   }
 
   getDistance(from: Position, to: Position): number {
-    // Hex distance calculation (simplified)
     const dx = to.x - from.x;
     const dy = to.y - from.y;
 
@@ -343,7 +276,6 @@ export class HexGrid extends GridSystem {
   }
 
   snapToGrid(position: Position): Position {
-    // Hex grid snapping is more complex, simplified here
     return {
       x: Math.round(position.x),
       y: Math.round(position.y),
@@ -356,7 +288,6 @@ export class HexGrid extends GridSystem {
   }
 
   normalizeDirection(direction: Direction): Direction {
-    // Hex grid normalizes to 6 main directions
     switch (direction) {
       case Direction.North:
       case Direction.NorthEast:
@@ -396,13 +327,11 @@ export class HexGrid extends GridSystem {
   }
 
   hasLineOfSight(from: Position, to: Position): boolean {
-    // Simplified hex line of sight
     const path = this.findPath(from, to);
     return path !== null;
   }
 
   findPath(from: Position, to: Position, maxCost = 100): Position[] | null {
-    // Reuse square grid A* with hex distance
     return new SquareGrid().findPath(from, to, maxCost);
   }
 }

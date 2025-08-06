@@ -3,9 +3,6 @@ import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import { RULE_NAMES } from '@osric/types/constants';
 import type { Character, Item, Spell } from '@osric/types/entities';
 
-/**
- * Scroll creation tracking
- */
 export interface ScrollCreation {
   creatorId: string;
   spellName: string;
@@ -15,9 +12,6 @@ export interface ScrollCreation {
   progressPercentage: number;
 }
 
-/**
- * Magic scroll as a specific item type
- */
 export interface MagicScroll {
   id: string;
   name: string;
@@ -35,9 +29,6 @@ export interface MagicScroll {
   charges: number | null;
 }
 
-/**
- * Scroll casting details
- */
 export interface ScrollCastingCheck {
   scroll: MagicScroll;
   caster: Character;
@@ -45,24 +36,6 @@ export interface ScrollCastingCheck {
   backfireChance: number;
 }
 
-/**
- * OSRIC Scroll Creation Rules - Preserves all OSRIC scroll creation mechanics
- *
- * Sources:
- * - rules/spells/scrollCreation.ts - Scroll creation requirements and mechanics
- *
- * OSRIC Preservation:
- * - Level requirements for scroll creation (level = spell level * 2 - 1)
- * - Gold costs (100 gp × spell level squared)
- * - Time requirements with intelligence modifiers
- * - Class restrictions for scroll usage
- * - Failure chances based on level differences
- */
-
-/**
- * Rule for calculating scroll creation requirements
- * OSRIC Preservation: Exact formulas for level, cost, and time requirements
- */
 export class ScrollCreationRequirementsRule extends BaseRule {
   public readonly name = RULE_NAMES.SCROLL_CREATION_REQUIREMENTS;
   public readonly description =
@@ -87,7 +60,6 @@ export class ScrollCreationRequirementsRule extends BaseRule {
       return this.createFailureResult('Character not found');
     }
 
-    // Check if character is a spellcaster
     const isSpellcaster = ['Magic-User', 'Illusionist', 'Cleric', 'Druid'].includes(
       character.class
     );
@@ -95,7 +67,6 @@ export class ScrollCreationRequirementsRule extends BaseRule {
       return this.createFailureResult('Only spellcasters can create scrolls');
     }
 
-    // OSRIC requirement calculations - PRESERVED EXACTLY
     const minimumCasterLevel = Math.max(1, spellLevel * 2 - 1);
     if (character.level < minimumCasterLevel) {
       return this.createFailureResult(
@@ -103,17 +74,14 @@ export class ScrollCreationRequirementsRule extends BaseRule {
       );
     }
 
-    // Calculate time requirements with intelligence modifier
     const baseDays = spellLevel * 2;
     const intelligenceModifier = character.abilityModifiers?.intelligenceLearnSpells || 0;
     const daysRequired = Math.max(1, baseDays - Math.floor(intelligenceModifier / 5));
 
-    // Gold cost: 100gp × spell level squared
     const goldCost = 100 * spellLevel ** 2;
 
     const message = `Creating a level ${spellLevel} scroll will require ${daysRequired} days and ${goldCost} gold pieces`;
 
-    // Store results in context
     context.setTemporary('scrollCreation_requirements', {
       canCreate: true,
       daysRequired,
@@ -130,10 +98,6 @@ export class ScrollCreationRequirementsRule extends BaseRule {
   }
 }
 
-/**
- * Rule for starting scroll creation process
- * OSRIC Preservation: All creation mechanics and validation
- */
 export class ScrollCreationStartRule extends BaseRule {
   public readonly name = RULE_NAMES.SCROLL_CREATION_START;
   public readonly description = 'Starts a scroll creation project with OSRIC requirements';
@@ -159,17 +123,14 @@ export class ScrollCreationStartRule extends BaseRule {
       return this.createFailureResult('Character not found');
     }
 
-    // Check creation requirements first
     context.setTemporary('scrollCreation_characterId', characterId);
     context.setTemporary('scrollCreation_spellLevel', spellLevel);
 
-    // This would typically be handled by rule chaining, but for simplicity we'll inline
     const requirements = this.calculateRequirements(character, spellLevel);
     if (!requirements.canCreate) {
       return this.createFailureResult(requirements.message);
     }
 
-    // Create the scroll creation project
     const scrollCreation: ScrollCreation = {
       creatorId: characterId,
       spellName,
@@ -179,7 +140,6 @@ export class ScrollCreationStartRule extends BaseRule {
       progressPercentage: 0,
     };
 
-    // Store the project in context
     context.setTemporary('scrollCreation_project', scrollCreation);
 
     const message = `Started creating scroll of ${spellName} (level ${spellLevel}). Progress: 0%`;
@@ -203,7 +163,6 @@ export class ScrollCreationStartRule extends BaseRule {
     goldCost: number;
     message: string;
   } {
-    // Check if character is a spellcaster
     const isSpellcaster = ['Magic-User', 'Illusionist', 'Cleric', 'Druid'].includes(
       character.class
     );
@@ -216,7 +175,6 @@ export class ScrollCreationStartRule extends BaseRule {
       };
     }
 
-    // Check level requirement
     const minimumCasterLevel = Math.max(1, spellLevel * 2 - 1);
     if (character.level < minimumCasterLevel) {
       return {
@@ -227,7 +185,6 @@ export class ScrollCreationStartRule extends BaseRule {
       };
     }
 
-    // Calculate requirements
     const baseDays = spellLevel * 2;
     const intelligenceModifier = character.abilityModifiers?.intelligenceLearnSpells || 0;
     const daysRequired = Math.max(1, baseDays - Math.floor(intelligenceModifier / 5));
@@ -242,10 +199,6 @@ export class ScrollCreationStartRule extends BaseRule {
   }
 }
 
-/**
- * Rule for updating scroll creation progress
- * OSRIC Preservation: Time-based progress tracking
- */
 export class ScrollCreationProgressRule extends BaseRule {
   public readonly name = RULE_NAMES.SCROLL_CREATION_PROGRESS;
   public readonly description = 'Updates progress on an ongoing scroll creation project';
@@ -264,7 +217,6 @@ export class ScrollCreationProgressRule extends BaseRule {
       return this.createFailureResult('Missing project or days worked for progress update');
     }
 
-    // Calculate new progress percentage
     const progressGained = (daysWorked / project.daysRequired) * 100;
     const newProgress = Math.min(100, project.progressPercentage + progressGained);
 
@@ -273,7 +225,6 @@ export class ScrollCreationProgressRule extends BaseRule {
       progressPercentage: newProgress,
     };
 
-    // Store updated project
     context.setTemporary('scrollProgress_result', updatedProject);
 
     const message =
@@ -292,10 +243,6 @@ export class ScrollCreationProgressRule extends BaseRule {
   }
 }
 
-/**
- * Rule for scroll usage validation
- * OSRIC Preservation: Class restrictions and usage mechanics
- */
 export class ScrollUsageValidationRule extends BaseRule {
   public readonly name = RULE_NAMES.SCROLL_USAGE_VALIDATION;
   public readonly description = 'Validates if a character can use a specific scroll';
@@ -319,13 +266,11 @@ export class ScrollUsageValidationRule extends BaseRule {
       return this.createFailureResult('Character not found');
     }
 
-    // Find the scroll in character's inventory
     const scroll = character.inventory.find((item: Item) => item.id === scrollId) as MagicScroll;
     if (!scroll || scroll.itemType !== 'scroll') {
       return this.createFailureResult('Scroll not found in character inventory');
     }
 
-    // Check if character's class can use this scroll
     const canUse = scroll.userClasses.includes(character.class);
     if (!canUse) {
       return this.createFailureResult(
@@ -333,14 +278,12 @@ export class ScrollUsageValidationRule extends BaseRule {
       );
     }
 
-    // Check if scroll has already been consumed
     if (scroll.consumed) {
       return this.createFailureResult(
         'This scroll has already been used and is no longer functional'
       );
     }
 
-    // Store validation results
     context.setTemporary('scrollUsage_validated', true);
     context.setTemporary('scrollUsage_scroll', scroll);
 
@@ -354,10 +297,6 @@ export class ScrollUsageValidationRule extends BaseRule {
   }
 }
 
-/**
- * Rule for calculating scroll casting failure chances
- * OSRIC Preservation: Level-based failure mechanics
- */
 export class ScrollCastingFailureRule extends BaseRule {
   public readonly name = RULE_NAMES.SCROLL_CASTING_FAILURE;
   public readonly description =
@@ -377,13 +316,10 @@ export class ScrollCastingFailureRule extends BaseRule {
       return this.createFailureResult('Missing scroll or caster for failure calculation');
     }
 
-    // OSRIC scroll casting failure mechanics - PRESERVED
     const levelDifference = Math.max(0, scroll.minCasterLevel - caster.level);
 
-    // Base 5% failure chance per level difference
     const failureChance = Math.min(95, levelDifference * 5);
 
-    // If failure occurs, there's a chance for backfire
     const backfireChance = Math.min(50, failureChance / 2);
 
     const castingCheck: ScrollCastingCheck = {
@@ -393,7 +329,6 @@ export class ScrollCastingFailureRule extends BaseRule {
       backfireChance,
     };
 
-    // Store casting check results
     context.setTemporary('scrollCasting_check', castingCheck);
 
     const message =
@@ -410,10 +345,6 @@ export class ScrollCastingFailureRule extends BaseRule {
   }
 }
 
-/**
- * Rule for executing scroll spell casting
- * OSRIC Preservation: Success/failure resolution with backfire mechanics
- */
 export class ScrollSpellCastingRule extends BaseRule {
   public readonly name = RULE_NAMES.SCROLL_SPELL_CASTING;
   public readonly description =
@@ -433,15 +364,12 @@ export class ScrollSpellCastingRule extends BaseRule {
 
     const { scroll, caster, failureChance, backfireChance } = castingCheck;
 
-    // Roll for success
     const failureRoll = Math.floor(Math.random() * 100) + 1;
     const success = failureRoll > failureChance;
 
     if (success) {
-      // Successful casting - consume the scroll
       const updatedScroll = { ...scroll, consumed: true };
 
-      // Update character's inventory
       const updatedCharacter = {
         ...caster,
         inventory: caster.inventory.map((item) => (item.id === scroll.id ? updatedScroll : item)),
@@ -449,7 +377,6 @@ export class ScrollSpellCastingRule extends BaseRule {
 
       context.setEntity(caster.id, updatedCharacter);
 
-      // Store casting results
       context.setTemporary('scrollCast_result', {
         success: true,
         backfired: false,
@@ -467,11 +394,9 @@ export class ScrollSpellCastingRule extends BaseRule {
       });
     }
 
-    // Failed casting - check for backfire
     const backfireRoll = Math.floor(Math.random() * 100) + 1;
     const backfired = backfireRoll <= backfireChance;
 
-    // Scroll is still consumed on failure
     const updatedScroll = { ...scroll, consumed: true };
     const updatedCharacter = {
       ...caster,
@@ -489,7 +414,6 @@ export class ScrollSpellCastingRule extends BaseRule {
       message = `${caster.name} fails to cast ${scroll.spell.name} from the scroll, but nothing bad happens`;
     }
 
-    // Store casting results
     context.setTemporary('scrollCast_result', {
       success: false,
       backfired,

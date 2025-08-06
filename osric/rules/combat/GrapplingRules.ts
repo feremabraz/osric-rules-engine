@@ -1,10 +1,3 @@
-/**
- * GrapplingRules - OSRIC Grappling System Rules
- *
- * Migrated from rules/combat/grappling.ts
- * PRESERVATION: All OSRIC grappling mechanics and calculations preserved exactly
- */
-
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
@@ -35,7 +28,6 @@ interface StrengthComparisonResult {
   targetStrength: number;
 }
 
-// OSRIC Grappling Outcomes - PRESERVE EXACT VALUES
 export enum GrapplingOutcome {
   ATTACKER_GRAPPLES = 'attacker_grapples',
   DEFENDER_GRAPPLES = 'defender_grapples',
@@ -46,7 +38,7 @@ export enum GrapplingOutcome {
 
 export class GrappleAttackRule extends BaseRule {
   readonly name = RULE_NAMES.GRAPPLE_ATTACK;
-  readonly priority = 10; // Execute first in grapple chain
+  readonly priority = 10;
 
   canApply(context: GameContext, command: Command): boolean {
     return (
@@ -64,17 +56,14 @@ export class GrappleAttackRule extends BaseRule {
     try {
       const { attacker, target } = grappleContext;
 
-      // First, must hit with normal attack roll - PRESERVE OSRIC REQUIREMENT
       const attackRoll = this.rollD20();
       const attackModifiers = this.calculateGrappleAttackModifiers(attacker, grappleContext);
       const totalAttackRoll = attackRoll + attackModifiers;
 
-      // Calculate target number using THAC0
       const targetNumber = attacker.thac0 - target.armorClass;
       const hit = totalAttackRoll >= targetNumber;
 
       if (!hit) {
-        // Grapple attempt misses completely
         const grappleResult = {
           outcome: GrapplingOutcome.MISS,
           hit: false,
@@ -87,7 +76,6 @@ export class GrappleAttackRule extends BaseRule {
         return this.createSuccessResult('Grapple attack missed');
       }
 
-      // Attack hits, proceed to strength comparison
       const attackResult: GrappleAttackResult = {
         hit: true,
         attackRoll: totalAttackRoll,
@@ -103,23 +91,18 @@ export class GrappleAttackRule extends BaseRule {
     }
   }
 
-  /**
-   * Calculate grapple attack modifiers - PRESERVE OSRIC BONUSES
-   */
   private calculateGrappleAttackModifiers(
     attacker: CharacterData | MonsterData,
     context: GrappleContext
   ): number {
     let modifier = context.situationalModifiers;
 
-    // Apply strength bonus for grapple attempts (characters only)
     if ('abilityModifiers' in attacker && attacker.abilityModifiers.strengthHitAdj) {
       modifier += attacker.abilityModifiers.strengthHitAdj;
     }
 
-    // Apply charge bonus for overbearing
     if (context.grappleType === 'overbearing' && context.isChargedAttack) {
-      modifier += 2; // OSRIC charge attack bonus
+      modifier += 2;
     }
 
     return modifier;
@@ -132,7 +115,7 @@ export class GrappleAttackRule extends BaseRule {
 
 export class StrengthComparisonRule extends BaseRule {
   readonly name = RULE_NAMES.STRENGTH_COMPARISON;
-  readonly priority = 20; // Execute after grapple attack
+  readonly priority = 20;
 
   canApply(context: GameContext, command: Command): boolean {
     const attackResult = context.getTemporary('grapple-attack-result') as GrappleAttackResult;
@@ -153,10 +136,8 @@ export class StrengthComparisonRule extends BaseRule {
     try {
       const { attacker, target, grappleType } = grappleContext;
 
-      // Compare strengths - PRESERVE OSRIC STRENGTH COMPARISON
       const outcome = this.compareStrengths(attacker, target, grappleType);
 
-      // Store strength comparison result
       const strengthResult: StrengthComparisonResult = {
         outcome,
         attackerStrength: this.getEffectiveStrength(attacker),
@@ -174,9 +155,6 @@ export class StrengthComparisonRule extends BaseRule {
     }
   }
 
-  /**
-   * Compare strengths to determine grapple outcome - PRESERVE OSRIC LOGIC
-   */
   private compareStrengths(
     attacker: CharacterData | MonsterData,
     target: CharacterData | MonsterData,
@@ -185,43 +163,33 @@ export class StrengthComparisonRule extends BaseRule {
     const attackerStr = this.getEffectiveStrength(attacker);
     const targetStr = this.getEffectiveStrength(target);
 
-    // OSRIC Grappling Logic - PRESERVE EXACT MECHANICS
     if (grappleType === 'overbearing') {
-      // Overbearing: attacker needs higher strength to succeed
       if (attackerStr > targetStr) {
         return GrapplingOutcome.OVERBEARING_SUCCESS;
       }
-      return GrapplingOutcome.MISS; // Overbearing fails if not stronger
+      return GrapplingOutcome.MISS;
     }
 
-    // Standard grappling: mutual grapple possible
     if (attackerStr > targetStr) {
       return GrapplingOutcome.ATTACKER_GRAPPLES;
     }
     if (targetStr > attackerStr) {
       return GrapplingOutcome.DEFENDER_GRAPPLES;
     }
-    // Equal strength - both grappled
+
     return GrapplingOutcome.STALEMATE;
   }
 
-  /**
-   * Get effective strength for grappling - PRESERVE OSRIC STRENGTH VALUES
-   */
   private getEffectiveStrength(entity: CharacterData | MonsterData): number {
     if ('abilities' in entity) {
       return entity.abilities.strength;
     }
     if ('strength' in entity) {
-      // Monster strength value
       return (entity as MonsterData & { strength?: number }).strength || 12;
     }
-    return 12; // Default strength
+    return 12;
   }
 
-  /**
-   * Get descriptive message for outcome
-   */
   private getOutcomeMessage(
     outcome: GrapplingOutcome,
     attackerName: string,
@@ -246,7 +214,7 @@ export class StrengthComparisonRule extends BaseRule {
 
 export class GrappleEffectRule extends BaseRule {
   readonly name = RULE_NAMES.GRAPPLE_EFFECT;
-  readonly priority = 30; // Execute after strength comparison
+  readonly priority = 30;
 
   canApply(context: GameContext, command: Command): boolean {
     return (
@@ -270,10 +238,8 @@ export class GrappleEffectRule extends BaseRule {
       const { attacker, target } = grappleContext;
       const { outcome } = strengthResult;
 
-      // Apply grapple effects and damage - PRESERVE OSRIC MECHANICS
       const effects = this.applyGrappleEffects(attacker, target, outcome);
 
-      // Store final grapple result
       context.setTemporary('grapple-final-result', effects);
 
       return this.createSuccessResult('Grapple effects applied');
@@ -284,9 +250,6 @@ export class GrappleEffectRule extends BaseRule {
     }
   }
 
-  /**
-   * Apply grapple effects based on outcome - PRESERVE OSRIC EFFECTS
-   */
   private applyGrappleEffects(
     attacker: CharacterData | MonsterData,
     target: CharacterData | MonsterData,
@@ -304,45 +267,38 @@ export class GrappleEffectRule extends BaseRule {
 
     switch (outcome) {
       case GrapplingOutcome.ATTACKER_GRAPPLES:
-        // Target is grappled/restrained
         targetEffects.push(this.createGrappledEffect());
-        // Attacker is also grappling (restricted movement)
+
         attackerEffects.push(this.createGrapplingEffect());
-        damage = this.rollGrappleDamage(); // 0-1 damage in OSRIC
+        damage = this.rollGrappleDamage();
         break;
 
       case GrapplingOutcome.DEFENDER_GRAPPLES:
-        // Attacker is grappled/restrained (reversal)
         attackerEffects.push(this.createGrappledEffect());
-        // Target is grappling
+
         targetEffects.push(this.createGrapplingEffect());
-        damage = 0; // No damage to attacker in reversal
+        damage = 0;
         break;
 
       case GrapplingOutcome.OVERBEARING_SUCCESS:
-        // Target is knocked prone
         targetEffects.push(this.createProneEffect());
-        damage = this.rollGrappleDamage(); // 0-1 damage
+        damage = this.rollGrappleDamage();
         break;
 
       case GrapplingOutcome.STALEMATE:
-        // Both are mutually grappled
         attackerEffects.push(this.createGrappledEffect());
         targetEffects.push(this.createGrappledEffect());
-        damage = 0; // No damage in stalemate
+        damage = 0;
         break;
 
       case GrapplingOutcome.MISS:
-        // No effects
         break;
     }
 
-    // Apply damage to target
     if (damage > 0) {
       target.hitPoints.current = Math.max(0, target.hitPoints.current - damage);
     }
 
-    // Apply status effects
     if (attackerEffects.length > 0) {
       attacker.statusEffects = [...(attacker.statusEffects || []), ...attackerEffects];
     }
@@ -362,56 +318,40 @@ export class GrappleEffectRule extends BaseRule {
     };
   }
 
-  /**
-   * Create grappled status effect - PRESERVE OSRIC CONDITIONS
-   */
   private createGrappledEffect(): StatusEffect {
     return {
       name: 'Grappled',
-      duration: 0, // Until broken free
+      duration: 0,
       effect: 'Restrained and cannot move freely. -4 to attack rolls.',
       savingThrow: null,
       endCondition: 'Break free with strength check or grappler releases',
     };
   }
 
-  /**
-   * Create grappling status effect (for the grappler)
-   */
   private createGrapplingEffect(): StatusEffect {
     return {
       name: 'Grappling',
-      duration: 0, // Until released
+      duration: 0,
       effect: 'Grappling an opponent. Movement restricted.',
       savingThrow: null,
       endCondition: 'Release grapple or opponent breaks free',
     };
   }
 
-  /**
-   * Create prone status effect - PRESERVE OSRIC CONDITIONS
-   */
   private createProneEffect(): StatusEffect {
     return {
       name: 'Prone',
-      duration: 1, // Can stand up next round
+      duration: 1,
       effect: 'Knocked down. -4 to attack rolls, attackers get +4 to hit.',
       savingThrow: null,
       endCondition: 'Stand up (costs movement)',
     };
   }
 
-  /**
-   * Roll grapple damage - PRESERVE OSRIC 0-1 DAMAGE
-   */
   private rollGrappleDamage(): number {
-    // OSRIC: Grappling does 0-1 points of damage
-    return Math.floor(Math.random() * 2); // 0 or 1
+    return Math.floor(Math.random() * 2);
   }
 
-  /**
-   * Generate descriptive message for effects
-   */
   private generateEffectMessage(
     attackerName: string,
     targetName: string,

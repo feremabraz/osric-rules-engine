@@ -3,22 +3,11 @@ import { BaseRule, type RuleResult } from '../../core/Rule';
 import type { Character, Spell } from '../../types';
 import { RULE_NAMES } from '../../types/constants';
 
-/**
- * Rule for handling spell memorization mechanics in the OSRIC system.
- *
- * Preserves OSRIC spell memorization mechanics:
- * - Spell slot validation by class and level
- * - Rest requirements for memorization
- * - Bonus spells from high ability scores
- * - Spell replacement mechanics
- * - Class-specific memorization rules
- */
 export class SpellMemorizationRules extends BaseRule {
   public readonly name = RULE_NAMES.SPELL_MEMORIZATION;
   public readonly description = 'Handles OSRIC spell memorization and slot allocation';
 
   public canApply(context: GameContext): boolean {
-    // This rule applies when we have spell memorization temporary data
     const caster = context.getTemporary<Character>('memorizeSpell_caster');
     const spell = context.getTemporary<Spell>('memorizeSpell_spell');
     return !!(caster && spell);
@@ -35,13 +24,11 @@ export class SpellMemorizationRules extends BaseRule {
         return this.createFailureResult('Missing memorization data in context');
       }
 
-      // Validate memorization prerequisites
       const validationResult = this.validateMemorization(caster, spell, spellLevel);
       if (!validationResult.success) {
         return validationResult;
       }
 
-      // Handle spell replacement if specified
       let updatedCaster = caster;
       if (replaceSpell) {
         updatedCaster = this.replaceMemorizedSpell(caster, replaceSpell, spell, spellLevel);
@@ -49,7 +36,6 @@ export class SpellMemorizationRules extends BaseRule {
         updatedCaster = this.memorizeNewSpell(caster, spell, spellLevel);
       }
 
-      // Update the caster in context
       context.setEntity(caster.id, updatedCaster);
 
       const action = replaceSpell ? 'replaced' : 'memorized';
@@ -65,29 +51,21 @@ export class SpellMemorizationRules extends BaseRule {
     }
   }
 
-  /**
-   * Validate that the spell can be memorized by this caster
-   * Preserves OSRIC memorization requirements
-   */
   private validateMemorization(caster: Character, spell: Spell, spellLevel: number): RuleResult {
-    // Check if caster can cast spells of this level
     if (!this.canCastSpellLevel(caster, spellLevel)) {
       return this.createFailureResult(`${caster.name} cannot cast spells of level ${spellLevel}`);
     }
 
-    // Check if spell matches caster's class
     if (!this.isSpellValidForClass(caster, spell)) {
       return this.createFailureResult(`${spell.name} is not available to ${caster.class}s`);
     }
 
-    // For arcane casters, check if spell is in spellbook
     if (this.isArcaneCaster(caster)) {
       if (!this.isSpellInSpellbook(caster, spell)) {
         return this.createFailureResult(`${spell.name} is not in ${caster.name}'s spellbook`);
       }
     }
 
-    // Check intelligence requirements for arcane casters
     if (this.isArcaneCaster(caster)) {
       const maxSpellLevel = this.getMaxSpellLevelFromIntelligence(caster.abilities.intelligence);
       if (maxSpellLevel === null || spellLevel > maxSpellLevel) {
@@ -100,43 +78,30 @@ export class SpellMemorizationRules extends BaseRule {
     return this.createSuccessResult('Memorization validation passed');
   }
 
-  /**
-   * Check if character can cast spells of the given level
-   */
   private canCastSpellLevel(caster: Character, spellLevel: number): boolean {
     return !!caster.spellSlots[spellLevel] && caster.spellSlots[spellLevel] > 0;
   }
 
-  /**
-   * Check if spell is valid for the character's class
-   */
   private isSpellValidForClass(caster: Character, spell: Spell): boolean {
     const characterClass = caster.class;
 
-    // Map character classes to spell classes
     const classSpellMapping: Record<string, string[]> = {
       'Magic-User': ['Magic-User'],
       Illusionist: ['Illusionist'],
       Cleric: ['Cleric'],
       Druid: ['Druid'],
-      Paladin: ['Cleric'], // Paladins use cleric spells
-      Ranger: ['Druid'], // Rangers use druid spells
+      Paladin: ['Cleric'],
+      Ranger: ['Druid'],
     };
 
     const validSpellClasses = classSpellMapping[characterClass] || [];
     return validSpellClasses.includes(spell.class);
   }
 
-  /**
-   * Check if character is an arcane caster
-   */
   private isArcaneCaster(caster: Character): boolean {
     return ['Magic-User', 'Illusionist'].includes(caster.class);
   }
 
-  /**
-   * Check if spell is in character's spellbook (for arcane casters)
-   */
   private isSpellInSpellbook(caster: Character, spell: Spell): boolean {
     if (!caster.spellbook) {
       return false;
@@ -147,10 +112,6 @@ export class SpellMemorizationRules extends BaseRule {
     );
   }
 
-  /**
-   * Calculate maximum spell level based on intelligence
-   * Preserves OSRIC intelligence-based spell level limits
-   */
   private getMaxSpellLevelFromIntelligence(intelligence: number): number | null {
     if (intelligence < 9) return null;
     if (intelligence <= 9) return 4;
@@ -158,12 +119,9 @@ export class SpellMemorizationRules extends BaseRule {
     if (intelligence <= 14) return 6;
     if (intelligence <= 16) return 7;
     if (intelligence <= 17) return 8;
-    return 9; // Intelligence 18+
+    return 9;
   }
 
-  /**
-   * Memorize a new spell in an available slot
-   */
   private memorizeNewSpell(caster: Character, spell: Spell, spellLevel: number): Character {
     const currentMemorized = caster.memorizedSpells[spellLevel] || [];
 
@@ -176,9 +134,6 @@ export class SpellMemorizationRules extends BaseRule {
     };
   }
 
-  /**
-   * Replace an already memorized spell with a new one
-   */
   private replaceMemorizedSpell(
     caster: Character,
     replaceSpellName: string,
@@ -187,7 +142,6 @@ export class SpellMemorizationRules extends BaseRule {
   ): Character {
     const currentMemorized = caster.memorizedSpells[spellLevel] || [];
 
-    // Find and replace the specified spell
     const updatedMemorized = currentMemorized.map((memorizedSpell) =>
       memorizedSpell.name === replaceSpellName ? newSpell : memorizedSpell
     );
@@ -201,14 +155,9 @@ export class SpellMemorizationRules extends BaseRule {
     };
   }
 
-  /**
-   * Calculate total spell slots including bonus spells from wisdom
-   * Preserves OSRIC bonus spell mechanics for divine casters
-   */
   public static calculateTotalSpellSlots(caster: Character): Record<number, number> {
     const baseSlots = { ...caster.spellSlots };
 
-    // Add bonus spells from wisdom for divine casters
     if (['Cleric', 'Druid', 'Paladin', 'Ranger'].includes(caster.class)) {
       const bonusSpells = SpellMemorizationRules.getBonusSpellsFromWisdom(caster.abilities.wisdom);
 
@@ -223,10 +172,6 @@ export class SpellMemorizationRules extends BaseRule {
     return baseSlots;
   }
 
-  /**
-   * Calculate bonus spells from high wisdom for divine casters
-   * Preserves OSRIC wisdom bonus spell table
-   */
   private static getBonusSpellsFromWisdom(wisdom: number): Record<number, number> {
     const bonusSpells: Record<number, number> = {};
 
@@ -240,20 +185,10 @@ export class SpellMemorizationRules extends BaseRule {
     return bonusSpells;
   }
 
-  /**
-   * Check if character needs rest to memorize spells
-   * OSRIC requires full rest for spell memorization
-   */
   public static requiresRest(_caster: Character): boolean {
-    // In OSRIC, spellcasters must rest 8 hours before memorizing
-    // This would track when the character last memorized spells
-    // For now, simplified to always require rest
     return true;
   }
 
-  /**
-   * Clear all memorized spells (typically done after rest before memorizing new ones)
-   */
   public static clearMemorizedSpells(caster: Character): Character {
     return {
       ...caster,

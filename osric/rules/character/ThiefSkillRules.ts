@@ -1,10 +1,3 @@
-/**
- * ThiefSkillRules - OSRIC Thief Skills Rule Implementation
- *
- * Handles validation and processing of thief skill checks according to OSRIC rules.
- * PRESERVATION: All OSRIC thief skill mechanics and calculations preserved exactly.
- */
-
 import type { Command } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { BaseRule, type RuleResult } from '../../core/Rule';
@@ -34,7 +27,7 @@ interface ThiefSkillCheckParameters {
 
 export class ThiefSkillRule extends BaseRule {
   readonly name = RULE_NAMES.THIEF_SKILLS;
-  readonly priority = 500; // Normal priority for skill checks
+  readonly priority = 500;
 
   canApply(_context: GameContext, command: Command): boolean {
     return command.type === COMMAND_TYPES.THIEF_SKILL_CHECK;
@@ -53,16 +46,13 @@ export class ThiefSkillRule extends BaseRule {
         return this.createFailureResult(`Character ${skillData.characterId} not found`);
       }
 
-      // Validate character can use thief skills
       const validationResult = this.validateThiefSkillUse(character, skillData.skillType);
       if (!validationResult.success) {
         return validationResult;
       }
 
-      // Calculate skill success probability
       const skillCalculation = this.calculateSkillChance(character, skillData);
 
-      // Apply any special rules or restrictions
       const specialRules = this.applySpecialRules(character, skillData, skillCalculation);
 
       return this.createSuccessResult('Thief skill validation complete', {
@@ -82,9 +72,6 @@ export class ThiefSkillRule extends BaseRule {
     }
   }
 
-  /**
-   * Validate that character can use the specified thief skill
-   */
   private validateThiefSkillUse(
     character: Character,
     skillType: string
@@ -93,7 +80,6 @@ export class ThiefSkillRule extends BaseRule {
     const level = character.experience.level;
     const restrictions: string[] = [];
 
-    // Check if character has thief abilities
     const hasThiefSkills =
       characterClass === 'thief' ||
       characterClass === 'assassin' ||
@@ -107,7 +93,6 @@ export class ThiefSkillRule extends BaseRule {
       };
     }
 
-    // Check level requirements for certain skills
     if (skillType === 'read-languages' && level < 4) {
       return {
         success: false,
@@ -116,15 +101,12 @@ export class ThiefSkillRule extends BaseRule {
       };
     }
 
-    // Check for class-specific restrictions
     if (characterClass === 'assassin') {
-      // Assassins have some skill restrictions
       if (skillType === 'find-traps' && level < 3) {
         restrictions.push('Assassins cannot find traps until level 3');
       }
     }
 
-    // Check for racial restrictions
     const race = character.race.toLowerCase();
     if (race === 'dwarf' && skillType === 'climb-walls') {
       restrictions.push('Dwarves have -10% penalty to climb walls due to their build');
@@ -138,9 +120,6 @@ export class ThiefSkillRule extends BaseRule {
     };
   }
 
-  /**
-   * Calculate the base and modified skill chance
-   */
   private calculateSkillChance(
     character: Character,
     skillData: ThiefSkillCheckParameters
@@ -151,11 +130,9 @@ export class ThiefSkillRule extends BaseRule {
   } {
     const modifiers: Array<{ source: string; modifier: number; description: string }> = [];
 
-    // Get base skill percentage from OSRIC tables
     const baseChance = this.getBaseSkillPercentage(character, skillData.skillType, modifiers);
     let finalChance = baseChance;
 
-    // Apply situational modifiers
     if (skillData.situationalModifiers) {
       finalChance = this.applySituationalModifiers(
         finalChance,
@@ -165,7 +142,6 @@ export class ThiefSkillRule extends BaseRule {
       );
     }
 
-    // Apply target difficulty override if provided
     if (skillData.targetDifficulty !== undefined) {
       modifiers.push({
         source: 'override',
@@ -175,24 +151,19 @@ export class ThiefSkillRule extends BaseRule {
       finalChance = skillData.targetDifficulty;
     }
 
-    // Ensure final chance is within valid range (1-99%)
     finalChance = Math.max(1, Math.min(99, finalChance));
 
     return { baseChance, finalChance, modifiers };
   }
 
-  /**
-   * Get base skill percentage from OSRIC progression tables
-   */
   private getBaseSkillPercentage(
     character: Character,
     skillType: string,
     modifiers: Array<{ source: string; modifier: number; description: string }>
   ): number {
-    const level = Math.min(character.experience.level, 15); // Cap at level 15 for table
+    const level = Math.min(character.experience.level, 15);
     const characterClass = character.class.toLowerCase();
 
-    // OSRIC thief skill base percentages by level (1-15)
     const skillTables: Record<string, number[]> = {
       'pick-locks': [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80],
       'find-traps': [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90],
@@ -205,7 +176,6 @@ export class ThiefSkillRule extends BaseRule {
 
     let basePercent = skillTables[skillType]?.[level - 1] || 0;
 
-    // Apply racial modifiers
     const racialMod = this.getRacialModifier(character, skillType);
     if (racialMod !== 0) {
       modifiers.push({
@@ -216,7 +186,6 @@ export class ThiefSkillRule extends BaseRule {
       basePercent += racialMod;
     }
 
-    // Apply ability score modifiers
     const abilityMod = this.getAbilityModifier(character, skillType);
     if (abilityMod !== 0) {
       modifiers.push({
@@ -227,7 +196,6 @@ export class ThiefSkillRule extends BaseRule {
       basePercent += abilityMod;
     }
 
-    // Apply class-specific modifiers
     const classMod = this.getClassModifier(character, skillType);
     if (classMod !== 0) {
       modifiers.push({
@@ -238,9 +206,8 @@ export class ThiefSkillRule extends BaseRule {
       basePercent += classMod;
     }
 
-    // Multi-class penalty
     if (characterClass.includes('/')) {
-      const penalty = Math.floor(basePercent * -0.2); // 20% penalty
+      const penalty = Math.floor(basePercent * -0.2);
       modifiers.push({
         source: 'multi-class',
         modifier: penalty,
@@ -252,9 +219,6 @@ export class ThiefSkillRule extends BaseRule {
     return Math.max(0, basePercent);
   }
 
-  /**
-   * Apply situational modifiers to skill check
-   */
   private applySituationalModifiers(
     baseChance: number,
     situationalMods: NonNullable<ThiefSkillCheckParameters['situationalModifiers']>,
@@ -263,7 +227,6 @@ export class ThiefSkillRule extends BaseRule {
   ): number {
     let modifiedChance = baseChance;
 
-    // Difficulty modifiers
     if (situationalMods.difficulty && situationalMods.difficulty !== 'normal') {
       const difficultyMods = {
         easy: 20,
@@ -281,7 +244,6 @@ export class ThiefSkillRule extends BaseRule {
       }
     }
 
-    // Equipment modifiers
     if (situationalMods.equipment) {
       modifiers.push({
         source: 'equipment',
@@ -291,7 +253,6 @@ export class ThiefSkillRule extends BaseRule {
       modifiedChance += situationalMods.equipment;
     }
 
-    // Time modifiers
     if (situationalMods.time && situationalMods.time !== 'normal') {
       const timeMods = {
         rushed: -20,
@@ -308,15 +269,11 @@ export class ThiefSkillRule extends BaseRule {
       }
     }
 
-    // Skill-specific environmental modifiers
     modifiedChance += this.applyEnvironmentalModifiers(situationalMods, skillType, modifiers);
 
     return modifiedChance;
   }
 
-  /**
-   * Apply environmental modifiers specific to each skill
-   */
   private applyEnvironmentalModifiers(
     situationalMods: NonNullable<ThiefSkillCheckParameters['situationalModifiers']>,
     skillType: string,
@@ -324,7 +281,6 @@ export class ThiefSkillRule extends BaseRule {
   ): number {
     let environmentalMod = 0;
 
-    // Lighting modifiers for stealth skills
     if (['move-silently', 'hide-shadows'].includes(skillType) && situationalMods.lighting) {
       const lightingMods = {
         bright: -10,
@@ -343,7 +299,6 @@ export class ThiefSkillRule extends BaseRule {
       }
     }
 
-    // Noise modifiers for hearing
     if (skillType === 'hear-noise' && situationalMods.noise) {
       const noiseMods = {
         silent: 20,
@@ -362,7 +317,6 @@ export class ThiefSkillRule extends BaseRule {
       }
     }
 
-    // Surface modifiers for climbing
     if (skillType === 'climb-walls' && situationalMods.surface) {
       const surfaceMods = {
         easy: 10,
@@ -384,9 +338,6 @@ export class ThiefSkillRule extends BaseRule {
     return environmentalMod;
   }
 
-  /**
-   * Get racial modifiers for thief skills
-   */
   private getRacialModifier(character: Character, skillType: string): number {
     const race = character.race.toLowerCase();
 
@@ -408,23 +359,18 @@ export class ThiefSkillRule extends BaseRule {
         'hear-noise': 5,
       },
       dwarf: {
-        'climb-walls': -10, // Dwarves are poor climbers
+        'climb-walls': -10,
       },
     };
 
     return racialMods[race]?.[skillType] || 0;
   }
 
-  /**
-   * Get ability score modifiers for thief skills
-   */
   private getAbilityModifier(character: Character, skillType: string): number {
-    // Dexterity affects most thief skills
     if (['pick-locks', 'move-silently', 'hide-shadows'].includes(skillType)) {
       return this.getDexterityModifier(character.abilities.dexterity);
     }
 
-    // Intelligence affects read languages
     if (skillType === 'read-languages') {
       return this.getIntelligenceModifier(character.abilities.intelligence);
     }
@@ -432,9 +378,6 @@ export class ThiefSkillRule extends BaseRule {
     return 0;
   }
 
-  /**
-   * Get dexterity modifier for applicable skills
-   */
   private getDexterityModifier(dexterity: number): number {
     if (dexterity >= 17) return 15;
     if (dexterity >= 16) return 10;
@@ -445,9 +388,6 @@ export class ThiefSkillRule extends BaseRule {
     return -20;
   }
 
-  /**
-   * Get intelligence modifier for read languages
-   */
   private getIntelligenceModifier(intelligence: number): number {
     if (intelligence >= 17) return 10;
     if (intelligence >= 15) return 5;
@@ -457,18 +397,14 @@ export class ThiefSkillRule extends BaseRule {
     return -10;
   }
 
-  /**
-   * Get class-specific modifiers
-   */
   private getClassModifier(character: Character, skillType: string): number {
     const characterClass = character.class.toLowerCase();
 
     if (characterClass === 'assassin') {
-      // Assassins get bonuses to stealth skills
       if (skillType === 'move-silently' || skillType === 'hide-shadows') {
-        return Math.floor(character.experience.level * 0.5); // Small level-based bonus
+        return Math.floor(character.experience.level * 0.5);
       }
-      // But penalty to climbing
+
       if (skillType === 'climb-walls') {
         return -5;
       }
@@ -477,9 +413,6 @@ export class ThiefSkillRule extends BaseRule {
     return 0;
   }
 
-  /**
-   * Apply special rules for specific skills or situations
-   */
   private applySpecialRules(
     character: Character,
     skillData: ThiefSkillCheckParameters,
@@ -487,20 +420,16 @@ export class ThiefSkillRule extends BaseRule {
   ): string[] {
     const specialRules: string[] = [];
 
-    // Level-based restrictions
     if (skillData.skillType === 'read-languages' && character.experience.level < 4) {
       specialRules.push('Read Languages requires level 4 minimum');
     }
 
-    // Critical success/failure rules
     specialRules.push('Natural 1 always succeeds, natural 100 always fails');
 
-    // Armor restrictions for some skills
     if (['move-silently', 'hide-shadows', 'climb-walls'].includes(skillData.skillType)) {
       specialRules.push('Heavy armor imposes penalties to this skill');
     }
 
-    // Time requirements
     if (skillData.skillType === 'find-traps') {
       specialRules.push('Finding traps requires careful searching (1 turn per 10-foot area)');
     }

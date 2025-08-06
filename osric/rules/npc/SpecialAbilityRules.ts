@@ -71,13 +71,9 @@ export class SpecialAbilityRules extends BaseRule {
     }
   }
 
-  /**
-   * Generate special abilities based on monster characteristics
-   */
   private generateSpecialAbilities(context: SpecialAbilityContext): SpecialAbility[] {
     const abilities: SpecialAbility[] = [];
 
-    // HD-based ability generation
     if (context.hitDice >= 10) {
       abilities.push(...this.getHighTierAbilities(context));
     } else if (context.hitDice >= 5) {
@@ -86,32 +82,23 @@ export class SpecialAbilityRules extends BaseRule {
       abilities.push(...this.getLowTierAbilities(context));
     }
 
-    // Type-specific abilities
     abilities.push(...this.getTypeSpecificAbilities(context));
 
-    // Intelligence-based abilities
     if (context.intelligence >= 12) {
       abilities.push(...this.getIntelligentAbilities(context));
     }
 
-    // Alignment-based abilities
     abilities.push(...this.getAlignmentAbilities(context));
 
-    // Environment-based abilities
     abilities.push(...this.getEnvironmentAbilities(context));
 
-    // Remove duplicates and limit total abilities
     const uniqueAbilities = this.deduplicateAbilities(abilities);
     return uniqueAbilities.slice(0, Math.min(6, Math.floor(context.hitDice / 2) + 1));
   }
 
-  /**
-   * High-tier abilities for powerful monsters (10+ HD)
-   */
   private getHighTierAbilities(context: SpecialAbilityContext): SpecialAbility[] {
     const abilities: SpecialAbility[] = [];
 
-    // Dragon-like breath weapons
     if (context.size === 'Large' || context.size === 'Huge') {
       abilities.push({
         name: 'Devastating Breath Weapon',
@@ -126,7 +113,6 @@ export class SpecialAbilityRules extends BaseRule {
       });
     }
 
-    // High-level spell-like abilities
     if (context.intelligence >= 15) {
       const spellLevel = Math.min(9, Math.floor(context.hitDice / 2));
       abilities.push({
@@ -140,7 +126,6 @@ export class SpecialAbilityRules extends BaseRule {
       });
     }
 
-    // Potent gaze attacks
     abilities.push({
       name: 'Dominating Gaze',
       type: 'gaze-attack',
@@ -155,13 +140,9 @@ export class SpecialAbilityRules extends BaseRule {
     return abilities;
   }
 
-  /**
-   * Mid-tier abilities for moderate monsters (5-9 HD)
-   */
   private getMidTierAbilities(context: SpecialAbilityContext): SpecialAbility[] {
     const abilities: SpecialAbility[] = [];
 
-    // Moderate breath weapons or energy attacks
     abilities.push({
       name: 'Energy Burst',
       type: 'breath-weapon',
@@ -174,7 +155,6 @@ export class SpecialAbilityRules extends BaseRule {
       duration: 'Instantaneous',
     });
 
-    // Moderate spell-like abilities
     if (context.intelligence >= 10) {
       abilities.push({
         name: 'Lesser Spell-like Ability',
@@ -187,7 +167,6 @@ export class SpecialAbilityRules extends BaseRule {
       });
     }
 
-    // Fear effects
     abilities.push({
       name: 'Frightening Presence',
       type: 'special-attack',
@@ -201,13 +180,9 @@ export class SpecialAbilityRules extends BaseRule {
     return abilities;
   }
 
-  /**
-   * Low-tier abilities for weaker monsters (1-4 HD)
-   */
   private getLowTierAbilities(context: SpecialAbilityContext): SpecialAbility[] {
     const abilities: SpecialAbility[] = [];
 
-    // Basic resistances scaled by HD
     abilities.push({
       name: 'Minor Resistance',
       type: 'resistance',
@@ -216,7 +191,6 @@ export class SpecialAbilityRules extends BaseRule {
       duration: 'Permanent',
     });
 
-    // Simple special attacks based on intelligence
     if (context.intelligence >= 5) {
       abilities.push({
         name: 'Cunning Attack',
@@ -240,9 +214,6 @@ export class SpecialAbilityRules extends BaseRule {
     return abilities;
   }
 
-  /**
-   * Type-specific abilities based on monster classification
-   */
   private getTypeSpecificAbilities(context: SpecialAbilityContext): SpecialAbility[] {
     const abilities: SpecialAbility[] = [];
     const type = context.monsterType.toLowerCase();
@@ -322,9 +293,6 @@ export class SpecialAbilityRules extends BaseRule {
     return abilities;
   }
 
-  /**
-   * Intelligence-based abilities
-   */
   private getIntelligentAbilities(context: SpecialAbilityContext): SpecialAbility[] {
     const abilities: SpecialAbility[] = [];
 
@@ -353,9 +321,6 @@ export class SpecialAbilityRules extends BaseRule {
     return abilities;
   }
 
-  /**
-   * Alignment-based abilities
-   */
   private getAlignmentAbilities(context: SpecialAbilityContext): SpecialAbility[] {
     const abilities: SpecialAbility[] = [];
 
@@ -384,9 +349,6 @@ export class SpecialAbilityRules extends BaseRule {
     return abilities;
   }
 
-  /**
-   * Environment-based abilities
-   */
   private getEnvironmentAbilities(context: SpecialAbilityContext): SpecialAbility[] {
     const abilities: SpecialAbility[] = [];
 
@@ -435,9 +397,6 @@ export class SpecialAbilityRules extends BaseRule {
     return abilities;
   }
 
-  /**
-   * Remove duplicate abilities by name
-   */
   private deduplicateAbilities(abilities: SpecialAbility[]): SpecialAbility[] {
     const seen = new Set<string>();
     return abilities.filter((ability) => {

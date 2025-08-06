@@ -1,10 +1,3 @@
-/**
- * AbilityScoreGenerationRules - OSRIC Ability Score Generation
- *
- * Migrated from rules/character/abilityScoreGeneration.ts
- * PRESERVATION: All OSRIC ability score generation methods and values preserved exactly
- */
-
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
@@ -20,7 +13,7 @@ interface CharacterCreationData {
 
 export class AbilityScoreGenerationRule extends BaseRule {
   readonly name = RULE_NAMES.ABILITY_SCORE_GENERATION;
-  readonly priority = 10; // Execute early in character creation
+  readonly priority = 10;
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
     const creationData = context.getTemporary('character-creation') as CharacterCreationData;
@@ -32,7 +25,6 @@ export class AbilityScoreGenerationRule extends BaseRule {
     try {
       let abilityScores: AbilityScores;
 
-      // Generate ability scores based on selected method
       switch (creationData.abilityScoreMethod) {
         case 'standard3d6':
           abilityScores = this.generateStandard3d6();
@@ -42,7 +34,7 @@ export class AbilityScoreGenerationRule extends BaseRule {
             abilityScores = creationData.arrangedScores;
           } else {
             const rolledScores = this.generate3d6Arranged();
-            // For now, assign in order - in a real implementation, player would arrange
+
             abilityScores = this.assignArrangedScores(rolledScores);
           }
           break;
@@ -57,7 +49,6 @@ export class AbilityScoreGenerationRule extends BaseRule {
           );
       }
 
-      // Store generated scores in context for next rules
       context.setTemporary('generated-ability-scores', abilityScores);
 
       return this.createSuccessResult(
@@ -81,16 +72,8 @@ export class AbilityScoreGenerationRule extends BaseRule {
     return creationData != null;
   }
 
-  // ===== OSRIC ABILITY SCORE GENERATION METHODS =====
-  // PRESERVED: All methods from original rules/character/abilityScoreGeneration.ts
-
-  /**
-   * Generate ability scores using the standard 3d6 method
-   * Rolls 3d6 for each ability in order
-   * PRESERVED: Exact implementation from original
-   */
   private generateStandard3d6(): AbilityScores {
-    const rollDice = () => Math.floor(Math.random() * 6) + 1; // Simulate a d6 roll
+    const rollDice = () => Math.floor(Math.random() * 6) + 1;
     const roll3d6 = () => rollDice() + rollDice() + rollDice();
 
     return {
@@ -103,11 +86,6 @@ export class AbilityScoreGenerationRule extends BaseRule {
     };
   }
 
-  /**
-   * Generate ability scores using 3d6 but allow arranging the scores
-   * Rolls 3d6 six times, returning the scores for player to assign
-   * PRESERVED: Exact implementation from original
-   */
   private generate3d6Arranged(): number[] {
     const rollDice = () => Math.floor(Math.random() * 6) + 1;
     const roll3d6 = () => rollDice() + rollDice() + rollDice();
@@ -117,11 +95,6 @@ export class AbilityScoreGenerationRule extends BaseRule {
       .map(() => roll3d6());
   }
 
-  /**
-   * Generate ability scores using 4d6, drop lowest
-   * This method tends to generate higher ability scores
-   * PRESERVED: Exact implementation from original
-   */
   private generate4d6DropLowest(): number[] {
     const rollDice = () => Math.floor(Math.random() * 6) + 1;
 
@@ -137,10 +110,6 @@ export class AbilityScoreGenerationRule extends BaseRule {
       .map(() => roll4d6DropLowest());
   }
 
-  /**
-   * Convert array of scores to AbilityScores object
-   * For arranged methods, assigns in standard order
-   */
   private assignArrangedScores(scores: number[]): AbilityScores {
     if (scores.length !== 6) {
       throw new Error('Expected exactly 6 ability scores');
@@ -158,8 +127,8 @@ export class AbilityScoreGenerationRule extends BaseRule {
 }
 
 export class ExceptionalStrengthRule extends BaseRule {
-  readonly name = RULE_NAMES.ABILITY_SCORE_MODIFIERS; // This handles exceptional strength
-  readonly priority = 15; // Execute after ability generation, before racial adjustments
+  readonly name = RULE_NAMES.ABILITY_SCORE_MODIFIERS;
+  readonly priority = 15;
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
     const creationData = context.getTemporary('character-creation') as CharacterCreationData;
@@ -169,14 +138,12 @@ export class ExceptionalStrengthRule extends BaseRule {
       return this.createFailureResult('No ability scores found for exceptional strength check');
     }
 
-    // Check if character qualifies for exceptional strength
     const exceptionalStrength = this.rollExceptionalStrength(
       creationData.characterClass,
       abilityScores.strength
     );
 
     if (exceptionalStrength !== null) {
-      // Store exceptional strength for later use
       context.setTemporary('exceptional-strength', exceptionalStrength);
 
       return this.createSuccessResult(
@@ -201,23 +168,15 @@ export class ExceptionalStrengthRule extends BaseRule {
     );
   }
 
-  /**
-   * Check if ability scores qualify for a fighter's exceptional strength
-   * Fighters, paladins, and rangers with 18 strength roll d% for exceptional strength
-   * PRESERVED: Exact logic from original
-   */
   private rollExceptionalStrength(characterClass: CharacterClass, strength: number): number | null {
-    // Only fighters, paladins, and rangers can have exceptional strength
     if (!this.canHaveExceptionalStrength(characterClass)) {
       return null;
     }
 
-    // Only applies to characters with exactly 18 strength
     if (strength !== 18) {
       return null;
     }
 
-    // Roll percentile dice
     const roll = Math.floor(Math.random() * 100) + 1;
     return roll;
   }
@@ -228,8 +187,8 @@ export class ExceptionalStrengthRule extends BaseRule {
 }
 
 export class RacialAbilityAdjustmentRule extends BaseRule {
-  readonly name = RULE_NAMES.RACIAL_ABILITIES; // Updated to use strong typing
-  readonly priority = 20; // Execute after exceptional strength
+  readonly name = RULE_NAMES.RACIAL_ABILITIES;
+  readonly priority = 20;
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
     const creationData = context.getTemporary('character-creation') as CharacterCreationData;
@@ -239,21 +198,18 @@ export class RacialAbilityAdjustmentRule extends BaseRule {
       return this.createFailureResult('No ability scores found for racial adjustment');
     }
 
-    // Apply racial adjustments
     const adjustedScores = this.applyRacialAbilityAdjustments(abilityScores, creationData.race);
 
-    // Check if character meets racial requirements
     const meetsRequirements = this.meetsRacialRequirements(adjustedScores, creationData.race);
 
     if (!meetsRequirements) {
       return this.createFailureResult(
         `Character does not meet racial ability requirements for ${creationData.race}`,
         undefined,
-        true // This is a critical failure - character creation should stop
+        true
       );
     }
 
-    // Store adjusted scores
     context.setTemporary('adjusted-ability-scores', adjustedScores);
 
     const adjustmentMessage = this.getAdjustmentMessage(
@@ -281,10 +237,6 @@ export class RacialAbilityAdjustmentRule extends BaseRule {
     return abilityScores != null && creationData != null;
   }
 
-  /**
-   * Apply racial ability score adjustments
-   * PRESERVED: Exact implementation from original
-   */
   private applyRacialAbilityAdjustments(
     abilityScores: AbilityScores,
     race: CharacterRace
@@ -294,7 +246,7 @@ export class RacialAbilityAdjustmentRule extends BaseRule {
     switch (race) {
       case 'Dwarf':
         newScores.constitution += 1;
-        newScores.charisma -= 1; // Only with respect to non-dwarfs
+        newScores.charisma -= 1;
         break;
       case 'Elf':
         newScores.dexterity += 1;
@@ -309,10 +261,8 @@ export class RacialAbilityAdjustmentRule extends BaseRule {
         newScores.constitution += 1;
         newScores.charisma -= 2;
         break;
-      // No adjustments for humans, gnomes, or half-elves
     }
 
-    // Ensure no score goes below 3 or above 18 (unless exceptional strength)
     for (const key of Object.keys(newScores)) {
       const ability = key as keyof AbilityScores;
       if (newScores[ability] < 3) newScores[ability] = 3;
@@ -322,10 +272,6 @@ export class RacialAbilityAdjustmentRule extends BaseRule {
     return newScores;
   }
 
-  /**
-   * Check if ability scores meet racial minimum requirements
-   * PRESERVED: Exact implementation from original
-   */
   private meetsRacialRequirements(abilityScores: AbilityScores, race: CharacterRace): boolean {
     switch (race) {
       case 'Dwarf':
@@ -383,7 +329,6 @@ export class RacialAbilityAdjustmentRule extends BaseRule {
           abilityScores.charisma >= 3
         );
       case 'Human':
-        // Humans have no ability score requirements
         return true;
       default:
         return false;

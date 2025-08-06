@@ -1,15 +1,3 @@
-/**
- * InitiativeCommand - OSRIC Initiative Resolution Command
- *
- * Implements the complete OSRIC initiative process including:
- * - Individual and group initiative rolls
- * - Dexterity reaction adjustments
- * - Weapon speed factor considerations
- * - Surprise round handling
- *
- * PRESERVATION: All OSRIC initiative mechanics and formulas are preserved exactly.
- */
-
 import { BaseCommand, type CommandResult } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
@@ -21,12 +9,12 @@ import type {
 } from '../../types/entities';
 
 export interface InitiativeParameters {
-  entities: string[]; // Array of Character or Monster IDs
-  initiativeType: 'individual' | 'group'; // Individual or group initiative
-  weapons?: Record<string, string>; // Entity ID -> Weapon ID mapping
-  spells?: Record<string, string>; // Entity ID -> Spell name mapping
-  circumstanceModifiers?: Record<string, number>; // Entity ID -> modifier
-  isFirstRound?: boolean; // For surprise checking
+  entities: string[];
+  initiativeType: 'individual' | 'group';
+  weapons?: Record<string, string>;
+  spells?: Record<string, string>;
+  circumstanceModifiers?: Record<string, number>;
+  isFirstRound?: boolean;
 }
 
 export interface InitiativeResult {
@@ -43,26 +31,23 @@ export class InitiativeCommand extends BaseCommand {
 
   constructor(
     private parameters: InitiativeParameters,
-    actorId = 'game-master' // Usually GM manages initiative
+    actorId = 'game-master'
   ) {
     super(actorId);
   }
 
   async execute(context: GameContext): Promise<CommandResult> {
     try {
-      // Validate all entities exist
       const entities = this.getEntities(context);
       if (entities.length === 0) {
         return this.createFailureResult('No valid entities found for initiative');
       }
 
-      // Get weapons and spells for speed factors
       const entityWeapons = this.getEntityWeapons(context, entities);
       const entitySpells = this.getEntitySpells(context, entities);
 
-      // Store initiative context for rules to process
       const initiativeContext = {
-        entities: entities.map((entity) => entity.id), // Store entity IDs, not full objects
+        entities: entities.map((entity) => entity.id),
         initiativeType: this.parameters.initiativeType,
         weapons: entityWeapons,
         spells: entitySpells,
@@ -71,11 +56,6 @@ export class InitiativeCommand extends BaseCommand {
       };
 
       context.setTemporary('initiative-context', initiativeContext);
-
-      // Rules will process:
-      // 1. InitiativeRollRule - Calculate initiative scores
-      // 2. SurpriseCheckRule - Check for surprise (if first round)
-      // 3. InitiativeOrderRule - Determine final action order
 
       return this.createSuccessResult('Initiative command prepared for rule processing');
     } catch (error) {
@@ -88,18 +68,15 @@ export class InitiativeCommand extends BaseCommand {
   canExecute(context: GameContext): boolean {
     const entities = this.getEntities(context);
 
-    // Check that we have entities and none are unconscious
     if (entities.length === 0) {
       return false;
     }
 
-    // Check if any entity is unconscious (0 or fewer hit points)
     for (const entity of entities) {
       if (entity.hitPoints.current <= 0) {
         return false;
       }
 
-      // Also check for status effects that prevent action
       if (
         entity.statusEffects?.some(
           (effect) =>
@@ -148,7 +125,7 @@ export class InitiativeCommand extends BaseCommand {
         const weapon = entity.inventory.find((item) => item.id === weaponId && 'damage' in item);
 
         if (weapon) {
-          entityWeapons[entity.id] = weaponId; // Store weapon ID, not weapon object
+          entityWeapons[entity.id] = weaponId;
         }
       }
     }
@@ -169,7 +146,6 @@ export class InitiativeCommand extends BaseCommand {
     for (const entityId of Object.keys(this.parameters.spells)) {
       const spellName = this.parameters.spells[entityId];
       if (spellName) {
-        // Store the spell name - spell validation will be handled by spell casting rules
         entitySpells[entityId] = spellName;
       }
     }

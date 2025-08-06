@@ -1,14 +1,3 @@
-/**
- * TrainingRules Tests - OSRIC Compliance
- *
- * Tests the TrainingRule for proper training mechanics according to OSRIC:
- * - Training requirements for level advancement
- * - Training costs and duration
- * - Trainer availability and quality
- * - Special training for new abilities
- * - Edge cases and error scenarios
- */
-
 import { createStore } from 'jotai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameContext } from '../../../osric/core/GameContext';
@@ -16,7 +5,6 @@ import { TrainingRule } from '../../../osric/rules/experience/TrainingRules';
 import { COMMAND_TYPES } from '../../../osric/types/constants';
 import type { Character } from '../../../osric/types/entities';
 
-// Mock helper function to create test characters
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-char',
@@ -100,7 +88,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return { ...defaultCharacter, ...overrides };
 }
 
-// Mock command for testing
 class MockTrainingCommand {
   readonly type = COMMAND_TYPES.LEVEL_UP;
   readonly actorId = 'test-character';
@@ -135,23 +122,20 @@ describe('TrainingRules', () => {
     trainingRule = new TrainingRule();
     mockCommand = new MockTrainingCommand();
 
-    // Store original Math.random
     originalMathRandom = Math.random;
-    // Mock Math.random to always succeed (return 0.1, which is < 0.9 success chance)
+
     Math.random = vi.fn(() => 0.1);
 
-    // Setup test character ready for training
     const testCharacter = createMockCharacter({
       id: 'test-character',
       name: 'Test Hero',
       level: 2,
-      experience: { current: 100000, requiredForNextLevel: 100000, level: 2 }, // Enough XP for high-level training
-      currency: { platinum: 0, gold: 2000, electrum: 0, silver: 0, copper: 0 }, // Enough for training
+      experience: { current: 100000, requiredForNextLevel: 100000, level: 2 },
+      currency: { platinum: 0, gold: 2000, electrum: 0, silver: 0, copper: 0 },
     });
 
     context.setEntity('test-character', testCharacter);
 
-    // Setup default training request data for most tests
     context.setTemporary('training-request-params', {
       characterId: 'test-character',
       trainingType: 'level_advancement',
@@ -160,7 +144,6 @@ describe('TrainingRules', () => {
   });
 
   afterEach(() => {
-    // Restore original Math.random
     Math.random = originalMathRandom;
   });
 
@@ -209,12 +192,11 @@ describe('TrainingRules', () => {
     });
 
     it('should handle insufficient experience points', async () => {
-      // Create character with insufficient XP for target level
       const lowXpCharacter = createMockCharacter({
         id: 'low-xp-character',
         name: 'Poor Hero',
         level: 1,
-        experience: { current: 1000, requiredForNextLevel: 1000, level: 1 }, // Not enough for level 3 (needs 27,000)
+        experience: { current: 1000, requiredForNextLevel: 1000, level: 1 },
         currency: { platinum: 0, gold: 2000, electrum: 0, silver: 0, copper: 0 },
       });
       context.setEntity('low-xp-character', lowXpCharacter);
@@ -232,15 +214,14 @@ describe('TrainingRules', () => {
     });
 
     it('should require higher prime requisite for high levels', async () => {
-      // Create character with low prime requisite but sufficient XP
       const lowStatCharacter = createMockCharacter({
         id: 'low-stat-character',
         name: 'Weak Hero',
         level: 8,
-        experience: { current: 1000000, requiredForNextLevel: 1000000, level: 8 }, // Enough XP for level 9
+        experience: { current: 1000000, requiredForNextLevel: 1000000, level: 8 },
         currency: { platinum: 0, gold: 2000, electrum: 0, silver: 0, copper: 0 },
         abilities: {
-          strength: 12, // Low for a Fighter (prime requisite)
+          strength: 12,
           dexterity: 14,
           constitution: 15,
           intelligence: 12,
@@ -253,7 +234,7 @@ describe('TrainingRules', () => {
       context.setTemporary('training-request-params', {
         characterId: 'low-stat-character',
         trainingType: 'level_advancement',
-        targetLevel: 9, // High level requiring prime requisite 15+
+        targetLevel: 9,
       });
 
       const result = await trainingRule.execute(context, mockCommand);
@@ -341,7 +322,6 @@ describe('TrainingRules', () => {
 
   describe('Error Handling', () => {
     it('should handle missing training data', async () => {
-      // Remove the temporary data to test missing data condition
       context.setTemporary('training-request-params', null);
 
       const result = await trainingRule.execute(context, mockCommand);

@@ -27,7 +27,6 @@ import type {
   WeaponProficiency,
 } from '../../osric/types/entities';
 
-// Mock helper function to create test characters
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-char',
@@ -111,7 +110,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return { ...defaultCharacter, ...overrides };
 }
 
-// Mock helper function to create test monsters
 function createMockMonster(overrides: Partial<Monster> = {}): Monster {
   const defaultMonster: Monster = {
     id: 'test-monster',
@@ -143,7 +141,6 @@ function createMockMonster(overrides: Partial<Monster> = {}): Monster {
   return { ...defaultMonster, ...overrides };
 }
 
-// Mock helper function to create test items
 function createMockItem(overrides: Partial<Item> = {}): Item {
   const defaultItem: Item = {
     id: 'test-item',
@@ -159,7 +156,6 @@ function createMockItem(overrides: Partial<Item> = {}): Item {
   return { ...defaultItem, ...overrides };
 }
 
-// Mock helper function to create test spells
 function createMockSpell(overrides: Partial<Spell> = {}): Spell {
   const defaultSpell: Spell = {
     name: 'Magic Missile',
@@ -229,7 +225,6 @@ describe('GameContext', () => {
 
         gameContext.setEntity(character.id, character);
 
-        // Update character
         const updatedCharacter = {
           ...character,
           name: 'Updated Name',
@@ -355,14 +350,12 @@ describe('GameContext', () => {
 
   describe('Integration Tests', () => {
     it('should handle complex game state with multiple entities', () => {
-      // Create a character
       const character = createMockCharacter({
         id: 'hero',
         name: 'Hero',
         inventory: [],
       });
 
-      // Create items for the character
       const sword = createMockItem({
         id: 'hero-sword',
         name: 'Longsword',
@@ -375,25 +368,21 @@ describe('GameContext', () => {
         equipped: true,
       });
 
-      // Create a spell
       const spell = createMockSpell({
         name: 'Cure Light Wounds',
         class: 'Cleric',
       });
 
-      // Store everything
       gameContext.setEntity(character.id, character);
       gameContext.setItem(sword.id, sword);
       gameContext.setItem(shield.id, shield);
       gameContext.setSpell(spell.name, spell);
 
-      // Add temporary combat data
       gameContext.setTemporary('combat', {
         round: 1,
         activeCharacter: 'hero',
       });
 
-      // Verify everything is stored correctly
       expect(gameContext.getEntity<Character>('hero')?.name).toBe('Hero');
       expect(gameContext.getItem('hero-sword')?.equipped).toBe(true);
       expect(gameContext.getItem('hero-shield')?.equipped).toBe(true);
@@ -407,14 +396,11 @@ describe('GameContext', () => {
     it('should maintain reactivity with Jotai atoms', () => {
       const character = createMockCharacter({ id: 'reactive-char' });
 
-      // Get initial state using snapshot
       const initialSnapshot = gameContext.createSnapshot();
       expect(initialSnapshot.entities).toHaveLength(0);
 
-      // Add character
       gameContext.setEntity(character.id, character);
 
-      // Verify state updated
       const updatedSnapshot = gameContext.createSnapshot();
       expect(updatedSnapshot.entities).toHaveLength(1);
       expect(updatedSnapshot.entities[0][0]).toBe('reactive-char');

@@ -1,17 +1,3 @@
-/**
- * @fileoverview Tests for SpellResearchCommand - OSRIC Spell Research System
- *
- * Tests comprehensive spell research mechanics including:
- * - Research validation and requirements
- * - Cost and time calculations
- * - Success/failure determination with modifiers
- * - Character updates and spell creation
- * - OSRIC compliance for all spell classes
- *
- * @version 1.0.0
- * @since Phase 4: Magic System
- */
-
 import { createStore } from 'jotai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SpellResearchCommand } from '../../../osric/commands/spells/SpellResearchCommand';
@@ -20,7 +6,6 @@ import { GameContext } from '../../../osric/core/GameContext';
 import { COMMAND_TYPES } from '../../../osric/types/constants';
 import type { AbilityScoreModifiers, Character, Spell } from '../../../osric/types/entities';
 
-// Helper function for mock character creation
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultModifiers: AbilityScoreModifiers = {
     strengthHitAdj: 0,
@@ -113,8 +98,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return baseCharacter;
 }
 
-// Helper function for mock character creation
-
 describe('SpellResearchCommand', () => {
   let context: GameContext;
   let researcher: Character;
@@ -125,12 +108,10 @@ describe('SpellResearchCommand', () => {
     researcher = createMockCharacter();
     context.setEntity(researcher.id, researcher);
 
-    // Mock Math.random to return 0.01 (will roll 1, ensuring success for high success chances)
     vi.spyOn(Math, 'random').mockReturnValue(0.01);
   });
 
   afterEach(() => {
-    // Restore all mocks after each test
     vi.restoreAllMocks();
   });
 
@@ -206,23 +187,22 @@ describe('SpellResearchCommand', () => {
 
   describe('Class Validation', () => {
     it('should allow Magic-User to research magic-user spells', async () => {
-      // Create a character with very high intelligence and ideal conditions for guaranteed success
       const superWizard = createMockCharacter({
         id: 'super-wizard-test',
         level: 20,
-        abilities: { ...researcher.abilities, intelligence: 25 }, // Extremely high intelligence
+        abilities: { ...researcher.abilities, intelligence: 25 },
         currency: { platinum: 0, gold: 50000, electrum: 0, silver: 0, copper: 0 },
       });
       context.setEntity(superWizard.id, superWizard);
 
       const command = new SpellResearchCommand({
         characterId: superWizard.id,
-        spellLevel: 1, // Use 1st level spell for easier success
+        spellLevel: 1,
         spellName: 'Arcane Bolt',
         spellDescription: 'Magical energy bolt',
         researchType: 'magic-user',
-        mentorAvailable: true, // +20 bonus
-        libraryQuality: 'excellent', // +30 bonus
+        mentorAvailable: true,
+        libraryQuality: 'excellent',
       });
 
       const result = await command.execute(context);
@@ -238,7 +218,7 @@ describe('SpellResearchCommand', () => {
         class: 'Cleric',
         level: 7,
         abilities: { ...researcher.abilities, wisdom: 17 },
-        currency: { platinum: 0, gold: 10000, electrum: 0, silver: 0, copper: 0 }, // Ensure enough funds
+        currency: { platinum: 0, gold: 10000, electrum: 0, silver: 0, copper: 0 },
       });
       context.setEntity(cleric.id, cleric);
 
@@ -250,7 +230,6 @@ describe('SpellResearchCommand', () => {
         researchType: 'cleric',
       });
 
-      // Test validation only - check that the command can execute
       const canExecute = command.canExecute(context);
       expect(canExecute).toBeTruthy();
     });
@@ -272,7 +251,6 @@ describe('SpellResearchCommand', () => {
         researchType: 'druid',
       });
 
-      // Test validation only - check that the command can execute
       const canExecute = command.canExecute(context);
       expect(canExecute).toBeTruthy();
     });
@@ -294,7 +272,6 @@ describe('SpellResearchCommand', () => {
         researchType: 'illusionist',
       });
 
-      // Test validation only - check that the command can execute
       const canExecute = command.canExecute(context);
       expect(canExecute).toBeTruthy();
     });
@@ -326,7 +303,7 @@ describe('SpellResearchCommand', () => {
       const lowLevelWizard = createMockCharacter({
         id: 'low-level-1',
         class: 'Magic-User',
-        level: 1, // Too low for 5th level spells
+        level: 1,
       });
       context.setEntity(lowLevelWizard.id, lowLevelWizard);
 
@@ -347,9 +324,9 @@ describe('SpellResearchCommand', () => {
       const highLevelWizard = createMockCharacter({
         id: 'high-level-1',
         class: 'Magic-User',
-        level: 17, // High enough for 9th level spells
-        abilities: { ...researcher.abilities, intelligence: 19 }, // High enough for 9th level spells
-        currency: { platinum: 0, gold: 50000, electrum: 0, silver: 0, copper: 0 }, // Enough funds
+        level: 17,
+        abilities: { ...researcher.abilities, intelligence: 19 },
+        currency: { platinum: 0, gold: 50000, electrum: 0, silver: 0, copper: 0 },
       });
       context.setEntity(highLevelWizard.id, highLevelWizard);
 
@@ -361,7 +338,6 @@ describe('SpellResearchCommand', () => {
         researchType: 'magic-user',
       });
 
-      // Test validation only - check that the command can execute
       const canExecute = command.canExecute(context);
       expect(canExecute).toBeTruthy();
     });
@@ -373,7 +349,7 @@ describe('SpellResearchCommand', () => {
         id: 'low-int-1',
         class: 'Magic-User',
         level: 9,
-        abilities: { ...researcher.abilities, intelligence: 12 }, // Too low for 5th level spells
+        abilities: { ...researcher.abilities, intelligence: 12 },
       });
       context.setEntity(lowIntWizard.id, lowIntWizard);
 
@@ -395,7 +371,7 @@ describe('SpellResearchCommand', () => {
         id: 'low-wis-1',
         class: 'Cleric',
         level: 9,
-        abilities: { ...researcher.abilities, wisdom: 10 }, // Too low for 4th level spells
+        abilities: { ...researcher.abilities, wisdom: 10 },
       });
       context.setEntity(lowWisCleric.id, lowWisCleric);
 
@@ -423,18 +399,17 @@ describe('SpellResearchCommand', () => {
         researchType: 'magic-user',
       });
 
-      // Mock the private method by accessing requirements calculation
       const requirements = command.calculateResearchRequirements(3, 'magic-user');
 
-      expect(requirements.timeInWeeks).toBe(3); // 1 week per spell level
-      expect(requirements.baseCost).toBe(900); // 3 levels * 100 gp * 3 weeks
+      expect(requirements.timeInWeeks).toBe(3);
+      expect(requirements.baseCost).toBe(900);
       expect(requirements.totalCost).toBe(900);
     });
 
     it('should reject research when insufficient funds', async () => {
       const poorWizard = createMockCharacter({
         id: 'poor-1',
-        currency: { platinum: 0, gold: 100, electrum: 0, silver: 0, copper: 0 }, // Not enough for research
+        currency: { platinum: 0, gold: 100, electrum: 0, silver: 0, copper: 0 },
       });
       context.setEntity(poorWizard.id, poorWizard);
 
@@ -500,7 +475,7 @@ describe('SpellResearchCommand', () => {
         true
       );
 
-      expect(requirements.timeInWeeks).toBe(3); // 4 weeks * 0.75 = 3 weeks
+      expect(requirements.timeInWeeks).toBe(3);
     });
 
     it('should apply library quality bonuses', async () => {
@@ -523,9 +498,8 @@ describe('SpellResearchCommand', () => {
         'excellent'
       );
 
-      // Excellent library should reduce cost by 40%
-      const baseCostWithoutLibrary = 2 * 100 * 2; // 400
-      const expectedCostWithLibrary = Math.floor(baseCostWithoutLibrary * 0.6); // 240
+      const baseCostWithoutLibrary = 2 * 100 * 2;
+      const expectedCostWithLibrary = Math.floor(baseCostWithoutLibrary * 0.6);
 
       expect(requirements.baseCost).toBe(expectedCostWithLibrary);
     });
@@ -549,18 +523,17 @@ describe('SpellResearchCommand', () => {
       );
 
       expect(researchResult.details.modifiers).toEqual({
-        baseStat: 18, // Intelligence
+        baseStat: 18,
         mentor: 20,
         library: 30,
-        level: 18, // 9 * 2
-        spellLevelPenalty: -30, // 3 * -10
+        level: 18,
+        spellLevelPenalty: -30,
       });
     });
   });
 
   describe('Research Outcomes', () => {
     it('should create spell on successful research', async () => {
-      // Force success by giving very high intelligence and modifiers
       const superWizard = createMockCharacter({
         id: 'super-wizard',
         level: 20,
@@ -608,14 +581,12 @@ describe('SpellResearchCommand', () => {
     });
 
     it('should deduct partial costs on failure', async () => {
-      // Mock failure by returning 0.99 (will roll 100, ensuring failure)
       vi.spyOn(Math, 'random').mockReturnValue(0.99);
 
-      // Force failure with low intelligence and harsh conditions
       const weakWizard = createMockCharacter({
         id: 'weak-wizard',
-        level: 9, // High enough level to attempt 5th level spells
-        abilities: { ...researcher.abilities, intelligence: 15 }, // Just barely enough intelligence
+        level: 9,
+        abilities: { ...researcher.abilities, intelligence: 15 },
         currency: { platinum: 0, gold: 5000, electrum: 0, silver: 0, copper: 0 },
       });
       context.setEntity(weakWizard.id, weakWizard);
@@ -626,18 +597,16 @@ describe('SpellResearchCommand', () => {
         spellName: 'Very Hard Spell',
         spellDescription: 'Extremely difficult spell research',
         researchType: 'magic-user',
-        libraryQuality: 'poor', // Make it harder
-        mentorAvailable: false, // No help
+        libraryQuality: 'poor',
+        mentorAvailable: false,
       });
 
       const originalGold = weakWizard.currency.gold;
       await command.execute(context);
 
-      // The test should handle both success and failure gracefully
       const updatedCharacter = context.getEntity<Character>(weakWizard.id);
       const goldLost = originalGold - (updatedCharacter?.currency.gold || 0);
 
-      // Should have lost some gold regardless of success/failure
       expect(goldLost).toBeGreaterThan(0);
     });
   });
@@ -762,7 +731,6 @@ describe('SpellResearchCommand', () => {
 
       const requirements = command.calculateResearchRequirements(5, 'magic-user');
 
-      // OSRIC: 1 week per spell level
       expect(requirements.timeInWeeks).toBe(5);
     });
 
@@ -777,8 +745,7 @@ describe('SpellResearchCommand', () => {
 
       const requirements = command.calculateResearchRequirements(4, 'magic-user');
 
-      // OSRIC: 100 gp per spell level per week
-      expect(requirements.baseCost).toBe(1600); // 4 levels * 100 gp * 4 weeks
+      expect(requirements.baseCost).toBe(1600);
     });
 
     it('should enforce OSRIC minimum level requirements', () => {
@@ -791,7 +758,7 @@ describe('SpellResearchCommand', () => {
       });
 
       const minLevel = command.getMinimumLevelForSpellLevel('Magic-User', 7);
-      expect(minLevel).toBe(13); // OSRIC progression for 7th level spells
+      expect(minLevel).toBe(13);
     });
 
     it('should handle all spell level progressions correctly', () => {
@@ -803,12 +770,10 @@ describe('SpellResearchCommand', () => {
         researchType: 'magic-user',
       });
 
-      // Test Magic-User progression
       expect(command.getMinimumLevelForSpellLevel('Magic-User', 1)).toBe(1);
       expect(command.getMinimumLevelForSpellLevel('Magic-User', 5)).toBe(9);
       expect(command.getMinimumLevelForSpellLevel('Magic-User', 9)).toBe(17);
 
-      // Test Cleric progression
       expect(command.getMinimumLevelForSpellLevel('Cleric', 1)).toBe(1);
       expect(command.getMinimumLevelForSpellLevel('Cleric', 4)).toBe(7);
       expect(command.getMinimumLevelForSpellLevel('Cleric', 7)).toBe(13);
@@ -831,21 +796,25 @@ describe('SpellResearchCommand', () => {
     });
 
     it('should handle invalid research types', async () => {
-      const command = new SpellResearchCommand({
+      const researchParams = {
         characterId: researcher.id,
         spellLevel: 3,
         spellName: 'Test Spell',
         spellDescription: 'Test description',
-        // @ts-expect-error Testing invalid type
-        researchType: 'invalid-type',
+        researchType: 'magic-user' as const,
+      };
+      Object.defineProperty(researchParams, 'researchType', {
+        value: 'invalid-type',
+        writable: true,
       });
+
+      const command = new SpellResearchCommand(researchParams);
 
       const result = await command.execute(context);
       expect(result.success).toBe(false);
     });
 
     it('should handle exceptions gracefully', async () => {
-      // Create a command that will cause an error by having invalid state
       const command = new SpellResearchCommand({
         characterId: researcher.id,
         spellLevel: 3,
@@ -854,8 +823,7 @@ describe('SpellResearchCommand', () => {
         researchType: 'magic-user',
       });
 
-      // Remove the character to cause an error during execution
-      context = new GameContext(createStore()); // Reset context without the character
+      context = new GameContext(createStore());
 
       const result = await command.execute(context);
       expect(result.success).toBe(false);

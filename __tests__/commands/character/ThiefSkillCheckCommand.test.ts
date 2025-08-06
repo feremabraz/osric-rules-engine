@@ -1,11 +1,3 @@
-/**
- * Test Suite: ThiefSkillCheckCommand
- * OSRIC Compliance: Full implementation testing of thief skill checks
- *
- * Tests the complete thief skill check workflow using the Command Pattern
- * with proper Rule Engine integration and OSRIC-authentic mechanics.
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ThiefSkillCheckCommand } from '../../../osric/commands/character/ThiefSkillCheckCommand';
@@ -14,14 +6,13 @@ import { GameContext } from '../../../osric/core/GameContext';
 import { COMMAND_TYPES, RULE_NAMES } from '../../../osric/types/constants';
 import type { Character, CharacterClass, CharacterRace } from '../../../osric/types/entities';
 
-// Mock character creation utility matching the actual entity types
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const character: Character = {
     id: 'test-character',
     name: 'Test Thief',
     race: 'Human' as CharacterRace,
     class: 'Thief' as CharacterClass,
-    classes: { Thief: 3 }, // Single class character
+    classes: { Thief: 3 },
     primaryClass: 'Thief' as CharacterClass,
     level: 3,
     hitPoints: { current: 18, maximum: 18 },
@@ -37,14 +28,12 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
       charisma: 10,
     },
     abilityModifiers: {
-      // Strength modifiers
       strengthHitAdj: null,
       strengthDamageAdj: null,
       strengthEncumbrance: null,
       strengthOpenDoors: null,
       strengthBendBars: null,
 
-      // Dexterity modifiers
       dexterityReaction: 2,
       dexterityMissile: 2,
       dexterityDefense: -2,
@@ -54,24 +43,20 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
       dexterityMoveSilently: 10,
       dexterityHideInShadows: 10,
 
-      // Constitution modifiers
       constitutionHitPoints: null,
       constitutionSystemShock: null,
       constitutionResurrectionSurvival: null,
       constitutionPoisonSave: null,
 
-      // Intelligence modifiers
       intelligenceLanguages: null,
       intelligenceLearnSpells: null,
       intelligenceMaxSpellLevel: null,
       intelligenceIllusionImmunity: false,
 
-      // Wisdom modifiers
       wisdomMentalSave: null,
       wisdomBonusSpells: null,
       wisdomSpellFailure: null,
 
-      // Charisma modifiers
       charismaReactionAdj: null,
       charismaLoyaltyBase: null,
       charismaMaxHenchmen: null,
@@ -138,11 +123,9 @@ describe('ThiefSkillCheckCommand', () => {
     const store = createStore();
     context = new GameContext(store);
 
-    // Set up test character
     const character = createMockCharacter();
     context.setEntity('test-character', character);
 
-    // Create basic command for most tests
     command = new ThiefSkillCheckCommand({
       characterId: 'test-character',
       skillType: 'pick-locks',
@@ -233,8 +216,8 @@ describe('ThiefSkillCheckCommand', () => {
           openLocks: 30,
           findTraps: 25,
           removeTraps: 25,
-          moveSilently: 30, // Assassin bonus
-          hideInShadows: 30, // Assassin bonus
+          moveSilently: 30,
+          hideInShadows: 30,
           hearNoise: 10,
           climbWalls: 75,
           readLanguages: 1,
@@ -312,7 +295,7 @@ describe('ThiefSkillCheckCommand', () => {
       const extremeEasyCommand = new ThiefSkillCheckCommand({
         characterId: 'test-character',
         skillType: 'pick-locks',
-        targetDifficulty: 200, // Extreme bonus
+        targetDifficulty: 200,
       });
 
       const result = await extremeEasyCommand.execute(context);
@@ -351,7 +334,6 @@ describe('ThiefSkillCheckCommand', () => {
     });
 
     it('should handle rule execution failure gracefully', async () => {
-      // Create a command but don't set up the context properly
       const emptyContext = new GameContext(createStore());
 
       const result = await command.execute(emptyContext);

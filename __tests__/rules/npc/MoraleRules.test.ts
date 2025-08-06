@@ -1,14 +1,3 @@
-/**
- * MoraleRules Tests - OSRIC Compliance
- *
- * Tests the MoraleRules for proper OSRIC morale check execution:
- * - Command validation and context setup
- * - Base morale calculation (50% + 5% per HD/Level)
- * - Trigger-based modifiers and situational adjustments
- * - Leadership effects and group modifiers
- * - Outcome determination and proper OSRIC compliance
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Command } from '../../../osric/core/Command';
@@ -17,7 +6,6 @@ import { MoraleRules } from '../../../osric/rules/npc/MoraleRules';
 import { COMMAND_TYPES } from '../../../osric/types/constants';
 import type { Character, Monster } from '../../../osric/types/entities';
 
-// Mock helper function to create test characters
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-char',
@@ -102,7 +90,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return defaultCharacter;
 }
 
-// Mock helper function to create test monsters
 function createMockMonster(overrides: Partial<Monster> = {}): Monster {
   const defaultMonster: Monster = {
     id: 'test-monster',
@@ -135,7 +122,6 @@ function createMockMonster(overrides: Partial<Monster> = {}): Monster {
   return defaultMonster;
 }
 
-// Mock command for testing
 class MockMoraleCommand implements Command {
   readonly type = COMMAND_TYPES.MORALE_CHECK;
   readonly actorId: string;
@@ -193,7 +179,6 @@ describe('MoraleRules', () => {
     context = new GameContext(store);
     moraleRules = new MoraleRules();
 
-    // Mock Math.random to control dice rolls
     vi.spyOn(Math, 'random').mockImplementation(() => 0.5);
   });
 
@@ -252,8 +237,7 @@ describe('MoraleRules', () => {
       const character = createMockCharacter({ id: 'char1', level: 4 });
       context.setEntity(character.id, character);
 
-      // Mock successful roll
-      vi.spyOn(Math, 'random').mockReturnValue(0.64); // 65% roll, should pass at 65% target
+      vi.spyOn(Math, 'random').mockReturnValue(0.64);
 
       const command = new MockMoraleCommand('char1', {
         characterId: 'char1',
@@ -262,7 +246,7 @@ describe('MoraleRules', () => {
 
       const result = await moraleRules.execute(context, command);
       expect(result.success).toBe(true);
-      expect(result.data?.baseValue).toBe(70); // 50 + (4 * 5)
+      expect(result.data?.baseValue).toBe(70);
     });
 
     it('should calculate base morale using hit dice for monsters', async () => {
@@ -275,7 +259,7 @@ describe('MoraleRules', () => {
       });
 
       const result = await moraleRules.execute(context, command);
-      expect(result.data?.baseValue).toBe(65); // 50 + (3 * 5)
+      expect(result.data?.baseValue).toBe(65);
     });
 
     it('should cap base morale at 95%', async () => {
@@ -373,7 +357,7 @@ describe('MoraleRules', () => {
       });
 
       const result = await moraleRules.execute(context, command);
-      expect(result.data?.modifiers).toContain('Leadership: +4'); // Half of 8
+      expect(result.data?.modifiers).toContain('Leadership: +4');
     });
 
     it('should apply elite unit bonus', async () => {
@@ -467,7 +451,7 @@ describe('MoraleRules', () => {
         characterId: 'char1',
         trigger: 'damage',
         situationalModifiers: {
-          outnumbered: 3, // 3:1 odds
+          outnumbered: 3,
         },
       });
 
@@ -514,7 +498,6 @@ describe('MoraleRules', () => {
 
       const result = await moraleRules.execute(context, command);
 
-      // Should have group effects based on group composition
       expect(result.success).toBeDefined();
       expect(result.data?.groupEffects).toBeDefined();
     });
@@ -522,15 +505,14 @@ describe('MoraleRules', () => {
 
   describe('Outcome Determination', () => {
     it('should result in success when roll passes', async () => {
-      const character = createMockCharacter({ id: 'char1', level: 4 }); // Base 70
+      const character = createMockCharacter({ id: 'char1', level: 4 });
       context.setEntity(character.id, character);
 
-      // Mock successful roll (50% ≤ 65%)
       vi.spyOn(Math, 'random').mockReturnValue(0.49);
 
       const command = new MockMoraleCommand('char1', {
         characterId: 'char1',
-        trigger: 'damage', // -5 modifier = 65 final
+        trigger: 'damage',
       });
 
       const result = await moraleRules.execute(context, command);
@@ -539,31 +521,30 @@ describe('MoraleRules', () => {
     });
 
     it('should result in failure when roll fails', async () => {
-      const character = createMockCharacter({ id: 'char1', level: 2 }); // Base 60
+      const character = createMockCharacter({ id: 'char1', level: 2 });
       context.setEntity(character.id, character);
 
-      // Mock failed roll (70% > 55%)
       vi.spyOn(Math, 'random').mockReturnValue(0.69);
 
       const command = new MockMoraleCommand('char1', {
         characterId: 'char1',
-        trigger: 'damage', // -5 modifier = 55 final
+        trigger: 'damage',
       });
 
       const result = await moraleRules.execute(context, command);
       expect(result.success).toBe(false);
-      expect(result.data?.outcome).toBe('fighting_withdrawal'); // 70 vs 55 = margin 15
+      expect(result.data?.outcome).toBe('fighting_withdrawal');
     });
 
     it('should determine different failure outcomes based on margin', async () => {
-      const character = createMockCharacter({ id: 'char1', level: 1 }); // Base 55
+      const character = createMockCharacter({ id: 'char1', level: 1 });
       context.setEntity(character.id, character);
 
       const testCases = [
-        { roll: 0.6, expected: 'fighting_withdrawal' }, // 60 vs 50, fail by 10
-        { roll: 0.75, expected: 'retreat' }, // 75 vs 50, fail by 25
-        { roll: 0.9, expected: 'rout' }, // 90 vs 50, fail by 40
-        { roll: 0.99, expected: 'surrender' }, // 99 vs 50, fail by 49
+        { roll: 0.6, expected: 'fighting_withdrawal' },
+        { roll: 0.75, expected: 'retreat' },
+        { roll: 0.9, expected: 'rout' },
+        { roll: 0.99, expected: 'surrender' },
       ];
 
       for (const testCase of testCases) {
@@ -571,7 +552,7 @@ describe('MoraleRules', () => {
 
         const command = new MockMoraleCommand('char1', {
           characterId: 'char1',
-          trigger: 'damage', // -5 modifier = 50 final
+          trigger: 'damage',
         });
 
         const result = await moraleRules.execute(context, command);
@@ -582,16 +563,16 @@ describe('MoraleRules', () => {
 
   describe('Complex Scenarios', () => {
     it('should handle combination of multiple modifiers', async () => {
-      const character = createMockCharacter({ id: 'char1', level: 3 }); // Base 65
+      const character = createMockCharacter({ id: 'char1', level: 3 });
       context.setEntity(character.id, character);
 
       const command = new MockMoraleCommand('char1', {
         characterId: 'char1',
-        trigger: 'leader_death', // -15
+        trigger: 'leader_death',
         situationalModifiers: {
-          eliteUnit: true, // +5
-          magicalFear: true, // -10
-          leadershipBonus: 6, // +3
+          eliteUnit: true,
+          magicalFear: true,
+          leadershipBonus: 6,
           customModifiers: {
             'Blessed weapon': 2,
           },
@@ -600,22 +581,21 @@ describe('MoraleRules', () => {
 
       const result = await moraleRules.execute(context, command);
 
-      // Total modifier should be: -15 + 5 - 10 + 3 + 2 = -15
       expect(result.data?.totalModifier).toBe(-15);
-      expect(result.data?.finalValue).toBe(50); // 65 - 15
+      expect(result.data?.finalValue).toBe(50);
     });
 
     it('should handle edge case with very negative modifiers', async () => {
-      const character = createMockCharacter({ id: 'char1', level: 1 }); // Base 55
+      const character = createMockCharacter({ id: 'char1', level: 1 });
       context.setEntity(character.id, character);
 
       const command = new MockMoraleCommand('char1', {
         characterId: 'char1',
-        trigger: 'leader_death', // -15
+        trigger: 'leader_death',
         situationalModifiers: {
-          inexperiencedUnit: true, // -5
-          magicalFear: true, // -10
-          outnumbered: 5, // -15
+          inexperiencedUnit: true,
+          magicalFear: true,
+          outnumbered: 5,
           customModifiers: {
             'Cursed ground': -20,
           },
@@ -624,9 +604,8 @@ describe('MoraleRules', () => {
 
       const result = await moraleRules.execute(context, command);
 
-      // Even with very negative final value, should still work
-      expect(result.data?.finalValue).toBe(-10); // 55 - 65
-      expect(result.success).toBe(false); // Any roll will fail
+      expect(result.data?.finalValue).toBe(-10);
+      expect(result.success).toBe(false);
     });
   });
 
@@ -637,8 +616,8 @@ describe('MoraleRules', () => {
         { level: 2, expected: 60 },
         { level: 4, expected: 70 },
         { level: 8, expected: 90 },
-        { level: 10, expected: 95 }, // Capped
-        { level: 20, expected: 95 }, // Still capped
+        { level: 10, expected: 95 },
+        { level: 20, expected: 95 },
       ];
 
       for (const { level, expected } of testCases) {
@@ -647,7 +626,7 @@ describe('MoraleRules', () => {
 
         const command = new MockMoraleCommand('test', {
           characterId: 'test',
-          trigger: 'other', // No modifier
+          trigger: 'other',
         });
 
         const result = await moraleRules.execute(context, command);
@@ -684,15 +663,15 @@ describe('MoraleRules', () => {
     });
 
     it('should implement correct OSRIC outcome determination', async () => {
-      const character = createMockCharacter({ id: 'char1', level: 1 }); // Base 55, no modifier = 55 final
+      const character = createMockCharacter({ id: 'char1', level: 1 });
       context.setEntity(character.id, character);
 
       const outcomeTests = [
-        { roll: 0.54, expected: 'stand_ground' }, // 54 ≤ 55
-        { roll: 0.64, expected: 'fighting_withdrawal' }, // 64 > 55, fail by 9
-        { roll: 0.75, expected: 'retreat' }, // 75 > 55, fail by 20
-        { roll: 0.9, expected: 'rout' }, // 90 > 55, fail by 35
-        { roll: 0.99, expected: 'surrender' }, // 99 > 55, fail by 44
+        { roll: 0.54, expected: 'stand_ground' },
+        { roll: 0.64, expected: 'fighting_withdrawal' },
+        { roll: 0.75, expected: 'retreat' },
+        { roll: 0.9, expected: 'rout' },
+        { roll: 0.99, expected: 'surrender' },
       ];
 
       for (const { roll, expected } of outcomeTests) {
@@ -700,7 +679,7 @@ describe('MoraleRules', () => {
 
         const command = new MockMoraleCommand('char1', {
           characterId: 'char1',
-          trigger: 'other', // No modifier
+          trigger: 'other',
         });
 
         const result = await moraleRules.execute(context, command);

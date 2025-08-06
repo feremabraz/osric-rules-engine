@@ -3,23 +3,11 @@ import { BaseRule, type RuleResult } from '../../core/Rule';
 import type { Character, Monster, Spell, SpellResult, StatusEffect } from '../../types';
 import { RULE_NAMES } from '../../types/constants';
 
-/**
- * Rule for handling spell casting mechanics in the OSRIC system.
- *
- * Preserves OSRIC spell mechanics:
- * - Spell slot validation and consumption
- * - Range and area of effect validation
- * - Casting time requirements
- * - Saving throw calculations
- * - Spell effect resolution
- * - Status effect application
- */
 export class SpellCastingRules extends BaseRule {
   public readonly name = RULE_NAMES.SPELL_CASTING;
   public readonly description = 'Handles OSRIC spell casting mechanics and effects';
 
   public canApply(context: GameContext): boolean {
-    // This rule applies when we have spell casting temporary data
     const caster = context.getTemporary<Character>('castSpell_caster');
     const spell = context.getTemporary<Spell>('castSpell_spell');
     return !!(caster && spell);
@@ -37,30 +25,24 @@ export class SpellCastingRules extends BaseRule {
         return this.createFailureResult('Missing caster or spell in context');
       }
 
-      // Validate spell casting prerequisites
       const validationResult = this.validateSpellCasting(caster, spell, targets);
       if (!validationResult.success) {
         return validationResult;
       }
 
-      // Check and consume spell slot
       const slotResult = this.consumeSpellSlot(caster, spell);
       if (!slotResult.success) {
         return slotResult;
       }
 
-      // Calculate spell effects
       const spellResult = this.resolveSpellEffect(caster, spell, targets);
 
-      // Apply effects to targets
       const effectResults = this.applySpellEffects(targets, spellResult, spell);
 
-      // Update caster with consumed spell slot
       if (slotResult.updatedCaster) {
         context.setEntity(caster.id, slotResult.updatedCaster);
       }
 
-      // Store results for command to use
       context.setTemporary('castSpell_spellResult', spellResult);
       context.setTemporary('castSpell_effectResults', effectResults);
 
@@ -78,21 +60,15 @@ export class SpellCastingRules extends BaseRule {
     }
   }
 
-  /**
-   * Validate that the spell can be cast by this caster at these targets
-   * Preserves OSRIC range, area of effect, and casting requirements
-   */
   private validateSpellCasting(
     caster: Character,
     spell: Spell,
     targets: (Character | Monster)[]
   ): RuleResult {
-    // Check if caster is conscious and able to cast
     if (caster.hitPoints.current <= 0) {
       return this.createFailureResult(`${caster.name} is unconscious and cannot cast spells`);
     }
 
-    // Check if caster is silenced (affects spells with verbal components)
     if (spell.components.includes('V')) {
       const silenced = caster.statusEffects.some(
         (effect) => effect.name === 'Silenced' || effect.name === 'Gagged'
@@ -104,7 +80,6 @@ export class SpellCastingRules extends BaseRule {
       }
     }
 
-    // Check if caster can perform somatic components
     if (spell.components.includes('S')) {
       const canPerformSomatic = this.canPerformSomaticComponents(caster);
       if (!canPerformSomatic) {
@@ -114,12 +89,10 @@ export class SpellCastingRules extends BaseRule {
       }
     }
 
-    // Validate range and targets (simplified - in full implementation would check positioning)
     if (targets.length === 0 && spell.range !== 'Self' && spell.range !== '0') {
       return this.createFailureResult(`${spell.name} requires targets but none were provided`);
     }
 
-    // Check if targets are valid for this spell
     if (spell.range === 'Self' && targets.length > 0) {
       return this.createFailureResult(`${spell.name} can only target the caster`);
     }
@@ -127,11 +100,7 @@ export class SpellCastingRules extends BaseRule {
     return this.createSuccessResult('Spell casting validation passed');
   }
 
-  /**
-   * Check if character can perform somatic components
-   */
   private canPerformSomaticComponents(character: Character): boolean {
-    // Check if hands are bound or paralyzed
     const restrictedMovement = character.statusEffects.some(
       (effect) =>
         effect.name === 'Paralyzed' || effect.name === 'Restrained' || effect.name === 'Bound'
@@ -141,31 +110,22 @@ export class SpellCastingRules extends BaseRule {
       return false;
     }
 
-    // Check if at least one hand is free (simplified check)
-    // In full implementation, would check equipped items and hand usage
     const equippedItems = character.inventory.filter((item) => item.equipped);
     let occupiedHands = 0;
 
     for (const item of equippedItems) {
-      // Simple heuristic - shields and two-handed weapons occupy hands
       if (item.name.toLowerCase().includes('shield')) {
         occupiedHands += 1;
       }
-      // This would be enhanced with proper weapon type checking
     }
 
-    return occupiedHands < 2; // Assuming humanoid with 2 hands
+    return occupiedHands < 2;
   }
 
-  /**
-   * Check if caster has the required spell slot and consume it
-   * Preserves OSRIC spell slot mechanics
-   */
   private consumeSpellSlot(
     caster: Character,
     spell: Spell
   ): RuleResult & { updatedCaster?: Character } {
-    // Check if caster has memorized this spell
     const spellLevel = spell.level;
     const memorizedSpells = caster.memorizedSpells[spellLevel] || [];
 
@@ -177,7 +137,6 @@ export class SpellCastingRules extends BaseRule {
       return this.createFailureResult(`${caster.name} does not have ${spell.name} memorized`);
     }
 
-    // Create updated caster with spell slot consumed
     const updatedCaster: Character = {
       ...caster,
       memorizedSpells: {
@@ -192,28 +151,18 @@ export class SpellCastingRules extends BaseRule {
     };
   }
 
-  /**
-   * Calculate spell effects based on caster level and spell mechanics
-   * Preserves OSRIC spell damage, healing, and effect calculations
-   */
   private resolveSpellEffect(
     caster: Character,
     spell: Spell,
     targets: (Character | Monster)[]
   ): SpellResult {
-    // Use the spell's built-in effect function if available
     if (spell.effect && typeof spell.effect === 'function') {
       return spell.effect(caster, targets);
     }
 
-    // Default spell effect resolution based on spell name and level
     return this.getDefaultSpellEffect(caster, spell, targets);
   }
 
-  /**
-   * Default spell effects for common OSRIC spells
-   * This preserves the original spell mechanics from the existing spellResolver
-   */
   private getDefaultSpellEffect(
     caster: Character,
     spell: Spell,
@@ -223,7 +172,6 @@ export class SpellCastingRules extends BaseRule {
 
     switch (spell.name.toLowerCase()) {
       case 'magic missile': {
-        // 1 missile per odd level (1, 3, 5, etc.), max 5 missiles
         const missiles = Math.min(5, Math.floor((casterLevel + 1) / 2));
         const damage = Array(missiles)
           .fill(0)
@@ -247,11 +195,10 @@ export class SpellCastingRules extends BaseRule {
       }
 
       case 'sleep': {
-        // Affects 2d4 HD of creatures
         const sleepHD = this.rollDice(2, 4);
         const sleepEffect: StatusEffect = {
           name: 'Asleep',
-          duration: casterLevel * 5, // 5 rounds per level
+          duration: casterLevel * 5,
           effect: 'Target is unconscious and helpless',
           savingThrow: null,
           endCondition: 'Damage or loud noise',
@@ -267,7 +214,7 @@ export class SpellCastingRules extends BaseRule {
       case 'shield': {
         const shieldEffect: StatusEffect = {
           name: 'Shield',
-          duration: casterLevel * 5, // 5 rounds per level
+          duration: casterLevel * 5,
           effect: 'AC 2 vs missiles, AC 4 vs other attacks',
           savingThrow: null,
           endCondition: 'Duration expires',
@@ -290,9 +237,6 @@ export class SpellCastingRules extends BaseRule {
     }
   }
 
-  /**
-   * Apply spell effects to targets, handling saving throws where applicable
-   */
   private applySpellEffects(
     targets: (Character | Monster)[],
     _spellResult: SpellResult,
@@ -308,13 +252,12 @@ export class SpellCastingRules extends BaseRule {
       let effectApplied = true;
       let savingThrow: number | undefined;
 
-      // Handle saving throws
       if (spell.savingThrow !== 'None') {
         savingThrow = this.rollDice(1, 20);
         const savingThrowTarget = this.getSavingThrowTarget(target, spell.savingThrow);
 
         if (savingThrow >= savingThrowTarget) {
-          effectApplied = false; // Saved against the spell
+          effectApplied = false;
         }
       }
 
@@ -328,13 +271,7 @@ export class SpellCastingRules extends BaseRule {
     return results;
   }
 
-  /**
-   * Get the saving throw target for a character/monster against a specific save type
-   * This would use the full OSRIC saving throw tables in a complete implementation
-   */
   private getSavingThrowTarget(target: Character | Monster, saveType: string): number {
-    // Simplified saving throw calculation
-    // In full implementation, this would use OSRIC saving throw tables by class and level
     const baseLevel = target.level || 1;
 
     switch (saveType) {
@@ -349,14 +286,10 @@ export class SpellCastingRules extends BaseRule {
       case 'Spells, Rods, or Staves':
         return Math.max(1, 19 - Math.floor(baseLevel / 2));
       default:
-        return 15; // Default saving throw
+        return 15;
     }
   }
 
-  /**
-   * Simple dice rolling function
-   * In a full implementation, this would use the centralized dice system
-   */
   private rollDice(count: number, sides: number): number {
     let total = 0;
     for (let i = 0; i < count; i++) {

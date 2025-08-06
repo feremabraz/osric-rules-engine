@@ -1,18 +1,3 @@
-/**
- * WeaponSpecializationRules Tests - OSRIC Compliance
- *
- * Tests the WeaponSpecializationRule for proper OSRIC weapon specialization mechanics:
- * - Fighter-class specialization requirements
- * - To-hit and damage bonuses for specialized weapons
- * - Rate of attack improvements from specialization
- * - Double specialization for melee weapons
- * - Weapon proficiency slot costs
- * - Class restrictions (Fighter, Paladin, Ranger only)
- * - Proficiency prerequisites
- * - OSRIC exact bonus calculations
- * - Edge cases and error scenarios
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { GameContext } from '../../../osric/core/GameContext';
@@ -23,7 +8,6 @@ import {
 import { COMMAND_TYPES } from '../../../osric/types/constants';
 import type { Character, Weapon } from '../../../osric/types/entities';
 
-// Type interfaces for test clarity
 interface SpecializationEligibility {
   canSpecialize: boolean;
   canDoubleSpecialize: boolean;
@@ -38,7 +22,6 @@ interface SpecializationBonuses {
   attackRate: number;
 }
 
-// Mock helper function to create test characters
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-char',
@@ -53,7 +36,7 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
     position: 'town',
     statusEffects: [],
     race: 'Human',
-    class: 'Fighter', // Default to Fighter for specialization
+    class: 'Fighter',
     abilities: {
       strength: 16,
       dexterity: 14,
@@ -119,14 +102,13 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
       { weapon: 'Longsword', penalty: 0 },
       { weapon: 'Bow (Long)', penalty: 0 },
     ],
-    weaponSpecializations: [], // Start with no specializations
+    weaponSpecializations: [],
     secondarySkills: [],
   };
 
   return { ...defaultCharacter, ...overrides };
 }
 
-// Mock helper function to create test weapons
 function createMockWeapon(overrides: Partial<Weapon> = {}): Weapon {
   const defaultWeapon: Weapon = {
     id: 'test-weapon',
@@ -150,7 +132,6 @@ function createMockWeapon(overrides: Partial<Weapon> = {}): Weapon {
   return { ...defaultWeapon, ...overrides };
 }
 
-// Mock command that implements the Command interface
 class MockSpecializationCommand {
   readonly type = COMMAND_TYPES.CHECK_SPECIALIZATION;
   readonly actorId = 'test-actor';
@@ -299,7 +280,7 @@ describe('WeaponSpecializationRules', () => {
       const fighter = createMockCharacter({
         name: 'Fighter',
         class: 'Fighter',
-        proficiencies: [{ weapon: 'Dagger', penalty: 0 }], // Not proficient with longsword
+        proficiencies: [{ weapon: 'Dagger', penalty: 0 }],
       });
       const longsword = createMockWeapon({ name: 'Longsword' });
 
@@ -331,7 +312,7 @@ describe('WeaponSpecializationRules', () => {
           {
             weapon: 'Longsword',
             bonuses: {
-              attackBonus: 1, // Regular specialization
+              attackBonus: 1,
               damageBonus: 2,
               extraAttacks: 0.5,
             },
@@ -354,9 +335,9 @@ describe('WeaponSpecializationRules', () => {
       const bonuses = context.getTemporary('specialization-bonuses') as SpecializationBonuses;
       expect(bonuses).toBeDefined();
       expect(bonuses.level).toBe(SpecializationLevel.SPECIALIZED);
-      expect(bonuses.hitBonus).toBe(1); // +1 to hit for specialization
-      expect(bonuses.damageBonus).toBe(2); // +2 damage for melee specialization
-      expect(bonuses.attackRate).toBeGreaterThan(1); // Improved attack rate
+      expect(bonuses.hitBonus).toBe(1);
+      expect(bonuses.damageBonus).toBe(2);
+      expect(bonuses.attackRate).toBeGreaterThan(1);
     });
 
     it('should calculate double specialization bonuses for melee weapons', async () => {
@@ -369,7 +350,7 @@ describe('WeaponSpecializationRules', () => {
           {
             weapon: 'Longsword',
             bonuses: {
-              attackBonus: 3, // Double specialization
+              attackBonus: 3,
               damageBonus: 3,
               extraAttacks: 1,
             },
@@ -391,8 +372,8 @@ describe('WeaponSpecializationRules', () => {
 
       const bonuses = context.getTemporary('specialization-bonuses') as SpecializationBonuses;
       expect(bonuses.level).toBe(SpecializationLevel.DOUBLE_SPECIALIZED);
-      expect(bonuses.hitBonus).toBe(3); // +3 to hit for double specialization
-      expect(bonuses.damageBonus).toBe(3); // +3 damage for double specialization
+      expect(bonuses.hitBonus).toBe(3);
+      expect(bonuses.damageBonus).toBe(3);
     });
 
     it('should calculate ranged weapon specialization bonuses', async () => {
@@ -406,7 +387,7 @@ describe('WeaponSpecializationRules', () => {
             weapon: 'Bow (Long)',
             bonuses: {
               attackBonus: 1,
-              damageBonus: 1, // Less damage bonus for ranged
+              damageBonus: 1,
               extraAttacks: 0.5,
             },
           },
@@ -430,8 +411,8 @@ describe('WeaponSpecializationRules', () => {
 
       const bonuses = context.getTemporary('specialization-bonuses') as SpecializationBonuses;
       expect(bonuses.level).toBe(SpecializationLevel.SPECIALIZED);
-      expect(bonuses.hitBonus).toBe(1); // +1 to hit
-      expect(bonuses.damageBonus).toBe(1); // +1 damage for ranged (less than melee)
+      expect(bonuses.hitBonus).toBe(1);
+      expect(bonuses.damageBonus).toBe(1);
     });
 
     it('should handle non-specialized characters', async () => {
@@ -439,7 +420,7 @@ describe('WeaponSpecializationRules', () => {
         name: 'Non-Specialist',
         class: 'Fighter',
         proficiencies: [{ weapon: 'Longsword', penalty: 0 }],
-        weaponSpecializations: [], // No specializations
+        weaponSpecializations: [],
       });
       const longsword = createMockWeapon({ name: 'Longsword' });
 
@@ -461,7 +442,6 @@ describe('WeaponSpecializationRules', () => {
     });
 
     it('should calculate proper attack rates by level', async () => {
-      // Low level fighter (1-6)
       const lowLevelFighter = createMockCharacter({
         name: 'Low Level Fighter',
         class: 'Fighter',
@@ -479,9 +459,8 @@ describe('WeaponSpecializationRules', () => {
       let result = await rule.execute(context, mockCommand);
       expect(result.success).toBe(true);
       let bonuses = context.getTemporary('specialization-bonuses') as SpecializationBonuses;
-      expect(bonuses.attackRate).toBe(1); // 1 attack per round
+      expect(bonuses.attackRate).toBe(1);
 
-      // Mid level fighter (7-12)
       const midLevelFighter = createMockCharacter({
         name: 'Mid Level Fighter',
         class: 'Fighter',
@@ -497,9 +476,8 @@ describe('WeaponSpecializationRules', () => {
 
       result = await rule.execute(context, mockCommand);
       bonuses = context.getTemporary('specialization-bonuses') as SpecializationBonuses;
-      expect(bonuses.attackRate).toBe(1.5); // 3/2 attacks per round
+      expect(bonuses.attackRate).toBe(1.5);
 
-      // High level fighter (13+)
       const highLevelFighter = createMockCharacter({
         name: 'High Level Fighter',
         class: 'Fighter',
@@ -515,18 +493,15 @@ describe('WeaponSpecializationRules', () => {
 
       result = await rule.execute(context, mockCommand);
       bonuses = context.getTemporary('specialization-bonuses') as SpecializationBonuses;
-      expect(bonuses.attackRate).toBe(2); // 2 attacks per round
+      expect(bonuses.attackRate).toBe(2);
     });
 
     it('should only apply to specialization commands with context', () => {
-      // Test with wrong command type
       const wrongCommand = { ...mockCommand, type: 'move' };
       expect(rule.canApply(context, wrongCommand as unknown as typeof mockCommand)).toBe(false);
 
-      // Test with correct command type but no context
       expect(rule.canApply(context, mockCommand)).toBe(false);
 
-      // Test with complete context
       context.setTemporary('specialization-context', {
         character: createMockCharacter(),
         weapon: createMockWeapon(),
@@ -536,7 +511,6 @@ describe('WeaponSpecializationRules', () => {
     });
 
     it('should fail gracefully without specialization context', async () => {
-      // No specialization context set
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(false);
@@ -556,7 +530,6 @@ describe('WeaponSpecializationRules', () => {
     });
 
     it('should preserve OSRIC specialization mechanics exactly', async () => {
-      // Test exact OSRIC mechanics for Fighter specialization
       const osricFighter = createMockCharacter({
         name: 'OSRIC Fighter',
         class: 'Fighter',
@@ -566,9 +539,9 @@ describe('WeaponSpecializationRules', () => {
           {
             weapon: 'Longsword',
             bonuses: {
-              attackBonus: 1, // OSRIC: +1 to hit
-              damageBonus: 2, // OSRIC: +2 damage for melee
-              extraAttacks: 0.5, // OSRIC: +1/2 attack per round
+              attackBonus: 1,
+              damageBonus: 2,
+              extraAttacks: 0.5,
             },
           },
         ],
@@ -590,11 +563,10 @@ describe('WeaponSpecializationRules', () => {
 
       const bonuses = context.getTemporary('specialization-bonuses') as SpecializationBonuses;
 
-      // OSRIC exact mechanics
       expect(bonuses.level).toBe(SpecializationLevel.SPECIALIZED);
-      expect(bonuses.hitBonus).toBe(1); // +1 to hit
-      expect(bonuses.damageBonus).toBe(2); // +2 damage for melee
-      expect(bonuses.attackRate).toBeGreaterThan(1); // Improved attack rate
+      expect(bonuses.hitBonus).toBe(1);
+      expect(bonuses.damageBonus).toBe(2);
+      expect(bonuses.attackRate).toBeGreaterThan(1);
     });
 
     it('should handle weapon slot costs correctly', async () => {
@@ -623,11 +595,10 @@ describe('WeaponSpecializationRules', () => {
     });
 
     it('should handle edge cases with missing data', async () => {
-      // Character without proficiencies array
       const characterNoProficiencies = createMockCharacter({
         name: 'No Proficiencies',
         class: 'Fighter',
-        proficiencies: [], // Empty proficiencies array
+        proficiencies: [],
       });
       const weapon = createMockWeapon({ name: 'Longsword' });
 

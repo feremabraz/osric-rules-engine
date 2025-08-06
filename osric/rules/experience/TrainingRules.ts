@@ -13,8 +13,8 @@ interface TrainingRequestData {
 }
 
 interface TrainingRequirements {
-  timeRequired: number; // in weeks
-  costRequired: number; // in GP
+  timeRequired: number;
+  costRequired: number;
   trainerRequired: boolean;
   trainerLevel?: number;
   locationRequired?: string;
@@ -61,16 +61,13 @@ export class TrainingRule extends BaseRule {
 
     const requirements = this.calculateTrainingRequirements(character, data);
 
-    // Check if character meets prerequisites
     const prerequisiteCheck = this.checkPrerequisites(character, requirements);
     if (!prerequisiteCheck.success) {
       return this.createFailureResult(prerequisiteCheck.message);
     }
 
-    // Process training
     const result = this.processTraining(character, data, requirements);
 
-    // Apply training effects to character
     if (result.success) {
       this.applyTrainingEffects(character, data, context);
     }
@@ -111,15 +108,12 @@ export class TrainingRule extends BaseRule {
   ): TrainingRequirements {
     const levelDifference = targetLevel - character.level;
 
-    // Base training time increases with level
     const baseTimeWeeks = Math.max(1, targetLevel);
     const timeRequired = baseTimeWeeks * levelDifference;
 
-    // Training cost scales with level and class
     const baseCost = this.getBaseLevelTrainingCost(character);
     const costRequired = baseCost * targetLevel;
 
-    // Higher levels require trainers
     const trainerRequired = targetLevel > 3;
     const trainerLevel = trainerRequired ? targetLevel + 1 : undefined;
 
@@ -137,10 +131,9 @@ export class TrainingRule extends BaseRule {
     _character: Character,
     _skillType: string
   ): TrainingRequirements {
-    // Standard requirements for learning new skills
     return {
-      timeRequired: 8, // 8 weeks base
-      costRequired: 500, // 500 GP base
+      timeRequired: 8,
+      costRequired: 500,
       trainerRequired: true,
       trainerLevel: 3,
       locationRequired: 'guild hall or academy',
@@ -152,10 +145,9 @@ export class TrainingRule extends BaseRule {
     _character: Character,
     _skillType: string
   ): TrainingRequirements {
-    // Requirements for improving existing skills
     return {
-      timeRequired: 4, // 4 weeks
-      costRequired: 250, // 250 GP
+      timeRequired: 4,
+      costRequired: 250,
       trainerRequired: true,
       trainerLevel: 5,
       prerequisites: ['Previous skill level', 'Practice time completed'],
@@ -163,7 +155,6 @@ export class TrainingRule extends BaseRule {
   }
 
   private getBaseLevelTrainingCost(character: Character): number {
-    // Training costs vary by class
     const classCostMultipliers: Record<string, number> = {
       Fighter: 100,
       Cleric: 150,
@@ -184,15 +175,12 @@ export class TrainingRule extends BaseRule {
   private getLevelAdvancementPrerequisites(character: Character, targetLevel: number): string[] {
     const prerequisites: string[] = [];
 
-    // Experience requirement
     prerequisites.push(`${this.getRequiredExperience(targetLevel)} XP`);
 
-    // Ability score requirements for higher levels
     if (targetLevel > 8) {
       prerequisites.push('Prime requisite 15+');
     }
 
-    // Class-specific requirements
     const classPrereqs = this.getClassSpecificPrerequisites(character, targetLevel);
     prerequisites.push(...classPrereqs);
 
@@ -200,8 +188,6 @@ export class TrainingRule extends BaseRule {
   }
 
   private getRequiredExperience(targetLevel: number): number {
-    // This would use the level progression tables from the old rules
-    // For now, using a simple calculation
     return targetLevel ** 3 * 1000;
   }
 
@@ -241,7 +227,6 @@ export class TrainingRule extends BaseRule {
     character: Character,
     requirements: TrainingRequirements
   ): { success: boolean; message: string } {
-    // Check experience points for level advancement
     if (requirements.prerequisites.some((p) => p.includes('XP'))) {
       const requiredXP = Number.parseInt(
         requirements.prerequisites.find((p) => p.includes('XP'))?.split(' ')[0] || '0'
@@ -254,7 +239,6 @@ export class TrainingRule extends BaseRule {
       }
     }
 
-    // Check ability score requirements
     if (requirements.prerequisites.some((p) => p.includes('Prime requisite'))) {
       const primeRequisite = this.getPrimeRequisite(character);
       if (primeRequisite < 15) {
@@ -265,12 +249,10 @@ export class TrainingRule extends BaseRule {
       }
     }
 
-    // All prerequisites met
     return { success: true, message: 'Prerequisites satisfied' };
   }
 
   private getPrimeRequisite(character: Character): number {
-    // Get the prime requisite ability for the character's class
     const primeRequisites: Record<string, keyof typeof character.abilities> = {
       Fighter: 'strength',
       Cleric: 'wisdom',
@@ -294,7 +276,6 @@ export class TrainingRule extends BaseRule {
     data: TrainingRequestData,
     requirements: TrainingRequirements
   ): TrainingResult {
-    // Simulate training process
     const success = this.rollTrainingSuccess(data.trainingType);
 
     if (success) {
@@ -316,7 +297,6 @@ export class TrainingRule extends BaseRule {
   }
 
   private rollTrainingSuccess(trainingType: string): boolean {
-    // Simple success calculation - could be enhanced with dice rolls
     const baseChance: Record<string, number> = {
       level_advancement: 0.9,
       new_skill: 0.7,
@@ -346,9 +326,5 @@ export class TrainingRule extends BaseRule {
     _character: Character,
     _data: TrainingRequestData,
     _context: GameContext
-  ): void {
-    // Apply the training effects to the character
-    // This would modify the character entity through the context
-    // For now, this is a placeholder for the actual implementation
-  }
+  ): void {}
 }

@@ -1,17 +1,3 @@
-/**
- * @fileoverview Tests for FallingDamageRule - OSRIC Falling Damage System
- *
- * Tests comprehensive falling damage calculation including:
- * - Distance-based damage calculation (1d6 per 10 feet)
- * - Surface type modifiers (soft/normal/hard/spikes)
- * - Character class special abilities (monk, thief)
- * - Circumstantial modifiers (intentional, encumbrance, dexterity)
- * - OSRIC authentic falling damage rules
- *
- * @version 1.0.0
- * @since Phase 4: Magic System Testing
- */
-
 import { createStore } from 'jotai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Command, CommandResult } from '../../../osric/core/Command';
@@ -20,7 +6,6 @@ import { FallingDamageRule } from '../../../osric/rules/exploration/FallingDamag
 import { COMMAND_TYPES, RULE_NAMES } from '../../../osric/types/constants';
 import type { AbilityScoreModifiers, Character } from '../../../osric/types/entities';
 
-// Type definitions for falling damage parameters
 interface FallingDamageParams {
   characterId: string;
   fallDistance: number;
@@ -35,7 +20,6 @@ interface FallingDamageParams {
   description?: string;
 }
 
-// Interface for falling damage rule return data
 interface FallingDamageRuleData {
   characterId: string;
   fallDistance: number;
@@ -57,7 +41,6 @@ interface FallingDamageRuleData {
   immunities: string[];
 }
 
-// Mock command implementation for testing
 class MockCommand implements Command {
   constructor(
     public type: string,
@@ -81,7 +64,6 @@ class MockCommand implements Command {
   }
 }
 
-// Helper function for mock character creation with proper interface compliance
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultModifiers: AbilityScoreModifiers = {
     strengthHitAdj: 0,
@@ -166,7 +148,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   };
 }
 
-// Helper function for creating falling damage parameters
 function createFallingDamageParams(
   overrides: Partial<FallingDamageParams> = {}
 ): FallingDamageParams {
@@ -199,7 +180,6 @@ describe('FallingDamageRule', () => {
     character = createMockCharacter();
     command = new MockCommand(COMMAND_TYPES.FALLING_DAMAGE);
 
-    // Set up character in context
     context.setEntity(character.id, character);
   });
 
@@ -276,7 +256,6 @@ describe('FallingDamageRule', () => {
     });
 
     it('should cap damage at 20d6 for terminal velocity (200+ feet)', async () => {
-      // Use high-level character to avoid "too extreme" rejection
       character = createMockCharacter({
         level: 15,
         experience: { current: 300000, requiredForNextLevel: 750000, level: 15 },
@@ -311,7 +290,7 @@ describe('FallingDamageRule', () => {
       expect(result.success).toBe(true);
       const data = result.data as unknown as FallingDamageRuleData;
       expect(data.surfaceModifier).toBe(0.5);
-      expect(data.expectedDamage).toBe(3); // 7 * 0.5 = 3.5, floored to 3
+      expect(data.expectedDamage).toBe(3);
     });
 
     it('should apply normal damage for normal surfaces', async () => {
@@ -326,7 +305,7 @@ describe('FallingDamageRule', () => {
       expect(result.success).toBe(true);
       const data = result.data as unknown as FallingDamageRuleData;
       expect(data.surfaceModifier).toBe(1.0);
-      expect(data.expectedDamage).toBe(7); // 2d6 average = 7
+      expect(data.expectedDamage).toBe(7);
     });
 
     it('should increase damage for hard surfaces', async () => {
@@ -341,7 +320,7 @@ describe('FallingDamageRule', () => {
       expect(result.success).toBe(true);
       const data = result.data as unknown as FallingDamageRuleData;
       expect(data.surfaceModifier).toBe(1.5);
-      expect(data.expectedDamage).toBe(10); // 7 * 1.5 = 10.5, floored to 10
+      expect(data.expectedDamage).toBe(10);
     });
 
     it('should double damage for spikes', async () => {
@@ -356,7 +335,7 @@ describe('FallingDamageRule', () => {
       expect(result.success).toBe(true);
       const data = result.data as unknown as FallingDamageRuleData;
       expect(data.surfaceModifier).toBe(2.0);
-      expect(data.expectedDamage).toBe(14); // 7 * 2.0 = 14
+      expect(data.expectedDamage).toBe(14);
     });
   });
 
@@ -545,7 +524,7 @@ describe('FallingDamageRule', () => {
       context.setEntity(character.id, character);
 
       const params = createFallingDamageParams({
-        fallDistance: 60, // 6d6, average 21 damage
+        fallDistance: 60,
         savingThrow: true,
       });
       context.setTemporary('falling-damage-params', params);
@@ -587,7 +566,7 @@ describe('FallingDamageRule', () => {
       const result = await rule.execute(context, command);
 
       expect(result.success).toBe(true);
-      expect(result.data?.canSurvive).toBe(true); // High HP can survive 20d6
+      expect(result.data?.canSurvive).toBe(true);
     });
   });
 
@@ -635,7 +614,6 @@ describe('FallingDamageRule', () => {
       const params = createFallingDamageParams({ fallDistance: 250 });
       context.setTemporary('falling-damage-params', params);
 
-      // Use high-level character to avoid rejection
       character = createMockCharacter({
         level: 15,
         experience: { current: 300000, requiredForNextLevel: 750000, level: 15 },
@@ -654,7 +632,6 @@ describe('FallingDamageRule', () => {
 
   describe('Error Handling', () => {
     it('should handle missing falling damage parameters', async () => {
-      // Don't set parameters
       const result = await rule.execute(context, command);
 
       expect(result.success).toBe(false);
@@ -672,12 +649,11 @@ describe('FallingDamageRule', () => {
     });
 
     it('should handle exceptions gracefully', async () => {
-      const params = createFallingDamageParams({ fallDistance: -999 }); // Edge case that rule handles gracefully
+      const params = createFallingDamageParams({ fallDistance: -999 });
       context.setTemporary('falling-damage-params', params);
 
       const result = await rule.execute(context, command);
 
-      // The implementation handles edge cases gracefully and returns success
       expect(result.success).toBe(true);
       expect(result.message).toContain('Falling damage validation complete');
     });
@@ -701,9 +677,9 @@ describe('FallingDamageRule', () => {
       const result = await rule.execute(context, command);
 
       expect(result.success).toBe(true);
-      // The rule might calculate negative damage, so we accept the actual implementation behavior
+
       const data = result.data as unknown as FallingDamageRuleData;
-      expect(data.expectedDamage).toBe(-4); // Implementation behavior
+      expect(data.expectedDamage).toBe(-4);
     });
 
     it('should handle multiple modifiers simultaneously', async () => {

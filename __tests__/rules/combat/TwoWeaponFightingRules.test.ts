@@ -1,17 +1,3 @@
-/**
- * TwoWeaponFightingRules Test Suite
- *
- * Tests the TwoWeaponFightingRules implementation using systematic testing methodology.
- * Validates OSRIC-compliant two-weapon fighting mechanics including:
- * - Weapon eligibility for off-hand use (daggers and hand axes only)
- * - Attack penalties for main hand (-2) and off-hand (-4)
- * - Dexterity modifier application to both attacks
- * - Sequence of attacks and target status checking
- * - Integration with existing attack resolution
- *
- * Follows established testing patterns with comprehensive coverage.
- */
-
 import type { Command } from '@osric/core/Command';
 import { GameContext } from '@osric/core/GameContext';
 import {
@@ -23,7 +9,6 @@ import type { Character, CombatResult, Monster, Weapon } from '@osric/types/enti
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-// Interface for two-weapon eligibility results
 interface TwoWeaponEligibility {
   canUseTwoWeapons: boolean;
   reason?: string;
@@ -33,7 +18,6 @@ interface TwoWeaponEligibility {
   };
 }
 
-// Helper function for mock character creation
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return {
     id: 'test-character',
@@ -49,7 +33,7 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
     movementRate: 120,
     abilities: {
       strength: 16,
-      dexterity: 15, // Good dexterity for missile modifier
+      dexterity: 15,
       constitution: 14,
       intelligence: 12,
       wisdom: 10,
@@ -62,7 +46,7 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
       strengthOpenDoors: null,
       strengthBendBars: null,
       dexterityReaction: 0,
-      dexterityMissile: 0, // Will vary in tests
+      dexterityMissile: 0,
       dexterityDefense: 0,
       dexterityPickPockets: null,
       dexterityOpenLocks: null,
@@ -126,7 +110,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   };
 }
 
-// Helper function for mock monster creation
 function createMockMonster(overrides: Partial<Monster> = {}): Monster {
   return {
     id: 'test-orc',
@@ -157,7 +140,6 @@ function createMockMonster(overrides: Partial<Monster> = {}): Monster {
   };
 }
 
-// Helper function for weapon creation
 function createMockWeapon(name: string, overrides: Partial<Weapon> = {}): Weapon {
   const weaponDefaults: Record<string, Partial<Weapon>> = {
     'Long Sword': {
@@ -211,7 +193,7 @@ function createMockWeapon(name: string, overrides: Partial<Weapon> = {}): Weapon
     equipped: false,
     magicBonus: null,
     charges: null,
-    damage: '1d4', // Default damage
+    damage: '1d4',
     type: 'Melee' as const,
     size: 'Medium' as const,
     speed: 5,
@@ -284,7 +266,6 @@ describe('TwoWeaponFightingRule', () => {
       expect(result.message).toContain('Two-weapon attack resolved');
       expect(result.stopChain).toBe(true);
 
-      // Check that results were stored
       const twoWeaponResults = context.getTemporary('two-weapon-results');
       const mainHandResult = context.getTemporary('main-hand-result');
       const offHandResult = context.getTemporary('off-hand-result');
@@ -298,7 +279,7 @@ describe('TwoWeaponFightingRule', () => {
       const attacker = createMockCharacter();
       const target = createMockMonster();
       const mainHandWeapon = createMockWeapon('Long Sword');
-      const offHandWeapon = createMockWeapon('Long Sword'); // Invalid off-hand weapon
+      const offHandWeapon = createMockWeapon('Long Sword');
 
       context.setTemporary('two-weapon-context', {
         attacker,
@@ -325,7 +306,7 @@ describe('TwoWeaponFightingRule', () => {
       const attacker = createMockCharacter({
         abilityModifiers: {
           ...createMockCharacter().abilityModifiers,
-          dexterityMissile: 1, // +1 to missile attacks (reduces penalties)
+          dexterityMissile: 1,
         },
       });
       const target = createMockMonster();
@@ -344,9 +325,6 @@ describe('TwoWeaponFightingRule', () => {
       expect(result.success).toBe(true);
       expect(result.message).toContain('Two-weapon attack resolved');
 
-      // The rule should have calculated penalties with dexterity modifiers
-      // Main hand: -2 + 1 = -1
-      // Off hand: -4 + 1 = -3
       const twoWeaponResults = context.getTemporary('two-weapon-results');
       expect(twoWeaponResults).toBeDefined();
     });
@@ -354,7 +332,7 @@ describe('TwoWeaponFightingRule', () => {
     it('should handle target defeat by main hand attack', async () => {
       const attacker = createMockCharacter();
       const target = createMockMonster({
-        hitPoints: { current: 1, maximum: 6 }, // Low HP, likely to be defeated
+        hitPoints: { current: 1, maximum: 6 },
       });
       const mainHandWeapon = createMockWeapon('Long Sword');
       const offHandWeapon = createMockWeapon('Dagger');
@@ -441,7 +419,7 @@ describe('TwoWeaponFightingRule', () => {
       const attacker = createMockCharacter({
         abilityModifiers: {
           ...createMockCharacter().abilityModifiers,
-          dexterityMissile: 0, // No modifier for cleaner test
+          dexterityMissile: 0,
         },
       });
       const target = createMockMonster();
@@ -459,8 +437,6 @@ describe('TwoWeaponFightingRule', () => {
 
       expect(result.success).toBe(true);
 
-      // OSRIC rules: Main hand -2, Off hand -4
-      // These penalties should be applied in the attack calculations
       const twoWeaponResults = context.getTemporary('two-weapon-results');
       expect(twoWeaponResults).toBeDefined();
     });
@@ -469,7 +445,7 @@ describe('TwoWeaponFightingRule', () => {
       const attacker = createMockCharacter({
         abilityModifiers: {
           ...createMockCharacter().abilityModifiers,
-          dexterityMissile: 5, // High bonus that would eliminate penalties
+          dexterityMissile: 5,
         },
       });
       const target = createMockMonster();
@@ -487,8 +463,6 @@ describe('TwoWeaponFightingRule', () => {
 
       expect(result.success).toBe(true);
 
-      // Even with high dexterity, penalties shouldn't become bonuses
-      // The rule should cap at 0 penalty (no bonus)
       const twoWeaponResults = context.getTemporary('two-weapon-results');
       expect(twoWeaponResults).toBeDefined();
     });
@@ -563,7 +537,7 @@ describe('TwoWeaponEligibilityRule', () => {
 
       const result = await rule.execute(context, mockCommand);
 
-      expect(result.success).toBe(true); // Rule succeeds but eligibility fails
+      expect(result.success).toBe(true);
       expect(result.message).toContain('Main hand weapon is two-handed');
 
       const eligibility = context.getTemporary('two-weapon-eligibility') as TwoWeaponEligibility;
@@ -582,7 +556,7 @@ describe('TwoWeaponEligibilityRule', () => {
 
       const result = await rule.execute(context, mockCommand);
 
-      expect(result.success).toBe(true); // Rule succeeds but eligibility fails
+      expect(result.success).toBe(true);
       expect(result.message).toContain('dagger or hand axe');
 
       const eligibility = context.getTemporary('two-weapon-eligibility') as TwoWeaponEligibility;
@@ -612,8 +586,8 @@ describe('TwoWeaponEligibilityRule', () => {
       expect(eligibility.canUseTwoWeapons).toBe(true);
       expect(eligibility.penalties).toBeDefined();
       if (eligibility.penalties) {
-        expect(eligibility.penalties.mainHandPenalty).toBe(-1); // -2 + 1 = -1
-        expect(eligibility.penalties.offHandPenalty).toBe(-3); // -4 + 1 = -3
+        expect(eligibility.penalties.mainHandPenalty).toBe(-1);
+        expect(eligibility.penalties.offHandPenalty).toBe(-3);
       }
     });
 

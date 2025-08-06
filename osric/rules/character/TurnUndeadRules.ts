@@ -1,10 +1,3 @@
-/**
- * TurnUndeadRules - OSRIC Turn Undead Rule Implementation
- *
- * Handles validation and processing of turn undead attempts according to OSRIC rules.
- * PRESERVATION: All OSRIC turn undead mechanics and calculations preserved exactly.
- */
-
 import type { Command } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { BaseRule, type RuleResult } from '../../core/Rule';
@@ -26,7 +19,7 @@ interface TurnUndeadParameters {
 
 export class TurnUndeadRule extends BaseRule {
   readonly name = RULE_NAMES.TURN_UNDEAD;
-  readonly priority = 500; // Normal priority for turn undead
+  readonly priority = 500;
 
   canApply(_context: GameContext, command: Command): boolean {
     return command.type === COMMAND_TYPES.TURN_UNDEAD;
@@ -45,13 +38,11 @@ export class TurnUndeadRule extends BaseRule {
         return this.createFailureResult(`Character ${turnData.characterId} not found`);
       }
 
-      // Validate the turn undead attempt
       const validationResult = this.validateTurnUndead(character, turnData);
       if (!validationResult.success) {
         return validationResult;
       }
 
-      // Get target undead and validate they exist
       const targetUndead: Monster[] = [];
       for (const undeadId of turnData.targetUndeadIds) {
         const undead = context.getEntity<Monster>(undeadId);
@@ -61,10 +52,8 @@ export class TurnUndeadRule extends BaseRule {
         targetUndead.push(undead);
       }
 
-      // Calculate turn undead parameters
       const turnCalculation = this.calculateTurnUndead(character, targetUndead, turnData);
 
-      // Apply special rules and restrictions
       const specialRules = this.applySpecialRules(character, turnData, turnCalculation);
 
       return this.createSuccessResult('Turn undead validation complete', {
@@ -85,9 +74,6 @@ export class TurnUndeadRule extends BaseRule {
     }
   }
 
-  /**
-   * Validate that the turn undead attempt is valid
-   */
   private validateTurnUndead(
     character: Character,
     turnData: TurnUndeadParameters
@@ -95,7 +81,6 @@ export class TurnUndeadRule extends BaseRule {
     const characterClass = character.class.toLowerCase();
     const restrictions: string[] = [];
 
-    // Check if character can turn undead
     const turnAbility = this.getTurnUndeadAbility(character);
     if (!turnAbility.canTurn) {
       return {
@@ -105,7 +90,6 @@ export class TurnUndeadRule extends BaseRule {
       };
     }
 
-    // Check for conditions that prevent turning
     if (character.hitPoints.current <= 0) {
       return {
         success: false,
@@ -114,12 +98,10 @@ export class TurnUndeadRule extends BaseRule {
       };
     }
 
-    // Check for holy symbol requirement
     if (!this.hasHolySymbol(character)) {
       restrictions.push('Requires holy symbol to turn undead');
     }
 
-    // Check for alignment restrictions
     if (turnData.situationalModifiers?.isEvil && characterClass === 'paladin') {
       return {
         success: false,
@@ -128,7 +110,6 @@ export class TurnUndeadRule extends BaseRule {
       };
     }
 
-    // Check turn attempts per day (OSRIC: once per turn)
     const turnLimit = this.getTurnLimit(character);
 
     return {
@@ -140,9 +121,6 @@ export class TurnUndeadRule extends BaseRule {
     };
   }
 
-  /**
-   * Check if character has turn undead ability
-   */
   private getTurnUndeadAbility(character: Character): {
     canTurn: boolean;
     effectiveLevel?: number;
@@ -151,22 +129,18 @@ export class TurnUndeadRule extends BaseRule {
     const characterClass = character.class.toLowerCase();
     const level = character.experience.level;
 
-    // Clerics can turn undead at all levels
     if (characterClass === 'cleric' || characterClass === 'druid') {
       return { canTurn: true, effectiveLevel: level };
     }
 
-    // Paladins can turn undead starting at level 3
     if (characterClass === 'paladin') {
       if (level >= 3) {
-        // Paladins turn as clerics 2 levels lower
         const effectiveLevel = Math.max(1, level - 2);
         return { canTurn: true, effectiveLevel };
       }
       return { canTurn: false, reason: 'Paladins can only turn undead starting at level 3' };
     }
 
-    // Multi-class characters with cleric
     if (characterClass.includes('cleric')) {
       return { canTurn: true, effectiveLevel: level };
     }
@@ -174,11 +148,7 @@ export class TurnUndeadRule extends BaseRule {
     return { canTurn: false, reason: 'Only clerics, druids, and paladins can turn undead' };
   }
 
-  /**
-   * Check if character has holy symbol
-   */
   private hasHolySymbol(character: Character): boolean {
-    // Check inventory for holy symbol
     return character.inventory.some(
       (item) =>
         item.name.toLowerCase().includes('holy symbol') ||
@@ -186,18 +156,10 @@ export class TurnUndeadRule extends BaseRule {
     );
   }
 
-  /**
-   * Get turn attempts limit per day
-   */
   private getTurnLimit(_character: Character): number {
-    // OSRIC: Generally once per turn (10 minutes)
-    // Could be enhanced to track daily usage
     return 1;
   }
 
-  /**
-   * Calculate turn undead parameters and success chances
-   */
   private calculateTurnUndead(
     character: Character,
     targetUndead: Monster[],
@@ -218,7 +180,6 @@ export class TurnUndeadRule extends BaseRule {
     const effectiveLevel = turnAbility.effectiveLevel || 1;
     const modifiers: Array<{ source: string; modifier: number; description: string }> = [];
 
-    // Apply situational modifiers
     if (turnData.situationalModifiers) {
       if (turnData.situationalModifiers.holySymbolBonus) {
         modifiers.push({
@@ -245,7 +206,6 @@ export class TurnUndeadRule extends BaseRule {
       }
     }
 
-    // Analyze each target undead
     const targetAnalysis = targetUndead.map((undead) => {
       const undeadHD = this.parseHitDice(undead.hitDice);
       const levelDifference = effectiveLevel - undeadHD;
@@ -290,26 +250,18 @@ export class TurnUndeadRule extends BaseRule {
     return { effectiveLevel, targetAnalysis, modifiers };
   }
 
-  /**
-   * Parse hit dice string to numerical value
-   */
   private parseHitDice(hitDice: string): number {
-    // Parse OSRIC hit dice format: "3+1", "2-1", "1+2", etc.
     const match = hitDice.match(/^(\d+)([+-]\d+)?$/);
     if (!match) {
-      return 1; // Default for unparseable format
+      return 1;
     }
 
     const dice = Number.parseInt(match[1], 10);
     const bonus = match[2] ? Number.parseInt(match[2], 10) : 0;
 
-    // Convert to effective HD (bonus counts as fraction)
     return dice + (bonus > 0 ? 1 : 0);
   }
 
-  /**
-   * Apply special rules for turn undead
-   */
   private applySpecialRules(
     character: Character,
     turnData: TurnUndeadParameters,
@@ -318,7 +270,6 @@ export class TurnUndeadRule extends BaseRule {
     const specialRules: string[] = [];
     const characterClass = character.class.toLowerCase();
 
-    // Class-specific rules
     if (characterClass === 'cleric') {
       if (turnData.situationalModifiers?.isEvil) {
         specialRules.push('Evil clerics command undead instead of turning them');
@@ -336,13 +287,11 @@ export class TurnUndeadRule extends BaseRule {
       specialRules.push('Druids can turn undead but not skeletons/zombies');
     }
 
-    // General rules
     specialRules.push('Can attempt once per turn (10 minutes)');
     specialRules.push('Requires holy symbol');
     specialRules.push('Affects 2d6 HD of undead on success');
     specialRules.push('Undead of same type turned together');
 
-    // Alignment effects
     if (turnData.situationalModifiers?.alignment) {
       const alignment = turnData.situationalModifiers.alignment;
       if (alignment === 'good') {

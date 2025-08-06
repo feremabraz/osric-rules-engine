@@ -1,8 +1,3 @@
-/**
- * OSRIC Loyalty Rules Test Suite
- * Comprehensive testing for all loyalty check mechanics
- */
-
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Command } from '../../../osric/core/Command';
@@ -11,7 +6,6 @@ import { LoyaltyRules } from '../../../osric/rules/npc/LoyaltyRules';
 import { COMMAND_TYPES } from '../../../osric/types/constants';
 import type { Character } from '../../../osric/types/entities';
 
-// Mock loyalty check command implementation
 class MockLoyaltyCommand implements Command {
   readonly type = COMMAND_TYPES.LOYALTY_CHECK;
 
@@ -62,7 +56,6 @@ describe('OSRIC Loyalty Rules', () => {
   let loyaltyRules: LoyaltyRules;
   let context: GameContext;
 
-  // Mock characters for testing
   const mockFollower: Partial<Character> & {
     id: string;
     name: string;
@@ -244,7 +237,6 @@ describe('OSRIC Loyalty Rules', () => {
     loyaltyRules = new LoyaltyRules();
     context = new GameContext(createStore());
 
-    // Set up entities in context
     context.setEntity(mockFollower.id, mockFollower as Character);
     context.setEntity(mockLeaderHighCharisma.id, mockLeaderHighCharisma as Character);
     context.setEntity(mockLeaderLowCharisma.id, mockLeaderLowCharisma as Character);
@@ -290,7 +282,7 @@ describe('OSRIC Loyalty Rules', () => {
       expect(result.data?.loyaltyCheck).toBeDefined();
       expect(result.data?.rollResult).toBeGreaterThanOrEqual(1);
       expect(result.data?.rollResult).toBeLessThanOrEqual(100);
-      expect(result.data?.baseValue).toBe(99); // Charisma 18 base loyalty
+      expect(result.data?.baseValue).toBe(99);
     });
 
     it('should handle follower without leader', async () => {
@@ -299,16 +291,16 @@ describe('OSRIC Loyalty Rules', () => {
       const result = await loyaltyRules.execute(context, command);
 
       expect(result.success).toBe(true);
-      expect(result.data?.baseValue).toBe(70); // Follower's own Charisma 12
+      expect(result.data?.baseValue).toBe(70);
     });
 
     it('should calculate different base loyalty from leader Charisma', async () => {
-      const command = new MockLoyaltyCommand('follower1', 'leader2', 'initial_hire'); // Low Charisma leader
+      const command = new MockLoyaltyCommand('follower1', 'leader2', 'initial_hire');
 
       const result = await loyaltyRules.execute(context, command);
 
       expect(result.success).toBe(true);
-      expect(result.data?.baseValue).toBe(40); // Charisma 6 base loyalty
+      expect(result.data?.baseValue).toBe(40);
     });
   });
 
@@ -320,7 +312,7 @@ describe('OSRIC Loyalty Rules', () => {
 
       expect(result.success).toBe(true);
       expect(result.data?.totalModifier).toBe(-10);
-      expect(result.data?.finalValue).toBe(89); // 99 - 10
+      expect(result.data?.finalValue).toBe(89);
     });
 
     it('should handle dangerous mission trigger', async () => {
@@ -385,12 +377,12 @@ describe('OSRIC Loyalty Rules', () => {
       const result = await loyaltyRules.execute(context, command);
 
       expect(result.success).toBe(true);
-      expect(result.data?.totalModifier).toBe(12); // 4 * 3 = 12
+      expect(result.data?.totalModifier).toBe(12);
     });
 
     it('should cap successful mission bonus at 15', async () => {
       const command = new MockLoyaltyCommand('follower1', 'leader1', 'periodic_check', {
-        successfulMissions: 10, // Would be 30, capped at 15
+        successfulMissions: 10,
       });
 
       const result = await loyaltyRules.execute(context, command);
@@ -407,34 +399,34 @@ describe('OSRIC Loyalty Rules', () => {
       const result = await loyaltyRules.execute(context, command);
 
       expect(result.success).toBe(true);
-      expect(result.data?.totalModifier).toBe(-9); // 3 * -3 = -9
+      expect(result.data?.totalModifier).toBe(-9);
     });
 
     it('should apply treasure bonus modifiers', async () => {
       const command = new MockLoyaltyCommand('follower1', 'leader1', 'periodic_check', {
-        treasureBonus: 150, // Major bonus
+        treasureBonus: 150,
       });
 
       const result = await loyaltyRules.execute(context, command);
 
       expect(result.success).toBe(true);
-      expect(result.data?.totalModifier).toBe(10); // Major treasure bonus
+      expect(result.data?.totalModifier).toBe(10);
     });
 
     it('should apply minor treasure bonus for smaller amounts', async () => {
       const command = new MockLoyaltyCommand('follower1', 'leader1', 'periodic_check', {
-        treasureBonus: 50, // Minor bonus
+        treasureBonus: 50,
       });
 
       const result = await loyaltyRules.execute(context, command);
 
       expect(result.success).toBe(true);
-      expect(result.data?.totalModifier).toBe(5); // Minor treasure bonus
+      expect(result.data?.totalModifier).toBe(5);
     });
 
     it('should apply magical influence modifiers', async () => {
       const command = new MockLoyaltyCommand('follower1', 'leader1', 'periodic_check', {
-        magicalInfluence: 20, // Positive magical influence
+        magicalInfluence: 20,
       });
 
       const result = await loyaltyRules.execute(context, command);
@@ -446,7 +438,7 @@ describe('OSRIC Loyalty Rules', () => {
 
     it('should apply negative magical influence', async () => {
       const command = new MockLoyaltyCommand('follower1', 'leader1', 'periodic_check', {
-        magicalInfluence: -15, // Magical fear/intimidation
+        magicalInfluence: -15,
       });
 
       const result = await loyaltyRules.execute(context, command);
@@ -467,7 +459,7 @@ describe('OSRIC Loyalty Rules', () => {
       const result = await loyaltyRules.execute(context, command);
 
       expect(result.success).toBe(true);
-      expect(result.data?.totalModifier).toBe(10); // 15 - 5
+      expect(result.data?.totalModifier).toBe(10);
       expect(result.data?.modifiers).toContain('Religious devotion: +15');
       expect(result.data?.modifiers).toContain('Language barrier: -5');
     });
@@ -476,47 +468,47 @@ describe('OSRIC Loyalty Rules', () => {
   describe('Complex Modifier Combinations', () => {
     it('should combine multiple modifiers correctly', async () => {
       const command = new MockLoyaltyCommand('follower1', 'leader1', 'combat_casualties', {
-        generousPayment: true, // +10
-        sharedDanger: true, // +5
-        successfulMissions: 2, // +6
-        failedMissions: 1, // -3
-        treasureBonus: 75, // +5
+        generousPayment: true,
+        sharedDanger: true,
+        successfulMissions: 2,
+        failedMissions: 1,
+        treasureBonus: 75,
       });
 
       const result = await loyaltyRules.execute(context, command);
 
       expect(result.success).toBe(true);
-      expect(result.data?.totalModifier).toBe(13); // -10 + 10 + 5 + 6 - 3 + 5 = 13
-      expect(result.data?.finalValue).toBe(99); // Capped at 99
+      expect(result.data?.totalModifier).toBe(13);
+      expect(result.data?.finalValue).toBe(99);
     });
 
     it('should cap final value at 99', async () => {
       const command = new MockLoyaltyCommand('follower1', 'leader1', 'treasure_share', {
-        generousPayment: true, // +10
-        magicalInfluence: 20, // +20
-        successfulMissions: 5, // +15
-        treasureBonus: 200, // +10
+        generousPayment: true,
+        magicalInfluence: 20,
+        successfulMissions: 5,
+        treasureBonus: 200,
       });
 
       const result = await loyaltyRules.execute(context, command);
 
       expect(result.success).toBe(true);
-      expect(result.data?.totalModifier).toBe(60); // 5 + 10 + 20 + 15 + 10
-      expect(result.data?.finalValue).toBe(99); // 99 + 60 = 159, capped at 99
+      expect(result.data?.totalModifier).toBe(60);
+      expect(result.data?.finalValue).toBe(99);
     });
 
     it('should not go below 0 for final value', async () => {
       const command = new MockLoyaltyCommand('follower1', 'leader2', 'combat_casualties', {
-        harshTreatment: true, // -15
-        failedMissions: 5, // -15
-        magicalInfluence: -20, // -20
+        harshTreatment: true,
+        failedMissions: 5,
+        magicalInfluence: -20,
       });
 
       const result = await loyaltyRules.execute(context, command);
 
       expect(result.success).toBe(true);
-      expect(result.data?.totalModifier).toBe(-60); // -10 - 15 - 15 - 20
-      expect(result.data?.finalValue).toBe(0); // 40 - 60 = -20, floored at 0
+      expect(result.data?.totalModifier).toBe(-60);
+      expect(result.data?.finalValue).toBe(0);
     });
   });
 

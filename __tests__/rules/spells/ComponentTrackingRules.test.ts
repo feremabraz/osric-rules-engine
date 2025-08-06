@@ -1,17 +1,3 @@
-/**
- * @fileoverview Tests for ComponentTrackingRules - OSRIC Spell Component System
- *
- * Tests comprehensive spell component validation including:
- * - Verbal component availability (speech ability)
- * - Somatic component validation (free hand requirements)
- * - Material component tracking and consumption
- * - Component override mechanics
- * - OSRIC authentic component rules
- *
- * @version 1.0.0
- * @since Phase 4: Magic System
- */
-
 import { createStore } from 'jotai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameContext } from '../../../osric/core/GameContext';
@@ -19,7 +5,6 @@ import { ComponentTrackingRules } from '../../../osric/rules/spells/ComponentTra
 import { COMMAND_TYPES, RULE_NAMES } from '../../../osric/types/constants';
 import type { AbilityScoreModifiers, Character, Item, Spell } from '../../../osric/types/entities';
 
-// Helper function for mock character creation
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultModifiers: AbilityScoreModifiers = {
     strengthHitAdj: 0,
@@ -115,7 +100,6 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
   };
 }
 
-// Helper function for mock spell creation
 function createMockSpell(overrides: Partial<Spell> = {}): Spell {
   return {
     name: 'Magic Missile',
@@ -135,7 +119,6 @@ function createMockSpell(overrides: Partial<Spell> = {}): Spell {
   };
 }
 
-// Helper function for creating items
 function createMockItem(name: string, equipped = false): Item {
   return {
     id: `item-${name.toLowerCase().replace(/\s+/g, '-')}`,
@@ -469,7 +452,7 @@ describe('ComponentTrackingRules', () => {
     });
 
     it('should succeed when only some components are required', async () => {
-      spell = createMockSpell({ components: ['V', 'M'] }); // No somatic
+      spell = createMockSpell({ components: ['V', 'M'] });
       context.setTemporary('castSpell_caster', caster);
       context.setTemporary('castSpell_spell', spell);
 
@@ -532,7 +515,7 @@ describe('ComponentTrackingRules', () => {
     });
 
     it('should not consume components for spells without material components', () => {
-      spell = createMockSpell({ components: ['V', 'S'] }); // No M
+      spell = createMockSpell({ components: ['V', 'S'] });
       const originalInventory = [...caster.inventory];
 
       const result = rules.consumeComponents(caster, spell);
@@ -605,7 +588,7 @@ describe('ComponentTrackingRules', () => {
 
     it('should allow somatic with quarterstaff unequipped', async () => {
       spell = createMockSpell({ components: ['S'] });
-      caster.inventory = [createMockItem('Quarterstaff', false)]; // not equipped
+      caster.inventory = [createMockItem('Quarterstaff', false)];
       context.setTemporary('castSpell_caster', caster);
       context.setTemporary('castSpell_spell', spell);
 
@@ -638,7 +621,6 @@ describe('ComponentTrackingRules', () => {
       context.setTemporary('castSpell_caster', caster);
       context.setTemporary('castSpell_spell', spell);
 
-      // Create a spell with invalid components to trigger an error
       const invalidSpell = { ...spell, components: null };
       context.setTemporary('castSpell_spell', invalidSpell);
 
@@ -651,16 +633,13 @@ describe('ComponentTrackingRules', () => {
 
   describe('OSRIC Compliance', () => {
     it('should implement authentic OSRIC verbal component rules', async () => {
-      // OSRIC: Verbal components require clear speech
       spell = createMockSpell({ components: ['V'] });
       context.setTemporary('castSpell_caster', caster);
       context.setTemporary('castSpell_spell', spell);
 
-      // Test normal case
       let result = await rules.execute(context);
       expect(result.success).toBe(true);
 
-      // Test silenced case - authentic OSRIC restriction
       caster.statusEffects.push({
         name: 'Silenced',
         duration: 10,
@@ -674,11 +653,9 @@ describe('ComponentTrackingRules', () => {
     });
 
     it('should implement authentic OSRIC somatic component rules', async () => {
-      // OSRIC: Somatic components require at least one free hand
       spell = createMockSpell({ components: ['S'] });
       context.setTemporary('castSpell_spell', spell);
 
-      // Test with shield + weapon (both hands occupied)
       caster.inventory = [createMockItem('Shield', true), createMockItem('Sword', true)];
       context.setTemporary('castSpell_caster', caster);
 
@@ -688,10 +665,8 @@ describe('ComponentTrackingRules', () => {
     });
 
     it('should implement authentic OSRIC material component rules', async () => {
-      // OSRIC: Material components require either specific materials or a focus
       spell = createMockSpell({ components: ['M'] });
 
-      // Test component pouch (standard OSRIC focus)
       caster.inventory = [createMockItem('Spell Component Pouch', true)];
       context.setTemporary('castSpell_caster', caster);
       context.setTemporary('castSpell_spell', spell);
@@ -699,7 +674,6 @@ describe('ComponentTrackingRules', () => {
       let result = await rules.execute(context);
       expect(result.success).toBe(true);
 
-      // Test without any focus (should fail)
       caster.inventory = [];
       context.setTemporary('castSpell_caster', caster);
       result = await rules.execute(context);
