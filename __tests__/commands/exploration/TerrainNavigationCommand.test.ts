@@ -1,4 +1,3 @@
-// File: __tests__/commands/exploration/TerrainNavigationCommand.test.ts
 import { TerrainNavigationCommand } from '@osric/commands/exploration/TerrainNavigationCommand';
 import { GameContext } from '@osric/core/GameContext';
 import type {
@@ -22,7 +21,6 @@ describe('TerrainNavigationCommand', () => {
 
   describe('Parameter Validation', () => {
     it('should validate required parameters', async () => {
-      // Test with missing character
       const command = new TerrainNavigationCommand({
         characterId: 'nonexistent-character',
         terrainType: TerrainNavigationCommand.TERRAIN_TYPES.plains,
@@ -173,7 +171,6 @@ describe('TerrainNavigationCommand', () => {
 
       const result = await command.execute(context);
 
-      // Navigation should execute but may result in getting lost
       expect(result.success).toBe(true);
       expect(result.data?.terrainType).toBe('Swamp');
     });
@@ -204,7 +201,6 @@ describe('TerrainNavigationCommand', () => {
 
       const result = await command.execute(context);
 
-      // Validate authentic OSRIC mechanics
       expect(result.success).toBe(true);
       expect(result.data?.navigationResult).toBeDefined();
       expect(result.data?.effectiveMovementRate).toBeDefined();

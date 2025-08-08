@@ -1,4 +1,3 @@
-// File: __tests__/rules/spells/EnchantmentRules.test.ts
 import type { Command } from '@osric/core/Command';
 import { GameContext } from '@osric/core/GameContext';
 import { EnchantmentRules } from '@osric/rules/spells/EnchantmentRules';
@@ -7,7 +6,6 @@ import type { Character, Item } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-// TEMPLATE: Mock Character Creation Helper
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-character',
@@ -133,7 +131,7 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
       charismaLoyaltyBase: null,
       charismaReactionAdj: null,
     },
-    // Add any component-specific overrides
+
     ...overrides,
   };
 
@@ -160,17 +158,14 @@ describe('EnchantmentRules', () => {
   let mockCommand: Command;
 
   beforeEach(() => {
-    // CRITICAL: Setup infrastructure
     const store = createStore();
     context = new GameContext(store);
     rule = new EnchantmentRules();
 
-    // CRITICAL: Setup test entities
     const character = createMockCharacter({ id: 'test-enchanter' });
     const targetItem = createMockItem({ id: 'target-sword' });
     context.setEntity('test-enchanter', character);
 
-    // CRITICAL: Setup context data for Rules (COMPONENT_SPECIFIC)
     context.setTemporary('enchantment-context', {
       enchanter: character,
       targetItem: targetItem,
@@ -184,7 +179,6 @@ describe('EnchantmentRules', () => {
       ritualDuration: 10,
     });
 
-    // CRITICAL: Setup command with proper type
     mockCommand = {
       type: COMMAND_TYPES.MAGIC_ITEM_CREATION,
       actorId: 'test-enchanter',
@@ -216,7 +210,6 @@ describe('EnchantmentRules', () => {
 
   describe('execute - Success Scenarios', () => {
     it('should successfully enchant a weapon with +1', async () => {
-      // Mock a successful enchantment by creating a valid context
       const enchanter = createMockCharacter({
         id: 'test-enchanter',
         level: 7,
@@ -237,14 +230,11 @@ describe('EnchantmentRules', () => {
 
       const result = await rule.execute(context, mockCommand);
 
-      // Since the rule implementation doesn't actually extract context from command,
-      // this will fail with "Invalid enchantment context"
       expect(result.success).toBe(false);
       expect(result.message).toBe('Invalid enchantment context');
     });
 
     it('should handle valid enchantment parameters', async () => {
-      // Test the validation logic indirectly
       const enchanter = createMockCharacter({
         level: 5,
         class: 'Magic-User',
@@ -277,7 +267,6 @@ describe('EnchantmentRules', () => {
     });
 
     it('should handle invalid enchanter level', async () => {
-      // Test with low-level character
       const lowLevelEnchanter = createMockCharacter({
         level: 1,
         class: 'Fighter',
@@ -293,7 +282,6 @@ describe('EnchantmentRules', () => {
     });
 
     it('should handle insufficient funds', async () => {
-      // Test with poor character
       const poorEnchanter = createMockCharacter({
         level: 7,
         class: 'Magic-User',
@@ -381,12 +369,9 @@ describe('EnchantmentRules', () => {
 
       expect(result.success).toBe(false);
       expect(result.message).toBe('Invalid enchantment context');
-      // Note: The actual implementation would require proper context extraction
-      // to test OSRIC compliance fully
     });
 
     it('should require appropriate caster level for enchantment level', async () => {
-      // Test level requirements: +1 requires level 5, +2 requires level 7, etc.
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(false);
@@ -394,7 +379,6 @@ describe('EnchantmentRules', () => {
     });
 
     it('should require appropriate spells known', async () => {
-      // Test spell requirements for different enchantment types
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(false);
@@ -402,7 +386,6 @@ describe('EnchantmentRules', () => {
     });
 
     it('should calculate material costs according to OSRIC rules', async () => {
-      // Test material component cost scaling
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(false);

@@ -1,4 +1,3 @@
-// File: __tests__/rules/exploration/MovementRules.test.ts
 import type { Command } from '@osric/core/Command';
 import { GameContext } from '@osric/core/GameContext';
 import { MovementRule } from '@osric/rules/exploration/MovementRules';
@@ -7,7 +6,6 @@ import type { Character } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-// TEMPLATE: Mock Character Creation Helper
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-character',
@@ -92,7 +90,7 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
       charismaLoyaltyBase: null,
       charismaMaxHenchmen: null,
     },
-    // Add any component-specific overrides
+
     ...overrides,
   };
 
@@ -105,16 +103,13 @@ describe('MovementRule', () => {
   let mockCommand: Command;
 
   beforeEach(() => {
-    // CRITICAL: Setup infrastructure
     const store = createStore();
     context = new GameContext(store);
     rule = new MovementRule();
 
-    // CRITICAL: Setup test entities
     const character = createMockCharacter({ id: 'test-character' });
     context.setEntity('test-character', character);
 
-    // CRITICAL: Setup context data for Rules (COMPONENT_SPECIFIC)
     context.setTemporary('movement-request-params', {
       characterId: 'test-character',
       fromPosition: 'room-1',
@@ -125,7 +120,6 @@ describe('MovementRule', () => {
       encumbrance: 'light',
     });
 
-    // CRITICAL: Setup command with proper type
     mockCommand = {
       type: COMMAND_TYPES.MOVE,
       actorId: 'test-character',
@@ -155,10 +149,9 @@ describe('MovementRule', () => {
     });
 
     it('should not apply without required data fields', () => {
-      // Test missing fromPosition and toPosition
       context.setTemporary('movement-request-params', {
         characterId: 'test-character',
-        // Missing fromPosition and toPosition
+
         movementType: 'walk',
         distance: 60,
       });
@@ -176,13 +169,12 @@ describe('MovementRule', () => {
     });
 
     it('should handle character has valid movement rate', async () => {
-      // Component-specific success test
       context.setTemporary('movement-request-params', {
         characterId: 'test-character',
         fromPosition: 'room-1',
         toPosition: 'room-2',
         movementType: 'walk',
-        distance: 60, // Within normal movement range
+        distance: 60,
         terrainType: 'clear',
         encumbrance: 'light',
       });
@@ -223,13 +215,12 @@ describe('MovementRule', () => {
     });
 
     it('should handle character exceeds movement limits', async () => {
-      // Component-specific error test
       context.setTemporary('movement-request-params', {
         characterId: 'test-character',
         fromPosition: 'room-1',
         toPosition: 'room-2',
         movementType: 'walk',
-        distance: 600, // Excessive distance
+        distance: 600,
         terrainType: 'clear',
         encumbrance: 'light',
       });
@@ -306,7 +297,7 @@ describe('MovementRule', () => {
           charisma: 10,
         },
         race: 'Human',
-        armorClass: 4, // Chain mail
+        armorClass: 4,
       });
       context.setEntity('osric-character', osricCharacter);
 
@@ -315,7 +306,7 @@ describe('MovementRule', () => {
         fromPosition: 'outdoor-1',
         toPosition: 'outdoor-2',
         movementType: 'walk',
-        distance: 90, // 3/4 of human base movement (120)
+        distance: 90,
         terrainType: 'clear',
         encumbrance: 'light',
       });
@@ -323,7 +314,7 @@ describe('MovementRule', () => {
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      // Validate OSRIC-specific mechanics
+
       const movementResult = result.data?.result as {
         actualDistance: number;
         timeRequired: number;
@@ -331,7 +322,7 @@ describe('MovementRule', () => {
       };
       expect(movementResult.actualDistance).toBe(90);
       expect(movementResult.timeRequired).toBeGreaterThan(0);
-      expect(movementResult.fatigueGained).toBe(0); // Walking shouldn't cause fatigue
+      expect(movementResult.fatigueGained).toBe(0);
     });
 
     it('should handle different terrain types according to OSRIC rules', async () => {
@@ -341,7 +332,7 @@ describe('MovementRule', () => {
         toPosition: 'forest-2',
         movementType: 'walk',
         distance: 60,
-        terrainType: 'forest', // Should reduce movement rate
+        terrainType: 'forest',
         encumbrance: 'light',
       });
 
@@ -349,18 +340,17 @@ describe('MovementRule', () => {
 
       expect(result.success).toBe(true);
       const movementResult = result.data?.result as { specialEffects: string[] };
-      // Forest terrain should slow movement
+
       expect(movementResult.specialEffects).toBeDefined();
     });
 
     it('should handle different movement types', async () => {
-      // Create a character with low constitution to ensure fatigue
       const lowConCharacter = createMockCharacter({
         id: 'low-con-character',
         abilities: {
           strength: 10,
           dexterity: 10,
-          constitution: 8, // Low constitution for higher fatigue
+          constitution: 8,
           intelligence: 10,
           wisdom: 10,
           charisma: 10,
@@ -373,7 +363,7 @@ describe('MovementRule', () => {
         fromPosition: 'ground',
         toPosition: 'wall-top',
         movementType: 'climb',
-        distance: 120, // Distance that should generate fatigue
+        distance: 120,
         terrainType: 'clear',
         encumbrance: 'light',
       });
@@ -386,7 +376,7 @@ describe('MovementRule', () => {
         fatigueGained: number;
       };
       expect(movementResult.specialEffects).toContain('Climbing check may be required');
-      expect(movementResult.fatigueGained).toBeGreaterThan(0); // Should generate fatigue
+      expect(movementResult.fatigueGained).toBeGreaterThan(0);
     });
 
     it('should handle running and fatigue', async () => {
@@ -395,7 +385,7 @@ describe('MovementRule', () => {
         fromPosition: 'start',
         toPosition: 'end',
         movementType: 'run',
-        distance: 240, // Double movement rate
+        distance: 240,
         terrainType: 'clear',
         encumbrance: 'light',
       });
@@ -419,13 +409,13 @@ describe('MovementRule', () => {
         movementType: 'walk',
         distance: 60,
         terrainType: 'clear',
-        encumbrance: 'heavy', // Should reduce movement rate significantly
+        encumbrance: 'heavy',
       });
 
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(true);
-      // Heavy encumbrance should allow movement but possibly at reduced rate
+
       const movementResult = result.data?.result as { actualDistance: number };
       expect(movementResult.actualDistance).toBeLessThanOrEqual(60);
     });
@@ -433,7 +423,7 @@ describe('MovementRule', () => {
     it('should handle racial movement differences', async () => {
       const dwarfCharacter = createMockCharacter({
         id: 'dwarf-character',
-        race: 'Dwarf', // Dwarves have 60' base movement vs Human 120'
+        race: 'Dwarf',
       });
       context.setEntity('dwarf-character', dwarfCharacter);
 
@@ -442,17 +432,16 @@ describe('MovementRule', () => {
         fromPosition: 'start',
         toPosition: 'end',
         movementType: 'walk',
-        distance: 100, // More than dwarf base movement
+        distance: 100,
         terrainType: 'clear',
         encumbrance: 'light',
       });
 
       const result = await rule.execute(context, mockCommand);
 
-      // Dwarf should be able to move but may be limited to actual distance
       expect(result.success).toBe(true);
       const movementResult = result.data?.result as { actualDistance: number };
-      // Since dwarf has 60' base movement, should be limited to less than requested 100
+
       expect(movementResult.actualDistance).toBeLessThanOrEqual(100);
     });
   });

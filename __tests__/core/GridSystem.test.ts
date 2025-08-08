@@ -1,4 +1,3 @@
-// File: __tests__/core/GridSystem.test.ts
 import { GridSystem, HexGrid, SquareGrid } from '@osric/core/GridSystem';
 import { Direction } from '@osric/core/Position';
 import type { Position, PositionBounds } from '@osric/core/Position';
@@ -79,15 +78,15 @@ describe('GridSystem', () => {
       const to: Position = { x: 3, y: 4 };
 
       const distance = squareGrid.getDistance(from, to);
-      expect(distance).toBe(5); // 3-4-5 triangle
+      expect(distance).toBe(5);
     });
 
     it('should snap to grid correctly', () => {
       const position: Position = { x: 7, y: 13 };
       const snapped = squareGrid.snapToGrid(position);
 
-      expect(snapped.x).toBe(5); // 7/5 = 1.4 -> rounds to 1 -> 1*5 = 5
-      expect(snapped.y).toBe(15); // 13/5 = 2.6 -> rounds to 3 -> 3*5 = 15
+      expect(snapped.x).toBe(5);
+      expect(snapped.y).toBe(15);
     });
 
     it('should find positions in range', () => {
@@ -120,7 +119,7 @@ describe('GridSystem', () => {
       const to: Position = { x: 3, y: 2 };
 
       const distance = hexGrid.getDistance(from, to);
-      expect(distance).toBe(5); // Actual implementation result
+      expect(distance).toBe(5);
     });
 
     it('should normalize direction for hex grid', () => {
@@ -133,7 +132,7 @@ describe('GridSystem', () => {
       const center: Position = { x: 0, y: 0 };
       const positions = hexGrid.getPositionsInRange(center, 1);
 
-      expect(positions.length).toBe(7); // Center + 6 neighbors
+      expect(positions.length).toBe(7);
       expect(positions).toContainEqual({ x: 0, y: 0 });
     });
   });
@@ -156,7 +155,7 @@ describe('GridSystem', () => {
       squareGrid.setBounds(bounds);
 
       const from: Position = { x: 0, y: 0 };
-      const to: Position = { x: 5, y: 5 }; // Outside bounds
+      const to: Position = { x: 5, y: 5 };
 
       const path = squareGrid.findPath(from, to);
       expect(path).toBeNull();
@@ -166,7 +165,7 @@ describe('GridSystem', () => {
       const from: Position = { x: 0, y: 0 };
       const to: Position = { x: 10, y: 10 };
 
-      const path = squareGrid.findPath(from, to, 5); // Very low max cost
+      const path = squareGrid.findPath(from, to, 5);
       expect(path).toBeNull();
     });
   });
@@ -187,7 +186,7 @@ describe('GridSystem', () => {
       squareGrid.setBounds(bounds);
 
       const from: Position = { x: 0, y: 0 };
-      const to: Position = { x: 5, y: 5 }; // Outside bounds
+      const to: Position = { x: 5, y: 5 };
 
       expect(squareGrid.hasLineOfSight(from, to)).toBe(false);
     });
@@ -195,18 +194,14 @@ describe('GridSystem', () => {
 
   describe('OSRIC Compliance', () => {
     it('should implement authentic OSRIC/AD&D 1st Edition mechanics', () => {
-      // Test standard D&D grid mechanics
       const position: Position = { x: 0, y: 0 };
 
-      // Standard 8-directional movement for square grid
       const squareNeighbors = squareGrid.getNeighbors(position);
       expect(squareNeighbors).toHaveLength(8);
 
-      // Standard 6-directional movement for hex grid
       const hexNeighbors = hexGrid.getNeighbors(position);
       expect(hexNeighbors).toHaveLength(6);
 
-      // Diagonal movement costs more (√2 ≈ 1.4)
       const diagonalCost = squareGrid.getMovementCost({ x: 0, y: 0 }, { x: 1, y: 1 });
       expect(diagonalCost).toBeCloseTo(1.4, 1);
     });
@@ -216,7 +211,7 @@ describe('GridSystem', () => {
       const to: Position = { x: 0, y: 0, z: 1 };
 
       const cost = squareGrid.getMovementCost(from, to);
-      expect(cost).toBe(1); // Vertical movement costs 1
+      expect(cost).toBe(1);
 
       const distance = squareGrid.getDistance(from, to);
       expect(distance).toBe(1);
@@ -243,16 +238,16 @@ describe('GridSystem', () => {
       expect(squareGrid.isValidPosition(edgePosition)).toBe(true);
 
       const neighbors = squareGrid.getNeighbors(edgePosition);
-      expect(neighbors.length).toBeLessThan(8); // Some neighbors out of bounds
+      expect(neighbors.length).toBeLessThan(8);
     });
 
     it('should handle grid snapping edge cases', () => {
-      const grid = new SquareGrid(1); // Grid size 1
+      const grid = new SquareGrid(1);
       const position: Position = { x: 0.7, y: -0.3 };
       const snapped = grid.snapToGrid(position);
 
       expect(snapped.x).toBe(1);
-      expect(snapped.y).toBe(-0); // Accept -0 as equivalent to 0
+      expect(snapped.y).toBe(-0);
     });
   });
 });

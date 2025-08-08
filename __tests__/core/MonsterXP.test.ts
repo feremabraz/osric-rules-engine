@@ -1,4 +1,3 @@
-// File: __tests__/core/MonsterXP.test.ts
 import {
   type GroupXPParameters,
   calculateGroupXP,
@@ -14,7 +13,6 @@ describe('MonsterXP', () => {
   let mockCharacter: Character;
 
   beforeEach(() => {
-    // Setup minimal mocks
     mockMonster = {
       id: 'test-monster',
       name: 'Test Monster',
@@ -46,25 +44,25 @@ describe('MonsterXP', () => {
     it('should calculate XP for basic monster with no special abilities', () => {
       const monster = { ...mockMonster, hitDice: '3', specialAbilities: [] };
       const xp = calculateMonsterXP(monster);
-      expect(xp).toBe(50); // Base XP for 3 HD monster
+      expect(xp).toBe(50);
     });
 
     it('should calculate XP for monster with plus HD', () => {
       const monster = { ...mockMonster, hitDice: '3+1' };
       const xp = calculateMonsterXP(monster);
-      expect(xp).toBe(75); // Base XP for 3+ HD monster
+      expect(xp).toBe(75);
     });
 
     it('should calculate XP for monster with minus HD', () => {
       const monster = { ...mockMonster, hitDice: '1-1' };
       const xp = calculateMonsterXP(monster);
-      expect(xp).toBe(7); // Base XP for 1- HD monster
+      expect(xp).toBe(7);
     });
 
     it('should calculate XP for fractional HD monster', () => {
       const monster = { ...mockMonster, hitDice: '1/2' };
       const xp = calculateMonsterXP(monster);
-      expect(xp).toBe(5); // Base XP for less than 1 HD monster
+      expect(xp).toBe(5);
     });
 
     it('should handle monster with special abilities', () => {
@@ -74,7 +72,7 @@ describe('MonsterXP', () => {
         specialAbilities: ['Breath Weapon', 'Poison'],
       };
       const xp = calculateMonsterXP(monster);
-      expect(xp).toBe(250); // 50 base + 100 breath weapon + 100 poison
+      expect(xp).toBe(250);
     });
 
     it('should handle unknown special abilities gracefully', () => {
@@ -84,7 +82,7 @@ describe('MonsterXP', () => {
         specialAbilities: ['Unknown Ability'],
       };
       const xp = calculateMonsterXP(monster);
-      expect(xp).toBe(50); // Only base XP, unknown ability ignored
+      expect(xp).toBe(50);
     });
 
     it('should handle various hit dice formats', () => {
@@ -92,8 +90,8 @@ describe('MonsterXP', () => {
         { hitDice: '1', expectedXP: 10 },
         { hitDice: '5', expectedXP: 275 },
         { hitDice: '8+3', expectedXP: 2750 },
-        { hitDice: '16+5', expectedXP: 10500 }, // Max HD
-        { hitDice: '20', expectedXP: 10500 }, // Over max, uses 16+ value
+        { hitDice: '16+5', expectedXP: 10500 },
+        { hitDice: '20', expectedXP: 10500 },
       ];
 
       for (const testCase of testCases) {
@@ -112,7 +110,7 @@ describe('MonsterXP', () => {
 
   describe('Group XP Distribution', () => {
     it('should distribute XP equally among active party members', () => {
-      const monsters = [mockMonster]; // 75 XP monster
+      const monsters = [mockMonster];
       const characters = [
         { ...mockCharacter, id: 'char1' },
         { ...mockCharacter, id: 'char2' },
@@ -122,7 +120,7 @@ describe('MonsterXP', () => {
       const distribution = calculateGroupXP(parameters);
 
       expect(distribution.size).toBe(2);
-      expect(distribution.get('char1')).toBe(43); // 75 XP / 2 with bonuses
+      expect(distribution.get('char1')).toBe(43);
       expect(distribution.get('char2')).toBe(43);
     });
 
@@ -130,21 +128,20 @@ describe('MonsterXP', () => {
       const monsters = [mockMonster];
       const characters = [
         { ...mockCharacter, id: 'char1', hitPoints: { current: 5, maximum: 8 } },
-        { ...mockCharacter, id: 'char2', hitPoints: { current: 0, maximum: 8 } }, // Dead
+        { ...mockCharacter, id: 'char2', hitPoints: { current: 0, maximum: 8 } },
       ];
 
       const parameters: GroupXPParameters = { monsters, characters };
       const distribution = calculateGroupXP(parameters);
 
       expect(distribution.size).toBe(1);
-      expect(distribution.get('char1')).toBe(86); // All XP to living character with bonuses
+      expect(distribution.get('char1')).toBe(86);
       expect(distribution.has('char2')).toBe(false);
     });
 
     it('should handle different party sizes with multipliers', () => {
-      const monsters = [{ ...mockMonster, hitDice: '1' }]; // 10 XP base
+      const monsters = [{ ...mockMonster, hitDice: '1' }];
 
-      // Small party (3 or fewer) gets 1.1x multiplier
       const smallParty = [
         { ...mockCharacter, id: 'char1' },
         { ...mockCharacter, id: 'char2' },
@@ -152,9 +149,8 @@ describe('MonsterXP', () => {
 
       const smallParams: GroupXPParameters = { monsters, characters: smallParty };
       const smallDistribution = calculateGroupXP(smallParams);
-      expect(smallDistribution.get('char1')).toBe(5); // Actual calculated value
+      expect(smallDistribution.get('char1')).toBe(5);
 
-      // Large party (6 or more) gets 0.9x multiplier
       const largeParty = Array.from({ length: 6 }, (_, i) => ({
         ...mockCharacter,
         id: `char${i + 1}`,
@@ -162,18 +158,18 @@ describe('MonsterXP', () => {
 
       const largeParams: GroupXPParameters = { monsters, characters: largeParty };
       const largeDistribution = calculateGroupXP(largeParams);
-      expect(largeDistribution.get('char1')).toBe(1); // Actual calculated value
+      expect(largeDistribution.get('char1')).toBe(1);
     });
 
     it('should apply difficulty modifiers correctly', () => {
-      const monsters = [{ ...mockMonster, hitDice: '1' }]; // 10 XP base
+      const monsters = [{ ...mockMonster, hitDice: '1' }];
       const characters = [{ ...mockCharacter, id: 'char1' }];
 
       const difficulties = [
         { difficulty: 'easy' as const, multiplier: 0.75, expected: 8 },
-        { difficulty: 'normal' as const, multiplier: 1.0, expected: 11 }, // Actual calculated value
+        { difficulty: 'normal' as const, multiplier: 1.0, expected: 11 },
         { difficulty: 'hard' as const, multiplier: 1.25, expected: 13 },
-        { difficulty: 'deadly' as const, multiplier: 1.5, expected: 16 }, // Actual calculated value
+        { difficulty: 'deadly' as const, multiplier: 1.5, expected: 16 },
       ];
 
       for (const test of difficulties) {
@@ -188,27 +184,27 @@ describe('MonsterXP', () => {
     });
 
     it('should apply roleplaying and tactical bonuses', () => {
-      const monsters = [{ ...mockMonster, hitDice: '1' }]; // 10 XP base
+      const monsters = [{ ...mockMonster, hitDice: '1' }];
       const characters = [{ ...mockCharacter, id: 'char1' }];
 
       const parameters: GroupXPParameters = {
         monsters,
         characters,
-        roleplayingBonus: 20, // 20% bonus
-        tacticalBonus: 10, // 10% bonus
+        roleplayingBonus: 20,
+        tacticalBonus: 10,
       };
 
       const distribution = calculateGroupXP(parameters);
-      // 10 base + 20% + 10% + prime req bonus = 14
+
       expect(distribution.get('char1')).toBe(14);
     });
 
     it('should handle multiclass XP penalty', () => {
-      const monsters = [{ ...mockMonster, hitDice: '1' }]; // 10 XP base
+      const monsters = [{ ...mockMonster, hitDice: '1' }];
       const multiclassChar = {
         ...mockCharacter,
         id: 'char1',
-        classes: { Fighter: 1, Cleric: 1 }, // Two active classes
+        classes: { Fighter: 1, Cleric: 1 },
       } as unknown as Character;
 
       const parameters: GroupXPParameters = {
@@ -216,17 +212,16 @@ describe('MonsterXP', () => {
         characters: [multiclassChar],
       };
       const distribution = calculateGroupXP(parameters);
-      expect(distribution.get('char1')).toBe(5); // XP split between classes: 10 / 2 = 5
+      expect(distribution.get('char1')).toBe(5);
     });
 
     it('should apply prime requisite bonuses', () => {
-      const monsters = [{ ...mockMonster, hitDice: '1' }]; // 10 XP base
+      const monsters = [{ ...mockMonster, hitDice: '1' }];
 
-      // High prime requisite (16+) gets 10% bonus
       const highPrimeChar = {
         ...mockCharacter,
         id: 'char1',
-        abilities: { ...mockCharacter.abilities, strength: 16 }, // Fighter prime req
+        abilities: { ...mockCharacter.abilities, strength: 16 },
         classes: { Fighter: 1 },
       } as unknown as Character;
 
@@ -235,9 +230,8 @@ describe('MonsterXP', () => {
         characters: [highPrimeChar],
       };
       const distribution = calculateGroupXP(parameters);
-      expect(distribution.get('char1')).toBe(12); // 10 * 1.1 with additional bonuses
+      expect(distribution.get('char1')).toBe(12);
 
-      // Medium prime requisite (13-15) gets 5% bonus
       const medPrimeChar = {
         ...mockCharacter,
         id: 'char2',
@@ -250,7 +244,7 @@ describe('MonsterXP', () => {
         characters: [medPrimeChar],
       };
       const medDistribution = calculateGroupXP(medParams);
-      expect(medDistribution.get('char2')).toBe(11); // Actual calculated value
+      expect(medDistribution.get('char2')).toBe(11);
     });
 
     it('should return empty map for no active characters', () => {
@@ -267,10 +261,10 @@ describe('MonsterXP', () => {
   describe('Character Advancement', () => {
     it('should calculate XP needed for next level correctly', () => {
       const testCases = [
-        { class: 'Fighter' as const, level: 1, expected: 4000 }, // 2000 * 2
-        { class: 'Cleric' as const, level: 2, expected: 4500 }, // 1500 * 3
-        { class: 'Magic-User' as const, level: 1, expected: 5000 }, // 2500 * 2
-        { class: 'Thief' as const, level: 3, expected: 4800 }, // 1200 * 4
+        { class: 'Fighter' as const, level: 1, expected: 4000 },
+        { class: 'Cleric' as const, level: 2, expected: 4500 },
+        { class: 'Magic-User' as const, level: 1, expected: 5000 },
+        { class: 'Thief' as const, level: 3, expected: 4800 },
       ];
 
       for (const testCase of testCases) {
@@ -289,7 +283,7 @@ describe('MonsterXP', () => {
         ...mockCharacter,
         class: 'Fighter' as const,
         level: 1,
-        experience: { current: 4000 }, // Exactly enough for level 2
+        experience: { current: 4000 },
       } as unknown as Character;
 
       expect(canLevelUp(character)).toBe(true);
@@ -306,13 +300,12 @@ describe('MonsterXP', () => {
       } as unknown as Character;
 
       const xpNeeded = calculateXPForNextLevel(character);
-      expect(xpNeeded).toBe(4000); // Default 2000 * 2
+      expect(xpNeeded).toBe(4000);
     });
   });
 
   describe('OSRIC Compliance', () => {
     it('should implement authentic OSRIC/AD&D 1st Edition XP mechanics', () => {
-      // Test standard monster XP values from OSRIC/AD&D
       const standardMonsters = [
         { hitDice: '1', expectedXP: 10 },
         { hitDice: '3', expectedXP: 50 },
@@ -326,23 +319,21 @@ describe('MonsterXP', () => {
         expect(xp).toBe(test.expectedXP);
       }
 
-      // Test special ability bonuses from OSRIC
       const breathWeaponMonster = {
         ...mockMonster,
         hitDice: '1',
         specialAbilities: ['Breath Weapon'],
       };
       const xp = calculateMonsterXP(breathWeaponMonster);
-      expect(xp).toBe(110); // 10 base + 100 breath weapon
+      expect(xp).toBe(110);
 
-      // Test class-specific XP multipliers from OSRIC
       const fighter = {
         ...mockCharacter,
         class: 'Fighter' as const,
         level: 1,
       } as unknown as Character;
       const fighterXP = calculateXPForNextLevel(fighter);
-      expect(fighterXP).toBe(4000); // Fighter requires 2000 XP per level
+      expect(fighterXP).toBe(4000);
 
       const wizard = {
         ...mockCharacter,
@@ -350,22 +341,21 @@ describe('MonsterXP', () => {
         level: 1,
       } as unknown as Character;
       const wizardXP = calculateXPForNextLevel(wizard);
-      expect(wizardXP).toBe(5000); // Magic-User requires 2500 XP per level
+      expect(wizardXP).toBe(5000);
     });
 
     it('should support prime requisite bonuses per OSRIC rules', () => {
-      const monsters = [{ ...mockMonster, hitDice: '1' }]; // 10 XP base
+      const monsters = [{ ...mockMonster, hitDice: '1' }];
 
-      // Ranger with multiple prime requisites
       const ranger = {
         ...mockCharacter,
         id: 'ranger',
         class: 'Ranger' as const,
         abilities: {
           ...mockCharacter.abilities,
-          strength: 16, // Prime req
-          intelligence: 14, // Prime req
-          wisdom: 15, // Prime req
+          strength: 16,
+          intelligence: 14,
+          wisdom: 15,
         },
         classes: { Ranger: 1 },
       } as unknown as Character;
@@ -375,17 +365,16 @@ describe('MonsterXP', () => {
         characters: [ranger],
       };
       const distribution = calculateGroupXP(parameters);
-      expect(distribution.get('ranger')).toBe(12); // Uses highest prime req (16) for 10% bonus with additional bonuses
+      expect(distribution.get('ranger')).toBe(12);
     });
 
     it('should enforce multiclass XP division per OSRIC rules', () => {
-      const monsters = [{ ...mockMonster, hitDice: '1' }]; // 10 XP base
+      const monsters = [{ ...mockMonster, hitDice: '1' }];
 
-      // Fighter/Cleric multiclass
       const multiclass = {
         ...mockCharacter,
         id: 'multi',
-        classes: { Fighter: 1, Cleric: 1 }, // Two active classes
+        classes: { Fighter: 1, Cleric: 1 },
       } as unknown as Character;
 
       const parameters: GroupXPParameters = {
@@ -393,7 +382,7 @@ describe('MonsterXP', () => {
         characters: [multiclass],
       };
       const distribution = calculateGroupXP(parameters);
-      expect(distribution.get('multi')).toBe(5); // XP divided by number of classes
+      expect(distribution.get('multi')).toBe(5);
     });
   });
 
@@ -405,7 +394,7 @@ describe('MonsterXP', () => {
       } as unknown as Monster;
 
       const xp = calculateMonsterXP(monster);
-      expect(xp).toBe(75); // Should only calculate base XP
+      expect(xp).toBe(75);
     });
 
     it('should handle empty monsters array', () => {
@@ -421,7 +410,7 @@ describe('MonsterXP', () => {
       const monsters = [mockMonster];
       const character = {
         ...mockCharacter,
-        classes: {}, // No active classes
+        classes: {},
       } as unknown as Character;
 
       const parameters: GroupXPParameters = {
@@ -429,18 +418,18 @@ describe('MonsterXP', () => {
         characters: [character],
       };
       const distribution = calculateGroupXP(parameters);
-      expect(distribution.get(character.id)).toBe(82); // Should still get base XP with bonuses
+      expect(distribution.get(character.id)).toBe(82);
     });
 
     it('should handle very high level calculations', () => {
       const character = {
         ...mockCharacter,
         class: 'Fighter' as const,
-        level: 20, // High level
+        level: 20,
       } as unknown as Character;
 
       const xpNeeded = calculateXPForNextLevel(character);
-      expect(xpNeeded).toBe(42000); // 2000 * 21
+      expect(xpNeeded).toBe(42000);
       expect(xpNeeded).toBeGreaterThan(0);
     });
   });

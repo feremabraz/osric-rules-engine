@@ -1,4 +1,3 @@
-// File: __tests__/rules/spells/ScrollScribingRules.test.ts
 import type { Command } from '@osric/core/Command';
 import { GameContext } from '@osric/core/GameContext';
 import { ScrollScribingRules } from '@osric/rules/spells/ScrollScribingRules';
@@ -7,7 +6,6 @@ import type { Character, Spell } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-// TEMPLATE: Mock Character Creation Helper
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-character',
@@ -194,7 +192,7 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
     classAbilities: [],
     proficiencies: [],
     secondarySkills: [],
-    // Add any component-specific overrides
+
     ...overrides,
   };
 
@@ -207,16 +205,13 @@ describe('ScrollScribingRules', () => {
   let mockCommand: Command;
 
   beforeEach(() => {
-    // CRITICAL: Setup infrastructure
     const store = createStore();
     context = new GameContext(store);
     rule = new ScrollScribingRules();
 
-    // CRITICAL: Setup test entities
     const character = createMockCharacter({ id: 'test-character' });
     context.setEntity('test-character', character);
 
-    // CRITICAL: Setup command with proper type for scroll scribing
     mockCommand = {
       type: 'scroll-scribing',
       actorId: 'test-character',
@@ -248,7 +243,6 @@ describe('ScrollScribingRules', () => {
 
   describe('execute - Success Scenarios', () => {
     it('should handle missing scribing context gracefully', async () => {
-      // Since extractScribingContext returns null by design in the current implementation
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(false);
@@ -272,7 +266,6 @@ describe('ScrollScribingRules', () => {
     });
 
     it('should handle command execution errors', async () => {
-      // Test that errors are caught and handled properly
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(false);
@@ -282,10 +275,8 @@ describe('ScrollScribingRules', () => {
 
   describe('Validation Logic Tests', () => {
     it('should test rule behavior through public interface', async () => {
-      // Since private methods can't be tested directly, test through execute
       const result = await rule.execute(context, mockCommand);
 
-      // The current implementation returns failure due to null context extraction
       expect(result.success).toBe(false);
       expect(result.message).toContain('Invalid scroll scribing context');
     });
@@ -307,7 +298,6 @@ describe('ScrollScribingRules', () => {
 
   describe('Material Calculation Tests', () => {
     it('should validate material system exists', async () => {
-      // Test that the rule can handle material-related scenarios
       const result = await rule.execute(context, mockCommand);
 
       expect(result.success).toBe(false);
@@ -315,7 +305,6 @@ describe('ScrollScribingRules', () => {
     });
 
     it('should validate cost structure through execution', async () => {
-      // Test different scenarios that would trigger material calculations
       const scrollScribingCommand = { ...mockCommand, type: 'scroll-scribing' };
       const result = await rule.execute(context, scrollScribingCommand);
 
@@ -386,21 +375,18 @@ describe('ScrollScribingRules', () => {
         ],
       });
 
-      // Test that the character meets basic OSRIC requirements
-      expect(osricCharacter.level).toBeGreaterThanOrEqual(5); // Level 5+ needed for 3rd level spells
-      expect(osricCharacter.abilities.intelligence).toBeGreaterThanOrEqual(13); // Int 13+ for level 3 spells
-      expect(osricCharacter.currency.gold).toBeGreaterThan(100); // Has adequate gold for scribing
-      expect(osricCharacter.spells.length).toBeGreaterThan(0); // Knows spells to scribe
+      expect(osricCharacter.level).toBeGreaterThanOrEqual(5);
+      expect(osricCharacter.abilities.intelligence).toBeGreaterThanOrEqual(13);
+      expect(osricCharacter.currency.gold).toBeGreaterThan(100);
+      expect(osricCharacter.spells.length).toBeGreaterThan(0);
     });
 
     it('should validate basic OSRIC spell progression principles', () => {
-      // Test basic OSRIC principles without accessing private methods
       const rule = new ScrollScribingRules();
 
       expect(rule.name).toBe('scroll-scribing');
       expect(rule.priority).toBe(90);
 
-      // Test command type acceptance
       expect(rule.canApply(context, { ...mockCommand, type: 'scroll-scribing' })).toBe(true);
       expect(rule.canApply(context, { ...mockCommand, type: 'magic-item-creation' })).toBe(true);
     });
@@ -415,7 +401,6 @@ describe('ScrollScribingRules', () => {
         classes: { Cleric: 5 },
       });
 
-      // Test that different classes exist and are properly configured
       expect(magicUser.class).toBe('Magic-User');
       expect(cleric.class).toBe('Cleric');
       expect(magicUser.classes['Magic-User']).toBe(5);

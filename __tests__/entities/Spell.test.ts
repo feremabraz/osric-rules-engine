@@ -1,5 +1,5 @@
 import type { GameContext } from '@osric/core/GameContext';
-// File: __tests__/entities/Spell.test.ts
+
 import { Spell, SpellFactory } from '@osric/entities/Spell';
 import type { Spell as BaseSpell } from '@osric/types/entities';
 import { describe, expect, it } from 'vitest';
@@ -95,7 +95,7 @@ describe('Spell', () => {
       const data = spell.data;
 
       data.name = 'Modified Name';
-      expect(spell.name).toBe('Magic Missile'); // Original unchanged
+      expect(spell.name).toBe('Magic Missile');
     });
   });
 
@@ -231,11 +231,9 @@ describe('Spell', () => {
         self: true,
       });
 
-      // Yards converted to meters (30 yards ≈ 27.432 meters, rounded to 27)
       expect(yardsSpell.getRangeValue().value).toBeCloseTo(27, 0);
       expect(yardsSpell.getRangeValue().unit).toBe('meters');
 
-      // Feet converted to meters (60 feet ≈ 18.288 meters, rounded to 18)
       expect(feetSpell.getRangeValue().value).toBeCloseTo(18, 0);
       expect(feetSpell.getRangeValue().unit).toBe('meters');
     });
@@ -265,7 +263,6 @@ describe('Spell', () => {
 
   describe('OSRIC Compliance', () => {
     it('should implement authentic OSRIC/AD&D 1st Edition spell mechanics', () => {
-      // Test spell level restrictions by class
       const magicUserSpell = new Spell(createMockSpell({ level: 9, class: 'Magic-User' }));
       const clericSpell = new Spell(createMockSpell({ level: 7, class: 'Cleric' }));
       const druidSpell = new Spell(createMockSpell({ level: 7, class: 'Druid' }));
@@ -276,10 +273,8 @@ describe('Spell', () => {
       expect(druidSpell.canBeCastByClass('Druid')).toBe(true);
       expect(illusionistSpell.canBeCastByClass('Illusionist')).toBe(true);
 
-      // Test level restrictions - a level 7 spell can be cast by Magic-User (who can cast up to level 9)
-      // but the current implementation only checks if the class can cast spells of that level
-      expect(clericSpell.canBeCastByClass('Magic-User')).toBe(true); // Level 7 spell, Magic-User can cast level 7
-      expect(magicUserSpell.canBeCastByClass('Fighter')).toBe(false); // Fighter cannot cast spells
+      expect(clericSpell.canBeCastByClass('Magic-User')).toBe(true);
+      expect(magicUserSpell.canBeCastByClass('Fighter')).toBe(false);
     });
 
     it('should enforce character level requirements for spell casting', () => {
@@ -287,16 +282,12 @@ describe('Spell', () => {
       const level5Spell = new Spell(createMockSpell({ level: 5, class: 'Magic-User' }));
       const level9Spell = new Spell(createMockSpell({ level: 9, class: 'Magic-User' }));
 
-      // Level 1 magic-users can cast 1st level spells
       expect(level1Spell.canBeCastAtLevel(1, 'Magic-User')).toBe(true);
 
-      // Level 9 magic-users can cast 5th level spells
       expect(level5Spell.canBeCastAtLevel(9, 'Magic-User')).toBe(true);
 
-      // Level 17 magic-users can cast 9th level spells
       expect(level9Spell.canBeCastAtLevel(17, 'Magic-User')).toBe(true);
 
-      // Too low level to cast
       expect(level5Spell.canBeCastAtLevel(5, 'Magic-User')).toBe(false);
       expect(level9Spell.canBeCastAtLevel(15, 'Magic-User')).toBe(false);
     });
@@ -305,15 +296,12 @@ describe('Spell', () => {
       const level1Spell = new Spell(createMockSpell({ level: 1, class: 'Cleric' }));
       const level4Spell = new Spell(createMockSpell({ level: 4, class: 'Cleric' }));
 
-      // Rangers get spells at level 8
       expect(level1Spell.canBeCastAtLevel(8, 'Ranger')).toBe(true);
       expect(level1Spell.canBeCastAtLevel(7, 'Ranger')).toBe(false);
 
-      // Paladins get spells at level 9
       expect(level1Spell.canBeCastAtLevel(9, 'Paladin')).toBe(true);
       expect(level1Spell.canBeCastAtLevel(8, 'Paladin')).toBe(false);
 
-      // Test level 4 spells for Paladin (available at level 15)
       expect(level4Spell.canBeCastAtLevel(15, 'Paladin')).toBe(true);
       expect(level4Spell.canBeCastAtLevel(14, 'Paladin')).toBe(false);
     });
@@ -334,7 +322,6 @@ describe('Spell', () => {
         })
       );
 
-      // Can cast when all requirements met
       expect(
         verbalSpell.canCastWithComponents({
           canSpeak: true,
@@ -343,7 +330,6 @@ describe('Spell', () => {
         })
       ).toBe(true);
 
-      // Cannot cast verbal spell when silenced
       expect(
         verbalSpell.canCastWithComponents({
           canSpeak: false,
@@ -352,7 +338,6 @@ describe('Spell', () => {
         })
       ).toBe(false);
 
-      // Cannot cast somatic spell when hands bound
       expect(
         somaticSpell.canCastWithComponents({
           canSpeak: true,
@@ -361,7 +346,6 @@ describe('Spell', () => {
         })
       ).toBe(false);
 
-      // Cannot cast material spell without components
       expect(
         materialSpell.canCastWithComponents({
           canSpeak: true,
@@ -370,7 +354,6 @@ describe('Spell', () => {
         })
       ).toBe(false);
 
-      // Can cast when all components available
       expect(
         allComponentsSpell.canCastWithComponents({
           canSpeak: true,
@@ -390,16 +373,12 @@ describe('Spell', () => {
         })
       );
 
-      // Level 1 caster: 1 missile
       expect(magicMissile.calculateDamage(1)).toEqual({ dice: '1d4', bonus: 1 });
 
-      // Level 3 caster: 2 missiles
       expect(magicMissile.calculateDamage(3)).toEqual({ dice: '2d4', bonus: 2 });
 
-      // Level 9 caster: 5 missiles (max)
       expect(magicMissile.calculateDamage(9)).toEqual({ dice: '5d4', bonus: 5 });
 
-      // Level 20 caster: still 5 missiles (max)
       expect(magicMissile.calculateDamage(20)).toEqual({ dice: '5d4', bonus: 5 });
     });
 
@@ -411,13 +390,10 @@ describe('Spell', () => {
         })
       );
 
-      // Level 5 caster: 5d6 damage
       expect(fireball.calculateDamage(5)).toEqual({ dice: '5d6', bonus: 0 });
 
-      // Level 10 caster: 10d6 damage (max)
       expect(fireball.calculateDamage(10)).toEqual({ dice: '10d6', bonus: 0 });
 
-      // Level 15 caster: still 10d6 damage (max)
       expect(fireball.calculateDamage(15)).toEqual({ dice: '10d6', bonus: 0 });
     });
 
@@ -546,7 +522,7 @@ describe('Spell', () => {
 
       expect(clonedSpell.name).toBe(originalSpell.name);
       expect(clonedSpell.level).toBe(originalSpell.level);
-      expect(clonedSpell).not.toBe(originalSpell); // Different instances
+      expect(clonedSpell).not.toBe(originalSpell);
     });
   });
 

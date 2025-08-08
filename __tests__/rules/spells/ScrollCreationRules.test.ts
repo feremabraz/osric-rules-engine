@@ -1,4 +1,3 @@
-// File: __tests__/rules/spells/ScrollCreationRules.test.ts
 import type { Command } from '@osric/core/Command';
 import { GameContext } from '@osric/core/GameContext';
 import {
@@ -16,7 +15,6 @@ import type { Character, Spell } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-// TEMPLATE: Mock Character Creation Helper
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-character',
@@ -163,14 +161,13 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
     classAbilities: [],
     proficiencies: [],
     secondarySkills: [],
-    // Add any component-specific overrides
+
     ...overrides,
   };
 
   return defaultCharacter;
 }
 
-// Helper function to create a mock scroll
 function createMockScroll(overrides: Partial<MagicScroll> = {}): MagicScroll {
   const defaultSpell: Spell = {
     name: 'Magic Missile',
@@ -291,7 +288,7 @@ describe('ScrollCreationRequirementsRule', () => {
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
       if (result.data) {
-        expect(result.data.daysRequired).toBeLessThan(6); // Base would be 6 days for level 3
+        expect(result.data.daysRequired).toBeLessThan(6);
       }
     });
   });
@@ -371,8 +368,8 @@ describe('ScrollCreationRequirementsRule', () => {
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
       if (result.data) {
-        expect(result.data.goldCost).toBe(900); // 100 * 3^2
-        expect(result.data.minimumCasterLevel).toBe(5); // 3 * 2 - 1
+        expect(result.data.goldCost).toBe(900);
+        expect(result.data.minimumCasterLevel).toBe(5);
       }
     });
   });
@@ -403,7 +400,6 @@ describe('ScrollCreationStartRule', () => {
     it('should not apply with missing parameters', () => {
       context.setTemporary('scrollStart_characterId', 'test-character');
       context.setTemporary('scrollStart_spellName', 'Fireball');
-      // Missing spell level
 
       expect(rule.canApply(context)).toBe(false);
     });
@@ -431,7 +427,6 @@ describe('ScrollCreationStartRule', () => {
   describe('execute - Error Scenarios', () => {
     it('should handle missing parameters', async () => {
       context.setTemporary('scrollStart_characterId', 'test-character');
-      // Missing spell name and level
 
       const result = await rule.execute(context);
 
@@ -587,7 +582,7 @@ describe('ScrollSpellCastingRule', () => {
       const castingCheck = {
         scroll,
         caster: character,
-        failureChance: 0, // Guaranteed success
+        failureChance: 0,
         backfireChance: 0,
       };
       context.setTemporary('scrollCast_check', castingCheck);
@@ -625,15 +620,14 @@ describe('ScrollSpellCastingRule', () => {
       const castingCheck = {
         scroll: highLevelScroll,
         caster: lowLevelCharacter,
-        failureChance: 35, // 7 level difference * 5
+        failureChance: 35,
         backfireChance: 17,
       };
       context.setTemporary('scrollCast_check', castingCheck);
 
-      // Mock failure scenario by setting context result expectation
       const result = await rule.execute(context);
 
-      expect(result.success).toBe(true); // Rule execution succeeds
+      expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
       if (result.data) {
         expect(result.data.scrollConsumed).toBe(true);

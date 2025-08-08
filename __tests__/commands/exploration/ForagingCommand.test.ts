@@ -1,4 +1,3 @@
-// File: __tests__/commands/exploration/ForagingCommand.test.ts
 import { ForagingCommand } from '@osric/commands/exploration/ForagingCommand';
 import { GameContext } from '@osric/core/GameContext';
 import type {
@@ -22,9 +21,8 @@ describe('ForagingCommand', () => {
 
   describe('Parameter Validation', () => {
     it('should validate required parameters', async () => {
-      // Test with missing characterId
       const command = new ForagingCommand({
-        characterId: '', // Invalid empty characterId
+        characterId: '',
         forageType: 'food',
         terrain: 'forest',
         season: 'summer',
@@ -39,7 +37,6 @@ describe('ForagingCommand', () => {
     });
 
     it('should accept valid parameters', async () => {
-      // Create a test character with minimal properties
       const character = {
         id: 'test-character',
         name: 'Test Ranger',
@@ -97,7 +94,7 @@ describe('ForagingCommand', () => {
         id: 'test-ranger',
         class: 'Ranger',
         level: 5,
-        hitPoints: { current: 32, maximum: 32 }, // Added missing hitPoints
+        hitPoints: { current: 32, maximum: 32 },
         abilities: { wisdom: 16, intelligence: 13 },
         statusEffects: [],
       } as unknown as Character;
@@ -106,10 +103,10 @@ describe('ForagingCommand', () => {
 
       const command = new ForagingCommand({
         characterId: 'test-ranger',
-        forageType: 'both', // Food and water
+        forageType: 'both',
         terrain: 'grassland',
         season: 'autumn',
-        timeSpent: 8, // Full day foraging
+        timeSpent: 8,
         groupSize: 3,
         hasForagingTools: true,
         weatherConditions: {
@@ -122,7 +119,6 @@ describe('ForagingCommand', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
-      // Should provide foraging results based on OSRIC wilderness rules
     });
   });
 
@@ -145,8 +141,6 @@ describe('ForagingCommand', () => {
     });
 
     it('should handle invalid parameters provided', async () => {
-      // ForagingCommand appears to be quite permissive with parameters
-      // Let's test that it still executes successfully even with edge case values
       const character = {
         id: 'test-character',
         hitPoints: { current: 10, maximum: 10 },
@@ -161,14 +155,13 @@ describe('ForagingCommand', () => {
         forageType: 'food',
         terrain: 'forest',
         season: 'summer',
-        timeSpent: 0, // Edge case: no time spent
+        timeSpent: 0,
         groupSize: 1,
         hasForagingTools: false,
       });
 
       const result = await command.execute(context);
 
-      // Command should execute but may provide minimal results
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
     });
@@ -180,8 +173,8 @@ describe('ForagingCommand', () => {
         id: 'test-character',
         class: 'Ranger',
         level: 4,
-        hitPoints: { current: 28, maximum: 28 }, // Added missing hitPoints
-        abilities: { wisdom: 17, intelligence: 14 }, // Good foraging abilities
+        hitPoints: { current: 28, maximum: 28 },
+        abilities: { wisdom: 17, intelligence: 14 },
         statusEffects: [],
       } as unknown as Character;
 
@@ -190,9 +183,9 @@ describe('ForagingCommand', () => {
       const command = new ForagingCommand({
         characterId: 'test-character',
         forageType: 'both',
-        terrain: 'forest', // Good foraging terrain
-        season: 'spring', // Abundant season
-        timeSpent: 8, // Full day
+        terrain: 'forest',
+        season: 'spring',
+        timeSpent: 8,
         groupSize: 4,
         hasForagingTools: true,
         weatherConditions: {
@@ -203,10 +196,8 @@ describe('ForagingCommand', () => {
 
       const result = await command.execute(context);
 
-      // Validate authentic OSRIC mechanics
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
-      // Should follow OSRIC wilderness survival and foraging rules
     });
   });
 
@@ -238,7 +229,6 @@ describe('ForagingCommand', () => {
 
       const requiredRules = command.getRequiredRules();
       expect(Array.isArray(requiredRules)).toBe(true);
-      // Should include foraging and wilderness survival rules
     });
   });
 });

@@ -1,4 +1,3 @@
-// File: __tests__/rules/npc/SpecialAbilityRules.test.ts
 import type { Command } from '@osric/core/Command';
 import { GameContext } from '@osric/core/GameContext';
 import {
@@ -21,12 +20,10 @@ describe('SpecialAbilityRules', () => {
   let mockCommand: Command;
 
   beforeEach(() => {
-    // CRITICAL: Setup infrastructure
     const store = createStore();
     context = new GameContext(store);
     rule = new SpecialAbilityRules();
 
-    // CRITICAL: Setup context data for Rules (COMPONENT_SPECIFIC)
     context.setTemporary('specialAbilityContext', {
       monsterType: 'Orc',
       hitDice: 1,
@@ -36,7 +33,6 @@ describe('SpecialAbilityRules', () => {
       environment: 'forest',
     } as SpecialAbilityContext);
 
-    // CRITICAL: Setup command with proper type
     mockCommand = {
       type: COMMAND_TYPES.MONSTER_GENERATION,
       actorId: 'test-monster',
@@ -158,9 +154,9 @@ describe('SpecialAbilityRules', () => {
       expect(result.success).toBe(true);
       if (result.data) {
         const data = result.data as unknown as SpecialAbilityResult;
-        // Should have abilities generated for undead type
+
         expect(data.abilities.length).toBeGreaterThan(0);
-        // Check that we have some immunity or special attack abilities (common for undead)
+
         expect(
           data.abilities.some((a) => a.type === 'immunity' || a.type === 'special-attack')
         ).toBe(true);
@@ -229,7 +225,6 @@ describe('SpecialAbilityRules', () => {
 
       const result = await rule.execute(context, mockCommand);
 
-      // Should still succeed but with minimal abilities
       expect(result.success).toBe(true);
       if (result.data) {
         const data = result.data as unknown as SpecialAbilityResult;
@@ -253,7 +248,7 @@ describe('SpecialAbilityRules', () => {
       expect(result.success).toBe(true);
       if (result.data) {
         const data = result.data as unknown as SpecialAbilityResult;
-        // Should be limited to maximum of 6 abilities
+
         expect(data.abilities.length).toBeLessThanOrEqual(6);
       }
     });
@@ -261,7 +256,6 @@ describe('SpecialAbilityRules', () => {
 
   describe('OSRIC Compliance', () => {
     it('should implement authentic OSRIC/AD&D 1st Edition mechanics', async () => {
-      // Test with a typical OSRIC monster - Hill Giant
       context.setTemporary('specialAbilityContext', {
         monsterType: 'Hill Giant',
         hitDice: 8,
@@ -277,20 +271,16 @@ describe('SpecialAbilityRules', () => {
       if (result.data) {
         const data = result.data as unknown as SpecialAbilityResult;
 
-        // OSRIC mechanics: Mid-tier monsters should have breath weapons or energy attacks
         expect(
           data.abilities.some((a) => a.type === 'breath-weapon' || a.type === 'special-attack')
         ).toBe(true);
 
-        // OSRIC mechanics: Should have some form of attack ability
         expect(
           data.abilities.some((a) => a.type === 'special-attack' || a.type === 'breath-weapon')
         ).toBe(true);
 
-        // OSRIC mechanics: Evil alignment should have aura abilities
         expect(data.abilities.some((a) => a.name.includes('Aura'))).toBe(true);
 
-        // Should have reasonable number of abilities for 8 HD creature
         expect(data.abilities.length).toBeGreaterThan(2);
         expect(data.abilities.length).toBeLessThanOrEqual(5);
       }
@@ -312,13 +302,10 @@ describe('SpecialAbilityRules', () => {
       if (result.data) {
         const data = result.data as unknown as SpecialAbilityResult;
 
-        // OSRIC demons have magic resistance
         expect(data.abilities.some((a) => a.name === 'Magic Resistance')).toBe(true);
 
-        // OSRIC demons can teleport
         expect(data.abilities.some((a) => a.name === 'Teleport')).toBe(true);
 
-        // High intelligence should grant tactical abilities
         expect(data.abilities.some((a) => a.name === 'Tactical Genius')).toBe(true);
       }
     });
@@ -339,7 +326,6 @@ describe('SpecialAbilityRules', () => {
       if (result.data) {
         const data = result.data as unknown as SpecialAbilityResult;
 
-        // OSRIC elementals are immune to their element and non-magical weapons
         expect(data.abilities.some((a) => a.name === 'Elemental Immunity')).toBe(true);
         expect(data.abilities.some((a) => a.description.includes('non-magical weapons'))).toBe(
           true
@@ -348,7 +334,6 @@ describe('SpecialAbilityRules', () => {
     });
 
     it('should follow OSRIC Hit Dice progression for abilities', async () => {
-      // Test different HD levels follow OSRIC rules
       const lowHD = {
         monsterType: 'Kobold',
         hitDice: 1,
@@ -374,14 +359,12 @@ describe('SpecialAbilityRules', () => {
         environment: 'any',
       };
 
-      // Low HD test
       context.setTemporary('specialAbilityContext', lowHD as SpecialAbilityContext);
       let result = await rule.execute(context, mockCommand);
       expect(result.success).toBe(true);
       let data = result.data as unknown as SpecialAbilityResult;
-      expect(data.abilities.length).toBeLessThanOrEqual(2); // Low HD = fewer abilities
+      expect(data.abilities.length).toBeLessThanOrEqual(2);
 
-      // Mid HD test
       context.setTemporary('specialAbilityContext', midHD as SpecialAbilityContext);
       result = await rule.execute(context, mockCommand);
       expect(result.success).toBe(true);
@@ -389,12 +372,11 @@ describe('SpecialAbilityRules', () => {
       expect(data.abilities.length).toBeGreaterThan(2);
       expect(data.abilities.length).toBeLessThanOrEqual(4);
 
-      // High HD test
       context.setTemporary('specialAbilityContext', highHD as SpecialAbilityContext);
       result = await rule.execute(context, mockCommand);
       expect(result.success).toBe(true);
       data = result.data as unknown as SpecialAbilityResult;
-      expect(data.abilities.length).toBeGreaterThan(4); // High HD = more abilities
+      expect(data.abilities.length).toBeGreaterThan(4);
     });
   });
 });

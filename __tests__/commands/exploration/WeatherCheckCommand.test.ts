@@ -1,4 +1,3 @@
-// File: __tests__/commands/exploration/WeatherCheckCommand.test.ts
 import { WeatherCheckCommand } from '@osric/commands/exploration/WeatherCheckCommand';
 import { GameContext } from '@osric/core/GameContext';
 import type {
@@ -22,7 +21,6 @@ describe('WeatherCheckCommand', () => {
 
   describe('Parameter Validation', () => {
     it('should validate required parameters', async () => {
-      // Test with missing character
       const command = new WeatherCheckCommand({
         characterId: 'nonexistent-character',
         currentWeather: {
@@ -183,7 +181,6 @@ describe('WeatherCheckCommand', () => {
 
       const result = await command.execute(context);
 
-      // Weather check should execute but cause damage and penalties
       expect(result.success).toBe(true);
       expect(result.data?.damage).toBeGreaterThan(0);
     });
@@ -218,7 +215,6 @@ describe('WeatherCheckCommand', () => {
 
       const result = await command.execute(context);
 
-      // Validate authentic OSRIC mechanics
       expect(result.success).toBe(true);
       expect(result.data?.effects).toBeDefined();
       expect(result.data?.modifiedMovementRate).toBeDefined();

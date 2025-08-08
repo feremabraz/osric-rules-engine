@@ -1,4 +1,3 @@
-// File: __tests__/commands/exploration/FallingDamageCommand.test.ts
 import { FallingDamageCommand } from '@osric/commands/exploration/FallingDamageCommand';
 import { GameContext } from '@osric/core/GameContext';
 import type {
@@ -22,9 +21,8 @@ describe('FallingDamageCommand', () => {
 
   describe('Parameter Validation', () => {
     it('should validate required parameters', async () => {
-      // Test with missing characterId
       const command = new FallingDamageCommand({
-        characterId: '', // Invalid empty characterId
+        characterId: '',
         fallDistance: 30,
         surfaceType: 'normal',
       });
@@ -35,7 +33,6 @@ describe('FallingDamageCommand', () => {
     });
 
     it('should accept valid parameters', async () => {
-      // Create a test character with minimal properties
       const character = {
         id: 'test-character',
         name: 'Test Fighter',
@@ -71,7 +68,7 @@ describe('FallingDamageCommand', () => {
 
       const command = new FallingDamageCommand({
         characterId: 'test-character',
-        fallDistance: 20, // 2d6 damage (20 feet)
+        fallDistance: 20,
         surfaceType: 'normal',
       });
 
@@ -93,8 +90,8 @@ describe('FallingDamageCommand', () => {
 
       const command = new FallingDamageCommand({
         characterId: 'test-fighter',
-        fallDistance: 30, // 3d6 damage (30 feet)
-        surfaceType: 'hard', // 1.5x damage multiplier
+        fallDistance: 30,
+        surfaceType: 'hard',
         circumstances: {
           intentional: false,
           hasFeatherFall: false,
@@ -105,7 +102,6 @@ describe('FallingDamageCommand', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
-      // Should apply OSRIC falling damage: 1d6 per 10 feet
     });
   });
 
@@ -133,7 +129,7 @@ describe('FallingDamageCommand', () => {
 
       const command = new FallingDamageCommand({
         characterId: 'test-character',
-        fallDistance: -10, // Invalid negative distance
+        fallDistance: -10,
         surfaceType: 'normal',
       });
 
@@ -149,7 +145,7 @@ describe('FallingDamageCommand', () => {
       const character = {
         id: 'test-character',
         hitPoints: { current: 24, maximum: 24 },
-        abilities: { dexterity: 16 }, // High dex for checks
+        abilities: { dexterity: 16 },
         class: 'Fighter',
       } as unknown as Character;
 
@@ -157,8 +153,8 @@ describe('FallingDamageCommand', () => {
 
       const command = new FallingDamageCommand({
         characterId: 'test-character',
-        fallDistance: 50, // 5d6 damage (50 feet)
-        surfaceType: 'spikes', // 2x damage multiplier
+        fallDistance: 50,
+        surfaceType: 'spikes',
         circumstances: {
           dexterityCheck: true,
           encumbrance: 'light',
@@ -167,10 +163,8 @@ describe('FallingDamageCommand', () => {
 
       const result = await command.execute(context);
 
-      // Validate authentic OSRIC mechanics
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
-      // Should follow OSRIC falling damage rules: 1d6 per 10 feet with modifiers
     });
   });
 
@@ -192,7 +186,6 @@ describe('FallingDamageCommand', () => {
 
       const requiredRules = command.getRequiredRules();
       expect(Array.isArray(requiredRules)).toBe(true);
-      // Should include falling damage calculation rules
     });
   });
 });

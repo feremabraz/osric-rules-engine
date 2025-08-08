@@ -1,4 +1,3 @@
-// File: __tests__/core/Dice.test.ts
 import {
   checkTHAC0Hit,
   roll,
@@ -16,7 +15,6 @@ import { describe, expect, it } from 'vitest';
 describe('Dice', () => {
   describe('Basic Functionality', () => {
     it('should perform primary function correctly', () => {
-      // Test basic rollDice function
       const result = rollDice(1, 6);
       expect(result).toBeDefined();
       expect(result.result).toBeGreaterThanOrEqual(1);
@@ -27,7 +25,6 @@ describe('Dice', () => {
     });
 
     it('should validate input parameters', () => {
-      // Test that zero-sided dice returns 1 (since Math.floor(Math.random() * 0) + 1 = 1)
       const result = rollDice(1, 0);
       expect(result.result).toBe(1);
       expect(result.sides).toBe(0);
@@ -35,20 +32,18 @@ describe('Dice', () => {
 
     it('should handle dice notation correctly', () => {
       const result = rollExpression('2d6+3');
-      expect(result).toBeGreaterThanOrEqual(5); // min: 2 + 3
-      expect(result).toBeLessThanOrEqual(15); // max: 12 + 3
+      expect(result).toBeGreaterThanOrEqual(5);
+      expect(result).toBeLessThanOrEqual(15);
     });
   });
 
   describe('Edge Cases', () => {
     it('should handle minimum boundary values', () => {
-      // Test with minimum valid values
       const result = roll(1);
       expect(result).toBe(1);
     });
 
     it('should handle maximum boundary values', () => {
-      // Test with maximum valid values (e.g., d100)
       const result = roll(100);
       expect(result).toBeGreaterThanOrEqual(1);
       expect(result).toBeLessThanOrEqual(100);
@@ -56,8 +51,8 @@ describe('Dice', () => {
 
     it('should handle multiple dice correctly', () => {
       const result = rollDice(3, 6, 2);
-      expect(result.result).toBeGreaterThanOrEqual(5); // min: 3 + 2
-      expect(result.result).toBeLessThanOrEqual(20); // max: 18 + 2
+      expect(result.result).toBeGreaterThanOrEqual(5);
+      expect(result.result).toBeLessThanOrEqual(20);
       expect(result.roll).toBe(3);
       expect(result.sides).toBe(6);
       expect(result.modifier).toBe(2);
@@ -66,7 +61,6 @@ describe('Dice', () => {
 
   describe('OSRIC Compliance', () => {
     it('should implement authentic OSRIC/AD&D 1st Edition mechanics', () => {
-      // Test standard AD&D dice (d4, d6, d8, d10, d12, d20, d100)
       const standardDice = [4, 6, 8, 10, 12, 20, 100];
       for (const sides of standardDice) {
         const result = roll(sides);
@@ -101,9 +95,8 @@ describe('Dice', () => {
       const hit = checkTHAC0Hit(thac0, targetAC, attackRoll);
       expect(typeof hit).toBe('boolean');
 
-      // Should hit (need 15, rolled 15)
       expect(checkTHAC0Hit(20, 5, 15)).toBe(true);
-      // Should miss (need 15, rolled 14)
+
       expect(checkTHAC0Hit(20, 5, 14)).toBe(false);
     });
 
@@ -134,7 +127,7 @@ describe('Dice', () => {
       }).toThrow('Invalid dice notation');
 
       expect(() => {
-        rollExpression('d6'); // Missing count
+        rollExpression('d6');
       }).toThrow('Invalid dice notation');
     });
 
@@ -144,8 +137,8 @@ describe('Dice', () => {
 
       const resultNegative = rollDice(1, 6, -2);
       expect(resultNegative.modifier).toBe(-2);
-      expect(resultNegative.result).toBeGreaterThanOrEqual(-1); // min: 1 - 2
-      expect(resultNegative.result).toBeLessThanOrEqual(4); // max: 6 - 2
+      expect(resultNegative.result).toBeGreaterThanOrEqual(-1);
+      expect(resultNegative.result).toBeLessThanOrEqual(4);
     });
   });
 });

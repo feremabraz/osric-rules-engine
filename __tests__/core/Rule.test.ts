@@ -1,11 +1,10 @@
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
-// File: __tests__/core/Rule.test.ts
+
 import { BaseRule, type Rule, type RuleResult } from '@osric/core/Rule';
 import type { Character } from '@osric/core/Types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Mock implementations for testing
 class TestRule extends BaseRule {
   readonly name = 'TestRule';
   readonly priority = 100;
@@ -52,7 +51,6 @@ class ConditionalRule extends BaseRule {
   }
 }
 
-// Helper test rule to expose protected methods for testing
 class TestableRule extends BaseRule {
   readonly name = 'TestableRule';
 
@@ -64,7 +62,6 @@ class TestableRule extends BaseRule {
     return true;
   }
 
-  // Public wrappers for protected methods
   public testCreateSuccessResult(
     message: string,
     data?: Record<string, unknown>,
@@ -358,9 +355,8 @@ describe('Rule', () => {
         readonly name = 'OSRICRule';
 
         async execute(_context: GameContext, _command: Command): Promise<RuleResult> {
-          // Simulate OSRIC-style saving throw
           const roll = Math.floor(Math.random() * 20) + 1;
-          const savingThrow = 15; // Example saving throw value
+          const savingThrow = 15;
 
           if (roll >= savingThrow) {
             return this.createSuccessResult('Saving throw succeeded', {
@@ -390,7 +386,6 @@ describe('Rule', () => {
         readonly name = 'DamageRule';
 
         async execute(): Promise<RuleResult> {
-          // Simulate weapon damage (1d8 longsword)
           const damage = Math.floor(Math.random() * 8) + 1;
 
           return this.createSuccessResult(
@@ -422,12 +417,10 @@ describe('Rule', () => {
         readonly name = 'SpellRule';
 
         async execute(_context: GameContext, command: Command): Promise<RuleResult> {
-          // Check command type for spell casting
           if (command.type !== 'cast-spell') {
             return this.createFailureResult('Wrong command type');
           }
 
-          // For testing, assume spell can be cast
           return this.createSuccessResult(
             'Spell cast successfully',
             { spellLevel: 1, school: 'evocation' },
@@ -455,7 +448,6 @@ describe('Rule', () => {
     it('should handle null/undefined contexts gracefully', async () => {
       const rule = new TestRule();
 
-      // The rule should still execute but may have limited functionality
       const result = await rule.execute(null as unknown as GameContext, mockCommand);
       expect(result).toBeDefined();
       expect(typeof result.success).toBe('boolean');

@@ -1,4 +1,3 @@
-// File: __tests__/rules/npc/TreasureGenerationRules.test.ts
 import type { Command } from '@osric/core/Command';
 import { GameContext } from '@osric/core/GameContext';
 import {
@@ -21,12 +20,10 @@ describe('TreasureGenerationRules', () => {
   let mockCommand: Command;
 
   beforeEach(() => {
-    // CRITICAL: Setup infrastructure
     const store = createStore();
     context = new GameContext(store);
     rule = new TreasureGenerationRules();
 
-    // CRITICAL: Setup context data for Rules (COMPONENT_SPECIFIC)
     context.setTemporary('treasureContext', {
       treasureType: 'C',
       monsterHitDice: 3,
@@ -35,7 +32,6 @@ describe('TreasureGenerationRules', () => {
       partyLevel: 3,
     } as TreasureContext);
 
-    // CRITICAL: Setup command with proper type
     mockCommand = {
       type: COMMAND_TYPES.MONSTER_GENERATION,
       actorId: 'test-monster',
@@ -129,7 +125,7 @@ describe('TreasureGenerationRules', () => {
       expect(result.success).toBe(true);
       if (result.data) {
         const data = result.data as unknown as TreasureResult;
-        // Type A has good chances for gems and jewelry
+
         expect(data.treasure.gems.length + data.treasure.jewelry.length).toBeGreaterThanOrEqual(0);
       }
     });
@@ -151,7 +147,6 @@ describe('TreasureGenerationRules', () => {
         partyLevel: 3,
       };
 
-      // Run multiple iterations to account for randomness
       let smallTotal = 0;
       let largeTotal = 0;
       let smallPositive = 0;
@@ -174,25 +169,19 @@ describe('TreasureGenerationRules', () => {
           smallTotal += smallData.treasure.totalValue;
           largeTotal += largeData.treasure.totalValue;
 
-          // Count iterations where treasure was actually generated
           if (smallData.treasure.totalValue > 0) smallPositive++;
           if (largeData.treasure.totalValue > 0) largePositive++;
         }
       }
 
-      // Check that larger groups generate treasure more often or in greater amounts
-      // This accounts for the fact that some treasure types might not always generate treasure
       const smallAverage = smallTotal / iterations;
       const largeAverage = largeTotal / iterations;
 
-      // Either the large group should have higher average treasure,
-      // OR it should generate treasure more frequently
       const averageImprovement = largeAverage > smallAverage;
       const frequencyImprovement = largePositive >= smallPositive;
 
       expect(averageImprovement || frequencyImprovement).toBe(true);
 
-      // Also verify that the large group generates some meaningful treasure
       expect(largeTotal).toBeGreaterThan(0);
     });
   });
@@ -218,7 +207,6 @@ describe('TreasureGenerationRules', () => {
 
       const result = await rule.execute(context, mockCommand);
 
-      // Should still succeed but use default treasure type
       expect(result.success).toBe(true);
       if (result.data) {
         const data = result.data as unknown as TreasureResult;
@@ -247,9 +235,8 @@ describe('TreasureGenerationRules', () => {
 
   describe('OSRIC Compliance', () => {
     it('should implement authentic OSRIC/AD&D 1st Edition mechanics', async () => {
-      // Test with classic OSRIC treasure type distribution
       context.setTemporary('treasureContext', {
-        treasureType: 'G', // High-value, low-volume treasure
+        treasureType: 'G',
         monsterHitDice: 12,
         numberAppearing: 1,
         environment: 'dungeon',
@@ -261,17 +248,16 @@ describe('TreasureGenerationRules', () => {
       expect(result.success).toBe(true);
       if (result.data) {
         const data = result.data as unknown as TreasureResult;
-        // Type G should have significant gold and platinum
+
         expect(data.treasure.goldPieces).toBeGreaterThan(0);
         expect(data.treasure.platinumPieces).toBeGreaterThan(0);
-        // Should have minimal copper/silver
+
         expect(data.treasure.copperPieces).toBe(0);
         expect(data.treasure.silverPieces).toBe(0);
       }
     });
 
     it('should follow OSRIC magic item generation probabilities', async () => {
-      // High-level monsters should have better magic item chances
       context.setTemporary('treasureContext', {
         treasureType: 'A',
         monsterHitDice: 15,
@@ -285,7 +271,7 @@ describe('TreasureGenerationRules', () => {
       expect(result.success).toBe(true);
       if (result.data) {
         const data = result.data as unknown as TreasureResult;
-        // High-level treasures should have substantial value
+
         expect(data.treasure.totalValue).toBeGreaterThan(10000);
       }
     });
@@ -304,8 +290,7 @@ describe('TreasureGenerationRules', () => {
       expect(result.success).toBe(true);
       if (result.data) {
         const data = result.data as unknown as TreasureResult;
-        // Verify proper coin value calculation
-        // 1 cp = 0.01 gp, 1 sp = 0.1 gp, 1 ep = 0.5 gp, 1 gp = 1 gp, 1 pp = 5 gp
+
         const expectedCoinValue =
           data.treasure.copperPieces * 0.01 +
           data.treasure.silverPieces * 0.1 +
@@ -331,12 +316,12 @@ describe('TreasureGenerationRules', () => {
       expect(result.success).toBe(true);
       if (result.data) {
         const data = result.data as unknown as TreasureResult;
-        // Gems should have reasonable values based on monster power
+
         if (data.treasure.gems.length > 0) {
           const avgGemValue =
             data.treasure.gems.reduce((sum, gem) => sum + gem.value, 0) / data.treasure.gems.length;
-          expect(avgGemValue).toBeGreaterThan(10); // Should be meaningful gems
-          expect(avgGemValue).toBeLessThan(10000); // But not ridiculous
+          expect(avgGemValue).toBeGreaterThan(10);
+          expect(avgGemValue).toBeLessThan(10000);
         }
       }
     });

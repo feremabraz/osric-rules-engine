@@ -1,4 +1,3 @@
-// File: __tests__/commands/exploration/SearchCommand.test.ts
 import { SearchCommand } from '@osric/commands/exploration/SearchCommand';
 import { GameContext } from '@osric/core/GameContext';
 import type {
@@ -22,7 +21,6 @@ describe('SearchCommand', () => {
 
   describe('Parameter Validation', () => {
     it('should validate required parameters', async () => {
-      // Test with missing character
       const command = new SearchCommand({
         characterId: 'nonexistent-character',
         searchType: 'secret-doors',
@@ -156,7 +154,6 @@ describe('SearchCommand', () => {
 
       const result = await command.execute(context);
 
-      // Search should execute but may trigger consequences
       expect(result.success).toBe(true);
       expect(result.data?.searchType).toBe('traps');
     });
@@ -185,7 +182,6 @@ describe('SearchCommand', () => {
 
       const result = await command.execute(context);
 
-      // Validate authentic OSRIC mechanics
       expect(result.success).toBe(true);
       expect(result.data?.modifiers).toBeDefined();
       expect(result.data?.searchRoll).toBeGreaterThanOrEqual(1);

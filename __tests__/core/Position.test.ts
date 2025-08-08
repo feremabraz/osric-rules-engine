@@ -1,4 +1,3 @@
-// File: __tests__/core/Position.test.ts
 import {
   Direction,
   type OrientedPosition,
@@ -406,7 +405,6 @@ describe('Position', () => {
       const center: Position = { x: 0, y: 0 };
       const positions = PositionUtils.getPositionsInRadius(center, 2);
 
-      // All positions should be within the radius
       for (const pos of positions) {
         const distance = PositionUtils.euclideanDistance(center, pos);
         expect(distance).toBeLessThanOrEqual(2);
@@ -470,7 +468,7 @@ describe('Position', () => {
     it('should handle strings with extra whitespace', () => {
       const pos = PositionUtils.fromString('( 10 , 20 , 30 )');
 
-      expect(pos).toBeNull(); // Actual implementation behavior - regex doesn't handle extra spaces
+      expect(pos).toBeNull();
     });
   });
 });

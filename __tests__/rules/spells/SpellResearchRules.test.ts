@@ -1,4 +1,3 @@
-// File: __tests__/rules/spells/SpellResearchRules.test.ts
 import { GameContext } from '@osric/core/GameContext';
 import {
   SpellLearningRule,
@@ -12,7 +11,6 @@ import type { Character } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-// TEMPLATE: Mock Character Creation Helper
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-character',
@@ -159,7 +157,7 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
     classAbilities: [],
     proficiencies: [],
     secondarySkills: [],
-    // Add any component-specific overrides
+
     ...overrides,
   };
 
@@ -238,7 +236,6 @@ describe('SpellResearchRequirementsRule', () => {
 
       const result = await rule.execute(context);
 
-      // Note: This test may fail if character level/intelligence is insufficient for the spell
       if (result.success) {
         expect(result.data).toBeDefined();
         if (result.data) {
@@ -250,13 +247,12 @@ describe('SpellResearchRequirementsRule', () => {
               minLevel: number;
             };
           };
-          expect(data.requirements.baseCost).toBe(81000); // 9 * 9 * 1000
-          expect(data.requirements.baseDays).toBe(315); // 9 * 5 * 7
-          expect(data.requirements.minIntelligence).toBe(18); // 9 + 9
-          expect(data.requirements.minLevel).toBe(18); // 9 * 2
+          expect(data.requirements.baseCost).toBe(81000);
+          expect(data.requirements.baseDays).toBe(315);
+          expect(data.requirements.minIntelligence).toBe(18);
+          expect(data.requirements.minLevel).toBe(18);
         }
       } else {
-        // If it fails, it should be due to level/intelligence requirements
         expect(result.message).toMatch(/(level|intelligence)/i);
       }
     });
@@ -314,10 +310,10 @@ describe('SpellResearchRequirementsRule', () => {
             minLevel: number;
           };
         };
-        expect(data.requirements.baseCost).toBe(9000); // 3 * 3 * 1000
-        expect(data.requirements.baseDays).toBe(21); // 3 * 1 * 7
-        expect(data.requirements.minIntelligence).toBe(12); // 9 + 3
-        expect(data.requirements.minLevel).toBe(6); // 3 * 2
+        expect(data.requirements.baseCost).toBe(9000);
+        expect(data.requirements.baseDays).toBe(21);
+        expect(data.requirements.minIntelligence).toBe(12);
+        expect(data.requirements.minLevel).toBe(6);
       }
     });
   });
@@ -557,7 +553,7 @@ describe('SpellResearchSuccessRule', () => {
         progressPercentage: 100,
         estimatedCompletion: 0,
         notes: 'Ready to complete',
-        failureChance: 1, // Very low failure chance for predictable test
+        failureChance: 1,
       };
 
       context.setTemporary('completeResearch', {
@@ -567,8 +563,7 @@ describe('SpellResearchSuccessRule', () => {
 
       const result = await rule.execute(context);
 
-      // Note: This test may sometimes fail due to random rolls
-      expect(result.success || !result.success).toBe(true); // Either success or failure is valid
+      expect(result.success || !result.success).toBe(true);
       if (result.success) {
         expect(result.message).toContain('SUCCESS!');
         expect(result.data).toMatchObject({
@@ -590,7 +585,7 @@ describe('SpellResearchSuccessRule', () => {
         targetLevel: 3,
         daysSpent: 20,
         goldSpent: 5000,
-        progressPercentage: 75, // Not 100%
+        progressPercentage: 75,
         estimatedCompletion: 10,
         notes: 'Still working',
         failureChance: 15,
@@ -660,13 +655,12 @@ describe('SpellLearningRule', () => {
         character,
         spellName: 'Sleep',
         spellLevel: 1,
-        source: 'tutor' as const, // Tutor gives +15 bonus
+        source: 'tutor' as const,
       });
 
       const result = await rule.execute(context);
 
-      // Note: This test may sometimes fail due to random rolls
-      expect(result.success || !result.success).toBe(true); // Either success or failure is valid
+      expect(result.success || !result.success).toBe(true);
     });
 
     it('should calculate learning chances based on source', async () => {
@@ -675,7 +669,6 @@ describe('SpellLearningRule', () => {
         abilities: { ...createMockCharacter().abilities, intelligence: 16 },
       });
 
-      // Test different sources have different modifiers
       const sources: Array<'scroll' | 'spellbook' | 'tutor' | 'library'> = [
         'scroll',
         'spellbook',
@@ -692,7 +685,7 @@ describe('SpellLearningRule', () => {
         });
 
         const result = await rule.execute(context);
-        expect(result.success || !result.success).toBe(true); // Either outcome is valid
+        expect(result.success || !result.success).toBe(true);
       }
     });
   });
@@ -720,7 +713,6 @@ describe('SpellLearningRule', () => {
         abilities: { ...createMockCharacter().abilities, intelligence: 18 },
       });
 
-      // Add spellsKnown to character
       const characterWithKnownSpells = {
         ...character,
         spellsKnown: [{ name: 'Magic Missile', level: 1 }],
@@ -772,8 +764,7 @@ describe('SpellLearningRule', () => {
 
       const result = await rule.execute(context);
 
-      // Test that the calculation factors are considered
-      expect(result.success || !result.success).toBe(true); // Either outcome is valid
+      expect(result.success || !result.success).toBe(true);
       expect(result.data).toBeDefined();
       if (result.data) {
         expect(result.data.spellName).toBe('Fireball');

@@ -1,4 +1,3 @@
-// File: __tests__/rules/exploration/VisibilityRules.test.ts
 import type { Command } from '@osric/core/Command';
 import { GameContext } from '@osric/core/GameContext';
 import { type VisibilityResult, VisibilityRules } from '@osric/rules/exploration/VisibilityRules';
@@ -11,7 +10,6 @@ interface VisibilityRuleResult {
   result: VisibilityResult;
 }
 
-// TEMPLATE: Mock Character Creation Helper
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-character',
@@ -96,7 +94,7 @@ function createMockCharacter(overrides: Partial<Character> = {}): Character {
       charismaLoyaltyBase: null,
       charismaMaxHenchmen: null,
     },
-    // Add any component-specific overrides
+
     ...overrides,
   };
 
@@ -109,16 +107,13 @@ describe('VisibilityRules', () => {
   let mockCommand: Command;
 
   beforeEach(() => {
-    // CRITICAL: Setup infrastructure
     const store = createStore();
     context = new GameContext(store);
     rule = new VisibilityRules();
 
-    // CRITICAL: Setup test entities
     const character = createMockCharacter({ id: 'test-character' });
     context.setEntity('test-character', character);
 
-    // CRITICAL: Setup context data for Rules (COMPONENT_SPECIFIC)
     context.setTemporary('visibility-check-params', {
       observerId: 'test-character',
       targetId: undefined,
@@ -129,7 +124,6 @@ describe('VisibilityRules', () => {
       distance: 100,
     });
 
-    // CRITICAL: Setup command with proper type
     mockCommand = {
       type: COMMAND_TYPES.SEARCH,
       actorId: 'test-character',
@@ -305,7 +299,7 @@ describe('VisibilityRules', () => {
         const data = result.data as unknown as VisibilityRuleResult;
         expect(data.result.canSee).toBe(false);
         expect(data.result.effectiveRange).toBe(0);
-        expect(data.result.detectionChance).toBe(5); // Minimum detection chance
+        expect(data.result.detectionChance).toBe(5);
       }
     });
 
@@ -345,7 +339,7 @@ describe('VisibilityRules', () => {
           dexterity: 12,
           constitution: 14,
           intelligence: 10,
-          wisdom: 16, // High wisdom for bonuses
+          wisdom: 16,
           charisma: 10,
         },
       });
@@ -370,13 +364,12 @@ describe('VisibilityRules', () => {
       expect(result.success).toBe(true);
       if (result.data) {
         const data = result.data as unknown as VisibilityRuleResult;
-        // OSRIC mechanics: dim light reduces visibility penalties
+
         expect(data.result.penalties.search).toBe(-2);
         expect(data.result.lightingBonus).toBe(-5);
-        // High wisdom character gets detection bonus but dim light penalizes
-        // Base 75 (searching) - 20 (dim light) + 9 (wisdom bonus) = 64
+
         expect(data.result.detectionChance).toBe(64);
-        // Terrain limits visibility in forest
+
         expect(data.result.effectiveRange).toBe(300);
         expect(data.result.canSee).toBe(true);
       }
@@ -404,7 +397,7 @@ describe('VisibilityRules', () => {
       if (result.data) {
         const data = result.data as unknown as VisibilityRuleResult;
         expect(data.result.canSee).toBe(true);
-        expect(data.result.effectiveRange).toBe(6000); // Normal light base range
+        expect(data.result.effectiveRange).toBe(6000);
       }
     });
 
@@ -416,7 +409,7 @@ describe('VisibilityRules', () => {
         conditions: {
           lightLevel: { type: 'normal-light' },
           elevation: {
-            observerHeight: 50, // 5 miles of bonus visibility (50/10 = 5)
+            observerHeight: 50,
             targetHeight: 0,
           },
         },
@@ -428,7 +421,7 @@ describe('VisibilityRules', () => {
       expect(result.success).toBe(true);
       if (result.data) {
         const data = result.data as unknown as VisibilityRuleResult;
-        // Base 6000 + (5 miles * 5280 feet/mile) = 32,400 feet
+
         expect(data.result.effectiveRange).toBe(32400);
         expect(data.result.canSee).toBe(true);
       }

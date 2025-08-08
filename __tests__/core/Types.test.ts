@@ -1,4 +1,3 @@
-// File: __tests__/core/Types.test.ts
 import type {
   AttackRoll,
   Character,
@@ -113,12 +112,12 @@ describe('Types', () => {
         class: 'thief',
         level: 1,
         abilities: {
-          strength: 3, // Minimum
-          intelligence: 18, // Maximum
-          wisdom: 9, // Average
-          dexterity: 18, // Maximum for thief
-          constitution: 8, // Below average
-          charisma: 12, // Average
+          strength: 3,
+          intelligence: 18,
+          wisdom: 9,
+          dexterity: 18,
+          constitution: 8,
+          charisma: 12,
         },
         hitPoints: { current: 4, maximum: 4 },
         armorClass: 7,
@@ -164,7 +163,7 @@ describe('Types', () => {
         weight: 4,
         value: 10000,
         description: 'A magical sword that bursts into flames on command',
-        charges: null, // Unlimited charges
+        charges: null,
         magicBonus: 1,
         commandWord: 'ignis',
         cursed: false,
@@ -182,7 +181,7 @@ describe('Types', () => {
         name: 'Ring of Weakness',
         itemType: 'ring',
         weight: 0,
-        value: 1000, // Apparent value
+        value: 1000,
         description: 'A ring that appears valuable but carries a curse',
         cursed: true,
         magicBonus: -2,
@@ -335,7 +334,7 @@ describe('Types', () => {
     it('should handle different duration types', () => {
       const permanentEffect: StatusEffect = {
         name: 'Cursed',
-        duration: -1, // Permanent
+        duration: -1,
         description: 'Character is cursed until remove curse is cast',
       };
 
@@ -469,10 +468,9 @@ describe('Types', () => {
     });
 
     it('should handle OSRIC time units correctly', () => {
-      // In AD&D: 1 turn = 10 rounds, 1 hour = 6 turns
       const time: GameTime = {
-        rounds: 60, // 6 turns worth
-        turns: 6, // 1 hour worth
+        rounds: 60,
+        turns: 6,
         hours: 1,
         days: 0,
       };
@@ -547,7 +545,7 @@ describe('Types', () => {
     it('should handle movement penalties', () => {
       const heavilyEncumbered: Movement = {
         base: 120,
-        current: 30, // 1/4 speed
+        current: 30,
         encumbered: true,
       };
 
@@ -558,14 +556,13 @@ describe('Types', () => {
 
   describe('OSRIC Compliance', () => {
     it('should implement authentic OSRIC/AD&D 1st Edition character mechanics', () => {
-      // Test standard AD&D character creation
       const fighter: Character = {
         id: 'fighter-001',
         name: 'Sir Lancelot',
         class: 'fighter',
         level: 1,
         abilities: {
-          strength: 16, // Prime requisite for fighters
+          strength: 16,
           intelligence: 11,
           wisdom: 12,
           dexterity: 14,
@@ -573,13 +570,12 @@ describe('Types', () => {
           charisma: 13,
         },
         hitPoints: {
-          current: 9, // 1d10 + Con bonus
+          current: 9,
           maximum: 9,
         },
-        armorClass: 2, // Plate mail + shield
+        armorClass: 2,
         experience: 0,
         savingThrows: {
-          // 1st level fighter saves
           paralysis: 14,
           rod: 16,
           petrification: 15,
@@ -588,10 +584,10 @@ describe('Types', () => {
         },
       };
 
-      expect(fighter.abilities.strength).toBeGreaterThanOrEqual(9); // Minimum for fighter
+      expect(fighter.abilities.strength).toBeGreaterThanOrEqual(9);
       expect(fighter.class).toBe('fighter');
       expect(fighter.level).toBe(1);
-      expect(fighter.armorClass).toBeLessThanOrEqual(10); // Lower is better in AD&D
+      expect(fighter.armorClass).toBeLessThanOrEqual(10);
     });
 
     it('should support OSRIC spell mechanics', () => {
@@ -624,7 +620,6 @@ describe('Types', () => {
     });
 
     it('should handle OSRIC item mechanics', () => {
-      // Standard AD&D magic weapon
       const magicSword: Item = {
         id: 'sword-plus1',
         name: '+1 Longsword',
@@ -636,20 +631,19 @@ describe('Types', () => {
         cursed: false,
       };
 
-      // Charged magic item
       const scrollItem: Item = {
         id: 'scroll-fireball',
         name: 'Scroll of Fireball',
         itemType: 'scroll',
         weight: 0,
         value: 450,
-        charges: 1, // Single use
+        charges: 1,
         description: 'A scroll containing the fireball spell',
       };
 
       expect(magicSword.magicBonus).toBe(1);
       expect(scrollItem.charges).toBe(1);
-      expect(magicSword.weight).toBe(4); // Standard longsword weight
+      expect(magicSword.weight).toBe(4);
     });
   });
 

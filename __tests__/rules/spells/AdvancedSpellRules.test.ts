@@ -12,7 +12,6 @@ import type { Character, Item, Spell } from '@osric/types/entities';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-// Mock Character Creation Helper
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
   const defaultCharacter: Character = {
     id: 'test-character',
@@ -215,7 +214,6 @@ describe('SpellComponentManagementRule', () => {
       expect(result.success).toBe(true);
       expect(result.message).toContain('Consumed: bat guano');
 
-      // Check that component was removed from inventory
       const updatedCharacter = context.getEntity<Character>(character.id);
       expect(
         updatedCharacter?.inventory.find((item) => item.name.includes('bat guano'))
@@ -347,7 +345,7 @@ describe('SpellFailureRule', () => {
         spell,
         failureRoll: 90,
         failureChance: 20,
-        backfireChance: 100, // Force backfire
+        backfireChance: 100,
       });
 
       const result = await rule.execute(context);
@@ -403,7 +401,6 @@ describe('SpellConcentrationRule', () => {
         distractionSeverity: 5,
       });
 
-      // Mock a high roll by running multiple times if needed
       let result: RuleResult;
       let attempts = 0;
       do {
@@ -428,7 +425,7 @@ describe('SpellConcentrationRule', () => {
           intelligence: 10,
           wisdom: 10,
           charisma: 10,
-        }, // Low constitution
+        },
         level: 1,
       });
       const spell = createMockSpellWithComponents({ name: 'Concentrate Spell', level: 2 });
@@ -437,10 +434,9 @@ describe('SpellConcentrationRule', () => {
         caster: character,
         spell,
         distraction: 'damage',
-        distractionSeverity: 20, // High damage
+        distractionSeverity: 20,
       });
 
-      // Run multiple times to get a failure
       let result: RuleResult;
       let attempts = 0;
       do {

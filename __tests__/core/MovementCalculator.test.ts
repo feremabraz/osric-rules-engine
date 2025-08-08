@@ -1,5 +1,5 @@
 import { SquareGrid } from '@osric/core/GridSystem';
-// File: __tests__/core/MovementCalculator.test.ts
+
 import {
   MovementCalculator,
   type MovementCapabilities,
@@ -67,7 +67,7 @@ describe('MovementCalculator', () => {
 
     it('should handle insufficient movement range', () => {
       const from: Position = { x: 0, y: 0 };
-      const to: Position = { x: 100, y: 0 }; // Far destination
+      const to: Position = { x: 100, y: 0 };
 
       const result = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
@@ -90,7 +90,7 @@ describe('MovementCalculator', () => {
 
     it('should calculate movement cost correctly', () => {
       const from: Position = { x: 0, y: 0 };
-      const to: Position = { x: 15, y: 0 }; // Within movement range
+      const to: Position = { x: 15, y: 0 };
 
       const result = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
@@ -115,7 +115,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Running, mockContext);
 
-      expect(result.success).toBe(true); // Should be within running range (30 * 2 = 60)
+      expect(result.success).toBe(true);
     });
 
     it('should handle charging movement', () => {
@@ -133,7 +133,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Flying, mockContext);
 
-      expect(result.success).toBe(true); // Flying speed is 60
+      expect(result.success).toBe(true);
     });
 
     it('should handle swimming movement', () => {
@@ -142,7 +142,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Swimming, mockContext);
 
-      expect(result.success).toBe(true); // Swimming speed is 15
+      expect(result.success).toBe(true);
     });
 
     it('should handle climbing movement', () => {
@@ -151,7 +151,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Climbing, mockContext);
 
-      expect(result.success).toBe(true); // Climbing speed is 10
+      expect(result.success).toBe(true);
     });
 
     it('should handle crawling movement with speed penalty', () => {
@@ -160,7 +160,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Crawling, mockContext);
 
-      expect(result.success).toBe(true); // Crawling is 25% of base speed
+      expect(result.success).toBe(true);
     });
   });
 
@@ -186,7 +186,7 @@ describe('MovementCalculator', () => {
       const result = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
       expect(result.terrainEncountered).toContain(TerrainType.Difficult);
-      expect(result.movementUsed).toBeGreaterThan(10); // More than base distance
+      expect(result.movementUsed).toBeGreaterThan(10);
     });
 
     it('should handle treacherous terrain with high penalties', () => {
@@ -198,7 +198,7 @@ describe('MovementCalculator', () => {
       const result = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
       expect(result.terrainEncountered).toContain(TerrainType.Treacherous);
-      expect(result.movementUsed).toBeGreaterThan(16); // 3x multiplier
+      expect(result.movementUsed).toBeGreaterThan(16);
     });
 
     it('should handle marsh terrain', () => {
@@ -210,7 +210,7 @@ describe('MovementCalculator', () => {
       const result = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
       expect(result.terrainEncountered).toContain(TerrainType.Marsh);
-      expect(result.movementUsed).toBeGreaterThan(16); // 2.5x multiplier
+      expect(result.movementUsed).toBeGreaterThan(16);
     });
 
     it('should handle forest terrain', () => {
@@ -222,7 +222,7 @@ describe('MovementCalculator', () => {
       const result = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
       expect(result.terrainEncountered).toContain(TerrainType.Forest);
-      expect(result.movementUsed).toBeGreaterThan(15); // 1.5x multiplier
+      expect(result.movementUsed).toBeGreaterThan(15);
     });
 
     it('should block movement through impassable terrain', () => {
@@ -246,7 +246,7 @@ describe('MovementCalculator', () => {
       expect(walkResult.success).toBe(false);
 
       const flyResult = calculator.calculateMovement(from, to, MovementType.Flying, mockContext);
-      expect(flyResult.success).toBe(false); // Even flying fails due to lava terrain modifiers
+      expect(flyResult.success).toBe(false);
     });
   });
 
@@ -259,7 +259,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
-      expect(result.success).toBe(true); // Effective rate reduced to 22.5 (30 * 0.75)
+      expect(result.success).toBe(true);
     });
 
     it('should apply dark lighting penalties', () => {
@@ -270,18 +270,18 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
-      expect(result.success).toBe(true); // Effective rate reduced to 15 (30 * 0.5)
+      expect(result.success).toBe(true);
     });
 
     it('should handle encumbrance modifiers', () => {
       const from: Position = { x: 0, y: 0 };
       const to: Position = { x: 20, y: 0 };
 
-      mockContext.character.capabilities.encumbranceModifier = 0.5; // Heavy encumbrance
+      mockContext.character.capabilities.encumbranceModifier = 0.5;
 
       const result = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
-      expect(result.success).toBe(false); // Effective rate reduced to 15 (30 * 0.5)
+      expect(result.success).toBe(false);
     });
   });
 
@@ -294,7 +294,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
-      expect(result.timeElapsed).toBe(1); // Always 1 round in combat
+      expect(result.timeElapsed).toBe(1);
     });
 
     it('should calculate exploration time outside combat', () => {
@@ -321,7 +321,7 @@ describe('MovementCalculator', () => {
 
     it('should reject charge with insufficient distance', () => {
       const from: Position = { x: 0, y: 0 };
-      const to: Position = { x: 5, y: 0 }; // Less than 10 feet
+      const to: Position = { x: 5, y: 0 };
 
       const validation = calculator.validateMovement(from, to, MovementType.Charging, mockContext);
 
@@ -391,7 +391,7 @@ describe('MovementCalculator', () => {
           ...mockContext.character,
           capabilities: {
             ...mockCapabilities,
-            baseMovementRate: 20, // Slower character
+            baseMovementRate: 20,
           },
         },
       };
@@ -404,22 +404,21 @@ describe('MovementCalculator', () => {
       );
 
       expect(results).toHaveLength(2);
-      // Fast character should succeed, slow character might not reach destination
+
       expect(results[0].success).toBe(true);
     });
   });
 
   describe('OSRIC Compliance', () => {
     it('should implement authentic OSRIC/AD&D 1st Edition movement mechanics', () => {
-      // Test standard AD&D movement rates
       const humanFighter = {
         ...mockContext,
         character: {
           ...mockContext.character,
           capabilities: {
             ...mockCapabilities,
-            baseMovementRate: 120, // Standard human movement rate (120 feet/turn)
-            runningMultiplier: 3, // AD&D running multiplier
+            baseMovementRate: 120,
+            runningMultiplier: 3,
           },
         },
       };
@@ -435,11 +434,9 @@ describe('MovementCalculator', () => {
     });
 
     it('should support OSRIC terrain movement penalties', () => {
-      // Test standard AD&D terrain modifiers
       const from: Position = { x: 0, y: 0 };
       const to: Position = { x: 20, y: 0 };
 
-      // Difficult terrain doubles movement cost
       mockContext.environment.terrain.set('20,0,0', TerrainType.Difficult);
       const difficultResult = calculator.calculateMovement(
         from,
@@ -447,9 +444,8 @@ describe('MovementCalculator', () => {
         MovementType.Walking,
         mockContext
       );
-      expect(difficultResult.movementUsed).toBe(30); // Actual calculated value
+      expect(difficultResult.movementUsed).toBe(30);
 
-      // Clear terrain for comparison
       mockContext.environment.terrain.clear();
       mockContext.environment.terrain.set('20,0,0', TerrainType.Clear);
       const clearResult = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
@@ -458,10 +454,10 @@ describe('MovementCalculator', () => {
 
     it('should handle OSRIC charge requirements', () => {
       const from: Position = { x: 0, y: 0 };
-      const to: Position = { x: 15, y: 0 }; // 15-foot charge
+      const to: Position = { x: 15, y: 0 };
 
       const validation = calculator.validateMovement(from, to, MovementType.Charging, mockContext);
-      expect(validation.valid).toBe(true); // Meets minimum 10-foot requirement
+      expect(validation.valid).toBe(true);
 
       const shortCharge = calculator.validateMovement(
         from,
@@ -469,22 +465,19 @@ describe('MovementCalculator', () => {
         MovementType.Charging,
         mockContext
       );
-      expect(shortCharge.valid).toBe(false); // Too short for charge
+      expect(shortCharge.valid).toBe(false);
     });
 
     it('should implement encumbrance effects per OSRIC rules', () => {
       const from: Position = { x: 0, y: 0 };
       const to: Position = { x: 25, y: 0 };
 
-      // Lightly encumbered (90% speed)
       mockContext.character.capabilities.encumbranceModifier = 0.9;
       const lightResult = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
-      // Heavily encumbered (60% speed)
       mockContext.character.capabilities.encumbranceModifier = 0.6;
       const heavyResult = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
-      // Heavy encumbrance should make movement harder
       expect(lightResult.success).toBe(true);
       expect(heavyResult.success).toBe(false);
     });
@@ -533,7 +526,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
-      expect(result.success).toBe(true); // Actual implementation behavior
+      expect(result.success).toBe(true);
     });
 
     it('should handle very large distances', () => {

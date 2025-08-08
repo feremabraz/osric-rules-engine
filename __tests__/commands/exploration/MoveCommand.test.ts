@@ -1,4 +1,3 @@
-// File: __tests__/commands/exploration/MoveCommand.test.ts
 import { MoveCommand } from '@osric/commands/exploration/MoveCommand';
 import { GameContext } from '@osric/core/GameContext';
 import type {
@@ -22,9 +21,8 @@ describe('MoveCommand', () => {
 
   describe('Parameter Validation', () => {
     it('should validate required parameters', async () => {
-      // Test with missing characterId
       const command = new MoveCommand({
-        characterId: '', // Invalid empty characterId
+        characterId: '',
         movement: {
           type: 'walk',
           distance: 30,
@@ -42,7 +40,6 @@ describe('MoveCommand', () => {
     });
 
     it('should accept valid parameters', async () => {
-      // Create a test character with minimal properties
       const character = {
         id: 'test-character',
         name: 'Test Fighter',
@@ -88,7 +85,7 @@ describe('MoveCommand', () => {
         characterId: 'test-character',
         movement: {
           type: 'walk',
-          distance: 60, // 60 feet
+          distance: 60,
           direction: 'north',
         },
         terrain: {
@@ -121,7 +118,7 @@ describe('MoveCommand', () => {
         characterId: 'test-explorer',
         movement: {
           type: 'sneak',
-          distance: 15, // Slow, careful movement
+          distance: 15,
           destination: 'secret_chamber',
         },
         terrain: {
@@ -136,7 +133,6 @@ describe('MoveCommand', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
-      // Should handle sneaking movement with terrain modifiers
     });
   });
 
@@ -178,7 +174,7 @@ describe('MoveCommand', () => {
           distance: 30,
         },
         terrain: {
-          type: 'Impassable', // Blocked terrain
+          type: 'Impassable',
           environment: 'solid_wall',
         },
         timeScale: 'exploration',
@@ -186,7 +182,6 @@ describe('MoveCommand', () => {
 
       const result = await command.execute(context);
 
-      // Should handle impassable terrain appropriately
       expect(result.success).toBe(false);
       expect(result.message).toContain('Impassable');
     });
@@ -213,13 +208,13 @@ describe('MoveCommand', () => {
           type: 'Normal',
           environment: 'corridor',
         },
-        timeScale: 'exploration', // Should allow full movement distance
+        timeScale: 'exploration',
       });
 
       const result = await command.execute(context);
 
       expect(result.success).toBe(true);
-      // Movement results should include some time or distance data
+
       expect(result.data).toBeDefined();
     });
 
@@ -248,7 +243,6 @@ describe('MoveCommand', () => {
 
       const result = await command.execute(context);
 
-      // Difficult terrain should affect movement in some way
       expect(result.data).toBeDefined();
       expect(result.success).toBe(true);
     });

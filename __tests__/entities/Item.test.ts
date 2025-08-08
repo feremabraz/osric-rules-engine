@@ -1,5 +1,5 @@
 import { GameContext } from '@osric/core/GameContext';
-// File: __tests__/entities/Item.test.ts
+
 import { Item, ItemFactory } from '@osric/entities/Item';
 import type { Item as BaseItem, Weapon } from '@osric/types/entities';
 import { createStore } from 'jotai';
@@ -13,7 +13,6 @@ describe('Item', () => {
     context = new GameContext(store);
   });
 
-  // Helper to create basic item data
   function createBasicItemData(overrides: Partial<BaseItem> = {}): BaseItem {
     return {
       id: 'test-item',
@@ -28,7 +27,6 @@ describe('Item', () => {
     };
   }
 
-  // Helper to create weapon data
   function createWeaponData(overrides: Partial<Weapon> = {}): Weapon {
     return {
       ...createBasicItemData(),
@@ -161,7 +159,7 @@ describe('Item', () => {
       const enhanced = item.addMagicBonus(2);
 
       expect(enhanced.getMagicBonus()).toBe(3);
-      expect(item.getMagicBonus()).toBe(1); // Original unchanged
+      expect(item.getMagicBonus()).toBe(1);
     });
 
     it('should add magic bonus to non-magical items', () => {
@@ -189,7 +187,7 @@ describe('Item', () => {
       const afterUse = item.useCharge();
 
       expect(afterUse.getRemainingCharges()).toBe(2);
-      expect(item.getRemainingCharges()).toBe(3); // Original unchanged
+      expect(item.getRemainingCharges()).toBe(3);
     });
 
     it('should not reduce charges below zero', () => {
@@ -236,7 +234,7 @@ describe('Item', () => {
 
       expect(equipped.isEquipped()).toBe(true);
       expect(unequipped.isEquipped()).toBe(false);
-      expect(item.isEquipped()).toBe(false); // Original unchanged
+      expect(item.isEquipped()).toBe(false);
     });
   });
 
@@ -257,8 +255,8 @@ describe('Item', () => {
       const item = new Item(createBasicItemData({ value: 23 }));
       const currency = item.getValueAsCurrency();
 
-      expect(currency.platinum).toBe(4); // 23 / 5 = 4
-      expect(currency.gold).toBe(3); // 23 % 5 = 3
+      expect(currency.platinum).toBe(4);
+      expect(currency.gold).toBe(3);
       expect(currency.electrum).toBe(0);
       expect(currency.silver).toBe(0);
       expect(currency.copper).toBe(0);
@@ -371,7 +369,7 @@ describe('Item', () => {
       expect(updated.name).toBe('Updated Item');
       expect(updated.value).toBe(200);
       expect(updated.equipped).toBe(true);
-      expect(item.name).toBe('Test Item'); // Original unchanged
+      expect(item.name).toBe('Test Item');
     });
 
     it('should clone item correctly', () => {
@@ -450,7 +448,6 @@ describe('Item', () => {
 
   describe('OSRIC Compliance', () => {
     it('should implement authentic OSRIC/AD&D 1st Edition item mechanics', () => {
-      // Test classic AD&D weapon
       const longsword = new Item(
         createWeaponData({
           name: 'Long Sword +1',
@@ -490,7 +487,6 @@ describe('Item', () => {
     });
 
     it('should implement proper currency conversion', () => {
-      // Test with typical AD&D treasure values
       const gemstone = new Item(
         createBasicItemData({
           name: 'Ruby',
@@ -499,7 +495,6 @@ describe('Item', () => {
       );
       const currency = gemstone.getValueAsCurrency();
 
-      // 1000 gp = 200 pp
       expect(currency.platinum).toBe(200);
       expect(currency.gold).toBe(0);
     });

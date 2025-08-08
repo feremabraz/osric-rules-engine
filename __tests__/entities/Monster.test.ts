@@ -1,5 +1,5 @@
 import { GameContext } from '@osric/core/GameContext';
-// File: __tests__/entities/Monster.test.ts
+
 import { Monster, MonsterFactory } from '@osric/entities/Monster';
 import type { Monster as BaseMonster, StatusEffect } from '@osric/types/entities';
 import { createStore } from 'jotai';
@@ -13,7 +13,6 @@ describe('Monster', () => {
     context = new GameContext(store);
   });
 
-  // Helper to create basic monster data
   function createBasicMonsterData(overrides: Partial<BaseMonster> = {}): BaseMonster {
     return {
       id: 'test-monster',
@@ -44,7 +43,6 @@ describe('Monster', () => {
     };
   }
 
-  // Helper to create status effect
   function createStatusEffect(name: string, duration = 5): StatusEffect {
     return {
       name,
@@ -144,8 +142,8 @@ describe('Monster', () => {
       const monster1 = new Monster(createBasicMonsterData({ hitDice: '2' }));
       const monster2 = new Monster(createBasicMonsterData({ hitDice: '3+2' }));
 
-      expect(monster1.getAverageHitPoints()).toBe(9); // 2 × 4.5 = 9
-      expect(monster2.getAverageHitPoints()).toBe(15); // 3 × 4.5 + 2 = 15.5 → 15
+      expect(monster1.getAverageHitPoints()).toBe(9);
+      expect(monster2.getAverageHitPoints()).toBe(15);
     });
   });
 
@@ -171,7 +169,6 @@ describe('Monster', () => {
       const monster1 = new Monster(createBasicMonsterData({ hitDice: '3+2' }));
       const monster2 = new Monster(createBasicMonsterData({ hitDice: '4-1' }));
 
-      // Should use base dice count (3 and 4)
       expect(monster1.calculateThac0()).toBe(17);
       expect(monster2.calculateThac0()).toBe(16);
     });
@@ -204,8 +201,8 @@ describe('Monster', () => {
       expect(monster.getDamageForAttack(0)).toBe('1d8');
       expect(monster.getDamageForAttack(1)).toBe('1d6');
       expect(monster.getDamageForAttack(2)).toBe('1d4');
-      expect(monster.getDamageForAttack(3)).toBe('1d4'); // Out of bounds
-      expect(monster.getDamageForAttack(-1)).toBe('1d4'); // Invalid index
+      expect(monster.getDamageForAttack(3)).toBe('1d4');
+      expect(monster.getDamageForAttack(-1)).toBe('1d4');
     });
 
     it('should calculate attack bonus based on hit dice', () => {
@@ -214,8 +211,8 @@ describe('Monster', () => {
       const strong = new Monster(createBasicMonsterData({ hitDice: '15' }));
 
       expect(weak.getAttackBonus()).toBe(0);
-      expect(medium.getAttackBonus()).toBe(1); // 7+ HD = +1
-      expect(strong.getAttackBonus()).toBe(3); // 15+ HD = +3
+      expect(medium.getAttackBonus()).toBe(1);
+      expect(strong.getAttackBonus()).toBe(3);
     });
 
     it('should check action availability', () => {
@@ -241,7 +238,7 @@ describe('Monster', () => {
       expect(healthy.canPerformAction('move')).toBe(true);
       expect(healthy.canPerformAction('special-ability')).toBe(true);
 
-      expect(wounded.canPerformAction('attack')).toBe(false); // Low morale
+      expect(wounded.canPerformAction('attack')).toBe(false);
       expect(wounded.canPerformAction('move')).toBe(true);
 
       expect(dead.canPerformAction('attack')).toBe(false);
@@ -274,7 +271,7 @@ describe('Monster', () => {
         { hitDice: '8', expectedXp: 650 },
         { hitDice: '15', expectedXp: 2250 },
         { hitDice: '20', expectedXp: 5250 },
-        { hitDice: '25', expectedXp: 5250 }, // Over maximum caps at 20 HD
+        { hitDice: '25', expectedXp: 5250 },
       ];
 
       for (const test of tests) {
@@ -287,8 +284,8 @@ describe('Monster', () => {
       const monster1 = new Monster(createBasicMonsterData({ hitDice: '3' }));
       const monster2 = new Monster(createBasicMonsterData({ hitDice: '3+1' }));
 
-      expect(monster1.getExperienceValue()).toBe(35); // 3 HD
-      expect(monster2.getExperienceValue()).toBe(75); // 4 HD (3+1 bonus)
+      expect(monster1.getExperienceValue()).toBe(35);
+      expect(monster2.getExperienceValue()).toBe(75);
     });
   });
 
@@ -352,7 +349,7 @@ describe('Monster', () => {
       expect(damaged.hitPoints).toBe(10);
       expect(damaged.maxHitPoints).toBe(15);
       expect(killed.hitPoints).toBe(0);
-      expect(monster.hitPoints).toBe(15); // Original unchanged
+      expect(monster.hitPoints).toBe(15);
     });
 
     it('should handle healing correctly', () => {
@@ -366,8 +363,8 @@ describe('Monster', () => {
       const overhealed = monster.heal(10);
 
       expect(healed.hitPoints).toBe(13);
-      expect(overhealed.hitPoints).toBe(15); // Capped at maximum
-      expect(monster.hitPoints).toBe(8); // Original unchanged
+      expect(overhealed.hitPoints).toBe(15);
+      expect(monster.hitPoints).toBe(8);
     });
 
     it('should manage status effects', () => {
@@ -432,7 +429,7 @@ describe('Monster', () => {
       expect(updated.name).toBe('Updated Monster');
       expect(updated.level).toBe(5);
       expect(updated.morale).toBe(12);
-      expect(monster.name).toBe('Test Monster'); // Original unchanged
+      expect(monster.name).toBe('Test Monster');
     });
   });
 
@@ -481,8 +478,8 @@ describe('Monster', () => {
       const validData = createBasicMonsterData();
       const invalidData = createBasicMonsterData({
         hitDice: 'invalid-format',
-        armorClass: 15, // Outside OSRIC range
-        morale: 15, // Outside OSRIC range
+        armorClass: 15,
+        morale: 15,
       });
 
       const validResult = MonsterFactory.validate(validData);
@@ -501,7 +498,6 @@ describe('Monster', () => {
 
   describe('OSRIC Compliance', () => {
     it('should implement authentic OSRIC/AD&D 1st Edition monster mechanics', () => {
-      // Test classic AD&D monster - Orc
       const orc = new Monster(
         createBasicMonsterData({
           name: 'Orc',
@@ -515,15 +511,14 @@ describe('Monster', () => {
         })
       );
 
-      expect(orc.calculateThac0()).toBe(19); // 1 HD = THAC0 19
-      expect(orc.getExperienceValue()).toBe(15); // 1 HD = 15 XP
-      expect(orc.getAttackBonus()).toBe(0); // Low HD = no bonus
+      expect(orc.calculateThac0()).toBe(19);
+      expect(orc.getExperienceValue()).toBe(15);
+      expect(orc.getAttackBonus()).toBe(0);
       expect(orc.getAttacksPerRound()).toBe(1);
-      expect(orc.shouldCheckMorale()).toBe(false); // Full HP
+      expect(orc.shouldCheckMorale()).toBe(false);
     });
 
     it('should handle high-level monsters correctly', () => {
-      // Test high-level monster like Adult Red Dragon
       const redDragon = new Monster(
         createBasicMonsterData({
           name: 'Adult Red Dragon',
@@ -537,10 +532,10 @@ describe('Monster', () => {
         })
       );
 
-      expect(redDragon.calculateThac0()).toBe(10); // 10 HD = THAC0 10
-      expect(redDragon.getExperienceValue()).toBe(1100); // 10 HD
-      expect(redDragon.getAttackBonus()).toBe(2); // 9+ HD = +2
-      expect(redDragon.getAttacksPerRound()).toBe(3); // Claw/Claw/Bite
+      expect(redDragon.calculateThac0()).toBe(10);
+      expect(redDragon.getExperienceValue()).toBe(1100);
+      expect(redDragon.getAttackBonus()).toBe(2);
+      expect(redDragon.getAttacksPerRound()).toBe(3);
     });
 
     it('should implement proper morale system', () => {
@@ -553,14 +548,12 @@ describe('Monster', () => {
         })
       );
 
-      // At full health, no morale check needed
       expect(goblin.shouldCheckMorale()).toBe(false);
       expect(goblin.canPerformAction('attack')).toBe(true);
 
-      // When wounded below half
-      const wounded = goblin.takeDamage(3); // 1 HP remaining
+      const wounded = goblin.takeDamage(3);
       expect(wounded.shouldCheckMorale()).toBe(true);
-      expect(wounded.canPerformAction('attack')).toBe(true); // Morale 7 >= 7
+      expect(wounded.canPerformAction('attack')).toBe(true);
     });
   });
 });
