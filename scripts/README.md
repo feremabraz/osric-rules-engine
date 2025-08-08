@@ -15,7 +15,7 @@
 ### Option 1: Automated Runner (Recommended)
 
 ```bash
-# Run all migrations with safety checks
+# Run all migrations with safety checks and manual git control
 node scripts/run-migrations.js
 
 # See what would be executed without running
@@ -49,9 +49,10 @@ npm test                                        # Run all tests
 ## 🛡️ Safety Features
 
 - **Automatic Backups**: All modified files are backed up as `.backup` files
-- **Git Integration**: Automated runner creates branch and commits each phase
+- **Manual Git Control**: You manage git branches, commits, and merges yourself
 - **Rollback Script**: Restore all backups if needed
 - **Validation**: Comprehensive checks ensure migration success
+- **Pause Between Scripts**: Review changes and commit as desired
 
 ### Emergency Rollback
 

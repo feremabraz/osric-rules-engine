@@ -37,20 +37,42 @@ function addGetRuleEngineMethod() {
   let updatedContent = content;
 
   if (!content.includes('import type { RuleEngine }')) {
-    updatedContent = updatedContent.replace(
-      /import.*from '@osric\/types\/entities';/,
-      `$&\nimport type { RuleEngine } from '@osric/core/RuleEngine';`
+    // Find the last import from @osric/types/entities specifically
+    const entitiesImportMatch = content.match(
+      /import\s+.*?\s+from\s+['"]@osric\/types\/entities['"];/
     );
+    if (entitiesImportMatch) {
+      updatedContent = updatedContent.replace(
+        entitiesImportMatch[0],
+        `${entitiesImportMatch[0]}\nimport type { RuleEngine } from '@osric/core/RuleEngine';`
+      );
+    } else {
+      // If no entities import found, add after any existing imports
+      const lastImportMatch = updatedContent.match(/import[^;]+;/g);
+      if (lastImportMatch) {
+        const lastImport = lastImportMatch[lastImportMatch.length - 1];
+        updatedContent = updatedContent.replace(
+          lastImport,
+          `${lastImport}\nimport type { RuleEngine } from '@osric/core/RuleEngine';`
+        );
+      }
+    }
   }
 
-  // Update constructor to accept RuleEngine
-  updatedContent = updatedContent.replace(
-    /constructor\(private store: ReturnType<typeof createStore>\) \{\}/,
-    `constructor(
+  // Update constructor to accept RuleEngine (handle various formatting)
+  const constructorPattern =
+    /constructor\s*\(\s*private\s+store:\s*ReturnType<typeof\s+createStore>\s*\)\s*\{\s*\}/;
+  if (constructorPattern.test(updatedContent)) {
+    updatedContent = updatedContent.replace(
+      constructorPattern,
+      `constructor(
     private store: ReturnType<typeof createStore>,
     private ruleEngine?: RuleEngine
   ) {}`
-  );
+    );
+  } else {
+    console.log('⚠️  Constructor pattern not found - may need manual update');
+  }
 
   // Add the new methods before the getEntity method
   const newMethods = `

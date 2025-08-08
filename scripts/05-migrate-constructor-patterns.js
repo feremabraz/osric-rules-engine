@@ -113,9 +113,13 @@ function migrateCommandFile(commandFile) {
   const filePath = path.join(COMMANDS_DIR, commandFile);
   const content = fs.readFileSync(filePath, 'utf8');
 
-  // Create backup
-  fs.writeFileSync(`${filePath}.backup`, content);
-
+  // Create backup (check if backup already exists)
+  const backupPath = `${filePath}.backup`;
+  if (!fs.existsSync(backupPath)) {
+    fs.writeFileSync(backupPath, content);
+  } else {
+    console.log(`    ℹ️  Backup already exists for ${commandFile}`);
+  }
   let updatedContent = content;
 
   // Extract parameter type from existing constructor or class
@@ -285,16 +289,26 @@ interface IdentifyMagicItemParameters {
   );
 
   // Update class property declaration to use public readonly
-  updatedContent = updatedContent.replace(/private parameters:/, 'public readonly parameters:');
+  const privateParamsPattern = /private parameters:/;
+  if (privateParamsPattern.test(updatedContent)) {
+    updatedContent = updatedContent.replace(privateParamsPattern, 'public readonly parameters:');
+  } else {
+    console.log(`    ⚠️  Could not find 'private parameters:' pattern in ${commandFile}`);
+  }
 
   // Add actorId and targetIds properties if they don't exist
   if (!updatedContent.includes('public readonly actorId')) {
-    updatedContent = updatedContent.replace(
-      /public readonly parameters: (\w+);/,
-      `public readonly parameters: $1;
+    const paramPattern = /public readonly parameters: (\w+);/;
+    if (paramPattern.test(updatedContent)) {
+      updatedContent = updatedContent.replace(
+        paramPattern,
+        `public readonly parameters: $1;
   public readonly actorId: string;
   public readonly targetIds: string[];`
-    );
+      );
+    } else {
+      console.log(`    ⚠️  Could not add actorId/targetIds properties to ${commandFile}`);
+    }
   }
 
   return updatedContent;

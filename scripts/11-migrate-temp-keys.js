@@ -206,7 +206,7 @@ function performAutoMigration(migrationPlan) {
           const lastImport = lastImportMatch[lastImportMatch.length - 1];
           updatedContent = updatedContent.replace(
             lastImport,
-            `${lastImport}\\nimport { TEMP_DATA_KEYS } from '@osric/core/TemporaryDataRegistry';`
+            `${lastImport}\nimport { TEMP_DATA_KEYS } from '@osric/core/TemporaryDataRegistry';`
           );
         }
       }

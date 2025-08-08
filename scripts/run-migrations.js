@@ -4,7 +4,7 @@
  * Master Migration Runner
  *
  * This script runs all migration scripts in the correct order
- * with safety checks and git integration.
+ * with safety checks and backup creation.
  */
 
 const fs = require('node:fs');
@@ -22,48 +22,6 @@ const MIGRATION_ORDER = [
   '11-migrate-temp-keys.js',
   '99-validate-changes.js',
 ];
-
-function checkGitStatus() {
-  console.log('🔍 Checking git status...');
-
-  try {
-    const status = execSync('git status --porcelain', {
-      encoding: 'utf8',
-      cwd: path.join(__dirname, '..'),
-    });
-
-    if (status.trim()) {
-      console.log('⚠️  Working directory has uncommitted changes:');
-      console.log(status);
-      console.log('💡 Commit or stash changes before running migrations');
-      return false;
-    }
-
-    console.log('✅ Working directory is clean');
-    return true;
-  } catch (error) {
-    console.log('❌ Git check failed:', error.message);
-    return false;
-  }
-}
-
-function createMigrationBranch() {
-  console.log('🌿 Creating migration branch...');
-
-  try {
-    const branchName = `osric-standardization-${Date.now()}`;
-    execSync(`git checkout -b ${branchName}`, {
-      encoding: 'utf8',
-      cwd: path.join(__dirname, '..'),
-    });
-
-    console.log(`✅ Created branch: ${branchName}`);
-    return branchName;
-  } catch (error) {
-    console.log('❌ Branch creation failed:', error.message);
-    return null;
-  }
-}
 
 function runScript(scriptName) {
   console.log(`\n🚀 Running ${scriptName}...`);
@@ -90,30 +48,6 @@ function runScript(scriptName) {
   }
 }
 
-function commitChanges(scriptName) {
-  console.log(`📝 Committing changes from ${scriptName}...`);
-
-  try {
-    execSync('git add .', {
-      encoding: 'utf8',
-      cwd: path.join(__dirname, '..'),
-    });
-
-    const commitMessage = `feat: ${scriptName.replace('.js', '').replace(/\d+-/, '').replace(/-/g, ' ')}`;
-
-    execSync(`git commit -m "${commitMessage}"`, {
-      encoding: 'utf8',
-      cwd: path.join(__dirname, '..'),
-    });
-
-    console.log(`✅ Committed: ${commitMessage}`);
-    return true;
-  } catch (error) {
-    console.log('⚠️  No changes to commit or commit failed:', error.message);
-    return false;
-  }
-}
-
 function runTests() {
   console.log('\n🧪 Running tests...');
 
@@ -126,7 +60,8 @@ function runTests() {
     console.log('✅ All tests passed');
     return true;
   } catch (error) {
-    console.log('❌ Tests failed', error.message);
+    const errorMsg = error.message || error.status || 'Unknown error';
+    console.log('❌ Tests failed:', errorMsg);
     return false;
   }
 }
@@ -174,10 +109,11 @@ async function main() {
   console.log('');
   console.log('This will run all migration scripts to standardize the codebase.');
   console.log('The process includes:');
-  console.log('- Creating a new git branch');
   console.log('- Running migrations in order');
-  console.log('- Committing each phase');
+  console.log('- Creating backups for all changes');
   console.log('- Running final validation');
+  console.log('');
+  console.log('💡 Git management is manual - commit changes as needed');
   console.log('');
 
   // Check if we should proceed
@@ -185,16 +121,6 @@ async function main() {
   if (!shouldProceed) {
     console.log('👋 Migration cancelled');
     process.exit(0);
-  }
-
-  // Pre-flight checks
-  if (!checkGitStatus()) {
-    process.exit(1);
-  }
-
-  const branchName = createMigrationBranch();
-  if (!branchName) {
-    process.exit(1);
   }
 
   // Run migrations
@@ -216,8 +142,13 @@ async function main() {
         break;
       }
     } else if (scriptName !== '99-validate-changes.js') {
-      // Commit after each successful script (except validation)
-      commitChanges(scriptName);
+      // Pause after each successful script for manual git operations
+      console.log('\n📝 Script completed successfully!');
+      console.log('💡 You can now review changes and commit if desired');
+
+      if (MIGRATION_ORDER.indexOf(scriptName) < MIGRATION_ORDER.length - 2) {
+        await promptContinue('Press Enter to continue to next script');
+      }
     }
   }
 
@@ -232,12 +163,12 @@ async function main() {
       console.log('\n🎉 Migration completed successfully!');
       console.log('📋 Next steps:');
       console.log('  1. Review the changes');
-      console.log('  2. Merge the migration branch');
-      console.log('  3. Remove backup files');
+      console.log('  2. Commit changes to git');
+      console.log('  3. Remove backup files if satisfied');
       console.log('  4. Delete scripts folder');
     } else {
       console.log('\n⚠️  Migration completed but tests failed');
-      console.log('📋 Review test failures before merging');
+      console.log('📋 Review test failures before committing');
     }
   } else {
     console.log('\n❌ Migration incomplete');
@@ -261,9 +192,9 @@ Options:
   --script NAME  Run only a specific script
 
 Examples:
-  node run-migrations.js
-  node run-migrations.js --script 01-add-getruleengine.js
-  node run-migrations.js --dry-run
+  node run-migrations.js                                    # Run all scripts with manual git control
+  node run-migrations.js --script 01-add-getruleengine.js  # Run single script
+  node run-migrations.js --dry-run                         # Preview execution order
 `);
   process.exit(0);
 }
