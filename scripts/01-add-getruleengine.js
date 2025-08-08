@@ -134,35 +134,45 @@ function updateTestFiles() {
       } else if (entry.name.endsWith('.ts') || entry.name.endsWith('.test.ts')) {
         const content = fs.readFileSync(fullPath, 'utf8');
 
-        // Look for GameContext instantiation patterns
-        if (
-          content.includes('new GameContext(') &&
-          !content.includes('new GameContext(store, ruleEngine)')
-        ) {
+        // Look for GameContext instantiation patterns that need updating
+        if (content.includes('new GameContext(') && !content.includes(', new RuleEngine()')) {
           let updatedContent = content;
 
           // Add RuleEngine import if needed
           if (
             !content.includes('import { RuleEngine }') &&
-            !content.includes('import type { RuleEngine }')
+            !content.includes('import type { RuleEngine }') &&
+            content.includes('new GameContext(')
           ) {
-            updatedContent = updatedContent.replace(
-              /import.*from.*GameContext.*';/,
-              `$&\nimport { RuleEngine } from '@osric/core/RuleEngine';`
+            // Find existing GameContext import and add RuleEngine import after it
+            const gameContextImportMatch = content.match(
+              /import\s+.*GameContext.*from\s+['"][^'"]*['"];/
             );
+            if (gameContextImportMatch) {
+              updatedContent = updatedContent.replace(
+                gameContextImportMatch[0],
+                `${gameContextImportMatch[0]}\nimport { RuleEngine } from '@osric/core/RuleEngine';`
+              );
+            }
           }
 
-          // Update GameContext constructor calls
+          // Update single parameter GameContext constructor calls
           updatedContent = updatedContent.replace(
-            /new GameContext\(([^)]+)\)/g,
+            /new GameContext\(([^,)]+)\)/g,
             'new GameContext($1, new RuleEngine())'
           );
 
-          // Handle test helpers that create mock contexts
+          // Handle cases where GameContext already has multiple parameters (avoid double-adding)
+          // This fixes any malformed calls we might have created
           updatedContent = updatedContent.replace(
-            /const context = new GameContext\(store\);/g,
-            `const context = new GameContext(store);
-  context.setRuleEngine(new RuleEngine());`
+            /new GameContext\(([^,)]+),\s*,\s*new RuleEngine\(\)\)/g,
+            'new GameContext($1, new RuleEngine())'
+          );
+
+          // Handle specific test helper patterns
+          updatedContent = updatedContent.replace(
+            /const context = new GameContext\(store\);\s*$/gm,
+            'const context = new GameContext(store, new RuleEngine());'
           );
 
           if (updatedContent !== content) {
