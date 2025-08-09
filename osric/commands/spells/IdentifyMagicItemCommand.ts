@@ -1,17 +1,21 @@
-import { BaseCommand, type CommandResult } from '@osric/core/Command';
-import type { GameContext } from '@osric/core/GameContext';
 import type { Character, Item } from '@osric/types';
-import { COMMAND_TYPES } from '@osric/types/constants';
+import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { GameContext } from '../../core/GameContext';
+import { COMMAND_TYPES } from '../../types/constants';
 
-export class IdentifyMagicItemCommand extends BaseCommand {
+export interface IdentifyMagicItemParameters {
+  identifierId: string;
+  itemId: string;
+  method: 'spell' | 'sage' | 'trial';
+}
+
+export class IdentifyMagicItemCommand extends BaseCommand<IdentifyMagicItemParameters> {
   public readonly type = COMMAND_TYPES.IDENTIFY_MAGIC_ITEM;
+  readonly parameters: IdentifyMagicItemParameters;
 
-  constructor(
-    identifierId: string,
-    private itemId: string,
-    private method: 'spell' | 'sage' | 'trial' = 'spell'
-  ) {
-    super(identifierId);
+  constructor(parameters: IdentifyMagicItemParameters, actorId: string, targetIds: string[] = []) {
+    super(parameters, actorId, targetIds);
+    this.parameters = parameters;
   }
 
   public async execute(context: GameContext): Promise<CommandResult> {
@@ -21,9 +25,9 @@ export class IdentifyMagicItemCommand extends BaseCommand {
         return this.createFailureResult(`Identifier with ID ${this.actorId} not found.`);
       }
 
-      const item = context.getItem(this.itemId);
+      const item = context.getItem(this.parameters.itemId);
       if (!item) {
-        return this.createFailureResult(`Item with ID ${this.itemId} not found.`);
+        return this.createFailureResult(`Item with ID ${this.parameters.itemId} not found.`);
       }
 
       if (!this.hasAccessToItem(identifier, item)) {
@@ -32,16 +36,16 @@ export class IdentifyMagicItemCommand extends BaseCommand {
 
       context.setTemporary('identifyItem_identifier', identifier);
       context.setTemporary('identifyItem_item', item);
-      context.setTemporary('identifyItem_method', this.method);
+      context.setTemporary('identifyItem_method', this.parameters.method);
 
       context.setTemporary('identifyItem_result', null);
 
       return this.createSuccessResult(
-        `${identifier.name} attempts to identify ${item.name} using ${this.method}`,
+        `${identifier.name} attempts to identify ${item.name} using ${this.parameters.method}`,
         {
           item: item.name,
           identifier: identifier.name,
-          method: this.method,
+          method: this.parameters.method,
         }
       );
     } catch (error) {
@@ -52,7 +56,7 @@ export class IdentifyMagicItemCommand extends BaseCommand {
   }
 
   public canExecute(context: GameContext): boolean {
-    if (!this.validateEntities(context)) {
+    if (!this.validateEntitiesExist(context)) {
       return false;
     }
 
@@ -61,7 +65,7 @@ export class IdentifyMagicItemCommand extends BaseCommand {
       return false;
     }
 
-    const item = context.getItem(this.itemId);
+    const item = context.getItem(this.parameters.itemId);
     if (!item) {
       return false;
     }
@@ -70,7 +74,7 @@ export class IdentifyMagicItemCommand extends BaseCommand {
       return false;
     }
 
-    return this.canUseMethod(identifier, this.method);
+    return this.canUseMethod(identifier, this.parameters.method);
   }
 
   public getRequiredRules(): string[] {

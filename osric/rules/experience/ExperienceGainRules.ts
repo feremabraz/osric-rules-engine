@@ -30,7 +30,9 @@ export class ExperienceGainRule extends BaseRule {
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const gainData = context.getTemporary<ExperienceGainParameters>('experience-gain-params');
+    const gainData = context.getTemporary<ExperienceGainParameters>(
+      'character:experience:gain-params'
+    );
 
     if (!gainData) {
       return this.createFailureResult('No experience gain data provided');

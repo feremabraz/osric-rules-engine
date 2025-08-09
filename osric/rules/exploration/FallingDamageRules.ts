@@ -27,7 +27,9 @@ export class FallingDamageRule extends BaseRule {
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const fallData = context.getTemporary<FallingDamageParameters>('falling-damage-params');
+    const fallData = context.getTemporary<FallingDamageParameters>(
+      'exploration:falling-damage:params'
+    );
 
     if (!fallData) {
       return this.createFailureResult('No falling damage data provided');

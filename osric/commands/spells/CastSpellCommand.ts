@@ -1,19 +1,23 @@
-import { BaseCommand, type CommandResult } from '@osric/core/Command';
-import type { GameContext } from '@osric/core/GameContext';
 import type { Character, Monster, Spell } from '@osric/types';
-import { COMMAND_TYPES } from '@osric/types/constants';
+import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { GameContext } from '../../core/GameContext';
+import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
 
-export class CastSpellCommand extends BaseCommand {
+export interface CastSpellParameters {
+  casterId: string;
+  spellName: string;
+  targetIds?: string[];
+  spellLevel?: number;
+  overrideComponents?: boolean;
+}
+
+export class CastSpellCommand extends BaseCommand<CastSpellParameters> {
   public readonly type = COMMAND_TYPES.CAST_SPELL;
+  readonly parameters: CastSpellParameters;
 
-  constructor(
-    casterId: string,
-    private spellName: string,
-    targetIds: string[] = [],
-    private spellLevel?: number,
-    private overrideComponents = false
-  ) {
-    super(casterId, targetIds);
+  constructor(parameters: CastSpellParameters, actorId: string, targetIds: string[] = []) {
+    super(parameters, actorId, targetIds);
+    this.parameters = parameters;
   }
 
   public async execute(context: GameContext): Promise<CommandResult> {
@@ -27,22 +31,22 @@ export class CastSpellCommand extends BaseCommand {
         return this.createFailureResult(`${caster.name} is not a spellcasting class.`);
       }
 
-      const spell = this.findSpell(caster, this.spellName, this.spellLevel);
+      const spell = this.findSpell(caster, this.parameters.spellName, this.parameters.spellLevel);
       if (!spell) {
         return this.createFailureResult(
-          `${caster.name} does not have ${this.spellName} memorized or available.`
+          `${caster.name} does not have ${this.parameters.spellName} memorized or available.`
         );
       }
 
       const targets = this.getTargets(context);
 
-      context.setTemporary('castSpell_caster', caster);
-      context.setTemporary('castSpell_spell', spell);
-      context.setTemporary('castSpell_targets', targets);
-      context.setTemporary('castSpell_overrideComponents', this.overrideComponents);
+      context.setTemporary('spell:cast:caster', caster);
+      context.setTemporary('spell:cast:spell', spell);
+      context.setTemporary('spell:cast:targets', targets);
+      context.setTemporary('spell:cast:components', this.parameters.overrideComponents);
 
-      context.setTemporary('castSpell_validationResult', null);
-      context.setTemporary('castSpell_spellResult', null);
+      context.setTemporary('spell:cast:validation', null);
+      context.setTemporary('spell:cast-spell:result', null);
 
       return this.createSuccessResult(`${caster.name} casts ${spell.name}`, {
         spell: spell.name,
@@ -57,7 +61,7 @@ export class CastSpellCommand extends BaseCommand {
   }
 
   public canExecute(context: GameContext): boolean {
-    if (!this.validateEntities(context)) {
+    if (!this.validateEntitiesExist(context)) {
       return false;
     }
 
@@ -70,16 +74,16 @@ export class CastSpellCommand extends BaseCommand {
       return false;
     }
 
-    const spell = this.findSpell(caster, this.spellName, this.spellLevel);
+    const spell = this.findSpell(caster, this.parameters.spellName, this.parameters.spellLevel);
     return !!spell;
   }
 
   public getRequiredRules(): string[] {
     return [
-      'SpellCastingValidation',
-      'ComponentTracking',
-      'SpellSlotConsumption',
-      'SpellEffectResolution',
+      RULE_NAMES.SPELL_CASTING,
+      RULE_NAMES.COMPONENT_TRACKING,
+      RULE_NAMES.SPELL_MEMORIZATION,
+      RULE_NAMES.SPELL_EFFECT_RESOLUTION,
     ];
   }
 

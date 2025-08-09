@@ -1,8 +1,8 @@
-import { BaseCommand, type CommandResult } from '@osric/core/Command';
-import { rollDice } from '@osric/core/Dice';
-import type { GameContext } from '@osric/core/GameContext';
-import { COMMAND_TYPES } from '@osric/types/constants';
-import type { Character } from '@osric/types/entities';
+import { BaseCommand, type CommandResult } from '../../core/Command';
+import { DiceEngine } from '../../core/Dice';
+import type { GameContext } from '../../core/GameContext';
+import { COMMAND_TYPES } from '../../types/constants';
+import type { Character } from '../../types/entities';
 
 export interface WeatherCondition {
   type:
@@ -40,11 +40,13 @@ export interface WeatherCheckParameters {
   exposureTime?: number;
 }
 
-export class WeatherCheckCommand extends BaseCommand {
+export class WeatherCheckCommand extends BaseCommand<WeatherCheckParameters> {
   readonly type = COMMAND_TYPES.WEATHER_CHECK;
+  readonly parameters: WeatherCheckParameters;
 
-  constructor(private parameters: WeatherCheckParameters) {
-    super(parameters.characterId, []);
+  constructor(parameters: WeatherCheckParameters, actorId: string, targetIds: string[] = []) {
+    super(parameters, actorId, targetIds);
+    this.parameters = parameters;
   }
 
   async execute(context: GameContext): Promise<CommandResult> {
@@ -257,14 +259,14 @@ export class WeatherCheckCommand extends BaseCommand {
     if (weather.temperature === 'freezing' && exposureTime >= 2) {
       const hasProtection = this.hasWeatherProtection(character, 'cold');
       if (!hasProtection) {
-        damage += rollDice(1, 4).result;
+        damage += DiceEngine.roll('1d4').total;
       }
     }
 
     if (weather.temperature === 'scorching' && exposureTime >= 4) {
       const hasProtection = this.hasWeatherProtection(character, 'heat');
       if (!hasProtection) {
-        damage += rollDice(1, 6).result;
+        damage += DiceEngine.roll('1d6').total;
       }
     }
 

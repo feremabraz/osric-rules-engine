@@ -50,19 +50,17 @@ export class VisibilityRules extends BaseRule {
   readonly priority = 50;
 
   canApply(context: GameContext, _command: Command): boolean {
-    return this.getTemporaryData<VisibilityParameters>(context, 'visibility-check-params') !== null;
+    return (
+      this.getOptionalContext<VisibilityParameters>(context, 'visibility-check-params') !== null
+    );
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
     try {
-      const parameters = this.getTemporaryData<VisibilityParameters>(
+      const parameters = this.getRequiredContext<VisibilityParameters>(
         context,
         'visibility-check-params'
       );
-
-      if (!parameters) {
-        return this.createFailureResult('No visibility check parameters found');
-      }
 
       const { observerId, targetId, activityType, conditions, distance } = parameters;
 
@@ -84,7 +82,7 @@ export class VisibilityRules extends BaseRule {
         distance
       );
 
-      this.setTemporaryData(context, 'visibility-result', visibilityResult);
+      this.setContext(context, 'visibility-result', visibilityResult);
 
       const message = this.createVisibilityMessage(
         observer,

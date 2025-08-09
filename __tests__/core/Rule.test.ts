@@ -85,11 +85,11 @@ class TestableRule extends BaseRule {
   }
 
   public testGetTemporaryData<T>(context: GameContext, key: string): T | null {
-    return this.getTemporaryData<T>(context, key);
+    return this.getOptionalContext<T>(context, key);
   }
 
   public testSetTemporaryData(context: GameContext, key: string, value: unknown): void {
-    this.setTemporaryData(context, key, value);
+    this.setContext(context, key, value);
   }
 
   public testExtractTypedParameters<T>(

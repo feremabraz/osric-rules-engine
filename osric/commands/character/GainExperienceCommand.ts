@@ -1,12 +1,12 @@
-import { BaseCommand, type CommandResult } from '@osric/core/Command';
-import type { GameContext } from '@osric/core/GameContext';
-import { calculateGroupXP, calculateMonsterXP } from '@osric/core/MonsterXP';
 import {
   determineLevel,
   getExperienceForNextLevel,
 } from '@osric/rules/experience/LevelProgressionRules';
-import { COMMAND_TYPES } from '@osric/types/constants';
-import type { Character, Monster } from '@osric/types/entities';
+import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { GameContext } from '../../core/GameContext';
+import { calculateGroupXP, calculateMonsterXP } from '../../core/MonsterXP';
+import { COMMAND_TYPES } from '../../types/constants';
+import type { Character, Monster } from '../../types/entities';
 
 export interface GainExperienceParameters {
   characterId: string;
@@ -25,11 +25,13 @@ export interface GainExperienceParameters {
   applyClassModifiers?: boolean;
 }
 
-export class GainExperienceCommand extends BaseCommand {
+export class GainExperienceCommand extends BaseCommand<GainExperienceParameters> {
   readonly type = COMMAND_TYPES.GAIN_EXPERIENCE;
+  readonly parameters: GainExperienceParameters;
 
-  constructor(private parameters: GainExperienceParameters) {
-    super(parameters.characterId, parameters.partyShare?.partyMemberIds || []);
+  constructor(parameters: GainExperienceParameters) {
+    super(parameters, parameters.characterId, parameters.partyShare?.partyMemberIds || []);
+    this.parameters = parameters;
   }
 
   async execute(context: GameContext): Promise<CommandResult> {
@@ -164,7 +166,7 @@ export class GainExperienceCommand extends BaseCommand {
   }
 
   canExecute(context: GameContext): boolean {
-    return this.validateEntities(context);
+    return this.validateEntitiesExist(context);
   }
 
   getRequiredRules(): string[] {

@@ -1,5 +1,5 @@
-import type { Command } from '@osric/core/Command';
-import type { GameContext } from '@osric/core/GameContext';
+import type { Command } from './Command';
+import type { GameContext } from './GameContext';
 
 export interface RuleResult {
   success: boolean;
@@ -13,13 +13,10 @@ export interface RuleResult {
 
 export interface Rule {
   readonly name: string;
-
   readonly priority: number;
 
-  execute(context: GameContext, command: Command): Promise<RuleResult>;
-
+  apply(context: GameContext, command: Command): Promise<RuleResult>;
   canApply(context: GameContext, command: Command): boolean;
-
   getPrerequisites(): string[];
 }
 
@@ -27,11 +24,42 @@ export abstract class BaseRule implements Rule {
   abstract readonly name: string;
   readonly priority: number = 100;
 
-  abstract execute(context: GameContext, command: Command): Promise<RuleResult>;
-  abstract canApply(context: GameContext, command: Command): boolean;
+  // Default implementation that can be overridden
+  async apply(_context: GameContext, _command: Command): Promise<RuleResult> {
+    return this.createSuccessResult(`Rule ${this.name} executed successfully`);
+  }
 
+  // Default implementation that can be overridden
+  canApply(_context: GameContext, _command: Command): boolean {
+    return true;
+  }
+
+  // Strict data access pattern - type-safe with validation
+  protected getRequiredContext<T>(context: GameContext, key: string): T {
+    const data = context.getTemporary<T>(key);
+    if (data === null || data === undefined) {
+      throw new Error(`Required temporary data not found: ${key}`);
+    }
+    return data;
+  }
+
+  protected getOptionalContext<T>(context: GameContext, key: string): T | null {
+    return context.getTemporary<T>(key) || null;
+  }
+
+  protected setContext<T>(context: GameContext, key: string, value: T): void {
+    context.setTemporary(key, value);
+  }
+
+  // Validation for startup checks
   getPrerequisites(): string[] {
     return [];
+  }
+
+  validate(availableRules: string[]): { valid: boolean; missing: string[] } {
+    const prerequisites = this.getPrerequisites();
+    const missing = prerequisites.filter((rule) => !availableRules.includes(rule));
+    return { valid: missing.length === 0, missing };
   }
 
   protected createSuccessResult(
@@ -56,26 +84,13 @@ export abstract class BaseRule implements Rule {
     return command.type === type;
   }
 
-  protected getTemporaryData<T>(context: GameContext, key: string): T | null {
-    return context.getTemporary<T>(key);
-  }
-
-  protected setTemporaryData(context: GameContext, key: string, value: unknown): void {
-    context.setTemporary(key, value);
-  }
-
   protected extractTypedParameters<T>(
     command: Command,
     validator: (params: unknown) => params is T
   ): T | null {
-    if ('params' in command && command.params && validator(command.params)) {
-      return command.params;
+    if (validator(command.parameters)) {
+      return command.parameters as T;
     }
-
-    if (validator(command)) {
-      return command as unknown as T;
-    }
-
     return null;
   }
 }

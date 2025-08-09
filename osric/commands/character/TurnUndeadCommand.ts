@@ -1,7 +1,7 @@
-import { BaseCommand, type CommandResult } from '@osric/core/Command';
-import type { GameContext } from '@osric/core/GameContext';
-import { COMMAND_TYPES } from '@osric/types/constants';
-import type { Character, Monster } from '@osric/types/entities';
+import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { GameContext } from '../../core/GameContext';
+import { COMMAND_TYPES } from '../../types/constants';
+import type { Character, Monster } from '../../types/entities';
 
 export interface TurnUndeadParameters {
   characterId: string;
@@ -16,11 +16,13 @@ export interface TurnUndeadParameters {
   massAttempt?: boolean;
 }
 
-export class TurnUndeadCommand extends BaseCommand {
+export class TurnUndeadCommand extends BaseCommand<TurnUndeadParameters> {
   readonly type = COMMAND_TYPES.TURN_UNDEAD;
+  readonly parameters: TurnUndeadParameters;
 
-  constructor(private parameters: TurnUndeadParameters) {
-    super(parameters.characterId, parameters.targetUndeadIds);
+  constructor(parameters: TurnUndeadParameters, actorId: string, targetIds: string[] = []) {
+    super(parameters, actorId, targetIds);
+    this.parameters = parameters;
   }
 
   async execute(context: GameContext): Promise<CommandResult> {
@@ -118,7 +120,7 @@ export class TurnUndeadCommand extends BaseCommand {
   }
 
   canExecute(context: GameContext): boolean {
-    return this.validateEntities(context);
+    return this.validateEntitiesExist(context);
   }
 
   getRequiredRules(): string[] {

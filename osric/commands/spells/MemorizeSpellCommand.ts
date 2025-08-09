@@ -1,18 +1,23 @@
-import { BaseCommand, type CommandResult } from '@osric/core/Command';
-import type { GameContext } from '@osric/core/GameContext';
+import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { GameContext } from '../../core/GameContext';
+
 import type { Character, Spell } from '@osric/types';
-import { COMMAND_TYPES } from '@osric/types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
 
-export class MemorizeSpellCommand extends BaseCommand {
+export interface MemorizeSpellParameters {
+  casterId: string;
+  spellName: string;
+  spellLevel: number;
+  replaceSpell?: string;
+}
+
+export class MemorizeSpellCommand extends BaseCommand<MemorizeSpellParameters> {
   public readonly type = COMMAND_TYPES.MEMORIZE_SPELL;
+  readonly parameters: MemorizeSpellParameters;
 
-  constructor(
-    casterId: string,
-    private spellName: string,
-    private spellLevel: number,
-    private replaceSpell?: string
-  ) {
-    super(casterId);
+  constructor(parameters: MemorizeSpellParameters, actorId: string, targetIds: string[] = []) {
+    super(parameters, actorId, targetIds);
+    this.parameters = parameters;
   }
 
   public async execute(context: GameContext): Promise<CommandResult> {
@@ -26,26 +31,29 @@ export class MemorizeSpellCommand extends BaseCommand {
         return this.createFailureResult(`${caster.name} is not a spellcasting class.`);
       }
 
-      const spell = this.findAvailableSpell(caster, this.spellName, this.spellLevel);
+      const spell = this.findAvailableSpell(
+        caster,
+        this.parameters.spellName,
+        this.parameters.spellLevel
+      );
       if (!spell) {
         return this.createFailureResult(
-          `${caster.name} does not have access to ${this.spellName} (level ${this.spellLevel}).`
+          `${caster.name} does not have access to ${this.parameters.spellName} (level ${this.parameters.spellLevel}).`
         );
       }
 
-      const slotResult = this.checkSpellSlotAvailability(caster, this.spellLevel);
+      const slotResult = this.checkSpellSlotAvailability(caster, this.parameters.spellLevel);
       if (!slotResult.success) {
         return this.createFailureResult(slotResult.message);
       }
 
-      context.setTemporary('memorizeSpell_caster', caster);
-      context.setTemporary('memorizeSpell_spell', spell);
-      context.setTemporary('memorizeSpell_level', this.spellLevel);
-      context.setTemporary('memorizeSpell_replaceSpell', this.replaceSpell);
+      context.setTemporary('spell:memorize:caster', caster);
+      context.setTemporary('spell:memorize:spell', spell);
+      context.setTemporary('spell:memorize:params', this.parameters);
 
       return this.createSuccessResult(`${caster.name} memorizes ${spell.name}`, {
         spell: spell.name,
-        level: this.spellLevel,
+        level: this.parameters.spellLevel,
         caster: caster.name,
       });
     } catch (error) {
@@ -56,7 +64,7 @@ export class MemorizeSpellCommand extends BaseCommand {
   }
 
   public canExecute(context: GameContext): boolean {
-    if (!this.validateEntities(context)) {
+    if (!this.validateEntitiesExist(context)) {
       return false;
     }
 
@@ -69,17 +77,21 @@ export class MemorizeSpellCommand extends BaseCommand {
       return false;
     }
 
-    const spell = this.findAvailableSpell(caster, this.spellName, this.spellLevel);
+    const spell = this.findAvailableSpell(
+      caster,
+      this.parameters.spellName,
+      this.parameters.spellLevel
+    );
     if (!spell) {
       return false;
     }
 
-    const slotResult = this.checkSpellSlotAvailability(caster, this.spellLevel);
-    return slotResult.success || !!this.replaceSpell;
+    const slotResult = this.checkSpellSlotAvailability(caster, this.parameters.spellLevel);
+    return slotResult.success || !!this.parameters.replaceSpell;
   }
 
   public getRequiredRules(): string[] {
-    return ['SpellMemorizationValidation', 'SpellSlotAllocation', 'RestRequirements'];
+    return [RULE_NAMES.SPELL_MEMORIZATION_VALIDATION, RULE_NAMES.SPELL_SLOT_ALLOCATION];
   }
 
   private isSpellcaster(character: Character): boolean {

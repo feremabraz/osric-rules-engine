@@ -62,7 +62,7 @@ export class TreasureGenerationRules extends BaseRule {
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const treasureContext = this.getTemporaryData<TreasureContext>(context, 'treasureContext');
+    const treasureContext = this.getOptionalContext<TreasureContext>(context, 'treasureContext');
 
     if (!treasureContext) {
       return this.createFailureResult('No treasure context provided');
@@ -71,7 +71,7 @@ export class TreasureGenerationRules extends BaseRule {
     try {
       const treasure = this.generateTreasure(treasureContext);
 
-      this.setTemporaryData(context, 'treasureHoard', treasure);
+      this.setContext(context, 'treasureHoard', treasure);
 
       return this.createSuccessResult(`Generated treasure hoard worth ${treasure.totalValue} gp`, {
         treasure,

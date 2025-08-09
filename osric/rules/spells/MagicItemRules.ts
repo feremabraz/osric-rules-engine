@@ -1,8 +1,8 @@
-import { rollDice } from '@osric/core/Dice';
-import type { GameContext } from '@osric/core/GameContext';
-import { BaseRule, type RuleResult } from '@osric/core/Rule';
-import type { IdentificationResult } from '@osric/types/SpellTypes';
-import type { Character, Item } from '@osric/types/entities';
+import { DiceEngine } from '../../core/Dice';
+import type { GameContext } from '../../core/GameContext';
+import { BaseRule, type RuleResult } from '../../core/Rule';
+import type { IdentificationResult } from '../../types/SpellTypes';
+import type { Character, Item } from '../../types/entities';
 
 export class MagicItemChargeCalculationRule extends BaseRule {
   name = 'magic-item-charge-calculation';
@@ -25,22 +25,22 @@ export class MagicItemChargeCalculationRule extends BaseRule {
 
     switch (item.itemType.toLowerCase()) {
       case 'wand': {
-        const wandRoll = rollDice(1, 20);
-        charges = 101 - wandRoll.result;
+        const wandRoll = DiceEngine.roll('1d20');
+        charges = 101 - wandRoll.total;
         chargeFormula = '101 - 1d20';
         break;
       }
 
       case 'rod': {
-        const rodRoll = rollDice(1, 10);
-        charges = 51 - rodRoll.result;
+        const rodRoll = DiceEngine.roll('1d10');
+        charges = 51 - rodRoll.total;
         chargeFormula = '51 - 1d10';
         break;
       }
 
       case 'staff': {
-        const staffRoll = rollDice(1, 6);
-        charges = 26 - staffRoll.result;
+        const staffRoll = DiceEngine.roll('1d6');
+        charges = 26 - staffRoll.total;
         chargeFormula = '26 - 1d6';
         break;
       }
@@ -200,16 +200,16 @@ export class MagicItemSavingThrowRule extends BaseRule {
         break;
     }
 
-    const savingThrowRoll = rollDice(1, 20);
-    const success = savingThrowRoll.result >= adjustedTarget;
+    const savingThrowRoll = DiceEngine.roll('1d20');
+    const success = savingThrowRoll.total >= adjustedTarget;
 
     const effectName = this.formatEffectType(effectType);
     let message: string;
 
     if (success) {
-      message = `${item.name} resists the ${effectName}! (rolled ${savingThrowRoll.result} vs ${adjustedTarget})`;
+      message = `${item.name} resists the ${effectName}! (rolled ${savingThrowRoll.total} vs ${adjustedTarget})`;
     } else {
-      message = `${item.name} fails to resist the ${effectName} and is affected. (rolled ${savingThrowRoll.result} vs ${adjustedTarget})`;
+      message = `${item.name} fails to resist the ${effectName} and is affected. (rolled ${savingThrowRoll.total} vs ${adjustedTarget})`;
     }
 
     return this.createSuccessResult(message, {
@@ -217,7 +217,7 @@ export class MagicItemSavingThrowRule extends BaseRule {
       itemType,
       effectType,
       targetRoll: adjustedTarget,
-      actualRoll: savingThrowRoll.result,
+      actualRoll: savingThrowRoll.total,
       success,
     });
   }
@@ -364,8 +364,8 @@ export class MagicItemIdentificationRule extends BaseRule {
     const levelBonus = character.level * 5;
     const totalChance = baseChance + levelBonus;
 
-    const successRoll = rollDice(1, 100);
-    const success = successRoll.result <= totalChance;
+    const successRoll = DiceEngine.roll('1d100');
+    const success = successRoll.total <= totalChance;
 
     const constitutionLoss = 8;
 
@@ -387,8 +387,8 @@ export class MagicItemIdentificationRule extends BaseRule {
       `Magic bonus: ${item.magicBonus || 0}`,
     ];
 
-    const commandWordRoll = rollDice(1, 100);
-    const commandWordRevealed = commandWordRoll.result <= totalChance;
+    const commandWordRoll = DiceEngine.roll('1d100');
+    const commandWordRevealed = commandWordRoll.total <= totalChance;
 
     let estimatedCharges: number | null = null;
     if (item.charges !== null && item.charges !== undefined) {
@@ -396,12 +396,12 @@ export class MagicItemIdentificationRule extends BaseRule {
       const variance = Math.floor(actualCharges * 0.25);
       const minEstimate = Math.max(0, actualCharges - variance);
       const maxEstimate = actualCharges + variance;
-      const estimateRoll = rollDice(1, maxEstimate - minEstimate);
-      estimatedCharges = minEstimate + estimateRoll.result;
+      const estimateRoll = DiceEngine.roll(`1d${maxEstimate - minEstimate}`);
+      estimatedCharges = minEstimate + estimateRoll.total;
     }
 
-    const curseRoll = rollDice(1, 100);
-    const curseDetected = curseRoll.result <= character.level;
+    const curseRoll = DiceEngine.roll('1d100');
+    const curseDetected = curseRoll.total <= character.level;
 
     return {
       success: true,
@@ -422,11 +422,11 @@ export class MagicItemIdentificationRule extends BaseRule {
     const levelBonus = character.level * 3;
     const totalChance = baseChance + intelligenceBonus + levelBonus;
 
-    const successRoll = rollDice(1, 100);
-    const success = successRoll.result <= totalChance;
+    const successRoll = DiceEngine.roll('1d100');
+    const success = successRoll.total <= totalChance;
 
-    const constitutionRoll = rollDice(1, 10);
-    const constitutionLoss = constitutionRoll.result === 1 ? rollDice(1, 3).result : 0;
+    const constitutionRoll = DiceEngine.roll('1d10');
+    const constitutionLoss = constitutionRoll.total === 1 ? DiceEngine.roll('1d3').total : 0;
 
     if (!success) {
       return {
@@ -455,8 +455,8 @@ export class MagicItemIdentificationRule extends BaseRule {
     }
 
     const commandWordChance = 20 + (character.abilities.intelligence - 10) * 2;
-    const commandWordRoll = rollDice(1, 100);
-    const commandWordRevealed = commandWordRoll.result <= commandWordChance;
+    const commandWordRoll = DiceEngine.roll('1d100');
+    const commandWordRevealed = commandWordRoll.total <= commandWordChance;
 
     let estimatedCharges: number | null = null;
     if (item.charges !== null && item.charges !== undefined) {
@@ -464,13 +464,13 @@ export class MagicItemIdentificationRule extends BaseRule {
       const variance = Math.floor(item.charges * accuracyModifier);
       const minEstimate = Math.max(0, item.charges - variance);
       const maxEstimate = item.charges + variance;
-      const estimateRoll = rollDice(1, maxEstimate - minEstimate);
-      estimatedCharges = minEstimate + estimateRoll.result;
+      const estimateRoll = DiceEngine.roll(`1d${maxEstimate - minEstimate}`);
+      estimatedCharges = minEstimate + estimateRoll.total;
     }
 
     const curseDetectionChance = (character.abilities.intelligence - 10) * 2;
-    const curseRoll = rollDice(1, 100);
-    const curseDetected = curseRoll.result <= curseDetectionChance;
+    const curseRoll = DiceEngine.roll('1d100');
+    const curseDetected = curseRoll.total <= curseDetectionChance;
 
     return {
       success: true,
@@ -505,8 +505,8 @@ export class MagicItemIdentificationRule extends BaseRule {
     const levelBonus = character.level * 2;
     const totalChance = baseChance + wisdomBonus + levelBonus;
 
-    const successRoll = rollDice(1, 100);
-    const success = successRoll.result <= totalChance;
+    const successRoll = DiceEngine.roll('1d100');
+    const success = successRoll.total <= totalChance;
 
     if (!success) {
       return {
@@ -527,8 +527,8 @@ export class MagicItemIdentificationRule extends BaseRule {
       `Divine insight: ${this.getDivineInsight(item)}`,
     ];
 
-    const curseRoll = rollDice(1, 100);
-    const curseDetected = curseRoll.result <= character.abilities.wisdom * 3;
+    const curseRoll = DiceEngine.roll('1d100');
+    const curseDetected = curseRoll.total <= character.abilities.wisdom * 3;
 
     return {
       success: true,

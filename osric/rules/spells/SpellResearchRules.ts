@@ -1,8 +1,8 @@
-import { rollDice } from '@osric/core/Dice';
-import type { GameContext } from '@osric/core/GameContext';
-import { BaseRule, type RuleResult } from '@osric/core/Rule';
-import type { ResearchDifficultyFactors, SpellResearch } from '@osric/types/SpellTypes';
-import type { Character } from '@osric/types/entities';
+import { DiceEngine } from '../../core/Dice';
+import type { GameContext } from '../../core/GameContext';
+import { BaseRule, type RuleResult } from '../../core/Rule';
+import type { ResearchDifficultyFactors, SpellResearch } from '../../types/SpellTypes';
+import type { Character } from '../../types/entities';
 
 export class SpellResearchRequirementsRule extends BaseRule {
   name = 'spell-research-requirements';
@@ -148,7 +148,7 @@ export class SpellResearchStartRule extends BaseRule {
       failureChance: finalFailureChance,
     };
 
-    context.setTemporary('activeResearch', research);
+    context.setTemporary('spell:research:active', research);
 
     const message =
       `${character.name} begins researching "${spellName}". ` +
@@ -234,12 +234,12 @@ export class SpellResearchProgressRule extends BaseRule {
 
     const progressRate = baseProgressRate + goldBonus;
 
-    const progressRoll = rollDice(1, 100);
+    const progressRoll = DiceEngine.roll('1d100');
     let progressMade: number;
 
-    if (progressRoll.result <= 10) {
-      const setbackRoll = rollDice(1, 10);
-      progressMade = -5 + setbackRoll.result;
+    if (progressRoll.total <= 10) {
+      const setbackRoll = DiceEngine.roll('1d10');
+      progressMade = -5 + setbackRoll.total;
       context.setTemporary('researchSetback', true);
     } else {
       progressMade = (daysWorked * progressRate * 100) / research.estimatedCompletion;
@@ -268,7 +268,7 @@ export class SpellResearchProgressRule extends BaseRule {
       estimatedCompletion: newEstimatedCompletion,
     };
 
-    context.setTemporary('activeResearch', updatedResearch);
+    context.setTemporary('spell:research:active', updatedResearch);
 
     let message: string;
     if (progressMade < 0) {
@@ -317,8 +317,8 @@ export class SpellResearchSuccessRule extends BaseRule {
       );
     }
 
-    const successRoll = rollDice(1, 100);
-    const success = successRoll.result > research.failureChance;
+    const successRoll = DiceEngine.roll('1d100');
+    const success = successRoll.total > research.failureChance;
 
     if (success) {
       const message = `SUCCESS! ${character.name} successfully completes research on "${research.spellName}"!`;
@@ -334,13 +334,13 @@ export class SpellResearchSuccessRule extends BaseRule {
       return this.createSuccessResult(message, {
         research,
         success: true,
-        rollResult: successRoll.result,
+        rollResult: successRoll.total,
         failureChance: research.failureChance,
       });
     }
 
-    const catastropheRoll = rollDice(1, 100);
-    const catastrophe = catastropheRoll.result <= 10;
+    const catastropheRoll = DiceEngine.roll('1d100');
+    const catastrophe = catastropheRoll.total <= 10;
 
     if (catastrophe) {
       const message = `CATASTROPHIC FAILURE! ${character.name}'s research on "${research.spellName}" fails spectacularly! Wild magical energies are unleashed!`;
@@ -355,8 +355,8 @@ export class SpellResearchSuccessRule extends BaseRule {
         research,
         success: false,
         catastrophe: true,
-        rollResult: successRoll.result,
-        catastropheRoll: catastropheRoll.result,
+        rollResult: successRoll.total,
+        catastropheRoll: catastropheRoll.total,
       });
     }
 
@@ -368,13 +368,13 @@ export class SpellResearchSuccessRule extends BaseRule {
       failureChance: Math.max(1, research.failureChance - 5),
     };
 
-    context.setTemporary('activeResearch', updatedResearch);
+    context.setTemporary('spell:research:active', updatedResearch);
 
     return this.createFailureResult(message, {
       research: updatedResearch,
       success: false,
       catastrophe: false,
-      rollResult: successRoll.result,
+      rollResult: successRoll.total,
       canContinue: true,
     });
   }
@@ -458,8 +458,8 @@ export class SpellLearningRule extends BaseRule {
       )
     );
 
-    const learningRoll = rollDice(1, 100);
-    const success = learningRoll.result <= totalChance;
+    const learningRoll = DiceEngine.roll('1d100');
+    const success = learningRoll.total <= totalChance;
 
     if (success) {
       const newSpell = {
@@ -483,13 +483,13 @@ export class SpellLearningRule extends BaseRule {
 
       const message =
         `SUCCESS! ${character.name} learns "${spellName}" from ${source} ` +
-        `(rolled ${learningRoll.result} vs ${totalChance}%)`;
+        `(rolled ${learningRoll.total} vs ${totalChance}%)`;
 
       return this.createSuccessResult(message, {
         spellName,
         spellLevel,
         source,
-        rollResult: learningRoll.result,
+        rollResult: learningRoll.total,
         successChance: totalChance,
         newSpell,
       });
@@ -497,7 +497,7 @@ export class SpellLearningRule extends BaseRule {
 
     const message =
       `${character.name} fails to learn "${spellName}" from ${source} ` +
-      `(rolled ${learningRoll.result} vs ${totalChance}%)`;
+      `(rolled ${learningRoll.total} vs ${totalChance}%)`;
 
     const constitutionLoss = spellLevel > 3 ? 1 : 0;
     if (constitutionLoss > 0) {
@@ -527,7 +527,7 @@ export class SpellLearningRule extends BaseRule {
       spellName,
       spellLevel,
       source,
-      rollResult: learningRoll.result,
+      rollResult: learningRoll.total,
       successChance: totalChance,
       constitutionLoss,
     });

@@ -1,8 +1,8 @@
-import { BaseCommand, type CommandResult } from '@osric/core/Command';
-import { rollDice } from '@osric/core/Dice';
-import type { GameContext } from '@osric/core/GameContext';
-import { COMMAND_TYPES } from '@osric/types/constants';
-import type { Character } from '@osric/types/entities';
+import { BaseCommand, type CommandResult } from '../../core/Command';
+import { DiceEngine } from '../../core/Dice';
+import type { GameContext } from '../../core/GameContext';
+import { COMMAND_TYPES } from '../../types/constants';
+import type { Character } from '../../types/entities';
 
 export interface ForagingParameters {
   characterId: string;
@@ -27,11 +27,13 @@ export interface ForagingResult {
   specialFinds: string[];
 }
 
-export class ForagingCommand extends BaseCommand {
+export class ForagingCommand extends BaseCommand<ForagingParameters> {
   readonly type = COMMAND_TYPES.FORAGING;
+  readonly parameters: ForagingParameters;
 
-  constructor(private parameters: ForagingParameters) {
-    super(parameters.characterId, []);
+  constructor(parameters: ForagingParameters, actorId: string, targetIds: string[] = []) {
+    super(parameters, actorId, targetIds);
+    this.parameters = parameters;
   }
 
   async execute(context: GameContext): Promise<CommandResult> {
@@ -51,6 +53,18 @@ export class ForagingCommand extends BaseCommand {
       if (!character) {
         return this.createFailureResult(`Character with ID "${characterId}" not found`);
       }
+
+      // Set standardized context for rule processing
+      context.setTemporary('exploration:foraging:context', {
+        character,
+        forageType,
+        terrain,
+        season,
+        timeSpent,
+        groupSize,
+        weatherConditions,
+        hasForagingTools,
+      });
 
       const modifiers = this.calculateForagingModifiers(
         character,
@@ -214,7 +228,7 @@ export class ForagingCommand extends BaseCommand {
     const waterChance = Math.max(5, Math.min(95, baseWaterChance + modifiers.total));
 
     if (forageType === 'food' || forageType === 'both') {
-      const foodRoll = rollDice(1, 100).result;
+      const foodRoll = DiceEngine.rollPercentile().total;
       if (foodRoll <= foodChance) {
         result.foodFound = this.calculateFoodYield(
           terrain,
@@ -223,14 +237,14 @@ export class ForagingCommand extends BaseCommand {
           character.abilities.wisdom
         );
 
-        if (rollDice(1, 20).result <= 3) {
+        if (DiceEngine.rollD20().total <= 3) {
           result.specialFinds.push(this.generateSpecialFind(terrain, season));
         }
       }
     }
 
     if (forageType === 'water' || forageType === 'both') {
-      const waterRoll = rollDice(1, 100).result;
+      const waterRoll = DiceEngine.rollPercentile().total;
       if (waterRoll <= waterChance) {
         const waterResult = this.calculateWaterYield(terrain, season, timeSpent);
         result.waterFound = waterResult.amount;
@@ -279,7 +293,7 @@ export class ForagingCommand extends BaseCommand {
 
     const totalYield = baseYield * timeSpent;
 
-    const variance = rollDice(1, 6).result / 10;
+    const variance = DiceEngine.roll('1d6').total / 10;
 
     return Math.round(totalYield * (0.7 + variance) * 10) / 10;
   }
@@ -299,7 +313,7 @@ export class ForagingCommand extends BaseCommand {
         break;
       case 'jungle':
         baseAmount = 4;
-        quality = rollDice(1, 6).result <= 2 ? 'stagnant' : 'fresh';
+        quality = DiceEngine.roll('1d6').total <= 2 ? 'stagnant' : 'fresh';
         break;
       case 'plains':
         baseAmount = 1;
@@ -315,11 +329,11 @@ export class ForagingCommand extends BaseCommand {
         break;
       case 'desert':
         baseAmount = 0.2;
-        quality = rollDice(1, 6).result <= 4 ? 'brackish' : 'fresh';
+        quality = DiceEngine.roll('1d6').total <= 4 ? 'brackish' : 'fresh';
         break;
       case 'swamp':
         baseAmount = 5;
-        quality = rollDice(1, 6).result <= 3 ? 'stagnant' : 'brackish';
+        quality = DiceEngine.roll('1d6').total <= 3 ? 'stagnant' : 'brackish';
         break;
     }
 
@@ -367,7 +381,7 @@ export class ForagingCommand extends BaseCommand {
     };
 
     const terrainFinds = finds[terrain.toLowerCase()] || finds.plains;
-    const randomFind = terrainFinds[rollDice(1, terrainFinds.length).result - 1];
+    const randomFind = terrainFinds[DiceEngine.roll(`1d${terrainFinds.length}`).total - 1];
 
     return `Found: ${randomFind} (${season})`;
   }
@@ -395,7 +409,7 @@ export class ForagingCommand extends BaseCommand {
 
     const encounterChance = baseChance + (terrainMods[terrain.toLowerCase()] || 0);
 
-    const roll = rollDice(1, 100).result;
+    const roll = DiceEngine.rollPercentile().total;
     const occurred = roll <= encounterChance;
 
     return {

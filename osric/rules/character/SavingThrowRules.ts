@@ -1,6 +1,7 @@
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
+
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 import type { Character } from '@osric/types/entities';
 
@@ -35,11 +36,10 @@ export class SavingThrowRule extends BaseRule {
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const saveData = context.getTemporary<SavingThrowParameters>('saving-throw-params');
-
-    if (!saveData) {
-      return this.createFailureResult('No saving throw data provided');
-    }
+    const saveData = this.getRequiredContext<SavingThrowParameters>(
+      context,
+      'character:saving-throw:params'
+    );
 
     if (!saveData.saveType) {
       return this.createFailureResult(`Invalid save type: ${saveData.saveType}`);

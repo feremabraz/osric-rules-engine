@@ -1,12 +1,13 @@
-import { BaseCommand, type CommandResult } from '@osric/core/Command';
-import type { GameContext } from '@osric/core/GameContext';
-import { COMMAND_TYPES } from '@osric/types/constants';
+import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { GameContext } from '../../core/GameContext';
+import { COMMAND_TYPES } from '../../types/constants';
+
 import type {
   Character as CharacterData,
   CombatResult,
   Monster as MonsterData,
   Weapon,
-} from '@osric/types/entities';
+} from '../../types/entities';
 
 export interface AttackParameters {
   attackerId: string;
@@ -17,14 +18,13 @@ export interface AttackParameters {
   isChargedAttack?: boolean;
 }
 
-export class AttackCommand extends BaseCommand {
+export class AttackCommand extends BaseCommand<AttackParameters> {
   readonly type = COMMAND_TYPES.ATTACK;
+  readonly parameters: AttackParameters;
 
-  constructor(
-    private parameters: AttackParameters,
-    actorId: string
-  ) {
-    super(actorId);
+  constructor(parameters: AttackParameters, actorId: string, targetIds: string[] = []) {
+    super(parameters, actorId, targetIds);
+    this.parameters = parameters;
   }
 
   async execute(context: GameContext): Promise<CommandResult> {
@@ -52,7 +52,7 @@ export class AttackCommand extends BaseCommand {
         isChargedAttack: this.parameters.isChargedAttack || false,
       };
 
-      context.setTemporary('attack-context', attackContext);
+      context.setTemporary('combat:attack:context', attackContext);
 
       return this.createSuccessResult('Attack command prepared for rule processing');
     } catch (error) {

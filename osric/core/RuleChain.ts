@@ -1,6 +1,6 @@
-import type { Command } from '@osric/core/Command';
-import type { GameContext } from '@osric/core/GameContext';
-import type { Rule, RuleResult } from '@osric/core/Rule';
+import type { Command } from './Command';
+import type { GameContext } from './GameContext';
+import type { Rule, RuleResult } from './Rule';
 
 export interface RuleChainResult {
   success: boolean;
@@ -85,7 +85,7 @@ export class RuleChain {
           continue;
         }
 
-        const result = await rule.execute(context, command);
+        const result = await rule.apply(context, command);
 
         if (result.data) {
           result.data.ruleName = rule.name;

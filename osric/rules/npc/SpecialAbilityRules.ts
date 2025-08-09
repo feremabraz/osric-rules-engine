@@ -43,7 +43,7 @@ export class SpecialAbilityRules extends BaseRule {
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const abilityContext = this.getTemporaryData<SpecialAbilityContext>(
+    const abilityContext = this.getOptionalContext<SpecialAbilityContext>(
       context,
       'specialAbilityContext'
     );
@@ -55,7 +55,7 @@ export class SpecialAbilityRules extends BaseRule {
     try {
       const abilities = this.generateSpecialAbilities(abilityContext);
 
-      this.setTemporaryData(context, 'specialAbilities', abilities);
+      this.setContext(context, 'specialAbilities', abilities);
 
       return this.createSuccessResult(
         `Generated ${abilities.length} special abilities for ${abilityContext.monsterType}`,

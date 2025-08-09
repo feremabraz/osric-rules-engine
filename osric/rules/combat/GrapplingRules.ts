@@ -42,12 +42,13 @@ export class GrappleAttackRule extends BaseRule {
 
   canApply(context: GameContext, command: Command): boolean {
     return (
-      command.type === COMMAND_TYPES.GRAPPLE && context.getTemporary('grapple-context') !== null
+      command.type === COMMAND_TYPES.GRAPPLE &&
+      context.getTemporary('combat:grapple:context') !== null
     );
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const grappleContext = context.getTemporary('grapple-context') as GrappleContext;
+    const grappleContext = context.getTemporary('combat:grapple:context') as GrappleContext;
 
     if (!grappleContext) {
       return this.createFailureResult('No grapple context found');
@@ -121,13 +122,13 @@ export class StrengthComparisonRule extends BaseRule {
     const attackResult = context.getTemporary('grapple-attack-result') as GrappleAttackResult;
     return (
       command.type === COMMAND_TYPES.GRAPPLE &&
-      context.getTemporary('grapple-context') !== null &&
+      context.getTemporary('combat:grapple:context') !== null &&
       attackResult?.hit === true
     );
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const grappleContext = context.getTemporary('grapple-context') as GrappleContext;
+    const grappleContext = context.getTemporary('combat:grapple:context') as GrappleContext;
 
     if (!grappleContext) {
       return this.createFailureResult('No grapple context found');
@@ -219,13 +220,13 @@ export class GrappleEffectRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     return (
       command.type === COMMAND_TYPES.GRAPPLE &&
-      context.getTemporary('grapple-context') !== null &&
+      context.getTemporary('combat:grapple:context') !== null &&
       context.getTemporary('strength-comparison-result') !== null
     );
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const grappleContext = context.getTemporary('grapple-context') as GrappleContext;
+    const grappleContext = context.getTemporary('combat:grapple:context') as GrappleContext;
     const strengthResult = context.getTemporary(
       'strength-comparison-result'
     ) as StrengthComparisonResult;

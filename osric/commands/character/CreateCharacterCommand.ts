@@ -1,13 +1,18 @@
-import { BaseCommand, type CommandResult } from '@osric/core/Command';
-import type { GameContext } from '@osric/core/GameContext';
-import { COMMAND_TYPES } from '@osric/types/constants';
+import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { GameContext } from '../../core/GameContext';
+import {
+  OSRICValidation,
+  ValidationEngine,
+  type ValidationRule,
+} from '../../core/ValidationEngine';
+import { COMMAND_TYPES } from '../../types/constants';
 import type {
   AbilityScores,
   Alignment,
   CharacterClass,
   Character as CharacterData,
   CharacterRace,
-} from '@osric/types/entities';
+} from '../../types/entities';
 
 export interface CreateCharacterParameters {
   name: string;
@@ -25,28 +30,53 @@ export interface CreateCharacterParameters {
   };
 }
 
-export class CreateCharacterCommand extends BaseCommand {
+export class CreateCharacterCommand extends BaseCommand<CreateCharacterParameters> {
   readonly type = COMMAND_TYPES.CREATE_CHARACTER;
 
   constructor(
-    private parameters: CreateCharacterParameters,
-    actorId = 'game-master'
+    parameters: CreateCharacterParameters,
+    actorId = 'game-master',
+    targetIds: string[] = []
   ) {
-    super(actorId);
+    super(parameters, actorId, targetIds);
+  }
+
+  protected getValidationRules(): ValidationRule[] {
+    return [
+      ValidationEngine.required<string>('name'),
+      ValidationEngine.stringLength('name', 1, 50),
+      OSRICValidation.characterRace('race'),
+      OSRICValidation.characterClass('characterClass'),
+      OSRICValidation.alignment('alignment'),
+      ValidationEngine.oneOf('abilityScoreMethod', ['standard3d6', 'arranged3d6', '4d6dropLowest']),
+      ValidationEngine.custom(
+        'arrangedScores',
+        (value) => {
+          if (this.parameters.abilityScoreMethod !== 'arranged3d6') return true;
+          return value !== null && value !== undefined;
+        },
+        'arrangedScores is required when using arranged3d6 method'
+      ),
+    ];
+  }
+
+  protected validateParameters(): void {
+    const result = ValidationEngine.validateObject(
+      this.parameters as unknown as Record<string, unknown>,
+      this.getValidationRules()
+    );
+    if (!result.valid) {
+      const errorMessages = result.errors.map((error) => error.message);
+      throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
+    }
   }
 
   async execute(context: GameContext): Promise<CommandResult> {
     try {
-      const validationResult = this.validateParameters();
-      if (!validationResult.valid) {
-        return this.createFailureResult(
-          `Character creation failed: ${validationResult.errors.join(', ')}`
-        );
-      }
-
+      // Validation is already done in constructor via super() call
       const characterId = this.generateCharacterId();
 
-      context.setTemporary('character-creation', {
+      context.setTemporary('character:creation:context', {
         characterId,
         ...this.parameters,
       });
@@ -75,94 +105,6 @@ export class CreateCharacterCommand extends BaseCommand {
       'class-requirement-validation',
       'character-initialization',
     ];
-  }
-
-  private validateParameters(): { valid: boolean; errors: string[] } {
-    const errors: string[] = [];
-
-    if (!this.parameters.name || this.parameters.name.trim().length === 0) {
-      errors.push('Character name is required');
-    }
-
-    if (this.parameters.name.length > 50) {
-      errors.push('Character name must be 50 characters or less');
-    }
-
-    const validRaces: CharacterRace[] = [
-      'Human',
-      'Dwarf',
-      'Elf',
-      'Gnome',
-      'Half-Elf',
-      'Halfling',
-      'Half-Orc',
-    ];
-    if (!validRaces.includes(this.parameters.race)) {
-      errors.push(`Invalid race: ${this.parameters.race}`);
-    }
-
-    const validClasses: CharacterClass[] = [
-      'Fighter',
-      'Paladin',
-      'Ranger',
-      'Magic-User',
-      'Illusionist',
-      'Cleric',
-      'Druid',
-      'Thief',
-      'Assassin',
-    ];
-    if (!validClasses.includes(this.parameters.characterClass)) {
-      errors.push(`Invalid character class: ${this.parameters.characterClass}`);
-    }
-
-    const validAlignments: Alignment[] = [
-      'Lawful Good',
-      'Lawful Neutral',
-      'Lawful Evil',
-      'Neutral Good',
-      'True Neutral',
-      'Neutral Evil',
-      'Chaotic Good',
-      'Chaotic Neutral',
-      'Chaotic Evil',
-    ];
-    if (!validAlignments.includes(this.parameters.alignment)) {
-      errors.push(`Invalid alignment: ${this.parameters.alignment}`);
-    }
-
-    const validMethods = ['standard3d6', 'arranged3d6', '4d6dropLowest'];
-    if (!validMethods.includes(this.parameters.abilityScoreMethod)) {
-      errors.push(`Invalid ability score generation method: ${this.parameters.abilityScoreMethod}`);
-    }
-
-    if (this.parameters.abilityScoreMethod === 'arranged3d6' && !this.parameters.arrangedScores) {
-      errors.push('Arranged scores must be provided when using arranged3d6 generation method');
-    }
-
-    if (this.parameters.arrangedScores) {
-      const scores = this.parameters.arrangedScores;
-      const abilities: (keyof AbilityScores)[] = [
-        'strength',
-        'dexterity',
-        'constitution',
-        'intelligence',
-        'wisdom',
-        'charisma',
-      ];
-
-      for (const ability of abilities) {
-        const score = scores[ability];
-        if (typeof score !== 'number' || score < 3 || score > 18) {
-          errors.push(`${ability} score must be between 3 and 18, got: ${score}`);
-        }
-      }
-    }
-
-    return {
-      valid: errors.length === 0,
-      errors,
-    };
   }
 
   private generateCharacterId(): string {

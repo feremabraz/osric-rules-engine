@@ -35,7 +35,9 @@ export class MonsterBehaviorRules extends BaseRule {
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
     try {
-      const behaviorData = context.getTemporary<MonsterBehaviorContext>('monster-behavior-params');
+      const behaviorData = context.getTemporary<MonsterBehaviorContext>(
+        'npc:monster:behavior-params'
+      );
 
       if (!behaviorData) {
         return this.createFailureResult('No monster behavior data provided');

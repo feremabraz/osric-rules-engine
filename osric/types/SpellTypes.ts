@@ -1,4 +1,4 @@
-import type { Character, Item, SavingThrowType, Spell } from '@osric/core/Types';
+import type { Character, Item, SavingThrowType, Spell } from '../core/Types';
 
 export type SpellComponentType = 'V' | 'S' | 'M';
 

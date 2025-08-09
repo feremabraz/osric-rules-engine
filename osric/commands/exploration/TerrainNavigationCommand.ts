@@ -1,8 +1,8 @@
-import { BaseCommand, type CommandResult } from '@osric/core/Command';
-import { rollDice } from '@osric/core/Dice';
-import type { GameContext } from '@osric/core/GameContext';
-import { COMMAND_TYPES } from '@osric/types/constants';
-import type { Character } from '@osric/types/entities';
+import { BaseCommand, type CommandResult } from '../../core/Command';
+import { DiceEngine } from '../../core/Dice';
+import type { GameContext } from '../../core/GameContext';
+import { COMMAND_TYPES } from '../../types/constants';
+import type { Character } from '../../types/entities';
 
 export interface TerrainType {
   name: string;
@@ -25,11 +25,13 @@ export interface NavigationParameters {
   timeOfDay: 'dawn' | 'day' | 'dusk' | 'night';
 }
 
-export class TerrainNavigationCommand extends BaseCommand {
+export class TerrainNavigationCommand extends BaseCommand<NavigationParameters> {
   readonly type = COMMAND_TYPES.TERRAIN_NAVIGATION;
+  readonly parameters: NavigationParameters;
 
-  constructor(private parameters: NavigationParameters) {
-    super(parameters.characterId, []);
+  constructor(parameters: NavigationParameters, actorId: string, targetIds: string[] = []) {
+    super(parameters, actorId, targetIds);
+    this.parameters = parameters;
   }
 
   async execute(context: GameContext): Promise<CommandResult> {
@@ -217,12 +219,12 @@ export class TerrainNavigationCommand extends BaseCommand {
 
     const finalChance = Math.max(1, Math.min(95, baseChance - navigationBonus));
 
-    const roll = rollDice(1, 100).result;
+    const roll = DiceEngine.rollPercentile().total;
     const gotLost = roll <= finalChance;
 
     let extraDistanceMultiplier = 1.0;
     if (gotLost) {
-      const severity = rollDice(1, 6).result;
+      const severity = DiceEngine.roll('1d6').total;
       extraDistanceMultiplier = 1.0 + severity * 0.2;
     }
 
@@ -242,7 +244,7 @@ export class TerrainNavigationCommand extends BaseCommand {
 
     const eventChance = Math.min(50, travelTime.hours * 2);
 
-    if (rollDice(1, 100).result <= eventChance) {
+    if (DiceEngine.rollPercentile().total <= eventChance) {
       const eventType = this.determineEventType(terrain);
       events.push(this.generateEvent(character, terrain, eventType));
     }
@@ -251,7 +253,7 @@ export class TerrainNavigationCommand extends BaseCommand {
   }
 
   private determineEventType(terrain: TerrainType): string {
-    const roll = rollDice(1, 20).result;
+    const roll = DiceEngine.rollD20().total;
 
     if (terrain.name.toLowerCase().includes('forest')) {
       if (roll <= 5) return 'animal-encounter';

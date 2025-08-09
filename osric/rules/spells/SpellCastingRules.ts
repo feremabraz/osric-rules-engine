@@ -1,5 +1,6 @@
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
+
 import type { Character, Monster, Spell, SpellResult, StatusEffect } from '@osric/types';
 import { RULE_NAMES } from '@osric/types/constants';
 
@@ -8,22 +9,19 @@ export class SpellCastingRules extends BaseRule {
   public readonly description = 'Handles OSRIC spell casting mechanics and effects';
 
   public canApply(context: GameContext): boolean {
-    const caster = context.getTemporary<Character>('castSpell_caster');
-    const spell = context.getTemporary<Spell>('castSpell_spell');
+    const caster = this.getOptionalContext<Character>(context, 'spell:cast:caster');
+    const spell = this.getOptionalContext<Spell>(context, 'spell:cast:spell');
     return !!(caster && spell);
   }
 
   public async execute(context: GameContext): Promise<RuleResult> {
     try {
-      const caster = context.getTemporary<Character>('castSpell_caster');
-      const spell = context.getTemporary<Spell>('castSpell_spell');
-      const targets = context.getTemporary<(Character | Monster)[]>('castSpell_targets') || [];
+      const caster = this.getRequiredContext<Character>(context, 'spell:cast:caster');
+      const spell = this.getRequiredContext<Spell>(context, 'spell:cast:spell');
+      const targets =
+        this.getOptionalContext<(Character | Monster)[]>(context, 'spell:cast:targets') || [];
       const _overrideComponents =
-        context.getTemporary<boolean>('castSpell_overrideComponents') || false;
-
-      if (!caster || !spell) {
-        return this.createFailureResult('Missing caster or spell in context');
-      }
+        this.getOptionalContext<boolean>(context, 'spell:cast:components') || false;
 
       const validationResult = this.validateSpellCasting(caster, spell, targets);
       if (!validationResult.success) {
@@ -43,8 +41,8 @@ export class SpellCastingRules extends BaseRule {
         context.setEntity(caster.id, slotResult.updatedCaster);
       }
 
-      context.setTemporary('castSpell_spellResult', spellResult);
-      context.setTemporary('castSpell_effectResults', effectResults);
+      this.setContext(context, 'spell:cast:validation', spellResult);
+      this.setContext(context, 'castSpell_effectResults', effectResults);
 
       return this.createSuccessResult(`${caster.name} successfully casts ${spell.name}`, {
         spellCast: spell.name,

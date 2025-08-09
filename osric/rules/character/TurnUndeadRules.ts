@@ -26,7 +26,7 @@ export class TurnUndeadRule extends BaseRule {
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const turnData = context.getTemporary<TurnUndeadParameters>('turn-undead-params');
+    const turnData = context.getTemporary<TurnUndeadParameters>('character:turn-undead:params');
 
     if (!turnData) {
       return this.createFailureResult('No turn undead data provided');

@@ -1,7 +1,7 @@
-import { BaseCommand, type CommandResult } from '@osric/core/Command';
-import type { GameContext } from '@osric/core/GameContext';
-import { COMMAND_TYPES } from '@osric/types/constants';
-import type { Character, Item } from '@osric/types/entities';
+import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { GameContext } from '../../core/GameContext';
+import { COMMAND_TYPES } from '../../types/constants';
+import type { Character, Item } from '../../types/entities';
 
 export interface MagicItemCreationParameters {
   characterId: string;
@@ -50,11 +50,13 @@ interface CreationResult {
   };
 }
 
-export class MagicItemCreationCommand extends BaseCommand {
+export class MagicItemCreationCommand extends BaseCommand<MagicItemCreationParameters> {
   readonly type = COMMAND_TYPES.MAGIC_ITEM_CREATION;
+  readonly parameters: MagicItemCreationParameters;
 
-  constructor(private parameters: MagicItemCreationParameters) {
-    super(parameters.characterId, []);
+  constructor(parameters: MagicItemCreationParameters, actorId: string, targetIds: string[] = []) {
+    super(parameters, actorId, targetIds);
+    this.parameters = parameters;
   }
 
   async execute(context: GameContext): Promise<CommandResult> {
@@ -63,19 +65,19 @@ export class MagicItemCreationCommand extends BaseCommand {
 
       const character = context.getEntity<Character>(characterId);
       if (!character) {
-        return this.createFailureResult('Character not found', { characterId });
+        return this.createFailureResult('Character not found', undefined, { characterId });
       }
 
       const validation = this.validateCreator(character, itemType);
       if (!validation.valid) {
-        return this.createFailureResult(validation.reason, { itemType });
+        return this.createFailureResult(validation.reason, undefined, { itemType });
       }
 
       const requirements = this.calculateCreationRequirements(character, this.parameters);
 
       const requirementCheck = this.checkRequirements(character, requirements);
       if (!requirementCheck.valid) {
-        return this.createFailureResult(requirementCheck.reason, {
+        return this.createFailureResult(requirementCheck.reason, undefined, {
           requirements: requirements,
           missing: requirementCheck.missing,
         });
@@ -108,14 +110,19 @@ export class MagicItemCreationCommand extends BaseCommand {
       );
       context.setEntity(characterId, failedCharacter);
 
-      return this.createFailureResult(`Magic item creation failed: ${creationResult.reason}`, {
-        timeSpent: requirements.timeInDays,
-        goldLost: Math.floor(requirements.totalCost * 0.75),
-        materialsLost: creationResult.costsIncurred.materials,
-      });
+      return this.createFailureResult(
+        `Magic item creation failed: ${creationResult.reason}`,
+        undefined,
+        {
+          timeSpent: requirements.timeInDays,
+          goldLost: Math.floor(requirements.totalCost * 0.75),
+          materialsLost: creationResult.costsIncurred.materials,
+        }
+      );
     } catch (error: unknown) {
       return this.createFailureResult(
         `Error during magic item creation: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error instanceof Error ? error : undefined,
         { error: error instanceof Error ? error.message : 'Unknown error' }
       );
     }

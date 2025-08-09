@@ -1,23 +1,27 @@
-import { BaseCommand, type CommandResult } from '@osric/core/Command';
-import type { GameContext } from '@osric/core/GameContext';
 import type { ReactionRollParams } from '@osric/rules/npc/ReactionRules';
-import { COMMAND_TYPES } from '@osric/types/constants';
+import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { GameContext } from '../../core/GameContext';
+import { COMMAND_TYPES } from '../../types/constants';
 
-export class ReactionRollCommand extends BaseCommand {
+export interface ReactionRollParameters {
+  characterId: string;
+  targetId: string;
+  interactionType: ReactionRollParams['interactionType'];
+  modifiers?: ReactionRollParams['modifiers'];
+  isPartySpokesperson?: boolean;
+}
+
+export class ReactionRollCommand extends BaseCommand<ReactionRollParameters> {
   readonly type = COMMAND_TYPES.REACTION_ROLL;
+  readonly parameters: ReactionRollParameters;
 
-  constructor(
-    characterId: string,
-    private readonly targetId: string,
-    private readonly interactionType: ReactionRollParams['interactionType'],
-    private readonly modifiers?: ReactionRollParams['modifiers'],
-    private readonly isPartySpokesperson = true
-  ) {
-    super(characterId, [targetId]);
+  constructor(parameters: ReactionRollParameters, actorId: string, targetIds: string[] = []) {
+    super(parameters, actorId, targetIds);
+    this.parameters = parameters;
   }
 
   async execute(context: GameContext): Promise<CommandResult> {
-    if (!this.validateEntities(context)) {
+    if (!this.validateEntitiesExist(context)) {
       return this.createFailureResult('Required entities not found for reaction roll');
     }
 
@@ -33,7 +37,7 @@ export class ReactionRollCommand extends BaseCommand {
     const ruleResult = await reactionRule.execute(context, this);
 
     if (!ruleResult.success) {
-      return this.createFailureResult(ruleResult.message, ruleResult.data);
+      return this.createFailureResult(ruleResult.message, undefined, ruleResult.data);
     }
 
     return this.createSuccessResult(
@@ -45,7 +49,7 @@ export class ReactionRollCommand extends BaseCommand {
   }
 
   canExecute(context: GameContext): boolean {
-    return context.hasEntity(this.actorId) && context.hasEntity(this.targetId);
+    return context.hasEntity(this.actorId) && context.hasEntity(this.parameters.targetId);
   }
 
   getRequiredRules(): string[] {
@@ -55,10 +59,10 @@ export class ReactionRollCommand extends BaseCommand {
   protected setupContextData(context: GameContext): void {
     const reactionParams: ReactionRollParams = {
       characterId: this.actorId,
-      targetId: this.targetId,
-      interactionType: this.interactionType,
-      modifiers: this.modifiers,
-      isPartySpokesperson: this.isPartySpokesperson,
+      targetId: this.parameters.targetId,
+      interactionType: this.parameters.interactionType,
+      modifiers: this.parameters.modifiers,
+      isPartySpokesperson: this.parameters.isPartySpokesperson ?? true,
     };
 
     context.setTemporary('reaction-roll-params', reactionParams);

@@ -16,12 +16,14 @@ export class ClassRequirementRule extends BaseRule {
   readonly priority = 25;
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const creationData = context.getTemporary('character-creation') as CharacterCreationData;
-    const abilityScores = context.getTemporary('adjusted-ability-scores') as AbilityScores;
-
-    if (!abilityScores || !creationData) {
-      return this.createFailureResult('Missing ability scores or character creation data');
-    }
+    const creationData = this.getRequiredContext<CharacterCreationData>(
+      context,
+      'character:creation:params'
+    );
+    const abilityScores = this.getRequiredContext<AbilityScores>(
+      context,
+      'character:creation:ability-scores'
+    );
 
     const meetsRequirements = this.meetsClassRequirements(
       abilityScores,
@@ -53,8 +55,8 @@ export class ClassRequirementRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     if (command.type !== COMMAND_TYPES.CREATE_CHARACTER) return false;
 
-    const abilityScores = context.getTemporary('adjusted-ability-scores');
-    const creationData = context.getTemporary('character-creation');
+    const abilityScores = context.getTemporary('character:creation:adjusted-scores');
+    const creationData = context.getTemporary('character:creation:context');
 
     return abilityScores != null && creationData != null;
   }

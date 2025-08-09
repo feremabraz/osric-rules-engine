@@ -1,95 +1,297 @@
-export interface DiceResult {
-  roll: number;
-  sides: number;
-  modifier: number;
-  result: number;
+/**
+ * Unified Dice Engine for the OSRIC Rules Engine
+ * Replaces all fragmented dice implementations with a single, consistent system
+ */
+
+export interface DiceRoll {
+  readonly notation: string; // "1d20+5"
+  readonly rolls: number[]; // Individual die results [15]
+  readonly modifier: number; // Flat modifier: 5
+  readonly total: number; // Final result: 20
+  readonly breakdown: string; // "15 + 5 = 20"
 }
 
-export interface LegacyDiceResult {
-  rolls: number[];
-  total: number;
-  modifier?: number;
+export interface MockDiceConfig {
+  enabled: boolean;
+  forcedResults?: number[];
+  resultIndex?: number;
 }
 
-function rollSingleDie(sides: number): number {
-  return Math.floor(Math.random() * sides) + 1;
-}
+// Internal state for dice mocking
+let mockConfig: MockDiceConfig = { enabled: false };
 
-export function rollDice(count: number, sides: number, modifier = 0): DiceResult {
-  let total = 0;
-
-  for (let i = 0; i < count; i++) {
-    total += rollSingleDie(sides);
-  }
-
-  const result = total + modifier;
-
-  return {
-    roll: count,
-    sides,
-    modifier,
-    result,
-  };
-}
-
-export function rollExpression(notation: string): number {
-  const match = notation.match(/^(\d+)d(\d+)([+-]\d+)?$/i);
+/**
+ * Parse dice notation into components
+ */
+function parseNotation(notation: string): { count: number; sides: number; modifier: number } {
+  const match = notation.match(/^(\d+)?d(\d+)([+-]\d+)?$/i);
 
   if (!match) {
     throw new Error(`Invalid dice notation: ${notation}`);
   }
 
-  const count = Number.parseInt(match[1], 10);
+  const count = match[1] ? Number.parseInt(match[1], 10) : 1;
   const sides = Number.parseInt(match[2], 10);
   const modifier = match[3] ? Number.parseInt(match[3], 10) : 0;
 
-  return rollDice(count, sides, modifier).result;
+  if (count < 1 || sides < 1) {
+    throw new Error(`Invalid dice parameters in notation: ${notation}`);
+  }
+
+  return { count, sides, modifier };
 }
 
-export function rollWithAdvantage(sides: number): number {
-  const roll1 = rollSingleDie(sides);
-  const roll2 = rollSingleDie(sides);
-  return Math.max(roll1, roll2);
+/**
+ * Roll a single die, handling mocking for tests
+ */
+function rollSingleDie(sides: number): number {
+  if (mockConfig.enabled && mockConfig.forcedResults) {
+    const result = mockConfig.forcedResults[mockConfig.resultIndex || 0];
+    mockConfig.resultIndex = ((mockConfig.resultIndex || 0) + 1) % mockConfig.forcedResults.length;
+    return result;
+  }
+
+  return Math.floor(Math.random() * sides) + 1;
 }
 
-export function rollWithDisadvantage(sides: number): number {
-  const roll1 = rollSingleDie(sides);
-  const roll2 = rollSingleDie(sides);
-  return Math.min(roll1, roll2);
+/**
+ * Create a human-readable breakdown of the roll
+ */
+function createBreakdown(rolls: number[], modifier: number, total: number): string {
+  if (rolls.length === 1 && modifier === 0) {
+    return total.toString();
+  }
+
+  const rollsStr = rolls.join(' + ');
+
+  if (modifier === 0) {
+    return `${rollsStr} = ${total}`;
+  }
+
+  const modifierStr = modifier >= 0 ? `+ ${modifier}` : `- ${Math.abs(modifier)}`;
+  return `${rollsStr} ${modifierStr} = ${total}`;
+}
+
+/**
+ * Unified Dice Engine that handles all random number generation in the system
+ */
+export namespace DiceEngine {
+  /**
+   * Configure dice mocking for testing purposes
+   */
+  export function configureMocking(config: MockDiceConfig): void {
+    mockConfig = { ...config, resultIndex: 0 };
+  }
+
+  /**
+   * Roll dice using standard notation (e.g., "1d20+5", "3d6", "2d8-1")
+   */
+  export function roll(notation: string): DiceRoll {
+    const parsed = parseNotation(notation);
+    const rolls: number[] = [];
+
+    for (let i = 0; i < parsed.count; i++) {
+      rolls.push(rollSingleDie(parsed.sides));
+    }
+
+    const rollSum = rolls.reduce((sum, roll) => sum + roll, 0);
+    const total = rollSum + parsed.modifier;
+    const breakdown = createBreakdown(rolls, parsed.modifier, total);
+
+    return {
+      notation,
+      rolls,
+      modifier: parsed.modifier,
+      total,
+      breakdown,
+    };
+  }
+
+  /**
+   * Roll multiple dice of the same type
+   */
+  export function rollMultiple(notation: string, count: number): DiceRoll[] {
+    const results: DiceRoll[] = [];
+    for (let i = 0; i < count; i++) {
+      results.push(roll(notation));
+    }
+    return results;
+  }
+
+  /**
+   * Roll with advantage (take the higher of two rolls)
+   */
+  export function rollWithAdvantage(notation: string): DiceRoll {
+    const roll1 = roll(notation);
+    const roll2 = roll(notation);
+    return roll1.total >= roll2.total ? roll1 : roll2;
+  }
+
+  /**
+   * Roll with disadvantage (take the lower of two rolls)
+   */
+  export function rollWithDisadvantage(notation: string): DiceRoll {
+    const roll1 = roll(notation);
+    const roll2 = roll(notation);
+    return roll1.total <= roll2.total ? roll1 : roll2;
+  }
+
+  /**
+   * Standard OSRIC ability score generation methods
+   */
+  export function rollAbilityScore(): DiceRoll {
+    return roll('3d6');
+  }
+
+  export function rollAbilityScoreHeroic(): DiceRoll {
+    const rolls = [rollSingleDie(6), rollSingleDie(6), rollSingleDie(6), rollSingleDie(6)];
+    rolls.sort((a, b) => b - a);
+    const top3 = rolls.slice(0, 3);
+    const total = top3.reduce((sum, roll) => sum + roll, 0);
+
+    return {
+      notation: '4d6 drop lowest',
+      rolls: top3,
+      modifier: 0,
+      total,
+      breakdown: `${top3.join(' + ')} = ${total}`,
+    };
+  }
+
+  /**
+   * Standard combat rolls
+   */
+  export function rollD20(): DiceRoll {
+    return roll('1d20');
+  }
+
+  export function rollPercentile(): DiceRoll {
+    return roll('1d100');
+  }
+
+  /**
+   * Hit point calculation for OSRIC characters
+   */
+  export function rollHitPoints(
+    hitDie: number,
+    level: number,
+    constitutionModifier: number
+  ): DiceRoll {
+    const rolls: number[] = [];
+    let totalHP = 0;
+
+    for (let i = 0; i < level; i++) {
+      const roll = rollSingleDie(hitDie);
+      const modifiedRoll = Math.max(1, roll + constitutionModifier);
+      rolls.push(roll);
+      totalHP += modifiedRoll;
+    }
+
+    return {
+      notation: `${level}d${hitDie}+${constitutionModifier * level} (min 1 per die)`,
+      rolls,
+      modifier: constitutionModifier * level,
+      total: totalHP,
+      breakdown: `${rolls.join(' + ')} + ${constitutionModifier * level} = ${totalHP} (min 1 per die)`,
+    };
+  }
+
+  /**
+   * OSRIC saving throw roll
+   */
+  export function rollSavingThrow(
+    saveValue: number,
+    modifier = 0
+  ): {
+    success: boolean;
+    roll: DiceRoll;
+    target: number;
+  } {
+    const rollResult = roll(`1d20+${modifier}`);
+    const success = rollResult.total >= saveValue;
+
+    return {
+      success,
+      roll: rollResult,
+      target: saveValue,
+    };
+  }
+
+  /**
+   * THAC0 attack roll
+   */
+  export function rollAttack(
+    thac0: number,
+    targetAC: number,
+    modifier = 0
+  ): {
+    hit: boolean;
+    roll: DiceRoll;
+    numberNeeded: number;
+  } {
+    const rollResult = roll(`1d20+${modifier}`);
+    const numberNeeded = thac0 - targetAC;
+    const hit = rollResult.total >= numberNeeded;
+
+    return {
+      hit,
+      roll: rollResult,
+      numberNeeded,
+    };
+  }
+}
+
+/**
+ * Legacy compatibility functions - these wrap the new DiceEngine
+ * These should be gradually replaced with direct DiceEngine calls
+ */
+
+export function rollDice(count: number, sides: number, modifier = 0): DiceRoll {
+  const notation =
+    modifier === 0
+      ? `${count}d${sides}`
+      : `${count}d${sides}${modifier >= 0 ? '+' : ''}${modifier}`;
+  return DiceEngine.roll(notation);
+}
+
+export function rollExpression(notation: string): number {
+  return DiceEngine.roll(notation).total;
+}
+
+export function rollD20(): number {
+  return DiceEngine.rollD20().total;
 }
 
 export function rollPercentile(): number {
-  return rollDice(1, 100).result;
+  return DiceEngine.rollPercentile().total;
 }
 
 export function rollAbilityScore(): number {
-  return rollDice(3, 6).result;
+  return DiceEngine.rollAbilityScore().total;
 }
 
 export function rollAbilityScore4d6DropLowest(): number {
-  const rolls = [rollSingleDie(6), rollSingleDie(6), rollSingleDie(6), rollSingleDie(6)];
-
-  rolls.sort((a, b) => b - a);
-  return rolls[0] + rolls[1] + rolls[2];
+  return DiceEngine.rollAbilityScoreHeroic().total;
 }
 
+/**
+ * @deprecated Use DiceEngine.rollHitPoints() instead
+ */
 export function rollHitPoints(hitDie: number, level: number, constitutionModifier: number): number {
-  let totalHP = 0;
-
-  for (let i = 0; i < level; i++) {
-    const roll = rollSingleDie(hitDie);
-    const modifiedRoll = Math.max(1, roll + constitutionModifier);
-    totalHP += modifiedRoll;
-  }
-
-  return totalHP;
+  return DiceEngine.rollHitPoints(hitDie, level, constitutionModifier).total;
 }
 
+/**
+ * @deprecated Use DiceEngine.rollAttack() instead
+ */
 export function checkTHAC0Hit(thac0: number, targetAC: number, attackRoll: number): boolean {
   const numberNeeded = thac0 - targetAC;
   return attackRoll >= numberNeeded;
 }
 
+/**
+ * @deprecated Use DiceEngine.rollSavingThrow() instead
+ */
 export function rollSavingThrow(
   saveValue: number,
   modifier = 0
@@ -99,86 +301,11 @@ export function rollSavingThrow(
   total: number;
   target: number;
 } {
-  const roll = rollDice(1, 20).result;
-  const total = roll + modifier;
-  const success = total >= saveValue;
-
+  const result = DiceEngine.rollSavingThrow(saveValue, modifier);
   return {
-    success,
-    roll,
-    total,
-    target: saveValue,
-  };
-}
-
-export function rollD20(): number {
-  return rollSingleDie(20);
-}
-
-export function roll(sides: number): number {
-  return rollSingleDie(sides);
-}
-
-export function rollMultiple(count: number, sides: number): LegacyDiceResult {
-  const rolls: number[] = [];
-  for (let i = 0; i < count; i++) {
-    rolls.push(rollSingleDie(sides));
-  }
-  const total = rolls.reduce((sum, roll) => sum + roll, 0);
-  return { rolls, total };
-}
-
-export function rollFromNotation(notation: string): LegacyDiceResult {
-  const match = notation.match(/^(\d+)d(\d+)([+-]\d+)?$/i);
-  if (!match) {
-    throw new Error(`Invalid dice notation: ${notation}`);
-  }
-
-  const count = Number.parseInt(match[1], 10);
-  const sides = Number.parseInt(match[2], 10);
-  const modifier = match[3] ? Number.parseInt(match[3], 10) : 0;
-
-  const result = rollMultiple(count, sides);
-  result.total += modifier;
-  result.modifier = modifier;
-
-  return result;
-}
-
-export function sumDice(results: LegacyDiceResult[]): number {
-  return results.reduce((sum, result) => sum + result.total, 0);
-}
-
-export function rollWithAdvantageLegacy(sides: number): LegacyDiceResult {
-  const roll1 = rollSingleDie(sides);
-  const roll2 = rollSingleDie(sides);
-  const higher = Math.max(roll1, roll2);
-  return {
-    rolls: [roll1, roll2],
-    total: higher,
-  };
-}
-
-export function rollWithDisadvantageLegacy(sides: number): LegacyDiceResult {
-  const roll1 = rollSingleDie(sides);
-  const roll2 = rollSingleDie(sides);
-  const lower = Math.min(roll1, roll2);
-  return {
-    rolls: [roll1, roll2],
-    total: lower,
-  };
-}
-
-export function rollAbilityScoreLegacy(): LegacyDiceResult {
-  return rollFromNotation('3d6');
-}
-
-export function rollAbilityScoreHeroic(): LegacyDiceResult {
-  const rolls = [rollSingleDie(6), rollSingleDie(6), rollSingleDie(6), rollSingleDie(6)];
-  rolls.sort((a, b) => b - a);
-  const top3 = rolls.slice(0, 3);
-  return {
-    rolls: top3,
-    total: top3.reduce((sum, roll) => sum + roll, 0),
+    success: result.success,
+    roll: result.roll.rolls[0], // First die roll
+    total: result.roll.total,
+    target: result.target,
   };
 }

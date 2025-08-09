@@ -1,13 +1,13 @@
-import { rollDice } from '@osric/core/Dice';
-import type { GameContext } from '@osric/core/GameContext';
-import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import { DiceEngine } from '../../core/Dice';
+import type { GameContext } from '../../core/GameContext';
+import { BaseRule, type RuleResult } from '../../core/Rule';
 import type {
   IdentificationResult,
   MagicScroll,
   MaterialComponent,
   SpellWithComponents,
-} from '@osric/types/SpellTypes';
-import type { Character, Item, Spell } from '@osric/types/entities';
+} from '../../types/SpellTypes';
+import type { Character, Item, Spell } from '../../types/entities';
 
 export class SpellComponentManagementRule extends BaseRule {
   name = 'spell-component-management';
@@ -140,8 +140,8 @@ export class SpellFailureRule extends BaseRule {
       return this.createSuccessResult(`${caster.name} successfully casts "${spell.name}"`);
     }
 
-    const backfireRoll = rollDice(1, 100);
-    const backfireFailed = backfireRoll.result <= backfireChance;
+    const backfireRoll = DiceEngine.rollPercentile();
+    const backfireFailed = backfireRoll.total <= backfireChance;
 
     if (backfireFailed) {
       const backfireEffect = this.determineBackfireEffect(spell.level);
@@ -159,7 +159,7 @@ export class SpellFailureRule extends BaseRule {
         failureChance,
         backfire: true,
         backfireEffect: backfireEffect.description,
-        backfireRoll: backfireRoll.result,
+        backfireRoll: backfireRoll.total,
       });
     }
 
@@ -176,8 +176,8 @@ export class SpellFailureRule extends BaseRule {
   }
 
   private determineBackfireEffect(spellLevel: number): { description: string; effect: string } {
-    const roll = rollDice(1, 20);
-    const adjustedRoll = roll.result + spellLevel;
+    const roll = DiceEngine.rollD20();
+    const adjustedRoll = roll.total + spellLevel;
 
     if (adjustedRoll <= 5) {
       return {
@@ -293,9 +293,9 @@ export class SpellConcentrationRule extends BaseRule {
     const proficiencyBonus = caster.level ? Math.ceil(caster.level / 4) + 1 : 2;
     const hasConcentrationProficiency = false;
 
-    const concentrationRoll = rollDice(1, 20);
+    const concentrationRoll = DiceEngine.rollD20();
     const totalRoll =
-      concentrationRoll.result +
+      concentrationRoll.total +
       constitutionModifier +
       (hasConcentrationProficiency ? proficiencyBonus : 0);
 
@@ -304,13 +304,13 @@ export class SpellConcentrationRule extends BaseRule {
     if (concentrationMaintained) {
       const message =
         `${caster.name} maintains concentration on "${spell.name}" ` +
-        `(rolled ${concentrationRoll.result} + ${constitutionModifier} ${hasConcentrationProficiency ? `+ ${proficiencyBonus}` : ''} = ${totalRoll} vs DC ${baseDC})`;
+        `(rolled ${concentrationRoll.total} + ${constitutionModifier} ${hasConcentrationProficiency ? `+ ${proficiencyBonus}` : ''} = ${totalRoll} vs DC ${baseDC})`;
 
       return this.createSuccessResult(message, {
         spellName: spell.name,
         distraction,
         dc: baseDC,
-        roll: concentrationRoll.result,
+        roll: concentrationRoll.total,
         total: totalRoll,
         maintained: true,
       });
@@ -318,7 +318,7 @@ export class SpellConcentrationRule extends BaseRule {
 
     const message =
       `${caster.name} loses concentration on "${spell.name}" ` +
-      `(rolled ${concentrationRoll.result} + ${constitutionModifier} ${hasConcentrationProficiency ? `+ ${proficiencyBonus}` : ''} = ${totalRoll} vs DC ${baseDC}). Spell effect ends.`;
+      `(rolled ${concentrationRoll.total} + ${constitutionModifier} ${hasConcentrationProficiency ? `+ ${proficiencyBonus}` : ''} = ${totalRoll} vs DC ${baseDC}). Spell effect ends.`;
 
     context.setTemporary('spellEnded', { caster: caster.id, spell: spell.name });
 
@@ -326,7 +326,7 @@ export class SpellConcentrationRule extends BaseRule {
       spellName: spell.name,
       distraction,
       dc: baseDC,
-      roll: concentrationRoll.result,
+      roll: concentrationRoll.total,
       total: totalRoll,
       maintained: false,
     });
@@ -406,20 +406,20 @@ export class SpellInteractionRule extends BaseRule {
     const casterLevel = caster.level || 1;
     const dispelDC = 11 + targetSpell.level;
 
-    const dispelRoll = rollDice(1, 20);
-    const totalRoll = dispelRoll.result + casterLevel;
+    const dispelRoll = DiceEngine.rollD20();
+    const totalRoll = dispelRoll.total + casterLevel;
 
     const dispelSuccess = totalRoll >= dispelDC;
 
     if (dispelSuccess) {
       const message =
         `${caster.name} successfully dispels "${targetSpell.name}" ` +
-        `(rolled ${dispelRoll.result} + ${casterLevel} = ${totalRoll} vs DC ${dispelDC})`;
+        `(rolled ${dispelRoll.total} + ${casterLevel} = ${totalRoll} vs DC ${dispelDC})`;
 
       return this.createSuccessResult(message, {
         targetSpell: targetSpell.name,
         dispelSpell: dispelSpell.name,
-        roll: dispelRoll.result,
+        roll: dispelRoll.total,
         casterLevel,
         total: totalRoll,
         dc: dispelDC,
@@ -429,12 +429,12 @@ export class SpellInteractionRule extends BaseRule {
 
     const message =
       `${caster.name} fails to dispel "${targetSpell.name}" ` +
-      `(rolled ${dispelRoll.result} + ${casterLevel} = ${totalRoll} vs DC ${dispelDC})`;
+      `(rolled ${dispelRoll.total} + ${casterLevel} = ${totalRoll} vs DC ${dispelDC})`;
 
     return this.createFailureResult(message, {
       targetSpell: targetSpell.name,
       dispelSpell: dispelSpell.name,
-      roll: dispelRoll.result,
+      roll: dispelRoll.total,
       casterLevel,
       total: totalRoll,
       dc: dispelDC,

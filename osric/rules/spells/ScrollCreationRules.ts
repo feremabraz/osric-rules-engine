@@ -42,14 +42,14 @@ export class ScrollCreationRequirementsRule extends BaseRule {
     'Calculates requirements for creating magic scrolls using OSRIC formulas';
 
   public canApply(context: GameContext): boolean {
-    const characterId = context.getTemporary<string>('scrollCreation_characterId');
-    const spellLevel = context.getTemporary<number>('scrollCreation_spellLevel');
+    const characterId = context.getTemporary<string>('spell:scroll:creation-character');
+    const spellLevel = context.getTemporary<number>('spell:scroll:creation-level');
     return !!(characterId && spellLevel);
   }
 
   public async execute(context: GameContext): Promise<RuleResult> {
-    const characterId = context.getTemporary<string>('scrollCreation_characterId');
-    const spellLevel = context.getTemporary<number>('scrollCreation_spellLevel');
+    const characterId = context.getTemporary<string>('spell:scroll:creation-character');
+    const spellLevel = context.getTemporary<number>('spell:scroll:creation-level');
 
     if (!characterId || !spellLevel) {
       return this.createFailureResult('Missing character ID or spell level for scroll creation');
@@ -123,8 +123,8 @@ export class ScrollCreationStartRule extends BaseRule {
       return this.createFailureResult('Character not found');
     }
 
-    context.setTemporary('scrollCreation_characterId', characterId);
-    context.setTemporary('scrollCreation_spellLevel', spellLevel);
+    context.setTemporary('spell:scroll:creation-character', characterId);
+    context.setTemporary('spell:scroll:creation-level', spellLevel);
 
     const requirements = this.calculateRequirements(character, spellLevel);
     if (!requirements.canCreate) {

@@ -26,7 +26,7 @@ export class DamageCalculationRule extends BaseRule {
   name = 'damage-calculation';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const attackContext = context.getTemporary('attack-context') as AttackContext;
+    const attackContext = context.getTemporary('combat:attack:context') as AttackContext;
 
     if (!attackContext) {
       return this.createFailureResult('No attack context found');
@@ -45,7 +45,7 @@ export class DamageCalculationRule extends BaseRule {
       combatResult = this.applyDamage(attacker, target, damage, isCriticalHit || false);
     }
 
-    context.setTemporary('damage-result', combatResult);
+    context.setTemporary('combat:damage:result', combatResult);
     context.setTemporary('damage-values', damage);
 
     return this.createSuccessResult(
@@ -59,7 +59,7 @@ export class DamageCalculationRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     if (command.type !== COMMAND_TYPES.ATTACK) return false;
 
-    const attackContext = context.getTemporary('attack-context') as AttackContext;
+    const attackContext = context.getTemporary('combat:attack:context') as AttackContext;
     return Boolean(attackContext && attackContext.hitRoll !== undefined);
   }
 

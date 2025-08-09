@@ -34,12 +34,14 @@ export class InitiativeRollRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     return (
       command.type === COMMAND_TYPES.INITIATIVE &&
-      context.getTemporary('initiative-context') !== null
+      context.getTemporary('combat:initiative:context') !== null
     );
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const initiativeContext = context.getTemporary('initiative-context') as InitiativeContext;
+    const initiativeContext = context.getTemporary(
+      'combat:initiative:context'
+    ) as InitiativeContext;
 
     if (!initiativeContext) {
       return this.createFailureResult('No initiative context found');
@@ -66,7 +68,7 @@ export class InitiativeRollRule extends BaseRule {
         return a.weaponSpeedFactor - b.weaponSpeedFactor;
       });
 
-      context.setTemporary('initiative-results', results);
+      context.setTemporary('combat:initiative:results', results);
 
       const message = `Initiative rolled for ${results.length} entities`;
       return this.createSuccessResult(message);
@@ -225,7 +227,9 @@ export class SurpriseCheckRule extends BaseRule {
   readonly priority = 20;
 
   canApply(context: GameContext, command: Command): boolean {
-    const initiativeContext = context.getTemporary('initiative-context') as InitiativeContext;
+    const initiativeContext = context.getTemporary(
+      'combat:initiative:context'
+    ) as InitiativeContext;
     return (
       command.type === COMMAND_TYPES.INITIATIVE &&
       initiativeContext !== null &&
@@ -234,7 +238,7 @@ export class SurpriseCheckRule extends BaseRule {
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const results = context.getTemporary('initiative-results') as EntityInitiativeResult[];
+    const results = context.getTemporary('combat:initiative:results') as EntityInitiativeResult[];
 
     if (!results) {
       return this.createFailureResult('No initiative results found for surprise check');
@@ -251,7 +255,7 @@ export class SurpriseCheckRule extends BaseRule {
         }
       }
 
-      context.setTemporary('initiative-results', results);
+      context.setTemporary('combat:initiative:results', results);
 
       const message =
         surprisedCount > 0
@@ -293,12 +297,12 @@ export class InitiativeOrderRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     return (
       command.type === COMMAND_TYPES.INITIATIVE &&
-      context.getTemporary('initiative-results') !== null
+      context.getTemporary('combat:initiative:results') !== null
     );
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const results = context.getTemporary('initiative-results') as EntityInitiativeResult[];
+    const results = context.getTemporary('combat:initiative:results') as EntityInitiativeResult[];
 
     if (!results) {
       return this.createFailureResult('No initiative results found for ordering');
@@ -323,7 +327,7 @@ export class InitiativeOrderRule extends BaseRule {
         roundNumber: 1,
       };
 
-      context.setTemporary('initiative-order', finalOrder);
+      context.setTemporary('combat:initiative:order', finalOrder);
 
       const activeCount = activeResults.length;
       const surprisedCount = surprisedResults.length;

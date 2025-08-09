@@ -1,12 +1,13 @@
-import { BaseCommand, type CommandResult } from '@osric/core/Command';
-import type { GameContext } from '@osric/core/GameContext';
-import { COMMAND_TYPES } from '@osric/types/constants';
+import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { GameContext } from '../../core/GameContext';
+import { COMMAND_TYPES } from '../../types/constants';
+
 import type {
   Character as CharacterData,
   Monster as MonsterData,
   Spell,
   Weapon,
-} from '@osric/types/entities';
+} from '../../types/entities';
 
 export interface InitiativeParameters {
   entities: string[];
@@ -26,14 +27,13 @@ export interface InitiativeResult {
   modifiers: number;
 }
 
-export class InitiativeCommand extends BaseCommand {
+export class InitiativeCommand extends BaseCommand<InitiativeParameters> {
   readonly type = COMMAND_TYPES.INITIATIVE;
+  readonly parameters: InitiativeParameters;
 
-  constructor(
-    private parameters: InitiativeParameters,
-    actorId = 'game-master'
-  ) {
-    super(actorId);
+  constructor(parameters: InitiativeParameters, actorId: string, targetIds: string[] = []) {
+    super(parameters, actorId, targetIds);
+    this.parameters = parameters;
   }
 
   async execute(context: GameContext): Promise<CommandResult> {
@@ -55,7 +55,7 @@ export class InitiativeCommand extends BaseCommand {
         isFirstRound: this.parameters.isFirstRound || false,
       };
 
-      context.setTemporary('initiative-context', initiativeContext);
+      context.setTemporary('combat:initiative:context', initiativeContext);
 
       return this.createSuccessResult('Initiative command prepared for rule processing');
     } catch (error) {

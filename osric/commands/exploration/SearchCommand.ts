@@ -1,8 +1,8 @@
-import { BaseCommand, type CommandResult } from '@osric/core/Command';
-import { rollDice } from '@osric/core/Dice';
-import type { GameContext } from '@osric/core/GameContext';
-import { COMMAND_TYPES } from '@osric/types/constants';
-import type { Character } from '@osric/types/entities';
+import { BaseCommand, type CommandResult } from '../../core/Command';
+import { DiceEngine } from '../../core/Dice';
+import type { GameContext } from '../../core/GameContext';
+import { COMMAND_TYPES } from '../../types/constants';
+import type { Character } from '../../types/entities';
 
 export interface SearchParameters {
   characterId: string;
@@ -15,11 +15,13 @@ export interface SearchParameters {
   thoroughness: 'quick' | 'normal' | 'careful' | 'meticulous';
 }
 
-export class SearchCommand extends BaseCommand {
+export class SearchCommand extends BaseCommand<SearchParameters> {
   readonly type = COMMAND_TYPES.SEARCH;
+  readonly parameters: SearchParameters;
 
-  constructor(private parameters: SearchParameters) {
-    super(parameters.characterId);
+  constructor(parameters: SearchParameters, actorId: string, targetIds: string[] = []) {
+    super(parameters, actorId, targetIds);
+    this.parameters = parameters;
   }
 
   async execute(context: GameContext): Promise<CommandResult> {
@@ -31,14 +33,23 @@ export class SearchCommand extends BaseCommand {
         return this.createFailureResult(`Character with ID "${characterId}" not found`);
       }
 
+      // Set standardized context for rule processing
+      context.setTemporary('exploration:search:context', {
+        character,
+        searchType,
+        target,
+        timeSpent,
+        thoroughness,
+      });
+
       const searchModifiers = this.calculateSearchModifiers(character, searchType, thoroughness);
 
       const baseChance = this.getBaseSearchChance(character, searchType);
 
       const finalChance = Math.min(95, Math.max(5, baseChance + searchModifiers.total));
 
-      const searchRoll = rollDice(1, 100);
-      const isSuccessful = searchRoll.result <= finalChance;
+      const searchRoll = DiceEngine.rollPercentile();
+      const isSuccessful = searchRoll.total <= finalChance;
 
       const actualTime = this.calculateSearchTime(timeSpent, thoroughness, isSuccessful);
 
@@ -59,7 +70,7 @@ export class SearchCommand extends BaseCommand {
         searchType,
         target,
         isSuccessful,
-        searchRoll: searchRoll.result,
+        searchRoll: searchRoll.total,
         finalChance,
         modifiers: searchModifiers,
         timeTaken: actualTime,
@@ -88,7 +99,7 @@ export class SearchCommand extends BaseCommand {
   }
 
   canExecute(context: GameContext): boolean {
-    return this.validateEntities(context);
+    return this.validateEntitiesExist(context);
   }
 
   getRequiredRules(): string[] {
@@ -257,8 +268,8 @@ export class SearchCommand extends BaseCommand {
       findings.push('Search revealed nothing of interest');
 
       if (searchType === 'traps') {
-        const triggerRoll = rollDice(1, 20);
-        if (triggerRoll.result <= 2) {
+        const triggerRoll = DiceEngine.rollD20();
+        if (triggerRoll.total <= 2) {
           consequences.push({
             type: 'trap-triggered',
             description: 'Accidentally triggered a trap while searching',

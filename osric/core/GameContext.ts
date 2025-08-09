@@ -1,5 +1,6 @@
-import type { Character, Item, Monster, Spell } from '@osric/types/entities';
 import { atom, type createStore } from 'jotai';
+import type { Character, Item, Monster, Spell } from '../types/entities';
+import type { RuleEngine } from './RuleEngine';
 
 export type GameEntity = Character | Monster;
 
@@ -13,7 +14,27 @@ export const spellsAtom = atom<Map<string, Spell>>(new Map());
 export const temporaryDataAtom = atom<TemporaryData>({});
 
 export class GameContext {
-  constructor(private store: ReturnType<typeof createStore>) {}
+  constructor(
+    private store: ReturnType<typeof createStore>,
+    private ruleEngine?: RuleEngine
+  ) {}
+
+  getRuleEngine(): RuleEngine {
+    if (!this.ruleEngine) {
+      throw new Error(
+        'RuleEngine not initialized. Call setRuleEngine() before using getRuleEngine().'
+      );
+    }
+    return this.ruleEngine;
+  }
+
+  setRuleEngine(engine: RuleEngine): void {
+    this.ruleEngine = engine;
+  }
+
+  isFullyInitialized(): boolean {
+    return this.ruleEngine !== undefined;
+  }
 
   getEntity<T extends GameEntity>(id: string): T | null {
     const entities = this.store.get(entitiesAtom);

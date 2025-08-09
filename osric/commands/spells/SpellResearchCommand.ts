@@ -1,7 +1,7 @@
-import { BaseCommand, type CommandResult } from '@osric/core/Command';
-import type { GameContext } from '@osric/core/GameContext';
-import { COMMAND_TYPES } from '@osric/types/constants';
-import type { Character, Spell } from '@osric/types/entities';
+import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { GameContext } from '../../core/GameContext';
+import { COMMAND_TYPES } from '../../types/constants';
+import type { Character, Spell } from '../../types/entities';
 
 export interface SpellResearchParameters {
   characterId: string;
@@ -42,11 +42,13 @@ export interface ResearchResult {
   };
 }
 
-export class SpellResearchCommand extends BaseCommand {
+export class SpellResearchCommand extends BaseCommand<SpellResearchParameters> {
   readonly type = COMMAND_TYPES.SPELL_RESEARCH;
+  readonly parameters: SpellResearchParameters;
 
-  constructor(public readonly parameters: SpellResearchParameters) {
-    super(parameters.characterId);
+  constructor(parameters: SpellResearchParameters, actorId: string, targetIds: string[] = []) {
+    super(parameters, actorId, targetIds);
+    this.parameters = parameters;
   }
 
   async execute(context: GameContext): Promise<CommandResult> {
@@ -140,14 +142,19 @@ export class SpellResearchCommand extends BaseCommand {
       );
       context.setEntity(characterId, failedCharacter);
 
-      return this.createFailureResult(`Spell research failed: ${researchResult.reason}`, {
-        timeSpent: requirements.timeInWeeks,
-        goldLost: Math.floor(requirements.totalCost * 0.5),
-        researchDetails: researchResult.details,
-      });
+      return this.createFailureResult(
+        `Spell research failed: ${researchResult.reason}`,
+        undefined,
+        {
+          timeSpent: requirements.timeInWeeks,
+          goldLost: Math.floor(requirements.totalCost * 0.5),
+          researchDetails: researchResult.details,
+        }
+      );
     } catch (error: unknown) {
       return this.createFailureResult(
         `Error during spell research: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error instanceof Error ? error : undefined,
         { error: error instanceof Error ? error.message : 'Unknown error' }
       );
     }

@@ -33,11 +33,14 @@ export class AttackRollRule extends BaseRule {
   readonly priority = 10;
 
   canApply(context: GameContext, command: Command): boolean {
-    return command.type === COMMAND_TYPES.ATTACK && context.getTemporary('attack-context') !== null;
+    return (
+      command.type === COMMAND_TYPES.ATTACK &&
+      context.getTemporary('combat:attack:context') !== null
+    );
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const attackContext = context.getTemporary('attack-context') as AttackContext;
+    const attackContext = context.getTemporary('combat:attack:context') as AttackContext;
 
     if (!attackContext) {
       return this.createFailureResult('No attack context found');
@@ -76,7 +79,7 @@ export class AttackRollRule extends BaseRule {
         weapon,
       };
 
-      context.setTemporary('attack-roll-result', attackRollResult);
+      context.setTemporary('combat:attack:roll-result', attackRollResult);
 
       const message = hit
         ? `Attack ${critical ? '(critical!) ' : ''}hits! Roll: ${totalAttackRoll} vs target: ${targetNumber}`
@@ -152,21 +155,21 @@ export class DamageCalculationRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     return (
       command.type === COMMAND_TYPES.ATTACK &&
-      context.getTemporary('attack-context') !== null &&
-      context.getTemporary('attack-roll-result') !== null
+      context.getTemporary('combat:attack:context') !== null &&
+      context.getTemporary('combat:attack:roll-result') !== null
     );
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const attackContext = context.getTemporary('attack-context') as AttackContext;
-    const attackRollResult = context.getTemporary('attack-roll-result') as AttackRollResult;
+    const attackContext = context.getTemporary('combat:attack:context') as AttackContext;
+    const attackRollResult = context.getTemporary('combat:attack:roll-result') as AttackRollResult;
 
     if (!attackContext || !attackRollResult) {
       return this.createFailureResult('Missing attack context or attack roll result');
     }
 
     if (!attackRollResult.hit) {
-      context.setTemporary('damage-result', { damage: [], totalDamage: 0 });
+      context.setTemporary('combat:damage:result', { damage: [], totalDamage: 0 });
       return this.createSuccessResult('No damage - attack missed');
     }
 
@@ -187,7 +190,7 @@ export class DamageCalculationRule extends BaseRule {
         damageType: attackType,
       };
 
-      context.setTemporary('damage-result', damageResult);
+      context.setTemporary('combat:damage:result', damageResult);
 
       const message = critical
         ? `Critical hit! ${finalDamage} damage dealt`

@@ -23,7 +23,9 @@ export class UnderwaterCombatRule extends BaseRule {
   name = 'underwater-combat';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const underwaterContext = context.getTemporary('underwater-context') as UnderwaterCombatContext;
+    const underwaterContext = context.getTemporary(
+      'combat:underwater:context'
+    ) as UnderwaterCombatContext;
 
     if (!underwaterContext) {
       return this.createFailureResult('No underwater combat context found');
@@ -80,7 +82,9 @@ export class UnderwaterCombatRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     if (!['attack', 'cast-spell', 'underwater-combat'].includes(command.type)) return false;
 
-    const underwaterContext = context.getTemporary('underwater-context') as UnderwaterCombatContext;
+    const underwaterContext = context.getTemporary(
+      'combat:underwater:context'
+    ) as UnderwaterCombatContext;
     return underwaterContext !== null && underwaterContext.waterDepth > 0;
   }
 
@@ -281,7 +285,9 @@ export class UnderwaterMovementRule extends BaseRule {
   name = 'underwater-movement';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const underwaterContext = context.getTemporary('underwater-context') as UnderwaterCombatContext;
+    const underwaterContext = context.getTemporary(
+      'combat:underwater:context'
+    ) as UnderwaterCombatContext;
 
     if (!underwaterContext) {
       return this.createFailureResult('No underwater movement context found');
@@ -307,7 +313,9 @@ export class UnderwaterMovementRule extends BaseRule {
     if (command.type !== COMMAND_TYPES.MOVE && command.type !== COMMAND_TYPES.UNDERWATER_MOVE)
       return false;
 
-    const underwaterContext = context.getTemporary('underwater-context') as UnderwaterCombatContext;
+    const underwaterContext = context.getTemporary(
+      'combat:underwater:context'
+    ) as UnderwaterCombatContext;
     return underwaterContext !== null && underwaterContext.waterDepth > 0;
   }
 

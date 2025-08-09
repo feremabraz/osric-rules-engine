@@ -59,6 +59,7 @@ export const COMMAND_TYPES = {
 export const RULE_NAMES = {
   ABILITY_SCORE_GENERATION: 'ability-score-generation',
   ABILITY_SCORE_MODIFIERS: 'ability-score-modifiers',
+  CHARACTER_INITIALIZATION: 'character-initialization',
   CLASS_REQUIREMENTS: 'class-requirements',
   RACIAL_RESTRICTIONS: 'racial-restrictions',
   RACIAL_ABILITIES: 'racial-abilities',
@@ -88,6 +89,8 @@ export const RULE_NAMES = {
 
   SPELL_CASTING: 'spell-casting',
   SPELL_MEMORIZATION: 'spell-memorization',
+  SPELL_MEMORIZATION_VALIDATION: 'spell-memorization-validation',
+  SPELL_SLOT_ALLOCATION: 'spell-slot-allocation',
   SPELL_PROGRESSION: 'spell-progression',
   COMPONENT_CHECK: 'component-check',
   COMPONENT_TRACKING: 'component-tracking',
@@ -109,8 +112,13 @@ export const RULE_NAMES = {
   SCROLL_CREATION_START: 'scroll-creation-start',
   SCROLL_CREATION_PROGRESS: 'scroll-creation-progress',
   SCROLL_USAGE_VALIDATION: 'scroll-usage-validation',
+  SCROLL_VALIDATION: 'scroll-validation',
+  SCROLL_READING_CHANCE: 'scroll-reading-chance',
   SCROLL_CASTING_FAILURE: 'scroll-casting-failure',
   SCROLL_SPELL_CASTING: 'scroll-spell-casting',
+  IDENTIFICATION_VALIDATION: 'identification-validation',
+  IDENTIFICATION_METHOD: 'identification-method',
+  IDENTIFICATION_RESULTS: 'identification-results',
 
   EXPERIENCE_GAIN: 'experience-gain',
   LEVEL_PROGRESSION: 'level-progression',
@@ -148,6 +156,9 @@ export const RULE_NAMES = {
   TERRAIN_NAVIGATION: 'terrain-navigation',
   VISIBILITY_RULES: 'visibility-rules',
   FORAGING_RULES: 'foraging-rules',
+
+  SCROLL_SCRIBING_RULES: 'scroll-scribing-rules',
+  HIT_POINT_ADVANCEMENT: 'hit-point-advancement',
 } as const;
 
 export const ERROR_TYPES = {

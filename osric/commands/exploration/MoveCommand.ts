@@ -1,7 +1,7 @@
-import { BaseCommand, type CommandResult } from '@osric/core/Command';
-import type { GameContext } from '@osric/core/GameContext';
-import { COMMAND_TYPES } from '@osric/types/constants';
-import type { Character } from '@osric/types/entities';
+import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { GameContext } from '../../core/GameContext';
+import { COMMAND_TYPES } from '../../types/constants';
+import type { Character } from '../../types/entities';
 
 export interface MoveParameters {
   characterId: string;
@@ -20,11 +20,13 @@ export interface MoveParameters {
   forcedMarch?: boolean;
 }
 
-export class MoveCommand extends BaseCommand {
+export class MoveCommand extends BaseCommand<MoveParameters> {
   readonly type = COMMAND_TYPES.MOVE;
+  readonly parameters: MoveParameters;
 
-  constructor(private parameters: MoveParameters) {
-    super(parameters.characterId);
+  constructor(parameters: MoveParameters, actorId: string, targetIds: string[] = []) {
+    super(parameters, actorId, targetIds);
+    this.parameters = parameters;
   }
 
   async execute(context: GameContext): Promise<CommandResult> {
@@ -99,7 +101,7 @@ export class MoveCommand extends BaseCommand {
   }
 
   canExecute(context: GameContext): boolean {
-    return this.validateEntities(context);
+    return this.validateEntitiesExist(context);
   }
 
   getRequiredRules(): string[] {

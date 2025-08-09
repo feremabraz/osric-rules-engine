@@ -34,7 +34,9 @@ export class ThiefSkillRule extends BaseRule {
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const skillData = context.getTemporary<ThiefSkillCheckParameters>('thief-skill-params');
+    const skillData = context.getTemporary<ThiefSkillCheckParameters>(
+      'character:thief-skill:params'
+    );
 
     if (!skillData) {
       return this.createFailureResult('No thief skill check data provided');

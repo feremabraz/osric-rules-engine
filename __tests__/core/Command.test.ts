@@ -3,26 +3,24 @@ import { GameContext } from '@osric/core/GameContext';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-class SimpleTestCommand extends BaseCommand {
+class SimpleTestCommand extends BaseCommand<string> {
   readonly type = 'simple-test';
+  readonly parameters: string;
 
-  constructor(
-    public readonly testData: string,
-    actorId = 'test-actor',
-    targetIds: string[] = []
-  ) {
-    super(actorId, targetIds);
+  constructor(parameters: string, actorId: string, targetIds: string[] = []) {
+    super(parameters, actorId, targetIds);
+    this.parameters = parameters;
   }
 
   async execute(context: GameContext): Promise<CommandResult> {
     context.setTemporary('command-executed', true);
-    context.setTemporary('command-data', this.testData);
+    context.setTemporary('command-data', this.parameters);
 
-    return this.createSuccessResult(`Simple command executed with: ${this.testData}`);
+    return this.createSuccessResult(`Simple command executed with: ${this.parameters}`);
   }
 
   canExecute(context: GameContext): boolean {
-    return this.validateEntities(context);
+    return this.validateEntitiesExist(context);
   }
 
   getRequiredRules(): string[] {
@@ -30,11 +28,13 @@ class SimpleTestCommand extends BaseCommand {
   }
 }
 
-class EntityRequiredCommand extends BaseCommand {
+class EntityRequiredCommand extends BaseCommand<Record<string, unknown>> {
   readonly type = 'entity-required';
+  readonly parameters: Record<string, unknown> = {};
 
-  constructor(actorId: string, targetIds: string[] = []) {
-    super(actorId, targetIds);
+  constructor(parameters: Record<string, unknown>, actorId: string, targetIds: string[] = []) {
+    super(parameters, actorId, targetIds);
+    this.parameters = parameters;
   }
 
   async execute(_context: GameContext): Promise<CommandResult> {
@@ -42,7 +42,7 @@ class EntityRequiredCommand extends BaseCommand {
   }
 
   canExecute(context: GameContext): boolean {
-    return this.validateEntities(context);
+    return this.validateEntitiesExist(context);
   }
 
   getRequiredRules(): string[] {
@@ -50,11 +50,13 @@ class EntityRequiredCommand extends BaseCommand {
   }
 }
 
-class FailingCommand extends BaseCommand {
+class FailingCommand extends BaseCommand<Record<string, unknown>> {
   readonly type = 'failing-command';
+  readonly parameters: Record<string, unknown> = {};
 
-  constructor(actorId = 'failing-actor') {
-    super(actorId);
+  constructor(parameters: Record<string, unknown>, actorId: string, targetIds: string[] = []) {
+    super(parameters, actorId, targetIds);
+    this.parameters = parameters;
   }
 
   async execute(_context: GameContext): Promise<CommandResult> {
@@ -70,15 +72,13 @@ class FailingCommand extends BaseCommand {
   }
 }
 
-class ValidationCommand extends BaseCommand {
+class ValidationCommand extends BaseCommand<{ requireTargets?: boolean }> {
   readonly type = 'validation-test';
+  readonly parameters: { requireTargets?: boolean };
 
-  constructor(
-    actorId: string,
-    targetIds: string[] = [],
-    public readonly requireTargets = false
-  ) {
-    super(actorId, targetIds);
+  constructor(parameters: { requireTargets?: boolean }, actorId: string, targetIds: string[] = []) {
+    super(parameters, actorId, targetIds);
+    this.parameters = parameters;
   }
 
   async execute(_context: GameContext): Promise<CommandResult> {
@@ -86,11 +86,11 @@ class ValidationCommand extends BaseCommand {
   }
 
   canExecute(context: GameContext): boolean {
-    if (!this.validateEntities(context)) {
+    if (!this.validateEntitiesExist(context)) {
       return false;
     }
 
-    if (this.requireTargets && this.getInvolvedEntities().length <= 1) {
+    if (this.parameters.requireTargets && this.getInvolvedEntities().length <= 1) {
       return false;
     }
 
@@ -211,12 +211,12 @@ describe('BaseCommand', () => {
       const command = new SimpleTestCommand('test-data', 'actor-1', ['target-1']);
 
       expect(command.type).toBe('simple-test');
-      expect(command.testData).toBe('test-data');
+      expect(command.parameters).toBe('test-data');
       expect(command.getInvolvedEntities()).toEqual(['actor-1', 'target-1']);
     });
 
     it('should create commands with default parameters', () => {
-      const command = new SimpleTestCommand('test-data');
+      const command = new SimpleTestCommand('test-data', 'test-actor');
 
       expect(command.getInvolvedEntities()).toEqual(['test-actor']);
     });
@@ -224,7 +224,7 @@ describe('BaseCommand', () => {
 
   describe('Command Execution', () => {
     it('should execute simple commands', async () => {
-      const command = new SimpleTestCommand('hello-world');
+      const command = new SimpleTestCommand('hello-world', 'test-actor');
       const result = await command.execute(gameContext);
 
       expect(result.success).toBe(true);
@@ -234,7 +234,7 @@ describe('BaseCommand', () => {
     });
 
     it('should handle command failures', async () => {
-      const command = new FailingCommand();
+      const command = new FailingCommand({}, 'failing-actor');
       const result = await command.execute(gameContext);
 
       expect(result.success).toBe(false);
@@ -242,7 +242,7 @@ describe('BaseCommand', () => {
     });
 
     it('should include execution data in results', async () => {
-      const command = new SimpleTestCommand('data-test');
+      const command = new SimpleTestCommand('data-test', 'test-actor');
       const result = await command.execute(gameContext);
 
       expect(result.data).toBeUndefined();
@@ -255,10 +255,10 @@ describe('BaseCommand', () => {
       const mockCharacter = createMockCharacter('test-character', 'Test Character');
       gameContext.setEntity('test-character', mockCharacter);
 
-      const validCommand = new EntityRequiredCommand('test-character');
+      const validCommand = new EntityRequiredCommand({}, 'test-character');
       expect(validCommand.canExecute(gameContext)).toBe(true);
 
-      const invalidCommand = new EntityRequiredCommand('non-existing-character');
+      const invalidCommand = new EntityRequiredCommand({}, 'non-existing-character');
       expect(invalidCommand.canExecute(gameContext)).toBe(false);
     });
 
@@ -269,10 +269,10 @@ describe('BaseCommand', () => {
       gameContext.setEntity('actor', actor);
       gameContext.setEntity('target', target);
 
-      const validCommand = new EntityRequiredCommand('actor', ['target']);
+      const validCommand = new EntityRequiredCommand({}, 'actor', ['target']);
       expect(validCommand.canExecute(gameContext)).toBe(true);
 
-      const invalidCommand = new EntityRequiredCommand('actor', ['missing-target']);
+      const invalidCommand = new EntityRequiredCommand({}, 'actor', ['missing-target']);
       expect(invalidCommand.canExecute(gameContext)).toBe(false);
     });
 
@@ -280,27 +280,29 @@ describe('BaseCommand', () => {
       const mockCharacter = createMockCharacter('validation-character', 'Validation Character');
       gameContext.setEntity('validation-character', mockCharacter);
 
-      const command1 = new ValidationCommand('validation-character', [], false);
+      const command1 = new ValidationCommand({ requireTargets: false }, 'validation-character', []);
       expect(command1.canExecute(gameContext)).toBe(true);
 
-      const command2 = new ValidationCommand('validation-character', [], true);
+      const command2 = new ValidationCommand({ requireTargets: true }, 'validation-character', []);
       expect(command2.canExecute(gameContext)).toBe(false);
 
-      const command3 = new ValidationCommand('validation-character', ['some-target'], true);
+      const command3 = new ValidationCommand({ requireTargets: true }, 'validation-character', [
+        'some-target',
+      ]);
       expect(command3.canExecute(gameContext)).toBe(false);
     });
   });
 
   describe('Command Metadata', () => {
     it('should provide required rules information', () => {
-      const command = new SimpleTestCommand('metadata-test');
+      const command = new SimpleTestCommand('metadata-test', 'test-actor');
       const requiredRules = command.getRequiredRules();
 
       expect(requiredRules).toEqual(['simple-test-rule']);
     });
 
     it('should provide involved entities information', () => {
-      const command = new EntityRequiredCommand('actor', ['target1', 'target2']);
+      const command = new EntityRequiredCommand({}, 'actor', ['target1', 'target2']);
       const entities = command.getInvolvedEntities();
 
       expect(entities).toEqual(['actor', 'target1', 'target2']);
@@ -309,7 +311,7 @@ describe('BaseCommand', () => {
 
   describe('Result Creation Helpers', () => {
     it('should create success results correctly', async () => {
-      const command = new SimpleTestCommand('success-test');
+      const command = new SimpleTestCommand('success-test', 'test-actor');
       const result = await command.execute(gameContext);
 
       expect(result.success).toBe(true);
@@ -317,7 +319,7 @@ describe('BaseCommand', () => {
     });
 
     it('should create failure results correctly', async () => {
-      const command = new FailingCommand();
+      const command = new FailingCommand({}, 'failing-actor');
       const result = await command.execute(gameContext);
 
       expect(result.success).toBe(false);
@@ -325,11 +327,15 @@ describe('BaseCommand', () => {
     });
 
     it('should create results with additional data', async () => {
-      class DataCommand extends BaseCommand {
+      class DataCommand extends BaseCommand<Record<string, unknown>> {
         readonly type = 'data-command';
 
-        constructor() {
-          super('data-actor');
+        constructor(
+          parameters: Record<string, unknown>,
+          actorId: string,
+          targetIds: string[] = []
+        ) {
+          super(parameters, actorId, targetIds);
         }
 
         async execute(_context: GameContext): Promise<CommandResult> {
@@ -350,7 +356,7 @@ describe('BaseCommand', () => {
         }
       }
 
-      const command = new DataCommand();
+      const command = new DataCommand({}, 'data-actor');
       const result = await command.execute(gameContext);
 
       expect(result.success).toBe(true);
@@ -363,7 +369,7 @@ describe('BaseCommand', () => {
 
   describe('Command Performance', () => {
     it('should execute commands efficiently', async () => {
-      const command = new SimpleTestCommand('performance-test');
+      const command = new SimpleTestCommand('performance-test', 'test-actor');
 
       const startTime = Date.now();
       await command.execute(gameContext);
@@ -378,7 +384,7 @@ describe('BaseCommand', () => {
 
       const startTime = Date.now();
       for (let i = 0; i < 1000; i++) {
-        commands.push(new SimpleTestCommand(`batch-${i}`));
+        commands.push(new SimpleTestCommand(`batch-${i}`, 'test-actor'));
       }
       const endTime = Date.now();
 
@@ -390,11 +396,15 @@ describe('BaseCommand', () => {
 
   describe('Error Handling', () => {
     it('should handle execution errors gracefully', async () => {
-      class ErrorCommand extends BaseCommand {
+      class ErrorCommand extends BaseCommand<Record<string, unknown>> {
         readonly type = 'error-command';
 
-        constructor() {
-          super('error-actor');
+        constructor(
+          parameters: Record<string, unknown>,
+          actorId: string,
+          targetIds: string[] = []
+        ) {
+          super(parameters, actorId, targetIds);
         }
 
         async execute(_context: GameContext): Promise<CommandResult> {
@@ -410,13 +420,13 @@ describe('BaseCommand', () => {
         }
       }
 
-      const command = new ErrorCommand();
+      const command = new ErrorCommand({}, 'error-actor');
 
       await expect(command.execute(gameContext)).rejects.toThrow('Unexpected execution error');
     });
 
     it('should handle validation errors appropriately', () => {
-      const command = new EntityRequiredCommand('non-existing-actor');
+      const command = new EntityRequiredCommand({}, 'non-existing-actor');
 
       expect(command.canExecute(gameContext)).toBe(false);
     });
@@ -424,7 +434,7 @@ describe('BaseCommand', () => {
 
   describe('Command Interface Compliance', () => {
     it('should implement all required Command interface methods', () => {
-      const command = new SimpleTestCommand('interface-test');
+      const command = new SimpleTestCommand('interface-test', 'test-actor');
 
       expect(typeof command.type).toBe('string');
       expect(typeof command.execute).toBe('function');
@@ -434,15 +444,15 @@ describe('BaseCommand', () => {
     });
 
     it('should provide consistent command types', () => {
-      const command1 = new SimpleTestCommand('test1');
-      const command2 = new SimpleTestCommand('test2');
+      const command1 = new SimpleTestCommand('test1', 'actor1');
+      const command2 = new SimpleTestCommand('test2', 'actor2');
 
       expect(command1.type).toBe(command2.type);
       expect(command1.type).toBe('simple-test');
     });
 
     it('should maintain entity relationships', () => {
-      const command = new EntityRequiredCommand('actor1', ['target1', 'target2']);
+      const command = new EntityRequiredCommand({}, 'actor1', ['target1', 'target2']);
       const entities = command.getInvolvedEntities();
 
       expect(entities).toContain('actor1');
@@ -465,7 +475,7 @@ describe('BaseCommand', () => {
     });
 
     it('should maintain command execution context for OSRIC rules', async () => {
-      const command = new SimpleTestCommand('osric-test');
+      const command = new SimpleTestCommand('osric-test', 'test-actor');
 
       gameContext.setTemporary('combat-round', 1);
       gameContext.setTemporary('initiative-order', ['fighter', 'wizard', 'goblin']);

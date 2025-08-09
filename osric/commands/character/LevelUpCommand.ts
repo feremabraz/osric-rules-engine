@@ -1,6 +1,3 @@
-import { BaseCommand, type CommandResult } from '@osric/core/Command';
-import { rollDice } from '@osric/core/Dice.js';
-import type { GameContext } from '@osric/core/GameContext';
 import {
   determineLevel,
   getExperienceForNextLevel,
@@ -9,8 +6,11 @@ import {
   getTrainingRequirements,
   meetsTrainingRequirements,
 } from '@osric/rules/experience/LevelProgressionRules.js';
-import { COMMAND_TYPES } from '@osric/types/constants';
-import type { Character } from '@osric/types/entities';
+import { BaseCommand, type CommandResult } from '../../core/Command';
+import { DiceEngine } from '../../core/Dice';
+import type { GameContext } from '../../core/GameContext';
+import { COMMAND_TYPES } from '../../types/constants';
+import type { Character } from '../../types/entities';
 
 export interface LevelUpParameters {
   characterId: string;
@@ -24,11 +24,13 @@ export interface LevelUpParameters {
   rollHitPoints?: boolean;
 }
 
-export class LevelUpCommand extends BaseCommand {
+export class LevelUpCommand extends BaseCommand<LevelUpParameters> {
   readonly type = COMMAND_TYPES.LEVEL_UP;
+  readonly parameters: LevelUpParameters;
 
-  constructor(private parameters: LevelUpParameters) {
-    super(parameters.characterId);
+  constructor(parameters: LevelUpParameters) {
+    super(parameters, parameters.characterId);
+    this.parameters = parameters;
   }
 
   async execute(context: GameContext): Promise<CommandResult> {
@@ -114,7 +116,7 @@ export class LevelUpCommand extends BaseCommand {
   }
 
   canExecute(context: GameContext): boolean {
-    return this.validateEntities(context);
+    return this.validateEntitiesExist(context);
   }
 
   getRequiredRules(): string[] {
@@ -141,6 +143,7 @@ export class LevelUpCommand extends BaseCommand {
     if (!trainingMet) {
       return this.createFailureResult(
         `Training requirements not met: Need ${requirements.timeRequired} weeks, ${requirements.costRequired} gold${requirements.trainerRequired ? ', and a trainer' : ''}`,
+        undefined,
         {
           requirements,
         }
@@ -205,8 +208,8 @@ export class LevelUpCommand extends BaseCommand {
     let hitPointsGained: number;
 
     if (rollHitPoints) {
-      const diceResult = rollDice(1, hitDiceType);
-      hitPointsGained = diceResult.result;
+      const diceResult = DiceEngine.roll(`1d${hitDiceType}`);
+      hitPointsGained = diceResult.total;
     } else {
       hitPointsGained = Math.ceil((hitDiceType + 1) / 2);
     }

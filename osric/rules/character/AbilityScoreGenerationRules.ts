@@ -16,11 +16,10 @@ export class AbilityScoreGenerationRule extends BaseRule {
   readonly priority = 10;
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const creationData = context.getTemporary('character-creation') as CharacterCreationData;
-
-    if (!creationData) {
-      return this.createFailureResult('No character creation data found');
-    }
+    const creationData = this.getRequiredContext<CharacterCreationData>(
+      context,
+      'character:creation:params'
+    );
 
     try {
       let abilityScores: AbilityScores;
@@ -49,7 +48,7 @@ export class AbilityScoreGenerationRule extends BaseRule {
           );
       }
 
-      context.setTemporary('generated-ability-scores', abilityScores);
+      this.setContext(context, 'character:creation:ability-scores', abilityScores);
 
       return this.createSuccessResult(
         `Generated ability scores using ${creationData.abilityScoreMethod}`,
@@ -68,7 +67,7 @@ export class AbilityScoreGenerationRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     if (command.type !== COMMAND_TYPES.CREATE_CHARACTER) return false;
 
-    const creationData = context.getTemporary('character-creation');
+    const creationData = context.getTemporary('character:creation:context');
     return creationData != null;
   }
 
@@ -131,8 +130,12 @@ export class ExceptionalStrengthRule extends BaseRule {
   readonly priority = 15;
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const creationData = context.getTemporary('character-creation') as CharacterCreationData;
-    const abilityScores = context.getTemporary('generated-ability-scores') as AbilityScores;
+    const creationData = context.getTemporary(
+      'character:creation:context'
+    ) as CharacterCreationData;
+    const abilityScores = context.getTemporary(
+      'character:creation:ability-scores'
+    ) as AbilityScores;
 
     if (!abilityScores) {
       return this.createFailureResult('No ability scores found for exceptional strength check');
@@ -144,7 +147,7 @@ export class ExceptionalStrengthRule extends BaseRule {
     );
 
     if (exceptionalStrength !== null) {
-      context.setTemporary('exceptional-strength', exceptionalStrength);
+      context.setTemporary('character:creation:exceptional-strength', exceptionalStrength);
 
       return this.createSuccessResult(
         `Rolled exceptional strength: 18/${exceptionalStrength.toString().padStart(2, '0')}`,
@@ -158,8 +161,12 @@ export class ExceptionalStrengthRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     if (command.type !== COMMAND_TYPES.CREATE_CHARACTER) return false;
 
-    const abilityScores = context.getTemporary('generated-ability-scores') as AbilityScores;
-    const creationData = context.getTemporary('character-creation') as CharacterCreationData;
+    const abilityScores = context.getTemporary(
+      'character:creation:ability-scores'
+    ) as AbilityScores;
+    const creationData = context.getTemporary(
+      'character:creation:context'
+    ) as CharacterCreationData;
 
     return (
       abilityScores?.strength === 18 &&
@@ -191,8 +198,12 @@ export class RacialAbilityAdjustmentRule extends BaseRule {
   readonly priority = 20;
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const creationData = context.getTemporary('character-creation') as CharacterCreationData;
-    const abilityScores = context.getTemporary('generated-ability-scores') as AbilityScores;
+    const creationData = context.getTemporary(
+      'character:creation:context'
+    ) as CharacterCreationData;
+    const abilityScores = context.getTemporary(
+      'character:creation:ability-scores'
+    ) as AbilityScores;
 
     if (!abilityScores) {
       return this.createFailureResult('No ability scores found for racial adjustment');
@@ -210,7 +221,7 @@ export class RacialAbilityAdjustmentRule extends BaseRule {
       );
     }
 
-    context.setTemporary('adjusted-ability-scores', adjustedScores);
+    context.setTemporary('character:creation:adjusted-scores', adjustedScores);
 
     const adjustmentMessage = this.getAdjustmentMessage(
       abilityScores,
@@ -231,8 +242,8 @@ export class RacialAbilityAdjustmentRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     if (command.type !== 'create-character') return false;
 
-    const abilityScores = context.getTemporary('generated-ability-scores');
-    const creationData = context.getTemporary('character-creation');
+    const abilityScores = context.getTemporary('character:creation:ability-scores');
+    const creationData = context.getTemporary('character:creation:context');
 
     return abilityScores != null && creationData != null;
   }

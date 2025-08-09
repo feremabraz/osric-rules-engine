@@ -1,7 +1,7 @@
-import { BaseCommand, type CommandResult } from '@osric/core/Command';
-import type { GameContext } from '@osric/core/GameContext';
-import { COMMAND_TYPES } from '@osric/types/constants';
-import type { Character } from '@osric/types/entities';
+import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { GameContext } from '../../core/GameContext';
+import { COMMAND_TYPES } from '../../types/constants';
+import type { Character } from '../../types/entities';
 
 export interface SavingThrowParameters {
   characterId: string;
@@ -25,11 +25,13 @@ export interface SavingThrowParameters {
   description?: string;
 }
 
-export class SavingThrowCommand extends BaseCommand {
+export class SavingThrowCommand extends BaseCommand<SavingThrowParameters> {
   readonly type = COMMAND_TYPES.SAVING_THROW;
+  readonly parameters: SavingThrowParameters;
 
-  constructor(private parameters: SavingThrowParameters) {
-    super(parameters.characterId);
+  constructor(parameters: SavingThrowParameters) {
+    super(parameters, parameters.characterId);
+    this.parameters = parameters;
   }
 
   async execute(context: GameContext): Promise<CommandResult> {
@@ -124,7 +126,7 @@ export class SavingThrowCommand extends BaseCommand {
   }
 
   canExecute(context: GameContext): boolean {
-    return this.validateEntities(context);
+    return this.validateEntitiesExist(context);
   }
 
   getRequiredRules(): string[] {

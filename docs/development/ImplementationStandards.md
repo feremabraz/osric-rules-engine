@@ -68,7 +68,7 @@ export class ActionRule extends BaseRule {
     }
 
     // 2. Check required data exists
-    const actionData = this.getTemporaryData<ActionParams>(context, 'action-params');
+    const actionData = this.getRequiredContext<ActionParams>(context, 'action-params');
     if (!actionData) {
       return false;
     }
@@ -79,7 +79,7 @@ export class ActionRule extends BaseRule {
 
   async execute(context: GameContext, command: Command): Promise<RuleResult> {
     // 1. Get and validate data
-    const actionData = this.getTemporaryData<ActionParams>(context, 'action-params');
+    const actionData = this.getRequiredContext<ActionParams>(context, 'action-params');
     const character = context.getEntity<Character>(actionData.characterId);
     
     if (!actionData || !character) {

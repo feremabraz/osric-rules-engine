@@ -1,7 +1,7 @@
-import { BaseCommand, type CommandResult } from '@osric/core/Command';
-import type { GameContext } from '@osric/core/GameContext';
-import { COMMAND_TYPES } from '@osric/types/constants';
-import type { Character } from '@osric/types/entities';
+import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { GameContext } from '../../core/GameContext';
+import { COMMAND_TYPES } from '../../types/constants';
+import type { Character } from '../../types/entities';
 
 export interface FallingDamageParameters {
   characterId: string;
@@ -17,11 +17,13 @@ export interface FallingDamageParameters {
   description?: string;
 }
 
-export class FallingDamageCommand extends BaseCommand {
+export class FallingDamageCommand extends BaseCommand<FallingDamageParameters> {
   readonly type = COMMAND_TYPES.FALLING_DAMAGE;
+  readonly parameters: FallingDamageParameters;
 
-  constructor(private parameters: FallingDamageParameters) {
-    super(parameters.characterId);
+  constructor(parameters: FallingDamageParameters, actorId: string, targetIds: string[] = []) {
+    super(parameters, actorId, targetIds);
+    this.parameters = parameters;
   }
 
   async execute(context: GameContext): Promise<CommandResult> {
@@ -145,7 +147,7 @@ export class FallingDamageCommand extends BaseCommand {
   }
 
   canExecute(context: GameContext): boolean {
-    return this.validateEntities(context);
+    return this.validateEntitiesExist(context);
   }
 
   getRequiredRules(): string[] {

@@ -1,7 +1,7 @@
-import { BaseCommand, type CommandResult } from '@osric/core/Command';
-import type { GameContext } from '@osric/core/GameContext';
-import { COMMAND_TYPES } from '@osric/types/constants';
-import type { Monster } from '@osric/types/entities';
+import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { GameContext } from '../../core/GameContext';
+import { COMMAND_TYPES } from '../../types/constants';
+import type { Monster } from '../../types/entities';
 
 export interface MonsterGenerationParameters {
   terrainType:
@@ -37,11 +37,13 @@ export interface MonsterTemplate {
   specialAbilities?: string[];
 }
 
-export class MonsterGenerationCommand extends BaseCommand {
+export class MonsterGenerationCommand extends BaseCommand<MonsterGenerationParameters> {
   readonly type = COMMAND_TYPES.MONSTER_GENERATION;
+  readonly parameters: MonsterGenerationParameters;
 
-  constructor(private parameters: MonsterGenerationParameters) {
-    super(`monster-gen-${Date.now()}`);
+  constructor(parameters: MonsterGenerationParameters, actorId: string, targetIds: string[] = []) {
+    super(parameters, actorId, targetIds);
+    this.parameters = parameters;
   }
 
   async execute(context: GameContext): Promise<CommandResult> {

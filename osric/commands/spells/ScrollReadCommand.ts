@@ -1,17 +1,22 @@
-import { BaseCommand, type CommandResult } from '@osric/core/Command';
-import type { GameContext } from '@osric/core/GameContext';
+import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { GameContext } from '../../core/GameContext';
+
 import type { Character, Item } from '@osric/types';
-import { COMMAND_TYPES } from '@osric/types/constants';
+import { COMMAND_TYPES } from '../../types/constants';
 
-export class ScrollReadCommand extends BaseCommand {
+export interface ScrollReadParameters {
+  readerId: string;
+  scrollId: string;
+  targetIds?: string[];
+}
+
+export class ScrollReadCommand extends BaseCommand<ScrollReadParameters> {
   public readonly type = COMMAND_TYPES.READ_SCROLL;
+  readonly parameters: ScrollReadParameters;
 
-  constructor(
-    readerId: string,
-    private scrollId: string,
-    targetIds: string[] = []
-  ) {
-    super(readerId, targetIds);
+  constructor(parameters: ScrollReadParameters, actorId: string, targetIds: string[] = []) {
+    super(parameters, actorId, targetIds);
+    this.parameters = parameters;
   }
 
   public async execute(context: GameContext): Promise<CommandResult> {
@@ -21,20 +26,20 @@ export class ScrollReadCommand extends BaseCommand {
         return this.createFailureResult(`Reader with ID ${this.actorId} not found.`);
       }
 
-      const scroll = context.getItem(this.scrollId);
+      const scroll = context.getItem(this.parameters.scrollId);
       if (!scroll) {
-        return this.createFailureResult(`Scroll with ID ${this.scrollId} not found.`);
+        return this.createFailureResult(`Scroll with ID ${this.parameters.scrollId} not found.`);
       }
 
       if (!this.hasScroll(reader, scroll)) {
         return this.createFailureResult(`${reader.name} does not have the scroll ${scroll.name}.`);
       }
 
-      context.setTemporary('readScroll_reader', reader);
-      context.setTemporary('readScroll_scroll', scroll);
-      context.setTemporary('readScroll_targets', this.getTargets(context));
+      context.setTemporary('spell:scroll:reader', reader);
+      context.setTemporary('spell:scroll:item', scroll);
+      context.setTemporary('spell:cast:targets', this.getTargets(context));
 
-      context.setTemporary('readScroll_result', null);
+      context.setTemporary('spell:scroll:context', null);
 
       return this.createSuccessResult(`${reader.name} attempts to read ${scroll.name}`, {
         scroll: scroll.name,
@@ -49,7 +54,7 @@ export class ScrollReadCommand extends BaseCommand {
   }
 
   public canExecute(context: GameContext): boolean {
-    if (!this.validateEntities(context)) {
+    if (!this.validateEntitiesExist(context)) {
       return false;
     }
 
@@ -58,7 +63,7 @@ export class ScrollReadCommand extends BaseCommand {
       return false;
     }
 
-    const scroll = context.getItem(this.scrollId);
+    const scroll = context.getItem(this.parameters.scrollId);
     if (!scroll) {
       return false;
     }

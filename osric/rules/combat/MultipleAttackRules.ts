@@ -33,7 +33,7 @@ export class MultipleAttackRule extends BaseRule {
   name = 'multiple-attack';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const attackContext = context.getTemporary('attack-context') as AttackContext;
+    const attackContext = context.getTemporary('combat:attack:context') as AttackContext;
 
     if (!attackContext) {
       return this.createFailureResult('No attack context found');
@@ -66,7 +66,7 @@ export class MultipleAttackRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     if (command.type !== COMMAND_TYPES.ATTACK) return false;
 
-    const attackContext = context.getTemporary('attack-context') as AttackContext;
+    const attackContext = context.getTemporary('combat:attack:context') as AttackContext;
     if (!attackContext) return false;
 
     const attacksPerRound = this.getAttacksPerRound(
@@ -244,7 +244,7 @@ export class AttackPrecedenceRule extends BaseRule {
   name = 'attack-precedence';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const attackContext = context.getTemporary('attack-context') as AttackContext;
+    const attackContext = context.getTemporary('combat:attack:context') as AttackContext;
 
     if (!attackContext) {
       return this.createFailureResult('No attack context found');
@@ -266,7 +266,7 @@ export class AttackPrecedenceRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     if (command.type !== COMMAND_TYPES.ATTACK) return false;
 
-    const attackContext = context.getTemporary('attack-context') as AttackContext;
+    const attackContext = context.getTemporary('combat:attack:context') as AttackContext;
     return attackContext !== null;
   }
 

@@ -18,7 +18,7 @@ export class LevelProgressionRule extends BaseRule {
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const levelData = context.getTemporary<LevelUpParameters>('level-up-params');
+    const levelData = context.getTemporary<LevelUpParameters>('character:level:up-params');
 
     if (!levelData) {
       return this.createFailureResult('No level up data provided');

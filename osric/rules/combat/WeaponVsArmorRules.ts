@@ -27,7 +27,9 @@ export class WeaponVsArmorRule extends BaseRule {
   name = 'weapon-vs-armor';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const weaponArmorContext = context.getTemporary('weapon-armor-context') as WeaponVsArmorContext;
+    const weaponArmorContext = context.getTemporary(
+      'combat:weapon-armor:context'
+    ) as WeaponVsArmorContext;
 
     if (!weaponArmorContext) {
       return this.createFailureResult('No weapon vs armor context found');
@@ -50,7 +52,9 @@ export class WeaponVsArmorRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     if (command.type !== COMMAND_TYPES.ATTACK) return false;
 
-    const weaponArmorContext = context.getTemporary('weapon-armor-context') as WeaponVsArmorContext;
+    const weaponArmorContext = context.getTemporary(
+      'combat:weapon-armor:context'
+    ) as WeaponVsArmorContext;
     return weaponArmorContext !== null;
   }
 
@@ -150,7 +154,7 @@ export class WeaponTypeRule extends BaseRule {
   name = 'weapon-type';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const weapon = context.getTemporary('weapon') as Weapon;
+    const weapon = context.getTemporary('combat:attack:weapon') as Weapon;
 
     if (!weapon) {
       return this.createFailureResult('No weapon found in context');
@@ -171,7 +175,7 @@ export class WeaponTypeRule extends BaseRule {
     if (command.type !== COMMAND_TYPES.ATTACK && command.type !== COMMAND_TYPES.CHECK_WEAPON_TYPE)
       return false;
 
-    const weapon = context.getTemporary('weapon') as Weapon;
+    const weapon = context.getTemporary('combat:attack:weapon') as Weapon;
     return weapon !== null;
   }
 
@@ -228,7 +232,7 @@ export class ArmorCategoryRule extends BaseRule {
   name = 'armor-category';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const target = context.getTemporary('target') as CharacterData | MonsterData;
+    const target = context.getTemporary('combat:attack:target') as CharacterData | MonsterData;
 
     if (!target) {
       return this.createFailureResult('No target found in context');
@@ -249,7 +253,7 @@ export class ArmorCategoryRule extends BaseRule {
     if (command.type !== COMMAND_TYPES.ATTACK && command.type !== COMMAND_TYPES.CHECK_ARMOR)
       return false;
 
-    const target = context.getTemporary('target') as CharacterData | MonsterData;
+    const target = context.getTemporary('combat:attack:target') as CharacterData | MonsterData;
     return target !== null;
   }
 

@@ -51,16 +51,12 @@ export class ReactionRules extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     return (
       this.isCommandType(command, COMMAND_TYPES.REACTION_ROLL) &&
-      this.getTemporaryData<ReactionRollParams>(context, 'reaction-roll-params') !== null
+      this.getOptionalContext<ReactionRollParams>(context, 'reaction-roll-params') !== null
     );
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const params = this.getTemporaryData<ReactionRollParams>(context, 'reaction-roll-params');
-
-    if (!params) {
-      return this.createFailureResult('No reaction roll data provided');
-    }
+    const params = this.getRequiredContext<ReactionRollParams>(context, 'reaction-roll-params');
 
     const character = context.getEntity<Character>(params.characterId);
     if (!character) {
@@ -78,7 +74,7 @@ export class ReactionRules extends BaseRule {
 
     const reactionResult = this.determineReaction(finalResult, params.interactionType);
 
-    this.setTemporaryData(context, 'last-reaction-result', reactionResult);
+    this.setContext(context, 'last-reaction-result', reactionResult);
 
     const modifierStr = totalModifier >= 0 ? `+${totalModifier}` : `${totalModifier}`;
 

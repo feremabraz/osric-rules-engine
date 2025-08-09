@@ -1,5 +1,6 @@
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
+
 import type { Character, Item, Spell } from '@osric/types';
 import { RULE_NAMES } from '@osric/types/constants';
 
@@ -8,21 +9,17 @@ export class ComponentTrackingRules extends BaseRule {
   public readonly description = 'Validates and tracks spell component requirements';
 
   public canApply(context: GameContext): boolean {
-    const caster = context.getTemporary<Character>('castSpell_caster');
-    const spell = context.getTemporary<Spell>('castSpell_spell');
+    const caster = this.getOptionalContext<Character>(context, 'spell:cast:caster');
+    const spell = this.getOptionalContext<Spell>(context, 'spell:cast:spell');
     return !!(caster && spell);
   }
 
   public async execute(context: GameContext): Promise<RuleResult> {
     try {
-      const caster = context.getTemporary<Character>('castSpell_caster');
-      const spell = context.getTemporary<Spell>('castSpell_spell');
+      const caster = this.getRequiredContext<Character>(context, 'spell:cast:caster');
+      const spell = this.getRequiredContext<Spell>(context, 'spell:cast:spell');
       const overrideComponents =
-        context.getTemporary<boolean>('castSpell_overrideComponents') || false;
-
-      if (!caster || !spell) {
-        return this.createFailureResult('Missing caster or spell in context');
-      }
+        this.getOptionalContext<boolean>(context, 'spell:cast:components') || false;
 
       if (overrideComponents) {
         return this.createSuccessResult('Component requirements overridden');
