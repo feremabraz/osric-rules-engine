@@ -1,3 +1,5 @@
+// Unified public types are re-exported from './entities' only.
+
 export type { Command, CommandResult } from '../core/Command';
 export type { Rule, RuleResult } from '../core/Rule';
 export type { RuleChain } from '../core/RuleChain';
@@ -37,6 +39,17 @@ export type {
   WeaponProficiency,
   WeaponSpecialization,
   CharacterSecondarySkill,
+  AttackRoll,
+  Damage,
+  GameTime,
+  Position,
+  Movement,
+  // Branded IDs and helper
+  Brand,
+  CharacterId,
+  ItemId,
+  MonsterId,
+  SpellId,
 } from './entities';
 
 export type {
@@ -108,6 +121,18 @@ export { Character as EnhancedCharacter, CharacterFactory } from '../entities/Ch
 export { Monster as EnhancedMonster, MonsterFactory } from '../entities/Monster';
 export { Item as EnhancedItem, ItemFactory } from '../entities/Item';
 export { Spell as EnhancedSpell, SpellFactory } from '../entities/Spell';
+
+// Branded ID utilities (Phase 3)
+export {
+  createCharacterId,
+  createItemId,
+  createMonsterId,
+  createSpellId,
+  isCharacterId,
+  isItemId,
+  isMonsterId,
+  isSpellId,
+} from './id-utils';
 
 export interface Result<T, E = Error> {
   success: boolean;

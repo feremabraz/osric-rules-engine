@@ -96,15 +96,22 @@ export namespace RuleContractValidator {
    */
   export function validateAllContracts(ruleEngine: RuleEngine): RuleContractValidationResult {
     const issues: string[] = [];
-    const registeredRules = new Set(Object.keys(ruleEngine.getRegisteredChains()));
+    // Build a map of commandType -> Set(ruleNames in its chain)
+    const chains = ruleEngine.getRegisteredChains();
+    const chainRuleNamesByCommand: Record<string, Set<string>> = {};
+    for (const [commandType, info] of Object.entries(chains)) {
+      chainRuleNamesByCommand[commandType] = new Set(info.ruleNames);
+    }
     const missingRules = new Set<string>();
     const commandsWithIssues = new Set<string>();
 
-    // Validate each command type
-    for (const [commandType, requiredRules] of Object.entries(COMMAND_RULE_CONTRACTS)) {
+    // Validate only command types that have a registered chain
+    for (const commandType of Object.keys(chainRuleNamesByCommand)) {
+      const requiredRules = COMMAND_RULE_CONTRACTS[commandType] || [];
+      const chainRuleNames = chainRuleNamesByCommand[commandType];
       for (const ruleName of requiredRules) {
-        // Check if rule is registered in RuleEngine
-        if (!registeredRules.has(ruleName)) {
+        // Check if rule exists within the command's rule chain
+        if (!chainRuleNames.has(ruleName)) {
           missingRules.add(ruleName);
           issues.push(
             `Command '${commandType}' requires rule '${ruleName}' which is not registered in RuleEngine`
@@ -156,11 +163,14 @@ export namespace RuleContractValidator {
     missingRules: Record<string, string[]>; // rule -> [commands that need it]
   } {
     const missingRules: Record<string, string[]> = {};
-    const registeredRules = new Set(Object.keys(ruleEngine.getRegisteredChains()));
+    const chains = ruleEngine.getRegisteredChains();
 
-    for (const [commandType, requiredRules] of Object.entries(COMMAND_RULE_CONTRACTS)) {
+    // Consider only commands with registered chains
+    for (const commandType of Object.keys(chains)) {
+      const requiredRules = COMMAND_RULE_CONTRACTS[commandType] || [];
+      const chainRuleNames = new Set(chains[commandType].ruleNames);
       for (const ruleName of requiredRules) {
-        if (!registeredRules.has(ruleName)) {
+        if (!chainRuleNames.has(ruleName)) {
           if (!missingRules[ruleName]) {
             missingRules[ruleName] = [];
           }
@@ -180,11 +190,11 @@ export namespace RuleContractValidator {
     ruleEngine: RuleEngine
   ): { valid: boolean; issues: string[] } {
     const issues: string[] = [];
-    const registeredRules = new Set(Object.keys(ruleEngine.getRegisteredChains()));
     const requiredRules = COMMAND_RULE_CONTRACTS[commandType] || [];
+    const chainRuleNames = new Set(ruleEngine.getRegisteredChains()[commandType]?.ruleNames || []);
 
     for (const ruleName of requiredRules) {
-      if (!registeredRules.has(ruleName)) {
+      if (!chainRuleNames.has(ruleName)) {
         issues.push(`Required rule '${ruleName}' is not registered`);
       }
     }
@@ -220,7 +230,12 @@ export namespace RuleContractValidator {
    * Gets all rule names that are referenced by commands but not yet implemented.
    */
   export function getUnimplementedRules(ruleEngine: RuleEngine): string[] {
-    const registeredRules = new Set(Object.keys(ruleEngine.getRegisteredChains()));
+    // Union of all rule names across all chains
+    const chains = ruleEngine.getRegisteredChains();
+    const implementedRuleNames = new Set<string>();
+    for (const info of Object.values(chains)) {
+      for (const rn of info.ruleNames) implementedRuleNames.add(rn);
+    }
     const allReferencedRules = new Set<string>();
 
     // Collect all referenced rules
@@ -232,7 +247,7 @@ export namespace RuleContractValidator {
 
     // Find rules that are referenced but not implemented
     return Array.from(allReferencedRules)
-      .filter((ruleName) => !registeredRules.has(ruleName))
+      .filter((ruleName) => !implementedRuleNames.has(ruleName))
       .sort();
   }
 
@@ -246,7 +261,11 @@ export namespace RuleContractValidator {
     missingRules: number;
     coveragePercentage: number;
   } {
-    const registeredRules = new Set(Object.keys(ruleEngine.getRegisteredChains()));
+    const chains = ruleEngine.getRegisteredChains();
+    const implementedRuleNames = new Set<string>();
+    for (const info of Object.values(chains)) {
+      for (const rn of info.ruleNames) implementedRuleNames.add(rn);
+    }
     const allReferencedRules = new Set<string>();
 
     // Collect all referenced rules
@@ -257,7 +276,7 @@ export namespace RuleContractValidator {
     }
 
     const implementedCount = Array.from(allReferencedRules).filter((ruleName) =>
-      registeredRules.has(ruleName)
+      implementedRuleNames.has(ruleName)
     ).length;
 
     return {

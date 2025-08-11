@@ -1,4 +1,4 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
+import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 
 import type { Character, Spell } from '@osric/types';
@@ -15,7 +15,7 @@ export class MemorizeSpellCommand extends BaseCommand<MemorizeSpellParameters> {
   public readonly type = COMMAND_TYPES.MEMORIZE_SPELL;
   readonly parameters: MemorizeSpellParameters;
 
-  constructor(parameters: MemorizeSpellParameters, actorId: string, targetIds: string[] = []) {
+  constructor(parameters: MemorizeSpellParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
   }

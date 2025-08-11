@@ -15,7 +15,7 @@ export class AbilityScoreGenerationRule extends BaseRule {
   readonly name = RULE_NAMES.ABILITY_SCORE_GENERATION;
   readonly priority = 10;
 
-  async execute(context: GameContext, _command: Command): Promise<RuleResult> {
+  async apply(context: GameContext, _command: Command): Promise<RuleResult> {
     const creationData = this.getRequiredContext<CharacterCreationData>(
       context,
       'character:creation:params'
@@ -67,8 +67,8 @@ export class AbilityScoreGenerationRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     if (command.type !== COMMAND_TYPES.CREATE_CHARACTER) return false;
 
-    const creationData = context.getTemporary('character:creation:context');
-    return creationData != null;
+    const creationParams = context.getTemporary('character:creation:params');
+    return creationParams != null;
   }
 
   private generateStandard3d6(): AbilityScores {
@@ -129,10 +129,8 @@ export class ExceptionalStrengthRule extends BaseRule {
   readonly name = RULE_NAMES.ABILITY_SCORE_MODIFIERS;
   readonly priority = 15;
 
-  async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const creationData = context.getTemporary(
-      'character:creation:context'
-    ) as CharacterCreationData;
+  async apply(context: GameContext, _command: Command): Promise<RuleResult> {
+    const creationData = context.getTemporary('character:creation:params') as CharacterCreationData;
     const abilityScores = context.getTemporary(
       'character:creation:ability-scores'
     ) as AbilityScores;
@@ -164,14 +162,14 @@ export class ExceptionalStrengthRule extends BaseRule {
     const abilityScores = context.getTemporary(
       'character:creation:ability-scores'
     ) as AbilityScores;
-    const creationData = context.getTemporary(
-      'character:creation:context'
+    const creationParams = context.getTemporary(
+      'character:creation:params'
     ) as CharacterCreationData;
 
     return (
       abilityScores?.strength === 18 &&
-      creationData &&
-      this.canHaveExceptionalStrength(creationData.characterClass)
+      creationParams &&
+      this.canHaveExceptionalStrength(creationParams.characterClass)
     );
   }
 
@@ -197,10 +195,8 @@ export class RacialAbilityAdjustmentRule extends BaseRule {
   readonly name = RULE_NAMES.RACIAL_ABILITIES;
   readonly priority = 20;
 
-  async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const creationData = context.getTemporary(
-      'character:creation:context'
-    ) as CharacterCreationData;
+  async apply(context: GameContext, _command: Command): Promise<RuleResult> {
+    const creationData = context.getTemporary('character:creation:params') as CharacterCreationData;
     const abilityScores = context.getTemporary(
       'character:creation:ability-scores'
     ) as AbilityScores;
@@ -240,10 +236,10 @@ export class RacialAbilityAdjustmentRule extends BaseRule {
   }
 
   canApply(context: GameContext, command: Command): boolean {
-    if (command.type !== 'create-character') return false;
+    if (command.type !== COMMAND_TYPES.CREATE_CHARACTER) return false;
 
     const abilityScores = context.getTemporary('character:creation:ability-scores');
-    const creationData = context.getTemporary('character:creation:context');
+    const creationData = context.getTemporary('character:creation:params');
 
     return abilityScores != null && creationData != null;
   }

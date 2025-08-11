@@ -1,4 +1,4 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
+import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
 import type { Monster } from '../../types/entities';
@@ -41,7 +41,11 @@ export class MonsterGenerationCommand extends BaseCommand<MonsterGenerationParam
   readonly type = COMMAND_TYPES.MONSTER_GENERATION;
   readonly parameters: MonsterGenerationParameters;
 
-  constructor(parameters: MonsterGenerationParameters, actorId: string, targetIds: string[] = []) {
+  constructor(
+    parameters: MonsterGenerationParameters,
+    actorId: EntityId,
+    targetIds: EntityId[] = []
+  ) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
   }

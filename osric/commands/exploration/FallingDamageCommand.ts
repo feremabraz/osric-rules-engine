@@ -1,10 +1,11 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { CharacterId } from '@osric/types';
+import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
 import type { Character } from '../../types/entities';
 
 export interface FallingDamageParameters {
-  characterId: string;
+  characterId: string | CharacterId;
   fallDistance: number;
   surfaceType?: 'soft' | 'normal' | 'hard' | 'spikes';
   circumstances?: {
@@ -21,7 +22,7 @@ export class FallingDamageCommand extends BaseCommand<FallingDamageParameters> {
   readonly type = COMMAND_TYPES.FALLING_DAMAGE;
   readonly parameters: FallingDamageParameters;
 
-  constructor(parameters: FallingDamageParameters, actorId: string, targetIds: string[] = []) {
+  constructor(parameters: FallingDamageParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
   }

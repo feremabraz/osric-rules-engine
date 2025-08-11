@@ -2,21 +2,22 @@ import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { calculateMonsterXP } from '@osric/core/MonsterXP';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import type { CharacterId, MonsterId } from '@osric/types';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 import type { Character, Monster } from '@osric/types/entities';
 
 interface ExperienceGainParameters {
-  characterId: string;
+  characterId: string | CharacterId;
   experienceSource: {
     type: 'combat' | 'treasure' | 'story' | 'other';
     amount?: number;
-    monsters?: Monster[];
+    monsters?: Array<Monster | string | MonsterId>;
     treasureValue?: number;
     description?: string;
   };
   partyShare?: {
     enabled: boolean;
-    partyMemberIds: string[];
+    partyMemberIds: Array<string | CharacterId>;
     equalShare: boolean;
   };
 }
@@ -29,7 +30,7 @@ export class ExperienceGainRule extends BaseRule {
     return command.type === COMMAND_TYPES.GAIN_EXPERIENCE;
   }
 
-  async execute(context: GameContext, _command: Command): Promise<RuleResult> {
+  async apply(context: GameContext, _command: Command): Promise<RuleResult> {
     const gainData = context.getTemporary<ExperienceGainParameters>(
       'character:experience:gain-params'
     );
@@ -52,7 +53,8 @@ export class ExperienceGainRule extends BaseRule {
           if (gainData.experienceSource.monsters) {
             baseExperience = this.calculateCombatXP(
               gainData.experienceSource.monsters,
-              gainData.partyShare
+              gainData.partyShare,
+              context
             );
             modifiers.push(`Combat XP from ${gainData.experienceSource.monsters.length} monsters`);
           }
@@ -107,12 +109,16 @@ export class ExperienceGainRule extends BaseRule {
   }
 
   private calculateCombatXP(
-    monsters: Monster[],
-    partyShare?: ExperienceGainParameters['partyShare']
+    monsters: Array<Monster | string | MonsterId>,
+    partyShare: ExperienceGainParameters['partyShare'] | undefined,
+    context: GameContext
   ): number {
     let totalXP = 0;
 
-    for (const monster of monsters) {
+    for (const m of monsters) {
+      const monster: Monster | undefined =
+        typeof m === 'string' ? (context.getEntity<Monster>(m) ?? undefined) : (m as Monster);
+      if (!monster) continue;
       const monsterXP = calculateMonsterXP(monster);
       totalXP += monsterXP;
     }

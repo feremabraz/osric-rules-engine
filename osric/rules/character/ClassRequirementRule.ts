@@ -1,6 +1,7 @@
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import { RULE_NAMES } from '@osric/types/constants';
 
 import type { AbilityScores, CharacterClass } from '@osric/types/entities';
 
@@ -17,7 +18,7 @@ export interface ClassRequirementResult {
 }
 
 export class ClassRequirementRule extends BaseRule {
-  readonly name = 'class-requirement-validation';
+  readonly name = RULE_NAMES.CLASS_REQUIREMENTS;
   readonly priority = 750;
 
   canApply(context: GameContext, command: Command<ClassRequirementParameters>): boolean {

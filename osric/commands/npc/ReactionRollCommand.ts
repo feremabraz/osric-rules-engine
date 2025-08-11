@@ -1,11 +1,12 @@
 import type { ReactionRollParams } from '@osric/rules/npc/ReactionRules';
-import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { CharacterId, MonsterId } from '@osric/types';
+import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
-import { COMMAND_TYPES } from '../../types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
 
 export interface ReactionRollParameters {
-  characterId: string;
-  targetId: string;
+  characterId: string | CharacterId | MonsterId;
+  targetId: string | CharacterId | MonsterId;
   interactionType: ReactionRollParams['interactionType'];
   modifiers?: ReactionRollParams['modifiers'];
   isPartySpokesperson?: boolean;
@@ -15,7 +16,7 @@ export class ReactionRollCommand extends BaseCommand<ReactionRollParameters> {
   readonly type = COMMAND_TYPES.REACTION_ROLL;
   readonly parameters: ReactionRollParameters;
 
-  constructor(parameters: ReactionRollParameters, actorId: string, targetIds: string[] = []) {
+  constructor(parameters: ReactionRollParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
   }
@@ -53,7 +54,7 @@ export class ReactionRollCommand extends BaseCommand<ReactionRollParameters> {
   }
 
   getRequiredRules(): string[] {
-    return ['reaction-roll'];
+    return [RULE_NAMES.REACTION_ROLL];
   }
 
   protected setupContextData(context: GameContext): void {

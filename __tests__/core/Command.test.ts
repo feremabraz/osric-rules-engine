@@ -248,6 +248,39 @@ describe('BaseCommand', () => {
       expect(result.data).toBeUndefined();
       expect(result.success).toBe(true);
     });
+
+    it('should set character creation temp keys and brand characterId', async () => {
+      const { CreateCharacterCommand } = await import(
+        '@osric/commands/character/CreateCharacterCommand'
+      );
+      const { createStore } = await import('jotai');
+      const { GameContext } = await import('@osric/core/GameContext');
+      const { isCharacterId } = await import('@osric/types');
+
+      const store = createStore();
+      const ctx = new GameContext(store);
+
+      const cmd = new CreateCharacterCommand(
+        {
+          name: 'Test',
+          race: 'Human',
+          characterClass: 'Fighter',
+          alignment: 'Lawful Good',
+          abilityScoreMethod: 'standard3d6',
+        },
+        'gm'
+      );
+
+      const res = await cmd.execute(ctx);
+      expect(res.success).toBe(true);
+
+      const creationCtx = ctx.getTemporary<{ characterId: string }>('character:creation:context');
+      const creationParams = ctx.getTemporary<Record<string, unknown>>('character:creation:params');
+      expect(creationCtx).not.toBeNull();
+      expect(creationParams).not.toBeNull();
+      expect((creationParams?.name as string) || '').toBe('Test');
+      expect(creationCtx && isCharacterId(creationCtx.characterId)).toBe(true);
+    });
   });
 
   describe('Entity Validation', () => {

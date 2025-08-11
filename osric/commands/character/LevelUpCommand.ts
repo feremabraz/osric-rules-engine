@@ -6,14 +6,14 @@ import {
   getTrainingRequirements,
   meetsTrainingRequirements,
 } from '@osric/rules/experience/LevelProgressionRules.js';
-import { BaseCommand, type CommandResult } from '../../core/Command';
+import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import { DiceEngine } from '../../core/Dice';
 import type { GameContext } from '../../core/GameContext';
-import { COMMAND_TYPES } from '../../types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
 import type { Character } from '../../types/entities';
 
 export interface LevelUpParameters {
-  characterId: string;
+  characterId: string | import('@osric/types').CharacterId;
   targetLevel?: number;
   bypassTraining?: boolean;
   trainerDetails?: {
@@ -29,7 +29,7 @@ export class LevelUpCommand extends BaseCommand<LevelUpParameters> {
   readonly parameters: LevelUpParameters;
 
   constructor(parameters: LevelUpParameters) {
-    super(parameters, parameters.characterId);
+    super(parameters, parameters.characterId as EntityId);
     this.parameters = parameters;
   }
 
@@ -120,7 +120,11 @@ export class LevelUpCommand extends BaseCommand<LevelUpParameters> {
   }
 
   getRequiredRules(): string[] {
-    return ['level-progression', 'training-requirements', 'hit-point-advancement'];
+    return [
+      RULE_NAMES.LEVEL_PROGRESSION,
+      RULE_NAMES.TRAINING_REQUIREMENTS,
+      RULE_NAMES.HIT_POINT_ADVANCEMENT,
+    ];
   }
 
   private validateTrainingRequirements(

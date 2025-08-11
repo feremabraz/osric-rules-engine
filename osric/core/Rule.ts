@@ -1,15 +1,26 @@
 import type { Command } from './Command';
 import type { GameContext } from './GameContext';
 
-export interface RuleResult {
-  success: boolean;
+export interface BaseRuleResult {
+  kind: 'success' | 'failure';
+  success: boolean; // retained for backward compatibility
   message: string;
   stopChain?: boolean;
   critical?: boolean;
   data?: Record<string, unknown>;
   effects?: string[];
   damage?: number[];
+  // Optional sub-discriminant for payload semantics (Phase 4 deepening)
+  dataKind?: string;
 }
+
+export type SuccessRuleResult = BaseRuleResult & {
+  kind: 'success';
+  success: true;
+  critical?: false;
+};
+export type FailureRuleResult = BaseRuleResult & { kind: 'failure'; success: false };
+export type RuleResult = SuccessRuleResult | FailureRuleResult;
 
 export interface Rule {
   readonly name: string;
@@ -67,17 +78,27 @@ export abstract class BaseRule implements Rule {
     data?: Record<string, unknown>,
     effects?: string[],
     damage?: number[],
-    stopChain = false
-  ): RuleResult {
-    return { success: true, message, data, effects, damage, stopChain };
+    stopChain = false,
+    dataKind?: string
+  ): SuccessRuleResult {
+    return { kind: 'success', success: true, message, data, effects, damage, stopChain, dataKind };
   }
 
   protected createFailureResult(
     message: string,
     data?: Record<string, unknown>,
-    critical = false
-  ): RuleResult {
-    return { success: false, message, data, critical, stopChain: critical };
+    critical = false,
+    dataKind?: string
+  ): FailureRuleResult {
+    return {
+      kind: 'failure',
+      success: false,
+      message,
+      data,
+      critical,
+      stopChain: critical,
+      dataKind,
+    };
   }
 
   protected isCommandType(command: Command, type: string): boolean {

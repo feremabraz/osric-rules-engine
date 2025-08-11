@@ -1,11 +1,11 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
+import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
 import type { Character as CharacterData, Monster as MonsterData } from '../../types/entities';
 
 export interface GrappleParameters {
-  attackerId: string;
-  targetId: string;
+  attackerId: string | import('@osric/types').CharacterId | import('@osric/types').MonsterId;
+  targetId: string | import('@osric/types').CharacterId | import('@osric/types').MonsterId;
   grappleType: 'standard' | 'overbearing';
   isChargedAttack?: boolean;
   situationalModifiers?: number;
@@ -15,7 +15,7 @@ export class GrappleCommand extends BaseCommand<GrappleParameters> {
   readonly type = COMMAND_TYPES.GRAPPLE;
   readonly parameters: GrappleParameters;
 
-  constructor(parameters: GrappleParameters, actorId: string, targetIds: string[] = []) {
+  constructor(parameters: GrappleParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
   }

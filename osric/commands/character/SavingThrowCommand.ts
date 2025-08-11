@@ -1,10 +1,10 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
+import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
-import { COMMAND_TYPES } from '../../types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
 import type { Character } from '../../types/entities';
 
 export interface SavingThrowParameters {
-  characterId: string;
+  characterId: string | import('@osric/types').CharacterId;
   saveType:
     | 'paralyzation-poison-death'
     | 'petrification-polymorph'
@@ -30,7 +30,7 @@ export class SavingThrowCommand extends BaseCommand<SavingThrowParameters> {
   readonly parameters: SavingThrowParameters;
 
   constructor(parameters: SavingThrowParameters) {
-    super(parameters, parameters.characterId);
+    super(parameters, parameters.characterId as EntityId);
     this.parameters = parameters;
   }
 
@@ -76,7 +76,8 @@ export class SavingThrowCommand extends BaseCommand<SavingThrowParameters> {
         return this.createFailureResult('Cannot make saving throws while unconscious or dead');
       }
 
-      context.setTemporary('saving-throw-params', this.parameters);
+      // Normalize temporary key to the convention used by rules
+      context.setTemporary('character:saving-throw:params', this.parameters);
 
       const baseSaveNumber = this.getBaseSavingThrow(character, saveType);
 
@@ -130,7 +131,7 @@ export class SavingThrowCommand extends BaseCommand<SavingThrowParameters> {
   }
 
   getRequiredRules(): string[] {
-    return ['saving-throws'];
+    return [RULE_NAMES.SAVING_THROWS];
   }
 
   private getBaseSavingThrow(character: Character, saveType: string): number {

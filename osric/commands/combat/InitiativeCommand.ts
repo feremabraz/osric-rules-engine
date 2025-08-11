@@ -1,7 +1,8 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
+import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
 
+import type { CharacterId, ItemId, MonsterId } from '@osric/types';
 import type {
   Character as CharacterData,
   Monster as MonsterData,
@@ -10,9 +11,9 @@ import type {
 } from '../../types/entities';
 
 export interface InitiativeParameters {
-  entities: string[];
+  entities: Array<string | CharacterId | MonsterId>;
   initiativeType: 'individual' | 'group';
-  weapons?: Record<string, string>;
+  weapons?: Record<string, string | ItemId>;
   spells?: Record<string, string>;
   circumstanceModifiers?: Record<string, number>;
   isFirstRound?: boolean;
@@ -31,7 +32,7 @@ export class InitiativeCommand extends BaseCommand<InitiativeParameters> {
   readonly type = COMMAND_TYPES.INITIATIVE;
   readonly parameters: InitiativeParameters;
 
-  constructor(parameters: InitiativeParameters, actorId: string, targetIds: string[] = []) {
+  constructor(parameters: InitiativeParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
   }

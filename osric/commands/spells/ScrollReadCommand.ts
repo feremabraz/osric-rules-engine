@@ -1,20 +1,20 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
+import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 
-import type { Character, Item } from '@osric/types';
+import type { Character, CharacterId, Item, ItemId, MonsterId } from '@osric/types';
 import { COMMAND_TYPES } from '../../types/constants';
 
 export interface ScrollReadParameters {
-  readerId: string;
-  scrollId: string;
-  targetIds?: string[];
+  readerId: string | CharacterId;
+  scrollId: string | ItemId;
+  targetIds?: Array<string | CharacterId | MonsterId>;
 }
 
 export class ScrollReadCommand extends BaseCommand<ScrollReadParameters> {
   public readonly type = COMMAND_TYPES.READ_SCROLL;
   readonly parameters: ScrollReadParameters;
 
-  constructor(parameters: ScrollReadParameters, actorId: string, targetIds: string[] = []) {
+  constructor(parameters: ScrollReadParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
   }

@@ -2,16 +2,17 @@ import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule } from '@osric/core/Rule';
 import type { RuleResult } from '@osric/core/Rule';
+import type { CharacterId } from '@osric/types';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 import type { Character } from '@osric/types/entities';
 
 interface SearchRequest {
-  characterId: string;
+  characterId: string | CharacterId;
   searchType: 'secret_doors' | 'hidden_objects' | 'traps' | 'tracks' | 'general';
   area: string;
   timeSpent: number;
   thoroughness: 'hasty' | 'normal' | 'careful' | 'meticulous';
-  assistingCharacterIds?: string[];
+  assistingCharacterIds?: Array<string | CharacterId>;
 }
 
 interface SearchResult {

@@ -2,14 +2,14 @@ import {
   determineLevel,
   getExperienceForNextLevel,
 } from '@osric/rules/experience/LevelProgressionRules';
-import { BaseCommand, type CommandResult } from '../../core/Command';
+import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { calculateGroupXP, calculateMonsterXP } from '../../core/MonsterXP';
-import { COMMAND_TYPES } from '../../types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
 import type { Character, Monster } from '../../types/entities';
 
 export interface GainExperienceParameters {
-  characterId: string;
+  characterId: string | import('@osric/types').CharacterId;
   experienceSource: {
     type: 'combat' | 'treasure' | 'story' | 'other';
     amount?: number;
@@ -19,7 +19,7 @@ export interface GainExperienceParameters {
   };
   partyShare?: {
     enabled: boolean;
-    partyMemberIds: string[];
+    partyMemberIds: Array<string | import('@osric/types').CharacterId>;
     shareRatio?: number;
   };
   applyClassModifiers?: boolean;
@@ -30,7 +30,11 @@ export class GainExperienceCommand extends BaseCommand<GainExperienceParameters>
   readonly parameters: GainExperienceParameters;
 
   constructor(parameters: GainExperienceParameters) {
-    super(parameters, parameters.characterId, parameters.partyShare?.partyMemberIds || []);
+    super(
+      parameters,
+      parameters.characterId as EntityId,
+      (parameters.partyShare?.partyMemberIds as EntityId[]) || []
+    );
     this.parameters = parameters;
   }
 
@@ -170,7 +174,7 @@ export class GainExperienceCommand extends BaseCommand<GainExperienceParameters>
   }
 
   getRequiredRules(): string[] {
-    return ['experience-gain', 'level-progression'];
+    return [RULE_NAMES.EXPERIENCE_GAIN, RULE_NAMES.LEVEL_PROGRESSION];
   }
 
   private applyClassExperienceModifiers(character: Character, baseXP: number): number {
@@ -234,6 +238,7 @@ export class GainExperienceCommand extends BaseCommand<GainExperienceParameters>
       const member = context.getEntity<Character>(memberId);
       if (!member) {
         return {
+          kind: 'failure',
           success: false,
           message: `Party member with ID "${memberId}" not found`,
         };
@@ -243,6 +248,7 @@ export class GainExperienceCommand extends BaseCommand<GainExperienceParameters>
 
     if (validMembers.length === 0) {
       return {
+        kind: 'failure',
         success: false,
         message: 'No valid party members found for experience sharing',
       };
@@ -261,6 +267,7 @@ export class GainExperienceCommand extends BaseCommand<GainExperienceParameters>
     }
 
     return {
+      kind: 'success',
       success: true,
       message: 'Experience shares calculated',
       experienceShares,

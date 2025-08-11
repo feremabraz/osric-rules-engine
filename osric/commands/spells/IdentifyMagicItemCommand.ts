@@ -1,11 +1,13 @@
 import type { Character, Item } from '@osric/types';
-import { BaseCommand, type CommandResult } from '../../core/Command';
+import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
 
+import type { CharacterId, ItemId } from '@osric/types';
+
 export interface IdentifyMagicItemParameters {
-  identifierId: string;
-  itemId: string;
+  identifierId: string | CharacterId;
+  itemId: string | ItemId;
   method: 'spell' | 'sage' | 'trial';
 }
 
@@ -13,7 +15,11 @@ export class IdentifyMagicItemCommand extends BaseCommand<IdentifyMagicItemParam
   public readonly type = COMMAND_TYPES.IDENTIFY_MAGIC_ITEM;
   readonly parameters: IdentifyMagicItemParameters;
 
-  constructor(parameters: IdentifyMagicItemParameters, actorId: string, targetIds: string[] = []) {
+  constructor(
+    parameters: IdentifyMagicItemParameters,
+    actorId: EntityId,
+    targetIds: EntityId[] = []
+  ) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
   }

@@ -1,10 +1,11 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { CharacterId } from '@osric/types';
+import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
-import { COMMAND_TYPES } from '../../types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
 import type { Character, Spell } from '../../types/entities';
 
 export interface SpellResearchParameters {
-  characterId: string;
+  characterId: string | CharacterId;
   spellLevel: number;
   spellName: string;
   spellDescription: string;
@@ -46,7 +47,7 @@ export class SpellResearchCommand extends BaseCommand<SpellResearchParameters> {
   readonly type = COMMAND_TYPES.SPELL_RESEARCH;
   readonly parameters: SpellResearchParameters;
 
-  constructor(parameters: SpellResearchParameters, actorId: string, targetIds: string[] = []) {
+  constructor(parameters: SpellResearchParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
   }
@@ -166,7 +167,7 @@ export class SpellResearchCommand extends BaseCommand<SpellResearchParameters> {
   }
 
   getRequiredRules(): string[] {
-    return ['enchantment-rules', 'scroll-scribing'];
+    return [RULE_NAMES.SPELL_RESEARCH, RULE_NAMES.SPELL_EFFECTS];
   }
 
   private validateSpellResearcher(

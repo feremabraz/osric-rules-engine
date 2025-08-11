@@ -1,10 +1,11 @@
 import type { Command } from '@osric/core/Command';
 import type { CommandType } from '@osric/types/constants';
 import { COMMAND_TYPES } from '@osric/types/constants';
+import type { CharacterId, ItemId, MonsterId, SpellId } from './entities';
 
 export interface BaseCommandParams {
-  readonly actorId: string;
-  readonly targetIds?: string[];
+  readonly actorId: string | CharacterId | MonsterId;
+  readonly targetIds?: Array<string | CharacterId | MonsterId>;
 }
 
 export interface CreateCharacterParams extends BaseCommandParams {
@@ -28,30 +29,30 @@ export interface AssignAbilityScoresParams extends BaseCommandParams {
 }
 
 export interface AttackParams extends BaseCommandParams {
-  readonly targetId: string;
-  readonly weaponId?: string;
+  readonly targetId: string | CharacterId | MonsterId;
+  readonly weaponId?: string | ItemId;
   readonly situationalModifiers?: number;
 }
 
 export interface InitiativeParams extends BaseCommandParams {
-  readonly weaponId?: string;
-  readonly spellId?: string;
+  readonly weaponId?: string | ItemId;
+  readonly spellId?: string | SpellId;
 }
 
 export interface GrappleParams extends BaseCommandParams {
-  readonly targetId: string;
+  readonly targetId: string | CharacterId | MonsterId;
   readonly grappleType: 'grab' | 'pin' | 'damage';
 }
 
 export interface UseShieldParams extends BaseCommandParams {
-  readonly shieldId: string;
+  readonly shieldId: string | ItemId;
   readonly defensive?: boolean;
 }
 
 export interface CastSpellParams extends BaseCommandParams {
   readonly spellName: string;
   readonly spellLevel: number;
-  readonly targetIds: string[];
+  readonly targetIds: Array<string | CharacterId | MonsterId>;
   readonly ignoreComponents?: boolean;
   readonly ignoreMemorization?: boolean;
 }
@@ -62,12 +63,12 @@ export interface MemorizeSpellParams extends BaseCommandParams {
 }
 
 export interface ScrollReadParams extends BaseCommandParams {
-  readonly scrollId: string;
-  readonly targetIds: string[];
+  readonly scrollId: string | ItemId;
+  readonly targetIds: Array<string | CharacterId | MonsterId>;
 }
 
 export interface IdentifyMagicItemParams extends BaseCommandParams {
-  readonly itemId: string;
+  readonly itemId: string | ItemId;
   readonly method: 'spell' | 'study';
 }
 
@@ -160,7 +161,7 @@ export interface MonsterGenerationParams extends BaseCommandParams {
 }
 
 export interface MonsterBehaviorParams extends BaseCommandParams {
-  readonly monsterId: string;
+  readonly monsterId: string | MonsterId;
   readonly situation: 'encounter' | 'combat' | 'pursuit' | 'negotiation';
   readonly opponents?: unknown[];
   readonly environment?: string;
@@ -175,7 +176,7 @@ export interface TreasureGenerationParams extends BaseCommandParams {
 }
 
 export interface ReactionRollParams extends BaseCommandParams {
-  readonly npcId: string;
+  readonly npcId: string | CharacterId | MonsterId;
   readonly situation?: string;
   readonly modifiers?: Record<string, number>;
 }

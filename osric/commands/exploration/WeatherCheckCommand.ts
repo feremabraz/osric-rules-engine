@@ -1,4 +1,4 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
+import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import { DiceEngine } from '../../core/Dice';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
@@ -34,7 +34,7 @@ export interface WeatherEffects {
 }
 
 export interface WeatherCheckParameters {
-  characterId: string;
+  characterId: string | import('@osric/types').CharacterId;
   currentWeather: WeatherCondition;
   activityType: 'travel' | 'combat' | 'spellcasting' | 'ranged-attack' | 'rest' | 'foraging';
   exposureTime?: number;
@@ -44,7 +44,7 @@ export class WeatherCheckCommand extends BaseCommand<WeatherCheckParameters> {
   readonly type = COMMAND_TYPES.WEATHER_CHECK;
   readonly parameters: WeatherCheckParameters;
 
-  constructor(parameters: WeatherCheckParameters, actorId: string, targetIds: string[] = []) {
+  constructor(parameters: WeatherCheckParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
   }

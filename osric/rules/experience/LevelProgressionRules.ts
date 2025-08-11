@@ -1,11 +1,12 @@
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import type { CharacterId } from '@osric/types';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 import type { Character, CharacterClass, ClassAbility } from '@osric/types/entities';
 
 interface LevelUpParameters {
-  characterId: string;
+  characterId: string | CharacterId;
   skipTraining?: boolean;
 }
 
@@ -17,7 +18,7 @@ export class LevelProgressionRule extends BaseRule {
     return command.type === COMMAND_TYPES.LEVEL_UP;
   }
 
-  async execute(context: GameContext, _command: Command): Promise<RuleResult> {
+  async apply(context: GameContext, _command: Command): Promise<RuleResult> {
     const levelData = context.getTemporary<LevelUpParameters>('character:level:up-params');
 
     if (!levelData) {

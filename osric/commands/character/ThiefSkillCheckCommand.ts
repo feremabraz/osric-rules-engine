@@ -1,10 +1,10 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
+import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
-import { COMMAND_TYPES } from '../../types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
 import type { Character } from '../../types/entities';
 
 export interface ThiefSkillCheckParameters {
-  characterId: string;
+  characterId: string | import('@osric/types').CharacterId;
   skillType:
     | 'pick-locks'
     | 'find-traps'
@@ -30,8 +30,8 @@ export class ThiefSkillCheckCommand extends BaseCommand<ThiefSkillCheckParameter
 
   constructor(
     parameters: ThiefSkillCheckParameters,
-    actorId = 'game-master',
-    targetIds: string[] = []
+    actorId: EntityId = 'game-master',
+    targetIds: EntityId[] = []
   ) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
@@ -52,7 +52,8 @@ export class ThiefSkillCheckCommand extends BaseCommand<ThiefSkillCheckParameter
         );
       }
 
-      context.setTemporary('thief-skill-params', this.parameters);
+      // Normalize temporary key to the convention used by rules
+      context.setTemporary('character:thief-skill:params', this.parameters);
 
       const baseSkillPercent = this.getBaseSkillPercentage(character, skillType);
 
@@ -105,7 +106,7 @@ export class ThiefSkillCheckCommand extends BaseCommand<ThiefSkillCheckParameter
   }
 
   getRequiredRules(): string[] {
-    return ['thief-skills'];
+    return [RULE_NAMES.THIEF_SKILLS];
   }
 
   private canUseThiefSkills(character: Character): boolean {

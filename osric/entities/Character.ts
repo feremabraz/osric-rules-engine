@@ -1,5 +1,6 @@
 import type { CommandResult } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
+import type { CharacterId } from '@osric/types';
 import type {
   Alignment,
   Character as BaseCharacter,
@@ -14,8 +15,8 @@ export class Character {
     this._data = { ...data };
   }
 
-  get id(): string {
-    return this._data.id;
+  get id(): CharacterId {
+    return this._data.id as CharacterId;
   }
   get name(): string {
     return this._data.name;

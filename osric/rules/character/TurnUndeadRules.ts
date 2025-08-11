@@ -1,12 +1,13 @@
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import type { CharacterId, MonsterId } from '@osric/types';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 import type { Character, Monster } from '@osric/types/entities';
 
 interface TurnUndeadParameters {
-  characterId: string;
-  targetUndeadIds: string[];
+  characterId: string | CharacterId;
+  targetUndeadIds: Array<string | MonsterId>;
   situationalModifiers?: {
     holySymbolBonus?: number;
     spellBonus?: number;
@@ -25,29 +26,44 @@ export class TurnUndeadRule extends BaseRule {
     return command.type === COMMAND_TYPES.TURN_UNDEAD;
   }
 
-  async execute(context: GameContext, _command: Command): Promise<RuleResult> {
+  async apply(context: GameContext, _command: Command): Promise<RuleResult> {
     const turnData = context.getTemporary<TurnUndeadParameters>('character:turn-undead:params');
 
     if (!turnData) {
-      return this.createFailureResult('No turn undead data provided');
+      return this.createFailureResult(
+        'No turn undead data provided',
+        undefined,
+        false,
+        'turn-undead:error'
+      );
     }
 
     try {
       const character = context.getEntity<Character>(turnData.characterId);
       if (!character) {
-        return this.createFailureResult(`Character ${turnData.characterId} not found`);
+        return this.createFailureResult(
+          `Character ${turnData.characterId} not found`,
+          undefined,
+          false,
+          'turn-undead:error'
+        );
       }
 
       const validationResult = this.validateTurnUndead(character, turnData);
       if (!validationResult.success) {
-        return validationResult;
+        return { ...validationResult, dataKind: 'turn-undead:validation' };
       }
 
       const targetUndead: Monster[] = [];
       for (const undeadId of turnData.targetUndeadIds) {
         const undead = context.getEntity<Monster>(undeadId);
         if (!undead) {
-          return this.createFailureResult(`Undead creature ${undeadId} not found`);
+          return this.createFailureResult(
+            `Undead creature ${undeadId} not found`,
+            undefined,
+            false,
+            'turn-undead:error'
+          );
         }
         targetUndead.push(undead);
       }
@@ -56,17 +72,24 @@ export class TurnUndeadRule extends BaseRule {
 
       const specialRules = this.applySpecialRules(character, turnData, turnCalculation);
 
-      return this.createSuccessResult('Turn undead validation complete', {
-        characterId: turnData.characterId,
-        effectiveLevel: turnCalculation.effectiveLevel,
-        targetUndead: turnCalculation.targetAnalysis,
-        targetAnalysis: turnCalculation.targetAnalysis,
-        modifiers: turnCalculation.modifiers,
-        specialRules,
-        canAttempt: validationResult.canAttempt,
-        restrictions: validationResult.restrictions,
-        turnLimit: validationResult.turnLimit,
-      });
+      return this.createSuccessResult(
+        'Turn undead validation complete',
+        {
+          characterId: turnData.characterId,
+          effectiveLevel: turnCalculation.effectiveLevel,
+          targetUndead: turnCalculation.targetAnalysis,
+          targetAnalysis: turnCalculation.targetAnalysis,
+          modifiers: turnCalculation.modifiers,
+          specialRules,
+          canAttempt: validationResult.canAttempt,
+          restrictions: validationResult.restrictions,
+          turnLimit: validationResult.turnLimit,
+        },
+        undefined,
+        undefined,
+        false,
+        'turn-undead:calculation'
+      );
     } catch (error) {
       return this.createFailureResult(
         `Failed to process turn undead rule: ${error instanceof Error ? error.message : String(error)}`
@@ -84,16 +107,14 @@ export class TurnUndeadRule extends BaseRule {
     const turnAbility = this.getTurnUndeadAbility(character);
     if (!turnAbility.canTurn) {
       return {
-        success: false,
-        message: turnAbility.reason || 'Cannot turn undead',
+        ...this.createFailureResult(turnAbility.reason || 'Cannot turn undead'),
         canAttempt: false,
       };
     }
 
     if (character.hitPoints.current <= 0) {
       return {
-        success: false,
-        message: 'Cannot turn undead while unconscious or dead',
+        ...this.createFailureResult('Cannot turn undead while unconscious or dead'),
         canAttempt: false,
       };
     }
@@ -104,8 +125,7 @@ export class TurnUndeadRule extends BaseRule {
 
     if (turnData.situationalModifiers?.isEvil && characterClass === 'paladin') {
       return {
-        success: false,
-        message: 'Paladins cannot command undead (only turn/destroy)',
+        ...this.createFailureResult('Paladins cannot command undead (only turn/destroy)'),
         canAttempt: false,
       };
     }
@@ -113,8 +133,7 @@ export class TurnUndeadRule extends BaseRule {
     const turnLimit = this.getTurnLimit(character);
 
     return {
-      success: true,
-      message: 'Turn undead attempt is valid',
+      ...this.createSuccessResult('Turn undead attempt is valid'),
       canAttempt: true,
       restrictions,
       turnLimit,

@@ -1,11 +1,12 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { CharacterId, MonsterId } from '@osric/types';
+import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
-import { COMMAND_TYPES } from '../../types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
 import type { Character, Monster } from '../../types/entities';
 
 export interface TurnUndeadParameters {
-  characterId: string;
-  targetUndeadIds: string[];
+  characterId: string | CharacterId;
+  targetUndeadIds: Array<string | MonsterId>;
   situationalModifiers?: {
     holySymbolBonus?: number;
     spellBonus?: number;
@@ -20,7 +21,7 @@ export class TurnUndeadCommand extends BaseCommand<TurnUndeadParameters> {
   readonly type = COMMAND_TYPES.TURN_UNDEAD;
   readonly parameters: TurnUndeadParameters;
 
-  constructor(parameters: TurnUndeadParameters, actorId: string, targetIds: string[] = []) {
+  constructor(parameters: TurnUndeadParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
   }
@@ -64,7 +65,8 @@ export class TurnUndeadCommand extends BaseCommand<TurnUndeadParameters> {
         return this.createFailureResult('No valid undead targets found');
       }
 
-      context.setTemporary('turn-undead-params', this.parameters);
+      // Normalize temporary key to the convention used by rules
+      context.setTemporary('character:turn-undead:params', this.parameters);
 
       const turnResults = this.performTurnUndead(
         character,
@@ -124,7 +126,7 @@ export class TurnUndeadCommand extends BaseCommand<TurnUndeadParameters> {
   }
 
   getRequiredRules(): string[] {
-    return ['turn-undead'];
+    return [RULE_NAMES.TURN_UNDEAD];
   }
 
   private parseHitDice(hitDice: string): number {

@@ -1,11 +1,12 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { CharacterId } from '@osric/types';
+import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import { DiceEngine } from '../../core/Dice';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
 import type { Character } from '../../types/entities';
 
 export interface SearchParameters {
-  characterId: string;
+  characterId: string | CharacterId;
   searchType: 'secret-doors' | 'traps' | 'hidden-objects' | 'general';
   target?: {
     area: string;
@@ -19,7 +20,7 @@ export class SearchCommand extends BaseCommand<SearchParameters> {
   readonly type = COMMAND_TYPES.SEARCH;
   readonly parameters: SearchParameters;
 
-  constructor(parameters: SearchParameters, actorId: string, targetIds: string[] = []) {
+  constructor(parameters: SearchParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
   }

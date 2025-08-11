@@ -7,6 +7,7 @@ import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule } from '@osric/core/Rule';
 import type { RuleResult } from '@osric/core/Rule';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 
 import type { AbilityScores, CharacterRace } from '@osric/types/entities';
 
@@ -61,7 +62,7 @@ const RACIAL_MODIFIERS: Record<CharacterRace, RacialModifiers> = {
 };
 
 export class RacialAbilityAdjustmentRule extends BaseRule {
-  readonly name = 'racial-ability-adjustments';
+  readonly name = RULE_NAMES.RACIAL_ABILITIES;
   readonly priority = 300; // After base generation, before class validation
 
   async apply(context: GameContext, _command: Command): Promise<RuleResult> {
@@ -116,7 +117,7 @@ export class RacialAbilityAdjustmentRule extends BaseRule {
 
   canApply(context: GameContext, command: Command): boolean {
     // Only applies to character creation commands
-    if (command.type !== 'create-character') {
+    if (command.type !== COMMAND_TYPES.CREATE_CHARACTER) {
       return false;
     }
 
@@ -130,7 +131,7 @@ export class RacialAbilityAdjustmentRule extends BaseRule {
   }
 
   getPrerequisites(): string[] {
-    return ['ability-score-generation'];
+    return [RULE_NAMES.ABILITY_SCORE_GENERATION];
   }
 
   /**

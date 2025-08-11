@@ -206,6 +206,16 @@ export namespace ValidationEngine {
  * Validation utilities for OSRIC-specific concepts
  */
 export namespace OSRICValidation {
+  /**
+   * Normalize OSRIC enum-like values: lower-case and replace spaces with hyphens
+   * Accepts inputs like "Lawful Good" or "Magic-User" and compares against
+   * canonical lower-case lists like "lawful-good" or "magic-user".
+   */
+  function normalizeOsricValue(value: unknown): string | null {
+    if (typeof value !== 'string') return null;
+    return value.trim().toLowerCase().replace(/\s+/g, '-');
+  }
+
   export function abilityScore(field: string): ValidationRule<number> {
     return ValidationEngine.numberRange(field, 3, 18);
   }
@@ -224,12 +234,26 @@ export namespace OSRICValidation {
       'monk',
       'bard',
     ];
-    return ValidationEngine.oneOf(field, classes);
+    return ValidationEngine.custom<string>(
+      field,
+      (value) => {
+        const norm = normalizeOsricValue(value);
+        return norm !== null && classes.includes(norm);
+      },
+      `must be one of: ${classes.join(', ')}`
+    );
   }
 
   export function characterRace(field: string): ValidationRule<string> {
     const races = ['human', 'elf', 'dwarf', 'halfling', 'gnome', 'half-elf', 'half-orc'];
-    return ValidationEngine.oneOf(field, races);
+    return ValidationEngine.custom<string>(
+      field,
+      (value) => {
+        const norm = normalizeOsricValue(value);
+        return norm !== null && races.includes(norm);
+      },
+      `must be one of: ${races.join(', ')}`
+    );
   }
 
   export function alignment(field: string): ValidationRule<string> {
@@ -244,7 +268,14 @@ export namespace OSRICValidation {
       'neutral-evil',
       'chaotic-evil',
     ];
-    return ValidationEngine.oneOf(field, alignments);
+    return ValidationEngine.custom<string>(
+      field,
+      (value) => {
+        const norm = normalizeOsricValue(value);
+        return norm !== null && alignments.includes(norm);
+      },
+      `must be one of: ${alignments.join(', ')}`
+    );
   }
 
   export function spellLevel(field: string): ValidationRule<number> {

@@ -1,7 +1,9 @@
+import type { CharacterId, MonsterId } from '@osric/types/entities';
 import type { GameContext } from './GameContext';
 import type { RuleEngine } from './RuleEngine';
 
 export interface CommandResult<TData = Record<string, unknown>> {
+  kind: 'success' | 'failure';
   success: boolean;
   message: string;
   data?: TData;
@@ -12,16 +14,18 @@ export interface CommandResult<TData = Record<string, unknown>> {
   commandType?: string;
 }
 
+export type EntityId = string | CharacterId | MonsterId;
+
 export interface Command<TParams = unknown> {
   readonly type: string;
   readonly parameters: TParams;
-  readonly actorId: string;
-  readonly targetIds: string[];
+  readonly actorId: EntityId;
+  readonly targetIds: EntityId[];
 
   execute(context: GameContext): Promise<CommandResult>;
   canExecute(context: GameContext): boolean;
   getRequiredRules(): string[];
-  getInvolvedEntities(): string[];
+  getInvolvedEntities(): EntityId[];
 }
 
 export abstract class BaseCommand<TParams = unknown> implements Command<TParams> {
@@ -29,8 +33,8 @@ export abstract class BaseCommand<TParams = unknown> implements Command<TParams>
 
   constructor(
     public readonly parameters: TParams,
-    public readonly actorId: string,
-    public readonly targetIds: string[] = []
+    public readonly actorId: EntityId,
+    public readonly targetIds: EntityId[] = []
   ) {
     this.validateParameters();
   }
@@ -44,7 +48,7 @@ export abstract class BaseCommand<TParams = unknown> implements Command<TParams>
     // Default: no validation - subclasses can override this
   }
 
-  getInvolvedEntities(): string[] {
+  getInvolvedEntities(): EntityId[] {
     return [this.actorId, ...this.targetIds];
   }
 
@@ -78,6 +82,7 @@ export abstract class BaseCommand<TParams = unknown> implements Command<TParams>
     damage?: number[]
   ): CommandResult<T> {
     return {
+      kind: 'success',
       success: true,
       message,
       data,
@@ -89,6 +94,7 @@ export abstract class BaseCommand<TParams = unknown> implements Command<TParams>
 
   protected createFailureResult<T>(message: string, error?: Error, data?: T): CommandResult<T> {
     return {
+      kind: 'failure',
       success: false,
       message,
       error,

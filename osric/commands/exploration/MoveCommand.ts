@@ -1,10 +1,11 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { CharacterId } from '@osric/types';
+import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
 import type { Character } from '../../types/entities';
 
 export interface MoveParameters {
-  characterId: string;
+  characterId: string | CharacterId;
   movement: {
     type: 'walk' | 'run' | 'sneak' | 'fly' | 'swim' | 'climb';
     distance: number;
@@ -24,7 +25,7 @@ export class MoveCommand extends BaseCommand<MoveParameters> {
   readonly type = COMMAND_TYPES.MOVE;
   readonly parameters: MoveParameters;
 
-  constructor(parameters: MoveParameters, actorId: string, targetIds: string[] = []) {
+  constructor(parameters: MoveParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
   }

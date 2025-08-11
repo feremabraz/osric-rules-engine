@@ -1,13 +1,14 @@
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import type { CharacterId } from '@osric/types';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 import type { Character } from '@osric/types/entities';
 
 export interface ReactionRollParams {
-  characterId: string;
+  characterId: string | CharacterId;
 
-  targetId: string;
+  targetId: string | CharacterId;
 
   interactionType: 'first_meeting' | 'negotiation' | 'intimidation' | 'persuasion' | 'bribery';
 
@@ -60,7 +61,12 @@ export class ReactionRules extends BaseRule {
 
     const character = context.getEntity<Character>(params.characterId);
     if (!character) {
-      return this.createFailureResult(`Character not found: ${params.characterId}`);
+      return this.createFailureResult(
+        `Character not found: ${params.characterId}`,
+        undefined,
+        false,
+        'reaction:error'
+      );
     }
 
     const charismaModifier = this.getCharismaReactionModifier(character.abilities.charisma);
@@ -86,7 +92,10 @@ export class ReactionRules extends BaseRule {
         targetId: params.targetId,
         interactionType: params.interactionType,
       },
-      [`${character.name} receives ${reactionResult.reaction} reaction from target`]
+      [`${character.name} receives ${reactionResult.reaction} reaction from target`],
+      undefined,
+      false,
+      'reaction:calculation'
     );
   }
 

@@ -1,12 +1,13 @@
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import type { CharacterId, MonsterId } from '@osric/types';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 import type { Character, Monster } from '@osric/types/entities';
 
 export interface MoraleCheckParams {
-  characterId: string;
-  groupIds?: string[];
+  characterId: string | CharacterId;
+  groupIds?: Array<string | CharacterId | MonsterId>;
   trigger: 'damage' | 'leader_death' | 'overwhelming_odds' | 'rally_attempt' | 'other';
   situationalModifiers?: {
     leadershipBonus?: number;
@@ -391,7 +392,7 @@ export class MoraleRules extends BaseRule {
   }
 
   private calculateGroupEffects(
-    groupIds: string[],
+    groupIds: Array<string | CharacterId | MonsterId>,
     _result: MoraleCheckResult,
     _context: GameContext
   ): Record<string, string | number> {

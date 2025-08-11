@@ -1,11 +1,12 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { CharacterId } from '@osric/types';
+import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import { DiceEngine } from '../../core/Dice';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
 import type { Character } from '../../types/entities';
 
 export interface ForagingParameters {
-  characterId: string;
+  characterId: string | CharacterId;
   forageType: 'food' | 'water' | 'both';
   terrain: string;
   season: 'spring' | 'summer' | 'autumn' | 'winter';
@@ -31,7 +32,7 @@ export class ForagingCommand extends BaseCommand<ForagingParameters> {
   readonly type = COMMAND_TYPES.FORAGING;
   readonly parameters: ForagingParameters;
 
-  constructor(parameters: ForagingParameters, actorId: string, targetIds: string[] = []) {
+  constructor(parameters: ForagingParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
   }

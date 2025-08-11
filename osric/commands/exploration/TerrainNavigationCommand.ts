@@ -1,4 +1,5 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { CharacterId } from '@osric/types';
+import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import { DiceEngine } from '../../core/Dice';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
@@ -13,7 +14,7 @@ export interface TerrainType {
 }
 
 export interface NavigationParameters {
-  characterId: string;
+  characterId: string | CharacterId;
   terrainType: TerrainType;
   distance: number;
   navigationMethod: 'landmark' | 'compass' | 'stars' | 'ranger-tracking' | 'none';
@@ -29,7 +30,7 @@ export class TerrainNavigationCommand extends BaseCommand<NavigationParameters> 
   readonly type = COMMAND_TYPES.TERRAIN_NAVIGATION;
   readonly parameters: NavigationParameters;
 
-  constructor(parameters: NavigationParameters, actorId: string, targetIds: string[] = []) {
+  constructor(parameters: NavigationParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
   }

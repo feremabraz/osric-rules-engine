@@ -1,10 +1,11 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { CharacterId } from '@osric/types';
+import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
-import { COMMAND_TYPES } from '../../types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
 import type { Character, Item } from '../../types/entities';
 
 export interface MagicItemCreationParameters {
-  characterId: string;
+  characterId: string | CharacterId;
   itemType:
     | 'scroll'
     | 'potion'
@@ -54,7 +55,11 @@ export class MagicItemCreationCommand extends BaseCommand<MagicItemCreationParam
   readonly type = COMMAND_TYPES.MAGIC_ITEM_CREATION;
   readonly parameters: MagicItemCreationParameters;
 
-  constructor(parameters: MagicItemCreationParameters, actorId: string, targetIds: string[] = []) {
+  constructor(
+    parameters: MagicItemCreationParameters,
+    actorId: EntityId,
+    targetIds: EntityId[] = []
+  ) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
   }
@@ -134,7 +139,12 @@ export class MagicItemCreationCommand extends BaseCommand<MagicItemCreationParam
   }
 
   getRequiredRules(): string[] {
-    return ['enchantment-rules', 'scroll-scribing-rules', 'potion-brewing-rules'];
+    return [
+      RULE_NAMES.ENCHANTMENT_RULES,
+      RULE_NAMES.SCROLL_SCRIBING,
+      // No dedicated constant for potion brewing rules yet; covered by magic item rules
+      RULE_NAMES.MAGIC_ITEM_RULES,
+    ];
   }
 
   private validateCreator(

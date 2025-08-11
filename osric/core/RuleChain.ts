@@ -3,13 +3,16 @@ import type { GameContext } from './GameContext';
 import type { Rule, RuleResult } from './Rule';
 
 export interface RuleChainResult {
-  success: boolean;
+  kind: 'success' | 'failure';
+  success: boolean; // backward compat
   message: string;
   results: RuleResult[];
   critical?: boolean;
   data?: Record<string, unknown>;
   effects?: string[];
   damage?: number[];
+  // If merged data corresponds to a specific semantic payload
+  dataKind?: string;
 }
 
 export interface RuleChainConfig {
@@ -77,6 +80,7 @@ export class RuleChain {
       try {
         if (!this.checkPrerequisites(rule, results)) {
           const skipResult: RuleResult = {
+            kind: 'failure',
             success: false,
             message: `Rule ${rule.name} skipped: prerequisites not met`,
             stopChain: false,
@@ -114,6 +118,7 @@ export class RuleChain {
         }
       } catch (error) {
         const errorResult: RuleResult = {
+          kind: 'failure',
           success: false,
           message: `Error executing rule ${rule.name}: ${error instanceof Error ? error.message : 'Unknown error'}`,
           stopChain: this.config.stopOnFailure || false,
@@ -172,6 +177,7 @@ export class RuleChain {
   ): RuleChainResult {
     const messages: string[] = [];
     const allData: Record<string, unknown> = {};
+    const seenDataKinds: (string | undefined)[] = [];
     const allEffects: string[] = [];
     const allDamage: number[] = [];
 
@@ -186,6 +192,9 @@ export class RuleChain {
         if (result.data) {
           const { ruleName, ...dataToMerge } = result.data;
           Object.assign(allData, dataToMerge);
+        }
+        if (result.dataKind) {
+          seenDataKinds.push(result.dataKind);
         }
 
         if (result.effects) {
@@ -204,6 +213,7 @@ export class RuleChain {
     }
 
     return {
+      kind: success ? 'success' : 'failure',
       success,
       message: finalMessage || (success ? 'Rule chain executed successfully' : 'Rule chain failed'),
       results,
@@ -211,6 +221,7 @@ export class RuleChain {
       data: Object.keys(allData).length > 0 ? allData : undefined,
       effects: allEffects.length > 0 ? allEffects : undefined,
       damage: allDamage.length > 0 ? allDamage : undefined,
+      dataKind: seenDataKinds.find(Boolean),
     };
   }
 

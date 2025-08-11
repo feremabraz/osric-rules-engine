@@ -1,3 +1,4 @@
+import type { CharacterId, ItemId, MonsterId } from '@osric/types';
 import { atom, type createStore } from 'jotai';
 import type { Character, Item, Monster, Spell } from '../types/entities';
 import type { RuleEngine } from './RuleEngine';
@@ -36,27 +37,40 @@ export class GameContext {
     return this.ruleEngine !== undefined;
   }
 
-  getEntity<T extends GameEntity>(id: string): T | null {
+  // Overloads to support branded IDs without changing runtime behavior
+  getEntity<T extends GameEntity>(id: string): T | null;
+  getEntity<T extends GameEntity>(id: CharacterId): T | null;
+  getEntity<T extends GameEntity>(id: MonsterId): T | null;
+  getEntity<T extends GameEntity>(id: CharacterId | MonsterId | string): T | null {
     const entities = this.store.get(entitiesAtom);
-    return (entities.get(id) as T) || null;
+    return (entities.get(id as string) as T) || null;
   }
 
-  hasEntity(id: string): boolean {
+  hasEntity(id: string): boolean;
+  hasEntity(id: CharacterId): boolean;
+  hasEntity(id: MonsterId): boolean;
+  hasEntity(id: CharacterId | MonsterId | string): boolean {
     const entities = this.store.get(entitiesAtom);
-    return entities.has(id);
+    return entities.has(id as string);
   }
 
-  setEntity(id: string, entity: GameEntity): void {
+  setEntity(id: string, entity: GameEntity): void;
+  setEntity(id: CharacterId, entity: GameEntity): void;
+  setEntity(id: MonsterId, entity: GameEntity): void;
+  setEntity(id: CharacterId | MonsterId | string, entity: GameEntity): void {
     const entities = this.store.get(entitiesAtom);
     const newEntities = new Map(entities);
-    newEntities.set(id, entity);
+    newEntities.set(id as string, entity);
     this.store.set(entitiesAtom, newEntities);
   }
 
-  removeEntity(id: string): void {
+  removeEntity(id: string): void;
+  removeEntity(id: CharacterId): void;
+  removeEntity(id: MonsterId): void;
+  removeEntity(id: CharacterId | MonsterId | string): void {
     const entities = this.store.get(entitiesAtom);
     const newEntities = new Map(entities);
-    newEntities.delete(id);
+    newEntities.delete(id as string);
     this.store.set(entitiesAtom, newEntities);
   }
 
@@ -73,22 +87,28 @@ export class GameContext {
     return result;
   }
 
-  getItem<T extends Item>(id: string): T | null {
+  getItem<T extends Item>(id: string): T | null;
+  getItem<T extends Item>(id: ItemId): T | null;
+  getItem<T extends Item>(id: ItemId | string): T | null {
     const items = this.store.get(itemsAtom);
-    return (items.get(id) as T) || null;
+    return (items.get(id as string) as T) || null;
   }
 
-  setItem(id: string, item: Item): void {
+  setItem(id: string, item: Item): void;
+  setItem(id: ItemId, item: Item): void;
+  setItem(id: ItemId | string, item: Item): void {
     const items = this.store.get(itemsAtom);
     const newItems = new Map(items);
-    newItems.set(id, item);
+    newItems.set(id as string, item);
     this.store.set(itemsAtom, newItems);
   }
 
-  removeItem(id: string): void {
+  removeItem(id: string): void;
+  removeItem(id: ItemId): void;
+  removeItem(id: ItemId | string): void {
     const items = this.store.get(itemsAtom);
     const newItems = new Map(items);
-    newItems.delete(id);
+    newItems.delete(id as string);
     this.store.set(itemsAtom, newItems);
   }
 

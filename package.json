@@ -18,6 +18,7 @@
   "packageManager": "pnpm@10.11.0",
   "private": true,
   "scripts": {
+    "check": "pnpm -s test && pnpm -s typecheck && pnpm -s lint",
     "format": "biome format --write .",
     "lint": "biome lint --write .",
     "test": "vitest run",

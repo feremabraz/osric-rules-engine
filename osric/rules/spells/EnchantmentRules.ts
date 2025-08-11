@@ -1,7 +1,7 @@
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
-import { RULE_NAMES } from '@osric/types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 import type { Character, Item } from '@osric/types/entities';
 
 interface MaterialRequirement {
@@ -90,7 +90,7 @@ export class EnchantmentRules extends BaseRule {
   }
 
   canApply(_context: GameContext, command: Command): boolean {
-    return command.type === 'enchantment' || command.type === 'magic-item-creation';
+    return command.type === COMMAND_TYPES.MAGIC_ITEM_CREATION;
   }
 
   private extractEnchantmentContext(_command: Command): EnchantmentContext | null {

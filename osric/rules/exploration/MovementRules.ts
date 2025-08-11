@@ -2,11 +2,12 @@ import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule } from '@osric/core/Rule';
 import type { RuleResult } from '@osric/core/Rule';
+import type { CharacterId } from '@osric/types';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 import type { Character } from '@osric/types/entities';
 
 interface MovementRequest {
-  characterId: string;
+  characterId: string | CharacterId;
   fromPosition: string;
   toPosition: string;
   movementType: 'walk' | 'run' | 'swim' | 'climb' | 'fly';
@@ -45,18 +46,23 @@ export class MovementRule extends BaseRule {
     const data = context.getTemporary<MovementRequest>('movement-request-params');
 
     if (!data) {
-      return this.createFailureResult('No movement request data provided');
+      return this.createFailureResult(
+        'No movement request data provided',
+        undefined,
+        false,
+        'movement:error'
+      );
     }
 
     const character = context.getEntity<Character>(data.characterId);
 
     if (!character) {
-      return this.createFailureResult('Character not found');
+      return this.createFailureResult('Character not found', undefined, false, 'movement:error');
     }
 
     const validation = this.validateMovement(character, data);
     if (!validation.success) {
-      return this.createFailureResult(validation.message);
+      return this.createFailureResult(validation.message, undefined, false, 'movement:validation');
     }
 
     const result = this.calculateMovement(character, data);
@@ -65,7 +71,14 @@ export class MovementRule extends BaseRule {
       this.applyMovementEffects(character, result, context);
     }
 
-    return this.createSuccessResult(result.message, { result });
+    return this.createSuccessResult(
+      result.message,
+      { result },
+      undefined,
+      undefined,
+      false,
+      'movement:calculation'
+    );
   }
 
   private validateMovement(

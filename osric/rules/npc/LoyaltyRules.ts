@@ -1,13 +1,14 @@
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import type { CharacterId } from '@osric/types';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 import type { Character, Monster } from '@osric/types/entities';
 
 export interface LoyaltyCheckParams {
-  characterId: string;
-  leaderId?: string;
-  followerIds?: string[];
+  characterId: string | CharacterId;
+  leaderId?: string | CharacterId;
+  followerIds?: Array<string | CharacterId>;
   trigger:
     | 'initial_hire'
     | 'combat_casualties'

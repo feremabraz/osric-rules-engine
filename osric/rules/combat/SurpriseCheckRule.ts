@@ -7,6 +7,7 @@ import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule } from '@osric/core/Rule';
 import type { RuleResult } from '@osric/core/Rule';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 
 import { DiceEngine } from '@osric/core/Dice';
 
@@ -35,7 +36,7 @@ interface SurpriseCheckResult {
 }
 
 export class SurpriseCheckRule extends BaseRule {
-  readonly name = 'surprise-check';
+  readonly name = RULE_NAMES.SURPRISE_CHECK;
   readonly priority = 50; // Very early in initiative, before rolls
 
   async apply(context: GameContext, _command: Command): Promise<RuleResult> {
@@ -75,7 +76,7 @@ export class SurpriseCheckRule extends BaseRule {
 
   canApply(context: GameContext, command: Command): boolean {
     // Only applies to initiative commands
-    if (command.type !== 'initiative') {
+    if (command.type !== COMMAND_TYPES.INITIATIVE) {
       return false;
     }
 

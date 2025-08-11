@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
+    "lib": ["es2022"],
+    "allowJs": false,
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
@@ -13,13 +13,12 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+    "baseUrl": ".",
     "paths": {
-      "@rules/*": ["./rules/*"],
       "@tests/*": ["./__tests__/*"],
       "@osric/*": ["./osric/*"],
       "@osric/core/*": ["./osric/core/*"],
       "@osric/types/*": ["./osric/types/*"],
-      "@osric/utils/*": ["./osric/utils/*"],
       "@osric/rules/*": ["./osric/rules/*"],
       "@osric/commands/*": ["./osric/commands/*"],
       "@osric/entities/*": ["./osric/entities/*"]

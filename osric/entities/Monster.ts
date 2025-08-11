@@ -1,3 +1,5 @@
+import type { MonsterId } from '@osric/types';
+import { createMonsterId } from '@osric/types';
 import type { CommandResult } from '../core/Command';
 import type { GameContext } from '../core/GameContext';
 import type { Monster as BaseMonster, CreatureSize, MonsterFrequency } from '../types/entities';
@@ -9,8 +11,8 @@ export class Monster {
     this._data = { ...data };
   }
 
-  get id(): string {
-    return this._data.id;
+  get id(): MonsterId {
+    return this._data.id as MonsterId;
   }
   get name(): string {
     return this._data.name;
@@ -279,7 +281,7 @@ export const MonsterFactory = {
     alignment: string;
   }): Monster {
     const data: BaseMonster = {
-      id: `monster-${Date.now()}`,
+      id: createMonsterId(`monster-${Date.now()}`),
       name: statBlock.name,
       level: Number.parseInt(statBlock.hitDice.split(/[+-]/)[0], 10),
       hitPoints: { current: 1, maximum: 1 },

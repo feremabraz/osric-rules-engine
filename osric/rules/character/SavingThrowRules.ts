@@ -1,12 +1,54 @@
+// Discriminated union types for SavingThrowRule results
+import type { BaseRuleResult } from '@osric/core/Rule';
+
+export type SavingThrowErrorResult = BaseRuleResult & {
+  kind: 'failure';
+  success: false;
+  dataKind: 'saving-throw:error';
+  data?: Record<string, unknown>;
+};
+
+export type SavingThrowValidationResult = BaseRuleResult & {
+  kind: 'success' | 'failure';
+  success: boolean;
+  dataKind: 'saving-throw:validation';
+  canAttempt?: boolean;
+  automaticSuccess?: boolean;
+  automaticFailure?: boolean;
+  data?: Record<string, unknown>;
+};
+
+export type SavingThrowCalculationResult = BaseRuleResult & {
+  kind: 'success';
+  success: true;
+  dataKind: 'saving-throw:calculation';
+  data: {
+    characterId: string | CharacterId;
+    saveType: string;
+    baseSave: number;
+    finalSave: number;
+    modifiers: Array<{ source: string; modifier: number; description: string }>;
+    specialRules: string[];
+    canAttempt?: boolean;
+    automaticSuccess?: boolean;
+    automaticFailure?: boolean;
+  };
+};
+
+export type SavingThrowRuleResult =
+  | SavingThrowErrorResult
+  | SavingThrowValidationResult
+  | SavingThrowCalculationResult;
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 
+import type { CharacterId } from '@osric/types';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 import type { Character } from '@osric/types/entities';
 
 interface SavingThrowParameters {
-  characterId: string;
+  characterId: string | CharacterId;
   saveType:
     | 'paralyzation-poison-death'
     | 'petrification-polymorph'
@@ -35,45 +77,84 @@ export class SavingThrowRule extends BaseRule {
     return command.type === COMMAND_TYPES.SAVING_THROW;
   }
 
-  async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const saveData = this.getRequiredContext<SavingThrowParameters>(
+  async apply(context: GameContext, _command: Command): Promise<RuleResult> {
+    const saveData = this.getOptionalContext<SavingThrowParameters>(
       context,
       'character:saving-throw:params'
     );
 
+    if (!saveData) {
+      return this.createFailureResult(
+        'No saving throw parameters provided',
+        undefined,
+        false,
+        'saving-throw:error'
+      ) as SavingThrowErrorResult;
+    }
+
     if (!saveData.saveType) {
-      return this.createFailureResult(`Invalid save type: ${saveData.saveType}`);
+      return this.createFailureResult(
+        `Invalid save type: ${saveData.saveType}`,
+        undefined,
+        false,
+        'saving-throw:error'
+      ) as SavingThrowErrorResult;
     }
 
     try {
       const character = context.getEntity<Character>(saveData.characterId);
       if (!character) {
-        return this.createFailureResult(`Character ${saveData.characterId} not found`);
+        return this.createFailureResult(
+          `Character ${saveData.characterId} not found`,
+          undefined,
+          false,
+          'saving-throw:error'
+        ) as SavingThrowErrorResult;
       }
 
       const validationResult = this.validateSavingThrow(character, saveData);
       if (!validationResult.success) {
-        return validationResult;
+        // Return a strict FailureRuleResult
+        return {
+          kind: 'failure',
+          success: false,
+          message: validationResult.message,
+          data: validationResult.data,
+          dataKind: validationResult.dataKind,
+          critical: validationResult.critical,
+          stopChain: validationResult.stopChain,
+        };
       }
 
       const saveCalculation = this.calculateSavingThrow(character, saveData);
-
       const specialModifications = this.applySpecialRules(character, saveData, saveCalculation);
 
-      return this.createSuccessResult('Saving throw calculation complete', {
-        characterId: saveData.characterId,
-        saveType: saveData.saveType,
-        baseSave: saveCalculation.baseSave,
-        finalSave: saveCalculation.finalSave,
-        modifiers: saveCalculation.modifiers,
-        specialRules: specialModifications,
-        canAttempt: validationResult.canAttempt,
-        automaticSuccess: validationResult.automaticSuccess,
-        automaticFailure: validationResult.automaticFailure,
-      });
+      // Return a strict SuccessRuleResult
+      return {
+        kind: 'success',
+        success: true,
+        message: 'Saving throw calculation complete',
+        data: {
+          characterId: saveData.characterId,
+          saveType: saveData.saveType,
+          baseSave: saveCalculation.baseSave,
+          finalSave: saveCalculation.finalSave,
+          modifiers: saveCalculation.modifiers,
+          specialRules: specialModifications,
+          canAttempt: validationResult.canAttempt,
+          automaticSuccess: validationResult.automaticSuccess,
+          automaticFailure: validationResult.automaticFailure,
+        },
+        dataKind: 'saving-throw:calculation',
+        critical: false,
+        stopChain: false,
+      };
     } catch (error) {
       return this.createFailureResult(
-        `Failed to process saving throw rule: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to process saving throw rule: ${error instanceof Error ? error.message : String(error)}`,
+        undefined,
+        false,
+        'saving-throw:error'
       );
     }
   }
@@ -84,8 +165,12 @@ export class SavingThrowRule extends BaseRule {
   ): RuleResult & { canAttempt?: boolean; automaticSuccess?: boolean; automaticFailure?: boolean } {
     if (character.hitPoints.current <= 0) {
       return {
-        success: false,
-        message: 'Cannot make saving throws while unconscious or dead',
+        ...this.createFailureResult(
+          'Cannot make saving throws while unconscious or dead',
+          undefined,
+          false,
+          'saving-throw:validation'
+        ),
         canAttempt: false,
       };
     }
@@ -93,18 +178,32 @@ export class SavingThrowRule extends BaseRule {
     const autoResult = this.checkAutomaticResults(character, saveData.saveType);
     if (autoResult) {
       return {
-        success: true,
-        message: autoResult.message,
+        ...this.createSuccessResult(
+          autoResult.message,
+          undefined,
+          undefined,
+          undefined,
+          false,
+          'saving-throw:validation'
+        ),
         canAttempt: true,
         automaticSuccess: autoResult.type === 'success',
         automaticFailure: autoResult.type === 'failure',
+        critical: false,
       };
     }
 
     return {
-      success: true,
-      message: 'Saving throw can be attempted',
+      ...this.createSuccessResult(
+        'Saving throw can be attempted',
+        undefined,
+        undefined,
+        undefined,
+        false,
+        'saving-throw:validation'
+      ),
       canAttempt: true,
+      critical: false,
     };
   }
 

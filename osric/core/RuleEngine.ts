@@ -100,6 +100,7 @@ export class RuleEngine {
 
       if (!command.canExecute(context)) {
         const result: CommandResult = {
+          kind: 'failure',
           success: false,
           message: `Command ${command.type} cannot be executed in current context`,
         };
@@ -117,6 +118,7 @@ export class RuleEngine {
       const chainResult = await ruleChain.execute(command, context);
 
       const commandResult: CommandResult = {
+        kind: chainResult.kind,
         success: chainResult.success,
         message: chainResult.message,
         data: chainResult.data,
@@ -140,6 +142,7 @@ export class RuleEngine {
       }
 
       const errorResult: CommandResult = {
+        kind: 'failure',
         success: false,
         message: `Error processing command ${command.type}: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };

@@ -1,7 +1,8 @@
-import { BaseCommand, type CommandResult } from '../../core/Command';
+import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
 
+import type { CharacterId, ItemId, MonsterId } from '@osric/types';
 import type {
   Character as CharacterData,
   CombatResult,
@@ -10,9 +11,9 @@ import type {
 } from '../../types/entities';
 
 export interface AttackParameters {
-  attackerId: string;
-  targetId: string;
-  weaponId?: string;
+  attackerId: string | CharacterId | MonsterId;
+  targetId: string | CharacterId | MonsterId;
+  weaponId?: string | ItemId;
   situationalModifiers?: number;
   attackType?: 'normal' | 'subdual' | 'grapple';
   isChargedAttack?: boolean;
@@ -22,7 +23,7 @@ export class AttackCommand extends BaseCommand<AttackParameters> {
   readonly type = COMMAND_TYPES.ATTACK;
   readonly parameters: AttackParameters;
 
-  constructor(parameters: AttackParameters, actorId: string, targetIds: string[] = []) {
+  constructor(parameters: AttackParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
   }

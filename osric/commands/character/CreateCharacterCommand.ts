@@ -1,3 +1,4 @@
+import { createCharacterId } from '@osric/types';
 import { BaseCommand, type CommandResult } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import {
@@ -5,7 +6,7 @@ import {
   ValidationEngine,
   type ValidationRule,
 } from '../../core/ValidationEngine';
-import { COMMAND_TYPES } from '../../types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
 import type {
   AbilityScores,
   Alignment,
@@ -74,12 +75,10 @@ export class CreateCharacterCommand extends BaseCommand<CreateCharacterParameter
   async execute(context: GameContext): Promise<CommandResult> {
     try {
       // Validation is already done in constructor via super() call
-      const characterId = this.generateCharacterId();
+      const characterId = createCharacterId(this.generateCharacterId());
 
-      context.setTemporary('character:creation:context', {
-        characterId,
-        ...this.parameters,
-      });
+      context.setTemporary('character:creation:context', { characterId });
+      context.setTemporary('character:creation:params', { ...this.parameters });
 
       return this.createSuccessResult(`Character creation initiated for ${this.parameters.name}`, {
         characterId,
@@ -100,10 +99,10 @@ export class CreateCharacterCommand extends BaseCommand<CreateCharacterParameter
 
   getRequiredRules(): string[] {
     return [
-      'ability-score-generation',
-      'racial-ability-adjustments',
-      'class-requirement-validation',
-      'character-initialization',
+      RULE_NAMES.ABILITY_SCORE_GENERATION,
+      RULE_NAMES.RACIAL_ABILITIES,
+      RULE_NAMES.CLASS_REQUIREMENTS,
+      RULE_NAMES.CHARACTER_INITIALIZATION,
     ];
   }
 

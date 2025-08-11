@@ -1,7 +1,7 @@
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
-import { RULE_NAMES } from '@osric/types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 import type { Character, Item, Spell } from '@osric/types/entities';
 
 interface ScrollScribingContext {
@@ -94,7 +94,7 @@ export class ScrollScribingRules extends BaseRule {
   }
 
   canApply(_context: GameContext, command: Command): boolean {
-    return command.type === 'scroll-scribing' || command.type === 'magic-item-creation';
+    return command.type === COMMAND_TYPES.MAGIC_ITEM_CREATION;
   }
 
   private extractScribingContext(_command: Command): ScrollScribingContext | null {

@@ -15,7 +15,7 @@ export class ClassRequirementRule extends BaseRule {
   readonly name = RULE_NAMES.CLASS_REQUIREMENTS;
   readonly priority = 25;
 
-  async execute(context: GameContext, _command: Command): Promise<RuleResult> {
+  async apply(context: GameContext, _command: Command): Promise<RuleResult> {
     const creationData = this.getRequiredContext<CharacterCreationData>(
       context,
       'character:creation:params'
@@ -56,7 +56,7 @@ export class ClassRequirementRule extends BaseRule {
     if (command.type !== COMMAND_TYPES.CREATE_CHARACTER) return false;
 
     const abilityScores = context.getTemporary('character:creation:adjusted-scores');
-    const creationData = context.getTemporary('character:creation:context');
+    const creationData = context.getTemporary('character:creation:params');
 
     return abilityScores != null && creationData != null;
   }

@@ -1,5 +1,7 @@
 import type { CommandResult } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
+import type { ItemId } from '@osric/types';
+import { createItemId } from '@osric/types';
 import type { Item as BaseItem, Currency, Weapon } from '@osric/types/entities';
 
 export class Item {
@@ -9,8 +11,8 @@ export class Item {
     this._data = { ...data };
   }
 
-  get id(): string {
-    return this._data.id;
+  get id(): ItemId {
+    return this._data.id as ItemId;
   }
   get name(): string {
     return this._data.name;
@@ -204,7 +206,7 @@ export const ItemFactory = {
     charges?: number;
   }): Item {
     const data: BaseItem = {
-      id: `item-${Date.now()}`,
+      id: createItemId(`item-${Date.now()}`),
       name: options.name,
       weight: options.weight,
       description: options.description,

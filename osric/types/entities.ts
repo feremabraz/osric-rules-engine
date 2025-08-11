@@ -7,6 +7,13 @@ export interface AbilityScores {
   charisma: number;
 }
 
+// Branded IDs (to be adopted across the codebase in a following phase)
+export type Brand<T, B extends string> = T & { readonly __brand: B };
+export type CharacterId = Brand<string, 'CharacterId'>;
+export type ItemId = Brand<string, 'ItemId'>;
+export type MonsterId = Brand<string, 'MonsterId'>;
+export type SpellId = Brand<string, 'SpellId'>;
+
 export const CharacterClasses = [
   'Fighter',
   'Paladin',
@@ -84,7 +91,7 @@ export interface StatusEffect {
 }
 
 export interface BaseCharacter {
-  id: string;
+  id: string; // will migrate to CharacterId
   name: string;
   level: number;
   hitPoints: {
@@ -225,7 +232,7 @@ export interface Monster extends BaseCharacter {
 }
 
 export interface Item {
-  id: string;
+  id: string; // will migrate to ItemId
   name: string;
   weight: number;
   description: string;
@@ -233,6 +240,10 @@ export interface Item {
   equipped: boolean;
   magicBonus: number | null;
   charges: number | null;
+  // Legacy/minimal compatibility fields (from unified core types)
+  itemType?: string;
+  commandWord?: string;
+  cursed?: boolean;
 }
 
 export const WeaponTypes = ['Melee', 'Ranged'] as const;
@@ -266,6 +277,8 @@ export interface Spell {
   name: string;
   level: number;
   class: SpellClass;
+  // Optional legacy/minimal field for categorization
+  school?: string;
   range: string;
   duration: string;
   areaOfEffect: string;
@@ -322,4 +335,36 @@ export interface CharacterSecondarySkill {
 export interface WeaponSpecialization {
   weapon: string;
   bonuses: Record<string, number>;
+}
+
+// Shared utility types (unified into entities for single-source model)
+export interface AttackRoll {
+  roll: number;
+  modifier: number;
+  total: number;
+  hit: boolean;
+}
+
+export interface Damage {
+  amount: number;
+  type: string;
+}
+
+export interface GameTime {
+  rounds: number;
+  turns: number;
+  hours: number;
+  days: number;
+}
+
+export interface Position {
+  x: number;
+  y: number;
+  z?: number;
+}
+
+export interface Movement {
+  base: number;
+  current: number;
+  encumbered: boolean;
 }

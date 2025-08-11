@@ -7,6 +7,7 @@ import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule } from '@osric/core/Rule';
 import type { RuleResult } from '@osric/core/Rule';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 
 interface InitiativeParticipant {
   entityId: string;
@@ -24,7 +25,7 @@ interface InitiativeOrderResult {
 }
 
 export class InitiativeOrderRule extends BaseRule {
-  readonly name = 'initiative-order';
+  readonly name = RULE_NAMES.INITIATIVE_ORDER;
   readonly priority = 200; // After initiative rolls, before combat resolution
 
   async apply(context: GameContext, _command: Command): Promise<RuleResult> {
@@ -94,7 +95,7 @@ export class InitiativeOrderRule extends BaseRule {
 
   canApply(context: GameContext, command: Command): boolean {
     // Only applies to initiative commands
-    if (command.type !== 'initiative') {
+    if (command.type !== COMMAND_TYPES.INITIATIVE) {
       return false;
     }
 
@@ -108,7 +109,7 @@ export class InitiativeOrderRule extends BaseRule {
   }
 
   getPrerequisites(): string[] {
-    return ['initiative-roll'];
+    return [RULE_NAMES.INITIATIVE_ROLL];
   }
 
   /**
