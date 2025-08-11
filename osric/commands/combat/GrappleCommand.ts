@@ -1,7 +1,9 @@
+import { GrappleValidator } from '@osric/types';
+import type { Character as CharacterData } from '@osric/types/character';
+import type { Monster as MonsterData } from '@osric/types/monster';
 import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
-import type { Character as CharacterData, Monster as MonsterData } from '../../types/entities';
 
 export interface GrappleParameters {
   attackerId: string | import('@osric/types').CharacterId | import('@osric/types').MonsterId;
@@ -18,6 +20,14 @@ export class GrappleCommand extends BaseCommand<GrappleParameters> {
   constructor(parameters: GrappleParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
+  }
+
+  protected validateParameters(): void {
+    const result = GrappleValidator.validate(this.parameters as unknown as Record<string, unknown>);
+    if (!result.valid) {
+      const errorMessages = result.errors.map((e) => String(e));
+      throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
+    }
   }
 
   async execute(context: GameContext): Promise<CommandResult> {

@@ -206,12 +206,12 @@ export const IMPORT_PATHS = {
   RULE_CHAIN: '@osric/core/RuleChain',
   RULE_ENGINE: '@osric/core/RuleEngine',
 
-  ENTITIES: '@osric/types/entities',
+  ENTITIES: '@osric/types',
   COMMANDS: '@osric/types/commands',
   RULES: '@osric/types/rules',
   ERRORS: '@osric/types/errors',
   CONSTANTS: '@osric/types/constants',
-  SPELL_TYPES: '@osric/types/SpellTypes',
+  SPELL_TYPES: '@osric/types/spell-types',
 
   CHARACTER: '@osric/entities/Character',
   MONSTER: '@osric/entities/Monster',

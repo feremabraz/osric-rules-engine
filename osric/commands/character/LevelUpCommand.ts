@@ -6,11 +6,12 @@ import {
   getTrainingRequirements,
   meetsTrainingRequirements,
 } from '@osric/rules/experience/LevelProgressionRules.js';
+import { LevelUpValidator } from '@osric/types';
+import type { Character } from '@osric/types/character';
 import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import { DiceEngine } from '../../core/Dice';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
-import type { Character } from '../../types/entities';
 
 export interface LevelUpParameters {
   characterId: string | import('@osric/types').CharacterId;
@@ -31,6 +32,16 @@ export class LevelUpCommand extends BaseCommand<LevelUpParameters> {
   constructor(parameters: LevelUpParameters) {
     super(parameters, parameters.characterId as EntityId);
     this.parameters = parameters;
+  }
+
+  protected validateParameters(): void {
+    const result = LevelUpValidator.validate(this.parameters as unknown as Record<string, unknown>);
+    if (!result.valid) {
+      const msgs = result.errors.map((e) =>
+        typeof e === 'string' ? e : `${e.field}: ${e.message}`
+      );
+      throw new Error(`Parameter validation failed: ${msgs.join(', ')}`);
+    }
   }
 
   async execute(context: GameContext): Promise<CommandResult> {

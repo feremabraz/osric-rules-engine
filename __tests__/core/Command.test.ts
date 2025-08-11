@@ -111,8 +111,8 @@ import type {
   Alignment,
   Character as CharacterData,
   Experience,
-  SavingThrowType,
-} from '@osric/types/entities';
+} from '@osric/types/character';
+import type { SavingThrowType } from '@osric/types/shared';
 
 const createMockCharacter = (id: string, name: string): CharacterData => ({
   id,

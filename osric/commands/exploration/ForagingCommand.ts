@@ -1,9 +1,10 @@
 import type { CharacterId } from '@osric/types';
+import { ForagingValidator } from '@osric/types';
+import type { Character } from '@osric/types/character';
 import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import { DiceEngine } from '../../core/Dice';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
-import type { Character } from '../../types/entities';
 
 export interface ForagingParameters {
   characterId: string | CharacterId;
@@ -35,6 +36,14 @@ export class ForagingCommand extends BaseCommand<ForagingParameters> {
   constructor(parameters: ForagingParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
+  }
+
+  protected validateParameters(): void {
+    const result = ForagingValidator.validate(this.parameters);
+    if (!result.valid) {
+      const errorMessages = result.errors.map((e) => String(e));
+      throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
+    }
   }
 
   async execute(context: GameContext): Promise<CommandResult> {

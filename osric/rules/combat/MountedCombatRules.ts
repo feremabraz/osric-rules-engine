@@ -1,12 +1,10 @@
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import type { Character as CharacterData } from '@osric/types/character';
 import { COMMAND_TYPES } from '@osric/types/constants';
-import type {
-  Character as CharacterData,
-  Monster as MonsterData,
-  Weapon,
-} from '@osric/types/entities';
+import type { Weapon } from '@osric/types/item';
+import type { Monster as MonsterData } from '@osric/types/monster';
 
 export enum AerialAgilityLevel {
   Drifting = 1,

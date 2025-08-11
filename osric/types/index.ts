@@ -15,42 +15,57 @@ export type {
   AbilityScores,
   AbilityScoreModifiers,
   Experience,
+  ThiefSkills,
+  TurnUndeadTable,
+  AgeCategory,
+  WeaponProficiency,
+  WeaponSpecialization,
+  CharacterSecondarySkill,
+  SpellSlots,
+} from './character';
+
+export type {
   Monster,
   MonsterFrequency,
   CreatureSize,
   MovementType,
   MovementTypeValue,
+} from './monster';
+
+export type {
   Item,
   Weapon,
   WeaponType,
   WeaponSize,
+  Armor,
+  ArmorType,
+} from './item';
+
+export type {
   Spell,
   SpellClass,
-  SpellSlots,
   SpellResult,
-  Currency,
-  StatusEffect,
-  SavingThrowType,
-  ThiefSkills,
-  TurnUndeadTable,
-  AgeCategory,
-  RacialAbility,
-  ClassAbility,
-  WeaponProficiency,
-  WeaponSpecialization,
-  CharacterSecondarySkill,
-  AttackRoll,
-  Damage,
-  GameTime,
-  Position,
-  Movement,
-  // Branded IDs and helper
+} from './spell';
+
+export type {
   Brand,
   CharacterId,
   ItemId,
   MonsterId,
   SpellId,
-} from './entities';
+  Currency,
+  StatusEffect,
+  SavingThrowType,
+  RacialAbility,
+  ClassAbility,
+  AttackRoll,
+  Damage,
+  GameTime,
+  Position,
+  Movement,
+  ActionResult,
+  CombatResult,
+} from './shared';
 
 export type {
   CommandParams,
@@ -78,6 +93,9 @@ export type {
   ReactionRollParams,
   MoraleCheckParams,
   LoyaltyCheckParams,
+  SavingThrowParams,
+  SavingThrowString,
+  SAVING_THROW_TYPES,
 } from './commands';
 
 export { COMMAND_METADATA } from './commands';
@@ -133,6 +151,35 @@ export {
   isMonsterId,
   isSpellId,
 } from './id-utils';
+
+// Centralized validators (live under core for engine utilities)
+export {
+  SavingThrowValidator,
+  AttackValidator,
+  SearchValidator,
+  WeatherCheckValidator,
+  MoveValidator,
+  ForagingValidator,
+  TerrainNavigationValidator,
+  InitiativeValidator,
+  GrappleValidator,
+  CastSpellValidator,
+  MemorizeSpellValidator,
+  ScrollReadValidator,
+  IdentifyMagicItemValidator,
+  CreateCharacterValidator,
+  LevelUpValidator,
+  ThiefSkillCheckValidator,
+  GainExperienceValidator,
+  FallingDamageValidator,
+  MonsterGenerationValidator,
+  ReactionRollValidator,
+  MagicItemCreationValidator,
+  SpellResearchValidator,
+  TurnUndeadValidator,
+  Validators,
+  ExtendedValidators,
+} from '../core/Validators';
 
 export interface Result<T, E = Error> {
   success: boolean;
@@ -210,5 +257,3 @@ export const RULE_PRIORITIES = {
   LOW: 250,
   MINIMAL: 100,
 } as const;
-
-export const PHASE_1_COMPLETE = true;

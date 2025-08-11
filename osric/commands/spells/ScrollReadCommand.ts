@@ -2,6 +2,7 @@ import { BaseCommand, type CommandResult, type EntityId } from '../../core/Comma
 import type { GameContext } from '../../core/GameContext';
 
 import type { Character, CharacterId, Item, ItemId, MonsterId } from '@osric/types';
+import { ScrollReadValidator } from '@osric/types';
 import { COMMAND_TYPES } from '../../types/constants';
 
 export interface ScrollReadParameters {
@@ -17,6 +18,16 @@ export class ScrollReadCommand extends BaseCommand<ScrollReadParameters> {
   constructor(parameters: ScrollReadParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
+  }
+
+  protected validateParameters(): void {
+    const result = ScrollReadValidator.validate(
+      this.parameters as unknown as Record<string, unknown>
+    );
+    if (!result.valid) {
+      const errorMessages = result.errors.map((e) => String(e));
+      throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
+    }
   }
 
   public async execute(context: GameContext): Promise<CommandResult> {

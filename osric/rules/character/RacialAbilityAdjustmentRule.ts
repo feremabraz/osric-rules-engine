@@ -9,7 +9,7 @@ import { BaseRule } from '@osric/core/Rule';
 import type { RuleResult } from '@osric/core/Rule';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 
-import type { AbilityScores, CharacterRace } from '@osric/types/entities';
+import type { AbilityScores, CharacterRace } from '@osric/types/character';
 
 interface RacialModifiers {
   strength?: number;

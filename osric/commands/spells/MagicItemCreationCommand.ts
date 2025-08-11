@@ -1,8 +1,10 @@
 import type { CharacterId } from '@osric/types';
+import { MagicItemCreationValidator } from '@osric/types';
+import type { Character } from '@osric/types/character';
+import type { Item } from '@osric/types/item';
 import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
-import type { Character, Item } from '../../types/entities';
 
 export interface MagicItemCreationParameters {
   characterId: string | CharacterId;
@@ -62,6 +64,18 @@ export class MagicItemCreationCommand extends BaseCommand<MagicItemCreationParam
   ) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
+  }
+
+  protected validateParameters(): void {
+    const result = MagicItemCreationValidator.validate(
+      this.parameters as unknown as Record<string, unknown>
+    );
+    if (!result.valid) {
+      const msgs = result.errors.map((e) =>
+        typeof e === 'string' ? e : `${e.field}: ${e.message}`
+      );
+      throw new Error(`Parameter validation failed: ${msgs.join(', ')}`);
+    }
   }
 
   async execute(context: GameContext): Promise<CommandResult> {

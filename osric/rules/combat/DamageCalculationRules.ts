@@ -2,14 +2,11 @@ import type { Command } from '@osric/core/Command';
 import { rollExpression } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import type { Character as CharacterData } from '@osric/types/character';
 import { COMMAND_TYPES } from '@osric/types/constants';
-import type {
-  Character as CharacterData,
-  CombatResult,
-  Monster as MonsterData,
-  StatusEffect,
-  Weapon,
-} from '@osric/types/entities';
+import type { Weapon } from '@osric/types/item';
+import type { Monster as MonsterData } from '@osric/types/monster';
+import type { CombatResult, StatusEffect } from '@osric/types/shared';
 
 interface AttackContext {
   attacker: CharacterData | MonsterData;

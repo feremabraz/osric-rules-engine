@@ -1,37 +1,25 @@
+import { SavingThrowValidator } from '@osric/types';
+import type { Character } from '@osric/types/character';
+import type { SavingThrowParams } from '@osric/types/commands';
 import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
-import type { Character } from '../../types/entities';
 
-export interface SavingThrowParameters {
-  characterId: string | import('@osric/types').CharacterId;
-  saveType:
-    | 'paralyzation-poison-death'
-    | 'petrification-polymorph'
-    | 'rod-staff-wand'
-    | 'breath-weapon'
-    | 'spell';
-  situationalModifiers?: {
-    magicItemBonus?: number;
-    spellBonus?: number;
-    classBonus?: number;
-    racialBonus?: number;
-    wisdomBonus?: number;
-    dexterityBonus?: number;
-    constitution?: number;
-    difficulty?: 'easy' | 'normal' | 'hard' | 'very-hard';
-  };
-  targetNumber?: number;
-  description?: string;
-}
-
-export class SavingThrowCommand extends BaseCommand<SavingThrowParameters> {
+export class SavingThrowCommand extends BaseCommand<SavingThrowParams> {
   readonly type = COMMAND_TYPES.SAVING_THROW;
-  readonly parameters: SavingThrowParameters;
+  readonly parameters: SavingThrowParams;
 
-  constructor(parameters: SavingThrowParameters) {
+  constructor(parameters: SavingThrowParams) {
     super(parameters, parameters.characterId as EntityId);
     this.parameters = parameters;
+  }
+
+  protected validateParameters(): void {
+    const result = SavingThrowValidator.validate(this.parameters);
+    if (!result.valid) {
+      const errorMessages = result.errors.map((error) => error.message);
+      throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
+    }
   }
 
   async execute(context: GameContext): Promise<CommandResult> {
@@ -39,33 +27,7 @@ export class SavingThrowCommand extends BaseCommand<SavingThrowParameters> {
       const { characterId, saveType, situationalModifiers, targetNumber, description } =
         this.parameters;
 
-      const validSaveTypes = [
-        'paralyzation-poison-death',
-        'petrification-polymorph',
-        'rod-staff-wand',
-        'breath-weapon',
-        'spell',
-      ];
-      if (!validSaveTypes.includes(saveType)) {
-        return this.createFailureResult(`Invalid save type: ${saveType}`);
-      }
-
-      if (situationalModifiers) {
-        if (situationalModifiers.magicItemBonus !== undefined) {
-          if (
-            situationalModifiers.magicItemBonus < -10 ||
-            situationalModifiers.magicItemBonus > 10
-          ) {
-            return this.createFailureResult('Magic item bonus must be between -10 and +10');
-          }
-        }
-      }
-
-      if (targetNumber !== undefined) {
-        if (targetNumber < 2 || targetNumber > 20) {
-          return this.createFailureResult('Target number must be between 2 and 20');
-        }
-      }
+      this.validateParameters();
 
       const character = context.getEntity<Character>(characterId);
       if (!character) {
@@ -212,7 +174,7 @@ export class SavingThrowCommand extends BaseCommand<SavingThrowParameters> {
 
   private applyModifiers(
     baseSave: number,
-    modifiers: SavingThrowParameters['situationalModifiers'],
+    modifiers: SavingThrowParams['situationalModifiers'],
     saveType: string,
     character: Character
   ): number {
@@ -253,7 +215,7 @@ export class SavingThrowCommand extends BaseCommand<SavingThrowParameters> {
   private getAbilityModifiers(
     character: Character,
     saveType: string,
-    modifiers: SavingThrowParameters['situationalModifiers']
+    modifiers: SavingThrowParams['situationalModifiers']
   ): number {
     let modifier = 0;
 
@@ -310,7 +272,7 @@ export class SavingThrowCommand extends BaseCommand<SavingThrowParameters> {
   }
 
   private getModifierDescriptions(
-    modifiers: SavingThrowParameters['situationalModifiers'],
+    modifiers: SavingThrowParams['situationalModifiers'],
     saveType: string
   ): string[] {
     const descriptions: string[] = [];

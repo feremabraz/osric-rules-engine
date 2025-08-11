@@ -8,22 +8,17 @@ import type {
   CharacterClass,
   CharacterRace,
   CharacterSecondarySkill,
-  ClassAbility,
-  CreatureSize,
-  Currency,
   Experience,
-  Item,
-  Monster,
-  MovementType,
-  RacialAbility,
-  SavingThrowType,
-  Spell,
-  SpellClass,
   SpellSlots,
   ThiefSkills,
   TurnUndeadTable,
   WeaponProficiency,
-} from '@osric/types/entities';
+} from '@osric/types/character';
+import type { Armor, ArmorType, Item, Weapon, WeaponSize, WeaponType } from '@osric/types/item';
+import type { CreatureSize, Monster, MovementType } from '@osric/types/monster';
+import { ClassAbility } from '@osric/types/shared';
+import type { Currency, RacialAbility, SavingThrowType, StatusEffect } from '@osric/types/shared';
+import type { Spell, SpellClass, SpellResult } from '@osric/types/spell';
 import { createStore } from 'jotai';
 import { beforeEach, describe, expect, it } from 'vitest';
 

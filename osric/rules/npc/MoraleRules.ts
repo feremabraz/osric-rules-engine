@@ -2,8 +2,9 @@ import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { CharacterId, MonsterId } from '@osric/types';
+import type { Character } from '@osric/types/character';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
-import type { Character, Monster } from '@osric/types/entities';
+import type { Monster } from '@osric/types/monster';
 
 export interface MoraleCheckParams {
   characterId: string | CharacterId;

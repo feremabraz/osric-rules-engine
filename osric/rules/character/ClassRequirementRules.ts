@@ -1,8 +1,8 @@
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import type { AbilityScores, CharacterClass, CharacterRace } from '@osric/types/character';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
-import type { AbilityScores, CharacterClass, CharacterRace } from '@osric/types/entities';
 
 interface CharacterCreationData {
   abilityScoreMethod: 'standard3d6' | 'arranged3d6' | '4d6dropLowest';

@@ -1,8 +1,9 @@
 import type { CharacterId } from '@osric/types';
+import { MoveValidator } from '@osric/types';
+import type { Character } from '@osric/types/character';
 import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
-import type { Character } from '../../types/entities';
 
 export interface MoveParameters {
   characterId: string | CharacterId;
@@ -28,6 +29,14 @@ export class MoveCommand extends BaseCommand<MoveParameters> {
   constructor(parameters: MoveParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
+  }
+
+  protected validateParameters(): void {
+    const result = MoveValidator.validate(this.parameters);
+    if (!result.valid) {
+      const errorMessages = result.errors.map((e) => String(e));
+      throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
+    }
   }
 
   async execute(context: GameContext): Promise<CommandResult> {

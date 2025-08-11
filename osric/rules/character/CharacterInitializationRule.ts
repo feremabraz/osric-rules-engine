@@ -2,14 +2,14 @@ import type { BaseCommand } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import { CharacterFactory } from '@osric/entities/Character';
-import { RULE_NAMES } from '@osric/types/constants';
 import type {
   AbilityScores,
   Alignment,
   CharacterClass,
   CharacterRace,
   Character as CharacterType,
-} from '@osric/types/entities';
+} from '@osric/types/character';
+import { RULE_NAMES } from '@osric/types/constants';
 
 export interface CharacterInitializationParams {
   playerName: string;

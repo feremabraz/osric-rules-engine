@@ -1,7 +1,7 @@
 import type { Command } from '@osric/core/Command';
 import type { CommandType } from '@osric/types/constants';
 import { COMMAND_TYPES } from '@osric/types/constants';
-import type { CharacterId, ItemId, MonsterId, SpellId } from './entities';
+import type { CharacterId, ItemId, MonsterId, SpellId } from './shared';
 
 export interface BaseCommandParams {
   readonly actorId: string | CharacterId | MonsterId;
@@ -181,6 +181,32 @@ export interface ReactionRollParams extends BaseCommandParams {
   readonly modifiers?: Record<string, number>;
 }
 
+export const SAVING_THROW_TYPES = [
+  'paralyzation-poison-death',
+  'petrification-polymorph',
+  'rod-staff-wand',
+  'breath-weapon',
+  'spell',
+] as const;
+export type SavingThrowString = (typeof SAVING_THROW_TYPES)[number];
+
+export interface SavingThrowParams {
+  readonly characterId: string | CharacterId;
+  readonly saveType: SavingThrowString;
+  readonly situationalModifiers?: {
+    magicItemBonus?: number;
+    spellBonus?: number;
+    classBonus?: number;
+    racialBonus?: number;
+    wisdomBonus?: number;
+    dexterityBonus?: number;
+    constitution?: number;
+    difficulty?: 'easy' | 'normal' | 'hard' | 'very-hard';
+  };
+  readonly targetNumber?: number;
+  readonly description?: string;
+}
+
 export interface MoraleCheckParams extends BaseCommandParams {
   readonly reason: string;
   readonly modifiers?: Record<string, number>;
@@ -216,6 +242,7 @@ export interface CommandTypeRegistry {
   [COMMAND_TYPES.REACTION_ROLL]: ReactionRollParams;
   [COMMAND_TYPES.MORALE_CHECK]: MoraleCheckParams;
   [COMMAND_TYPES.LOYALTY_CHECK]: LoyaltyCheckParams;
+  [COMMAND_TYPES.SAVING_THROW]: SavingThrowParams;
 }
 
 export type CommandParamsFor<T extends CommandType> = T extends keyof CommandTypeRegistry

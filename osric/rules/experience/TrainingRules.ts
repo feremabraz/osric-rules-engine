@@ -3,8 +3,8 @@ import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule } from '@osric/core/Rule';
 import type { RuleResult } from '@osric/core/Rule';
 import type { CharacterId } from '@osric/types';
+import type { Character } from '@osric/types/character';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
-import type { Character } from '@osric/types/entities';
 
 interface TrainingRequestData {
   characterId: string | CharacterId;

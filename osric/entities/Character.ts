@@ -6,7 +6,8 @@ import type {
   Character as BaseCharacter,
   CharacterClass,
   CharacterRace,
-} from '@osric/types/entities';
+} from '@osric/types/character';
+import type { ThiefSkills } from '@osric/types/character';
 
 export class Character {
   private _data: BaseCharacter;
@@ -154,7 +155,7 @@ export class Character {
     return this._data.spellbook?.some((spell) => spell.name === spellName) || false;
   }
 
-  getThiefSkillChance(skill: keyof import('../types/entities').ThiefSkills): number {
+  getThiefSkillChance(skill: keyof ThiefSkills): number {
     if (!this._data.thiefSkills) return 0;
 
     const baseChance = this._data.thiefSkills[skill] || 0;
@@ -165,11 +166,7 @@ export class Character {
     }
 
     let dexModifier = 0;
-    const dexSkills: (keyof import('../types/entities').ThiefSkills)[] = [
-      'pickPockets',
-      'openLocks',
-      'removeTraps',
-    ];
+    const dexSkills: (keyof ThiefSkills)[] = ['pickPockets', 'openLocks', 'removeTraps'];
     if (dexSkills.includes(skill)) {
       dexModifier = this.getAbilityModifier('dexterity') * 5;
     }
@@ -177,7 +174,7 @@ export class Character {
     return Math.min(95, baseChance + racialModifier + dexModifier);
   }
 
-  canUseThiefSkill(skill: keyof import('../types/entities').ThiefSkills): boolean {
+  canUseThiefSkill(skill: keyof ThiefSkills): boolean {
     return (
       this._data.class === 'Thief' ||
       this._data.class === 'Assassin' ||
@@ -233,7 +230,7 @@ export class Character {
       case 'cast-spell':
         return this.canPerformCombatAction('cast-spell');
       case 'use-thief-skill': {
-        const skill = parameters.skill as keyof import('../types/entities').ThiefSkills;
+        const skill = parameters.skill as keyof ThiefSkills;
         return this.canUseThiefSkill(skill);
       }
       default:

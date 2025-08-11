@@ -2,7 +2,8 @@ import type { CommandResult } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import type { ItemId } from '@osric/types';
 import { createItemId } from '@osric/types';
-import type { Item as BaseItem, Currency, Weapon } from '@osric/types/entities';
+import type { Item as BaseItem, Weapon } from '@osric/types/item';
+import type { Currency } from '@osric/types/shared';
 
 export class Item {
   private _data: BaseItem;

@@ -1,4 +1,4 @@
-import type { CharacterId, MonsterId } from '@osric/types/entities';
+import type { CharacterId, MonsterId } from '@osric/types/shared';
 import type { GameContext } from './GameContext';
 import type { RuleEngine } from './RuleEngine';
 

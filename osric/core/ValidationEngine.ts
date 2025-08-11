@@ -15,6 +15,12 @@ export interface ValidationError {
   value: unknown;
 }
 
+// Simple Validator contract for command params
+export interface Validator<TParams> {
+  rules: ValidationRule[];
+  validate(params: TParams): { valid: boolean; errors: ValidationError[] };
+}
+
 /**
  * ValidationEngine provides fluent interface for creating validation rules
  */
@@ -113,14 +119,15 @@ export namespace ValidationEngine {
   /**
    * Get field value from object using dot notation
    */
-  function getFieldValue(obj: Record<string, unknown>, field: string): unknown {
+  function getFieldValue(obj: object, field: string): unknown {
     if (!field) return obj;
 
     const parts = field.split('.');
-    let value: unknown = obj;
+    let value: unknown = obj as Record<string, unknown>;
 
     for (const part of parts) {
-      value = (value as Record<string, unknown>)?.[part];
+      const current = value as Record<string, unknown> | undefined;
+      value = current ? current[part] : undefined;
     }
 
     return value;
@@ -129,7 +136,7 @@ export namespace ValidationEngine {
   /**
    * Validate multiple rules against an object
    */
-  export function validateObject<T extends Record<string, unknown>>(
+  export function validateObject<T extends object>(
     obj: T,
     rules: ValidationRule[]
   ): { valid: boolean; errors: ValidationError[] } {
@@ -153,9 +160,23 @@ export namespace ValidationEngine {
   }
 
   /**
+   * Adapter: returns a unified ValidationResult shape from @osric/types
+   */
+  export function toValidationResult<T extends object>(
+    obj: T,
+    rules: ValidationRule[]
+  ): import('@osric/types').ValidationResult {
+    const { valid, errors } = validateObject(obj, rules);
+    return {
+      valid,
+      errors: errors.map((e) => (e.field ? `${e.field}: ${e.message}` : e.message)),
+    };
+  }
+
+  /**
    * Validate array of objects
    */
-  export function validateArray<T extends Record<string, unknown>>(
+  export function validateArray<T extends object>(
     array: T[],
     rules: ValidationRule[],
     fieldPrefix = ''

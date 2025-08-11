@@ -3,7 +3,7 @@ import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import { RULE_NAMES } from '@osric/types/constants';
 
-import type { AbilityScores, CharacterClass } from '@osric/types/entities';
+import type { AbilityScores, CharacterClass } from '@osric/types/character';
 
 export interface ClassRequirementParameters {
   characterClass: CharacterClass;

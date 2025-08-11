@@ -2,7 +2,7 @@ import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
-import type { Monster } from '@osric/types/entities';
+import type { Monster } from '@osric/types/monster';
 
 export interface MonsterBehaviorContext {
   monsterId: string;

@@ -1,6 +1,9 @@
 import type { CharacterId, ItemId, MonsterId } from '@osric/types';
+import type { Character } from '@osric/types/character';
+import type { Item } from '@osric/types/item';
+import type { Monster } from '@osric/types/monster';
+import type { Spell } from '@osric/types/spell';
 import { atom, type createStore } from 'jotai';
-import type { Character, Item, Monster, Spell } from '../types/entities';
 import type { RuleEngine } from './RuleEngine';
 
 export type GameEntity = Character | Monster;

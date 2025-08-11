@@ -1,9 +1,12 @@
 // Compatibility re-exports for legacy imports from '@osric/core/Types'.
-// Canonical definitions now live in '@osric/types/entities'.
+// Canonical definitions now live in '@osric/types/*'.
+export type { Character, CharacterClass, AbilityScores, ThiefSkills } from '@osric/types/character';
+export type { Monster, MonsterFrequency, CreatureSize } from '@osric/types/monster';
+export type { Item } from '@osric/types/item';
+export type { Spell } from '@osric/types/spell';
+export type { CharacterId, ItemId, MonsterId, SpellId } from '@osric/types/shared';
 export type {
-  Character,
-  Item,
-  Spell,
+  Brand,
   SavingThrowType,
   StatusEffect,
   AttackRoll,
@@ -11,10 +14,4 @@ export type {
   GameTime,
   Position,
   Movement,
-  Brand,
-  CharacterId,
-  ItemId,
-  Monster,
-  MonsterId,
-  SpellId,
-} from '../types/entities';
+} from '@osric/types/shared';

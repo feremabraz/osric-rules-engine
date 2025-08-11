@@ -2,7 +2,7 @@
 
 This document is the canonical reference for the repository’s structure, how to extend it safely, and what’s next. It focuses on the unified model (Option A) and only lists active or upcoming work; completed phases are summarized briefly.
 
-Last updated: 2025-08-11 (Phase 4 in progress)
+Last updated: 2025-08-11 (Phase 5 complete)
 
 
 ## Project overview
@@ -13,7 +13,7 @@ Last updated: 2025-08-11 (Phase 4 in progress)
 - Package manager: pnpm
 - Source layout:
   - `osric/core`: engine primitives (Command, Rule, RuleChain, RuleEngine, Dice, Grid/Movement, ValidationEngine, GameContext)
-  - `osric/types`: canonical public types and constants (COMMAND_TYPES, RULE_NAMES, entities, rules metadata)
+  - `osric/types`: canonical public types and constants (COMMAND_TYPES, RULE_NAMES, domain types, rules metadata)
   - `osric/entities`: thin OO wrappers/factories around typed entities
   - `osric/commands`: strongly-typed command classes (user intents)
   - `osric/rules`: rules that implement mechanics executed via RuleChain/RuleEngine
@@ -40,9 +40,29 @@ Last updated: 2025-08-11 (Phase 4 in progress)
 
 ## Development conventions
 
-- Imports and aliases
   - Prefer `@osric/*` namespaces. Avoid introducing new top-level aliases without a clear need.
 
+## Type imports after the types refactor
+
+We no longer use the legacy `osric/types/entities.ts`. Import types from their canonical domain modules:
+
+- Character domain: `@osric/types/character`
+- Monster domain: `@osric/types/monster`
+- Item domain: `@osric/types/item`
+- Spell domain: `@osric/types/spell`
+- Shared/IDs/utilities: `@osric/types/shared`
+
+Examples:
+
+```ts
+import type { Character, CharacterClass } from '@osric/types/character';
+import type { Monster } from '@osric/types/monster';
+import type { Weapon } from '@osric/types/item';
+import type { Spell } from '@osric/types/spell';
+import type { CharacterId, SavingThrowType, StatusEffect } from '@osric/types/shared';
+```
+
+Note: Use the canonical modules above exclusively. The legacy barrel `@osric/core/Types` has been removed.
 - Rule naming and implementation
   - Rule names come from `RULE_NAMES` (no ad-hoc strings). All rules implement `apply(context, command)` and can report prerequisites.
 
@@ -101,7 +121,7 @@ Only merge when all gates pass. Keep a minimal smoke path (command → chain →
   - `osric/core/GridSystem.ts`, `osric/core/MovementCalculator.ts`
 
 - Types/constants
-  - `osric/types/constants.ts`, `osric/types/entities.ts`, `osric/types/rules.ts`, `osric/types/errors.ts`
+  - `osric/types/constants.ts`, `osric/types/character.ts`, `osric/types/monster.ts`, `osric/types/item.ts`, `osric/types/spell.ts`, `osric/types/shared.ts`, `osric/types/rules.ts`, `osric/types/errors.ts`
 
 - Entities
   - `osric/entities/*` — helpers/factories that stay in sync with types
@@ -117,8 +137,13 @@ Only merge when all gates pass. Keep a minimal smoke path (command → chain →
 
 ### Phase 5: Types and Structure Refactor
 
-- **Split monolithic files:** Break up `osric/types/entities.ts` into domain-specific files (e.g., `character.ts`, `monster.ts`, `item.ts`, `spell.ts`, `shared.ts`).
+- Split monolithic files: The former `osric/types/entities.ts` has been replaced by domain-specific files: `character.ts`, `monster.ts`, `item.ts`, `spell.ts`, and `shared.ts`.
 - **Consistent file naming:** Rename `SpellTypes.ts` to `spell-types.ts` for consistency; use kebab-case for all type files.
+Breaking changes (Phase 5)
+
+- The compatibility barrel `@osric/core/Types` was removed. Import directly from domain modules in `@osric/types/*`.
+- The file `@osric/types/SpellTypes` was renamed to `@osric/types/spell-types` (kebab-case). Update imports accordingly.
+- The legacy monolith `osric/types/entities.ts` was deleted earlier; continue to use domain files: `character`, `monster`, `item`, `spell`, `shared`, and `spell-types`.
 - **Separation of concerns:** Move branded ID types and helpers to a single file (`id-utils.ts`).
 - **Non-mixing:** Ensure utility functions are not mixed with type definitions; keep helpers/utilities in their own files.
 - **Consistent export style:** Use named exports everywhere; avoid default exports and mixed export styles.
@@ -131,6 +156,35 @@ Only merge when all gates pass. Keep a minimal smoke path (command → chain →
 - **Unified ValidationResult:** Use a single `ValidationResult` type everywhere; remove ad-hoc validation result shapes.
 - **Shared validation helpers:** Ensure all rules and commands use shared validation helpers, not custom logic.
 - **Document validation flow:** Clearly document validation phases (pre-validation, main execution, post-processing).
+
+#### Centralized validators quick reference
+
+- Engine primitives: `osric/core/ValidationEngine.ts`
+  - Provides ValidationRule, Validator<TParams>
+  - Helpers: required, stringLength, numberRange, oneOf, arrayNotEmpty, positiveInteger, nonNegativeInteger, pattern, custom, and/or combinators, toValidationResult
+
+- Concrete validators and helpers: `osric/core/Validators.ts`
+  - Contains validators for commands like Attack, Move, Search, WeatherCheck, Foraging, TerrainNavigation, Initiative, Grapple, CastSpell, MemorizeSpell, ScrollRead, IdentifyMagicItem, CreateCharacter, LevelUp, ThiefSkillCheck, GainExperience, FallingDamage, MonsterGeneration, ReactionRoll, SpellResearch, TurnUndead
+  - Typed helper `isStringOneOf` for clean union checks
+  - Registries: `Validators` and `ExtendedValidators` for discoverability
+
+- Public exports: `@osric/types`
+  - Import validators ergonomically: `import { MoveValidator } from '@osric/types'`
+
+Using a validator in a command
+1) Import the validator from `@osric/types`
+2) Override `protected validateParameters()` and delegate:
+   - `const r = SomeValidator.validate(this.parameters as unknown as Record<string, unknown>)`
+   - If `!r.valid`, throw `new Error("Parameter validation failed: ...")`
+
+Design notes
+- Keep validators decoupled from domain types to avoid cycles; validate plain object shapes
+- For conditional requirements (e.g., field required when another has a value), prefer a soft check and handle edge cases in command `execute` if execution context is needed
+- Re-export validators via `@osric/types` for uniform imports across commands and tests
+
+Testing tips
+- Unit: call `Validator.validate(params)` and assert `valid`/`errors`
+- E2E: construct commands; `BaseCommand` will run `validateParameters()` on instantiation
 
 
 ### Phase 7: Additional Separation of Concerns and Domain-Driven Refactors

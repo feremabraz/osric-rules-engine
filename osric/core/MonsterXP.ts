@@ -1,4 +1,5 @@
-import type { Character, Monster } from '@osric/types/entities';
+import type { Character } from '@osric/types/character';
+import type { Monster } from '@osric/types/monster';
 
 const BASE_XP_BY_HD: Record<string, number> = {
   'less-than-1': 5,

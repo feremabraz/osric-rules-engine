@@ -1,7 +1,8 @@
+import { MonsterGenerationValidator } from '@osric/types';
+import type { Monster } from '@osric/types/monster';
 import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
-import type { Monster } from '../../types/entities';
 
 export interface MonsterGenerationParameters {
   terrainType:
@@ -48,6 +49,18 @@ export class MonsterGenerationCommand extends BaseCommand<MonsterGenerationParam
   ) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
+  }
+
+  protected validateParameters(): void {
+    const result = MonsterGenerationValidator.validate(
+      this.parameters as unknown as Record<string, unknown>
+    );
+    if (!result.valid) {
+      const msgs = result.errors.map((e) =>
+        typeof e === 'string' ? e : `${e.field}: ${e.message}`
+      );
+      throw new Error(`Parameter validation failed: ${msgs.join(', ')}`);
+    }
   }
 
   async execute(context: GameContext): Promise<CommandResult> {

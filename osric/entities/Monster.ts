@@ -1,8 +1,8 @@
 import type { MonsterId } from '@osric/types';
 import { createMonsterId } from '@osric/types';
+import type { Monster as BaseMonster, CreatureSize, MonsterFrequency } from '@osric/types/monster';
 import type { CommandResult } from '../core/Command';
 import type { GameContext } from '../core/GameContext';
-import type { Monster as BaseMonster, CreatureSize, MonsterFrequency } from '../types/entities';
 
 export class Monster {
   private _data: BaseMonster;

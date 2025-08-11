@@ -1,8 +1,9 @@
+import { WeatherCheckValidator } from '@osric/types';
+import type { Character } from '@osric/types/character';
 import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import { DiceEngine } from '../../core/Dice';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
-import type { Character } from '../../types/entities';
 
 export interface WeatherCondition {
   type:
@@ -47,6 +48,16 @@ export class WeatherCheckCommand extends BaseCommand<WeatherCheckParameters> {
   constructor(parameters: WeatherCheckParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
+  }
+
+  protected validateParameters(): void {
+    const result = WeatherCheckValidator.validate(this.parameters);
+    if (!result.valid) {
+      const errorMessages = result.errors.map((e) =>
+        typeof e === 'string' ? e : `${e.field}: ${e.message}`
+      );
+      throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
+    }
   }
 
   async execute(context: GameContext): Promise<CommandResult> {

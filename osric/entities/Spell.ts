@@ -1,6 +1,7 @@
 import type { CommandResult } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
-import type { Spell as BaseSpell, SavingThrowType, SpellClass } from '@osric/types/entities';
+import type { SavingThrowType } from '@osric/types/shared';
+import type { Spell as BaseSpell, SpellClass } from '@osric/types/spell';
 
 export class Spell {
   private _data: BaseSpell;

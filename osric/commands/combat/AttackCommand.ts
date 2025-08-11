@@ -3,12 +3,11 @@ import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
 
 import type { CharacterId, ItemId, MonsterId } from '@osric/types';
-import type {
-  Character as CharacterData,
-  CombatResult,
-  Monster as MonsterData,
-  Weapon,
-} from '../../types/entities';
+import { AttackValidator } from '@osric/types';
+import type { Character as CharacterData } from '@osric/types/character';
+import type { Weapon } from '@osric/types/item';
+import type { Monster as MonsterData } from '@osric/types/monster';
+import type { CombatResult } from '@osric/types/shared';
 
 export interface AttackParameters {
   attackerId: string | CharacterId | MonsterId;
@@ -26,6 +25,16 @@ export class AttackCommand extends BaseCommand<AttackParameters> {
   constructor(parameters: AttackParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
+  }
+
+  protected validateParameters(): void {
+    const result = AttackValidator.validate(this.parameters);
+    if (!result.valid) {
+      const errorMessages = result.errors.map((e) =>
+        typeof e === 'string' ? e : `${e.field}: ${e.message}`
+      );
+      throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
+    }
   }
 
   async execute(context: GameContext): Promise<CommandResult> {

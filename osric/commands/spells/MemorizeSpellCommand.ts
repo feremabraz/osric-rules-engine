@@ -2,6 +2,7 @@ import { BaseCommand, type CommandResult, type EntityId } from '../../core/Comma
 import type { GameContext } from '../../core/GameContext';
 
 import type { Character, Spell } from '@osric/types';
+import { MemorizeSpellValidator } from '@osric/types';
 import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
 
 export interface MemorizeSpellParameters {
@@ -18,6 +19,16 @@ export class MemorizeSpellCommand extends BaseCommand<MemorizeSpellParameters> {
   constructor(parameters: MemorizeSpellParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
+  }
+
+  protected validateParameters(): void {
+    const result = MemorizeSpellValidator.validate(
+      this.parameters as unknown as Record<string, unknown>
+    );
+    if (!result.valid) {
+      const errorMessages = result.errors.map((e) => String(e));
+      throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
+    }
   }
 
   public async execute(context: GameContext): Promise<CommandResult> {

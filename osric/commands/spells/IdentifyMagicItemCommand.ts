@@ -1,4 +1,5 @@
 import type { Character, Item } from '@osric/types';
+import { IdentifyMagicItemValidator } from '@osric/types';
 import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
@@ -22,6 +23,16 @@ export class IdentifyMagicItemCommand extends BaseCommand<IdentifyMagicItemParam
   ) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
+  }
+
+  protected validateParameters(): void {
+    const result = IdentifyMagicItemValidator.validate(
+      this.parameters as unknown as Record<string, unknown>
+    );
+    if (!result.valid) {
+      const errorMessages = result.errors.map((e) => String(e));
+      throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
+    }
   }
 
   public async execute(context: GameContext): Promise<CommandResult> {

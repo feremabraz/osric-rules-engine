@@ -2,8 +2,8 @@ import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule } from '@osric/core/Rule';
 import type { RuleResult } from '@osric/core/Rule';
+import type { Character } from '@osric/types/character';
 import { RULE_NAMES } from '@osric/types/constants';
-import type { Character } from '@osric/types/entities';
 
 export interface LightCondition {
   type: 'bright-light' | 'normal-light' | 'dim-light' | 'darkness' | 'magical-darkness';

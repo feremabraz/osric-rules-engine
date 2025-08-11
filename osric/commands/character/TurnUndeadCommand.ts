@@ -1,8 +1,10 @@
 import type { CharacterId, MonsterId } from '@osric/types';
+import { TurnUndeadValidator } from '@osric/types';
+import type { Character } from '@osric/types/character';
+import type { Monster } from '@osric/types/monster';
 import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
-import type { Character, Monster } from '../../types/entities';
 
 export interface TurnUndeadParameters {
   characterId: string | CharacterId;
@@ -24,6 +26,18 @@ export class TurnUndeadCommand extends BaseCommand<TurnUndeadParameters> {
   constructor(parameters: TurnUndeadParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
+  }
+
+  protected validateParameters(): void {
+    const result = TurnUndeadValidator.validate(
+      this.parameters as unknown as Record<string, unknown>
+    );
+    if (!result.valid) {
+      const msgs = result.errors.map((e) =>
+        typeof e === 'string' ? e : `${e.field}: ${e.message}`
+      );
+      throw new Error(`Parameter validation failed: ${msgs.join(', ')}`);
+    }
   }
 
   async execute(context: GameContext): Promise<CommandResult> {

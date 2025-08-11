@@ -1,5 +1,6 @@
 import type { ReactionRollParams } from '@osric/rules/npc/ReactionRules';
 import type { CharacterId, MonsterId } from '@osric/types';
+import { ReactionRollValidator } from '@osric/types';
 import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
@@ -19,6 +20,18 @@ export class ReactionRollCommand extends BaseCommand<ReactionRollParameters> {
   constructor(parameters: ReactionRollParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
+  }
+
+  protected validateParameters(): void {
+    const result = ReactionRollValidator.validate(
+      this.parameters as unknown as Record<string, unknown>
+    );
+    if (!result.valid) {
+      const msgs = result.errors.map((e) =>
+        typeof e === 'string' ? e : `${e.field}: ${e.message}`
+      );
+      throw new Error(`Parameter validation failed: ${msgs.join(', ')}`);
+    }
   }
 
   async execute(context: GameContext): Promise<CommandResult> {

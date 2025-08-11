@@ -5,7 +5,7 @@ import { RuleChain } from '@osric/core/RuleChain';
 import { RuleEngine } from '@osric/core/RuleEngine';
 import { SavingThrowRule } from '@osric/rules/character/SavingThrowRules';
 import { ThiefSkillRule } from '@osric/rules/character/ThiefSkillRules';
-import type { Character as CharacterType, ThiefSkills } from '@osric/types/entities';
+import type { Character as CharacterType, ThiefSkills } from '@osric/types/character';
 import { createStore } from 'jotai';
 import { describe, expect, it } from 'vitest';
 

@@ -1,6 +1,6 @@
 // Branded ID constructors and guards for staged adoption across the codebase.
 // Usage: createCharacterId('char-123'), isCharacterId(x)
-import type { Brand, CharacterId, ItemId, MonsterId, SpellId } from './entities';
+import type { Brand, CharacterId, ItemId, MonsterId, SpellId } from './shared';
 
 function makeId<T extends string, B extends string>(value: T): Brand<T, B> {
   return value as Brand<T, B>;

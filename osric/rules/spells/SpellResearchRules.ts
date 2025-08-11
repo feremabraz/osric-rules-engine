@@ -1,8 +1,8 @@
+import type { Character } from '@osric/types/character';
 import { DiceEngine } from '../../core/Dice';
 import type { GameContext } from '../../core/GameContext';
 import { BaseRule, type RuleResult } from '../../core/Rule';
-import type { ResearchDifficultyFactors, SpellResearch } from '../../types/SpellTypes';
-import type { Character } from '../../types/entities';
+import type { ResearchDifficultyFactors, SpellResearch } from '../../types/spell-types';
 
 export class SpellResearchRequirementsRule extends BaseRule {
   name = 'spell-research-requirements';

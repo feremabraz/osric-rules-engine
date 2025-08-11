@@ -1,8 +1,9 @@
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import type { Character } from '@osric/types/character';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
-import type { Character, Item } from '@osric/types/entities';
+import type { Item } from '@osric/types/item';
 
 interface MaterialRequirement {
   name: string;

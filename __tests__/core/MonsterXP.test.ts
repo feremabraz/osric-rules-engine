@@ -5,7 +5,8 @@ import {
   calculateXPForNextLevel,
   canLevelUp,
 } from '@osric/core/MonsterXP';
-import type { Character, Monster } from '@osric/types/entities';
+import type { Character } from '@osric/types/character';
+import type { Monster } from '@osric/types/monster';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 describe('MonsterXP', () => {

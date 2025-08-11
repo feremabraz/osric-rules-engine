@@ -1,9 +1,10 @@
 import type { CharacterId } from '@osric/types';
+import { TerrainNavigationValidator } from '@osric/types';
+import type { Character } from '@osric/types/character';
 import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
 import { DiceEngine } from '../../core/Dice';
 import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
-import type { Character } from '../../types/entities';
 
 export interface TerrainType {
   name: string;
@@ -33,6 +34,14 @@ export class TerrainNavigationCommand extends BaseCommand<NavigationParameters> 
   constructor(parameters: NavigationParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
+  }
+
+  protected validateParameters(): void {
+    const result = TerrainNavigationValidator.validate(this.parameters);
+    if (!result.valid) {
+      const errorMessages = result.errors.map((e) => String(e));
+      throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
+    }
   }
 
   async execute(context: GameContext): Promise<CommandResult> {

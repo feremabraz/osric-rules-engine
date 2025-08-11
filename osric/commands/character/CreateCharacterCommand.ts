@@ -1,19 +1,16 @@
 import { createCharacterId } from '@osric/types';
-import { BaseCommand, type CommandResult } from '../../core/Command';
-import type { GameContext } from '../../core/GameContext';
-import {
-  OSRICValidation,
-  ValidationEngine,
-  type ValidationRule,
-} from '../../core/ValidationEngine';
-import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
+import { CreateCharacterValidator } from '@osric/types';
 import type {
   AbilityScores,
   Alignment,
   CharacterClass,
   Character as CharacterData,
   CharacterRace,
-} from '../../types/entities';
+} from '@osric/types/character';
+import { BaseCommand, type CommandResult } from '../../core/Command';
+import type { GameContext } from '../../core/GameContext';
+import { ValidationEngine, type ValidationRule } from '../../core/ValidationEngine';
+import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
 
 export interface CreateCharacterParameters {
   name: string;
@@ -43,31 +40,18 @@ export class CreateCharacterCommand extends BaseCommand<CreateCharacterParameter
   }
 
   protected getValidationRules(): ValidationRule[] {
-    return [
-      ValidationEngine.required<string>('name'),
-      ValidationEngine.stringLength('name', 1, 50),
-      OSRICValidation.characterRace('race'),
-      OSRICValidation.characterClass('characterClass'),
-      OSRICValidation.alignment('alignment'),
-      ValidationEngine.oneOf('abilityScoreMethod', ['standard3d6', 'arranged3d6', '4d6dropLowest']),
-      ValidationEngine.custom(
-        'arrangedScores',
-        (value) => {
-          if (this.parameters.abilityScoreMethod !== 'arranged3d6') return true;
-          return value !== null && value !== undefined;
-        },
-        'arrangedScores is required when using arranged3d6 method'
-      ),
-    ];
+    // kept for backward compatibility; not used as we call centralized validator below
+    return [];
   }
 
   protected validateParameters(): void {
-    const result = ValidationEngine.validateObject(
-      this.parameters as unknown as Record<string, unknown>,
-      this.getValidationRules()
+    const result = CreateCharacterValidator.validate(
+      this.parameters as unknown as Record<string, unknown>
     );
     if (!result.valid) {
-      const errorMessages = result.errors.map((error) => error.message);
+      const errorMessages = result.errors.map((error) =>
+        typeof error === 'string' ? error : error.message
+      );
       throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
     }
   }

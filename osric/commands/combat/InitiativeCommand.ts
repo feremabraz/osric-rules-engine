@@ -3,12 +3,11 @@ import type { GameContext } from '../../core/GameContext';
 import { COMMAND_TYPES } from '../../types/constants';
 
 import type { CharacterId, ItemId, MonsterId } from '@osric/types';
-import type {
-  Character as CharacterData,
-  Monster as MonsterData,
-  Spell,
-  Weapon,
-} from '../../types/entities';
+import { InitiativeValidator } from '@osric/types';
+import type { Character as CharacterData } from '@osric/types/character';
+import type { Weapon } from '@osric/types/item';
+import type { Monster as MonsterData } from '@osric/types/monster';
+import type { Spell } from '@osric/types/spell';
 
 export interface InitiativeParameters {
   entities: Array<string | CharacterId | MonsterId>;
@@ -35,6 +34,16 @@ export class InitiativeCommand extends BaseCommand<InitiativeParameters> {
   constructor(parameters: InitiativeParameters, actorId: EntityId, targetIds: EntityId[] = []) {
     super(parameters, actorId, targetIds);
     this.parameters = parameters;
+  }
+
+  protected validateParameters(): void {
+    const result = InitiativeValidator.validate(
+      this.parameters as unknown as Record<string, unknown>
+    );
+    if (!result.valid) {
+      const errorMessages = result.errors.map((e) => String(e));
+      throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
+    }
   }
 
   async execute(context: GameContext): Promise<CommandResult> {

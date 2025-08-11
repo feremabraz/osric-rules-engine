@@ -1,4 +1,7 @@
-import type { Character, Item, SavingThrowType, Spell } from './entities';
+import type { Character } from './character';
+import type { Item } from './item';
+import type { Spell } from './spell';
+import type { SavingThrowType } from './shared';
 
 export type SpellComponentType = 'V' | 'S' | 'M';
 
@@ -69,3 +72,4 @@ export interface IdentificationResult {
   curseDetected: boolean;
   constitutionLoss: number;
 }
+//

@@ -1,12 +1,10 @@
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import type { Character as CharacterData } from '@osric/types/character';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
-import type {
-  Character as CharacterData,
-  Monster as MonsterData,
-  StatusEffect,
-} from '@osric/types/entities';
+import type { Monster as MonsterData } from '@osric/types/monster';
+import type { StatusEffect } from '@osric/types/shared';
 
 interface GrappleContext {
   attacker: CharacterData | MonsterData;
