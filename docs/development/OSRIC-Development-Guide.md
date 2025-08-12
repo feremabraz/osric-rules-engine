@@ -1,8 +1,8 @@
-## OSRIC Rules Engine — Architecture, Conventions, and Unified Roadmap
+## OSRIC Rules Engine — Architecture, Conventions, and Roadmap
 
-This document is the canonical reference for the repository’s structure, how to extend it safely, and what’s next. It focuses on the unified model (Option A) and only lists active or upcoming work; completed phases are summarized briefly.
+This document is the canonical reference for how to extend the engine safely, plus a concise roadmap with clear status markers (Done, Pending, Planned).
 
-Last updated: 2025-08-12 (Phases 5–6 complete; Phase 7–8 planning drafted)
+Last updated: 2025-08-12 (Phase 1: completed; Phase 2: planned)
 
 
 ## Project overview
@@ -92,179 +92,110 @@ Note: Use the canonical modules above exclusively. The legacy barrel `@osric/cor
 
 All configs are green today.
 
+## Phase status at a glance
 
-### Branded IDs usage examples
+- Phase 1 — API and Context Consistency: Done
+  - Done
+    - [x] Discriminated union results (kind); legacy boolean removed
+    - [x] Ergonomic helpers isSuccess/isFailure adopted across engine/rules/commands
+    - [x] Rule names via RULE_NAMES; validators co‑located and used from commands
+    - [x] Quality gates green (typecheck, lint, tests)
+    - [x] Typed ContextKey<T> accessors for temporary data (overloads + TypedContextKey)
+    - [x] Generic BaseRuleResult<T> and typed createSuccessResult<T>()/createFailureResult<T>()
+    - [x] Optional helpers added: matchResult/unwrapSuccess (adoption will be incremental)
+  - Pending
+    - (none)
 
-- Constructing IDs
-  - `const charId = createCharacterId('char-001')`
-  - `if (isCharacterId(maybeId)) { /* safe as CharacterId */ }`
-- Using with GameContext
-  - `context.setEntity(charId, character)`
-  - `const exists = context.hasEntity(charId)`
-  - `const got = context.getEntity(charId)`
+- Phase 2 — Behavior and Structure Normalization: Planned
+  - [ ] Keep commands thin; move mechanics into rules where needed (single responsibility)
+  - [ ] Naming normalization: one file → one purpose (each rule file exports one rule)
+  - [ ] Extract duplicated logic (dice/modifiers) into shared helpers
+  - [ ] Error model: converge on a simple DomainError (code/message/details)
 
+- Phase 3 — Public Surface Pruning: Planned
+  - [ ] Replace export * barrels with explicit exports or internalize
+  - [ ] Remove unused or alias-only types; keep the most descriptive name
+  - [ ] Ensure validators are not exported via @osric/types
+  - [ ] Verify tree‑shaking friendliness (no side‑effects at module top level)
 
-## Quality gates
-
-- Build/type: `pnpm typecheck`
-- Unit tests: `pnpm test`
-- Lint/format: `pnpm lint`
-- All-in-one: `pnpm check`
-
-Only merge when all gates pass. Keep a minimal smoke path (command → chain → rules) healthy after each change.
-
-
-## Appendix — File map highlights
-
-- Core engine
-  - `osric/core/Command.ts`, `osric/core/Rule.ts`, `osric/core/RuleChain.ts`, `osric/core/RuleEngine.ts`
-  - `osric/core/ValidationPrimitives.ts`, `osric/core/Dice.ts`, `osric/core/GameContext.ts`
-  - `osric/core/GridSystem.ts`, `osric/core/MovementCalculator.ts`
-
-- Types/constants
-  - `osric/types/constants.ts`, `osric/types/character.ts`, `osric/types/monster.ts`, `osric/types/item.ts`, `osric/types/spell.ts`, `osric/types/shared.ts`, `osric/types/rules.ts`, `osric/types/errors.ts`
-
-- Entities
-  - `osric/entities/*` — helpers/factories that stay in sync with types
-
-- Commands
-  - `osric/commands/*` — prepare context for rules
-
-- Rules
+- Phase 4 — Developer Experience: Planned
+  - [ ] Add small command guard helpers (ensureEntitiesExist/ensureConscious)
 
 ---
 
-## Upcoming Phases & Improvements
+## Phases & Improvements
 
-The next work is strictly about internal clarity and consistency. No new gameplay feature scope (items expansion, loot generation, crafting, performance profiling, etc.) is part of these phases unless required to eliminate duplication or ambiguity.
+The focus remains internal clarity and consistency. No new gameplay features are in scope unless needed to eliminate duplication or ambiguity.
 
-### Phase 7: Pattern Unification & Single Responsibility Pass
+### Phase 1: API and Context Consistency (Done)
 
-Objective: Ensure every file/module has one purpose and that there is exactly one blessed pattern for each architectural concern (commands, validators, rules, context usage, IDs, error handling).
+Objective: Make the core APIs consistent, strongly typed, and ergonomic.
 
-Key Goals:
-- Identify and refactor any modules doing more than one thing (split or extract helpers).
-- Eliminate divergent patterns for: command validation, rule registration, ID creation, result typing.
-- Normalize naming conventions (e.g., `<Domain><Concept><Suffix>`). No mixed suffix styles.
-- Co-locate all validators (already mostly done) and remove any lingering shared validator logic that is domain-specific.
-- Centralize cross-domain constants into `osric/types/constants.ts` only when truly shared; otherwise keep domain-local.
-- Remove dead or redundant helper functions / types uncovered during pass.
+Deliverables / Checklist
+1. Context keys
+  - [x] Consolidate all temporary keys under `ContextKeys`
+  - [x] Introduce `ContextKey<T>` and typed accessors: `getTemporary<T>(key)`, `setTemporary<T>(key, value)`
+2. Results
+  - [x] Common `kind` discriminant everywhere
+  - [x] `BaseRuleResult<T>` generic with typed `data?: T`
+  - [x] `createSuccessResult<T>(msg, data?: T)` propagates types
+3. Helpers
+  - [x] `isSuccess` / `isFailure`
+  - [x] Optional: `matchResult`, `unwrapSuccess` (helpers added; adopt where they clearly improve readability)
 
-Deliverables / Checklist:
-1. Inventory: Automated or manual list of patterns & outliers (added to this doc under an "Inconsistencies Report" subsection).
-2. Validators: Confirm every command has exactly one validator file named `<CommandName>Validator.ts` with a consistent exported symbol.
-3. Commands: Ensure uniform structure order: imports, types, validator import, class, validateParameters, execute.
-4. Rules: Standardize rule file naming `<Domain><RuleName>Rule.ts` (or keep existing if already consistent) and ensure each exports exactly one rule class + rule name constant reference.
-5. Context Keys: Add a small `ContextKeys` (type-only) map or literal union centralizing existing keys; eliminate ad-hoc strings.
-6. Results: Ensure discriminated result types share a common `kind` field pattern; remove alternative naming (`type`, `resultType`, etc. if any exist).
-7. Errors: Provide a single `DomainError` shape or enum-driven variant; remove duplicate error utility functions.
-8. Duplicate Logic: Extract repeated dice / movement / modifier calculations into a single helper if they appear 2+ times.
-9. Remove Legacy: Delete any commented or unused exports that survived prior phases.
-10. Update Docs: This guide gains an "Unified Patterns" section enumerating the final canonical shapes.
+Exit Criteria
+- Temp context accesses no longer use ad‑hoc string keys
+- Rule results are generically typed where a stable data shape exists
+- All quality gates green
 
-Exit Criteria:
-- No TODO comments referencing “unify later” remain in touched areas.
-- Grep for alternative patterns (e.g. `resultType:`) yields zero matches once normalized.
-- Tests, typecheck, lint all green.
+### Phase 2: Behavior and Structure Normalization (Planned)
 
-### Phase 8: Public Surface Pruning (Code-Only)
+Objective: Ensure single responsibility and remove duplication.
 
-Objective: Strip exports to the smallest coherent set. Rely on TypeScript types and inline JSDoc for discoverability—no separate docs, tables, or changelog generation.
+Deliverables / Checklist
+1. Commands vs Rules
+  - [ ] Commands validate and set context; mechanics live in rules
+2. Files and naming
+  - [ ] One file → one rule class; consistent naming via `RULE_NAMES`
+3. Duplicate logic
+  - [ ] Extract shared dice/modifier routines used 2+ times
+4. Error model
+  - [ ] Introduce simple `DomainError` (code/message/details) and use where it helps clarity
 
-Scope (code actions only):
-- Inline review of each top-level exported symbol; remove or rename in-place.
-- Collapse duplicate type aliases (keep the most descriptive name).
-- Delete shim / transitional barrels; favor direct module imports.
-- Ensure validators stay unexported from public type barrels.
-- Remove dead constants or re-export chains that point to a single symbol.
-- Add minimal JSDoc only where a type’s intent is not obvious from its name.
+Exit Criteria
+- Thin commands, focused rules
+- Reused helpers for common calculations
+- Minimal, consistent error surface
 
-Minimal Checklist:
-1. Grep for `export \*` barrels and replace with explicit exports or internalize.
-2. Grep for duplicate alias patterns (e.g. `type X = Y`) and eliminate redundant layer if X adds no semantic value.
-3. Remove unused exports (verified by TypeScript errors after deletion).
-4. Ensure no command or validator is exported through `@osric/types` (commands are consumed internally; external API remains types + core engine primitives only).
-5. Confirm tree-shaking friendliness: no side-effect code at module top-level beyond constant declarations.
+### Phase 3: Public Surface Pruning (Planned)
 
-Exit Criteria:
-- Running `pnpm typecheck` after removals yields zero references to removed symbols.
-- Searching for `export *` in repo returns only intentionally retained cases (ideally zero or a justified small set).
-- Public surface = core primitives + domain types; nothing else.
+Objective: Keep the public API as small and coherent as possible.
 
-### Phase 9 (Optional Cleanup — Only If Gaps Remain)
+Deliverables / Checklist
+1. Exports
+  - [ ] Replace `export *` barrels with explicit exports or internalize
+  - [ ] Remove unused exports and alias-only types
+2. Boundaries
+  - [ ] No validators exported via `@osric/types`
+  - [ ] No side‑effects at module top level
 
-Only executed if Phase 7/8 leave residual inconsistencies:
-- Final micro-splits of any remaining multi-purpose files.
-- Consolidate error handling if still fragmented.
-- Optional codemod(s) for future large-scale refactors.
+Exit Criteria
+- `pnpm typecheck` shows no references to removed symbols
+- Search for `export *` yields only justified cases (ideally none)
+- Public surface = core primitives + domain types
 
----
+### Phase 4: Developer Experience (Planned)
 
-## Inconsistencies Report (Populate During Phase 7)
+Objective: Make tests and authoring smoother without changing behavior.
 
-Use this section as a living scratchpad. Keep only active discrepancies; remove rows once fixed.
+Deliverables / Checklist
+1. Testing
+  - [ ] Seedable `DiceEngine` for deterministic tests
+  - [ ] Tiny factories for Character/Monster/Item (`__tests__/helpers`)
+2. Command guards (optional)
+  - [ ] `ensureEntitiesExist(ctx, ids)` and `ensureConscious(ctx, ids)` helpers
 
-| Category | Instance | Issue | Planned Fix | Done? |
-|----------|----------|-------|------------|-------|
-| Command | AttackCommand | Raw rule name strings | Switched to RULE_NAMES | Done |
-| Command | CreateCharacterCommand | Legacy getValidationRules method | Removed method | Done |
-| Core | * | OSRICError complex system unused | Removed exports & file | Done |
-| Context | Multiple rules | Ad-hoc temp keys (wildMagicSurge, etc.) | Introduce ContextKeys + rename (pending) | Pending |
-| Command | AttackCommand | Domain validation logic inside command | Move to rule or guard pattern | Pending |
-| Results | BaseCommand / Rule | Dual success + kind fields | Removed success field; unified on 'kind' | Done |
-| Rules | Various | dataKind inconsistently used | Removed dataKind; rely on 'kind' + domain data | Done |
+Exit Criteria
+- Tests are easier to author and maintain with fewer fixtures and stubs
 
 ---
-
-## Unified Patterns (Finalize End of Phase 7)
-
-Command skeleton:
-```ts
-// imports
-import { RULE_NAMES } from '@osric/types/rules';
-import { validateAttack } from './validators/AttackCommandValidator';
-
-export class AttackCommand extends BaseCommand<AttackParams, AttackResult> {
-  readonly type = COMMAND_TYPES.ATTACK;
-  validateParameters() { return validateAttack(this.params); }
-  getRequiredRules() { return [RULE_NAMES.ATTACK_SEQUENCE]; }
-  execute(ctx: GameContext) { /* set context keys, no mechanics */ }
-}
-```
-
-Validator skeleton:
-```ts
-import { validateObject, rules } from '@osric/core/ValidationPrimitives';
-export function validateAttack(p: AttackParams) {
-  return validateObject(p, {
-    attackerId: [rules.required('attackerId')],
-    targetId: [rules.required('targetId')],
-    weaponId: [rules.required('weaponId')],
-  });
-}
-```
-
-Rule skeleton:
-```ts
-export class AttackRollRule extends BaseRule<AttackCommand> {
-  name = RULE_NAMES.ATTACK_ROLL;
-  apply(ctx, command) { /* pure mechanics, returns result fragment */ }
-}
-```
-
-Result type pattern:
-```ts
-export type AttackResult =
-  | { kind: 'attack:hit'; damage: number }
-  | { kind: 'attack:miss'; reason: 'AC' | 'FUMBLE' };
-```
-
-Error pattern:
-```ts
-export interface DomainError { code: string; message: string; details?: unknown }
-```
-
-No alternative field names (`resultType`, `status`) are allowed; always use `kind` for discriminants.
-
----
-

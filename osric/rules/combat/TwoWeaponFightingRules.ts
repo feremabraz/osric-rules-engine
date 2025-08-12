@@ -169,9 +169,9 @@ export class TwoWeaponEligibilityRule extends BaseRule {
   name = 'two-weapon-eligibility';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const character = context.getTemporary('character:creation:data') as CharacterData;
-    const mainHandWeapon = context.getTemporary('main-hand-weapon') as Weapon;
-    const offHandWeapon = context.getTemporary('off-hand-weapon') as Weapon;
+    const character = context.getTemporary(ContextKeys.CHARACTER_CREATION_DATA) as CharacterData;
+    const mainHandWeapon = context.getTemporary(ContextKeys.COMBAT_MAIN_HAND_WEAPON) as Weapon;
+    const offHandWeapon = context.getTemporary(ContextKeys.COMBAT_OFF_HAND_WEAPON) as Weapon;
 
     if (!character || !mainHandWeapon || !offHandWeapon) {
       return this.createFailureResult('Character or weapons not found in context');
@@ -190,9 +190,9 @@ export class TwoWeaponEligibilityRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     if (command.type !== COMMAND_TYPES.CHECK_TWO_WEAPON) return false;
 
-    const character = context.getTemporary('character:creation:data') as CharacterData;
-    const mainHandWeapon = context.getTemporary('main-hand-weapon') as Weapon;
-    const offHandWeapon = context.getTemporary('off-hand-weapon') as Weapon;
+    const character = context.getTemporary(ContextKeys.CHARACTER_CREATION_DATA) as CharacterData;
+    const mainHandWeapon = context.getTemporary(ContextKeys.COMBAT_MAIN_HAND_WEAPON) as Weapon;
+    const offHandWeapon = context.getTemporary(ContextKeys.COMBAT_OFF_HAND_WEAPON) as Weapon;
 
     return character !== null && mainHandWeapon !== null && offHandWeapon !== null;
   }

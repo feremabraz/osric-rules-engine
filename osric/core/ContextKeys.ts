@@ -6,7 +6,9 @@ export const ContextKeys = {
   CHARACTER_CREATION_CONTEXT: 'character:creation:context',
   CHARACTER_CREATION_PARAMS: 'character:creation:params',
   CHARACTER_CREATION_ABILITY_SCORES: 'character:creation:ability-scores',
+  CHARACTER_CREATION_ADJUSTED_SCORES: 'character:creation:adjusted-scores',
   CHARACTER_CREATION_COMPLETE: 'character:creation:complete',
+  CHARACTER_CREATION_DATA: 'character:creation:data',
 
   // Saving throws
   SAVING_THROW_PARAMS: 'character:saving-throw:params',
@@ -19,11 +21,32 @@ export const ContextKeys = {
 
   // Combat (attack preparation, two weapon, etc.)
   COMBAT_ATTACK_CONTEXT: 'combat:attack:context',
+  COMBAT_ATTACK_ROLL_RESULT: 'combat:attack:roll-result',
   COMBAT_TWO_WEAPON_CONTEXT: 'combat:two-weapon:context',
   COMBAT_TWO_WEAPON_RESULTS: 'combat:two-weapon:results',
   COMBAT_MAIN_HAND_RESULT: 'combat:main-hand:result',
   COMBAT_OFF_HAND_RESULT: 'combat:off-hand:result',
   COMBAT_TWO_WEAPON_ELIGIBILITY: 'combat:two-weapon:eligibility',
+  COMBAT_MAIN_HAND_WEAPON: 'combat:main-hand:weapon',
+  COMBAT_OFF_HAND_WEAPON: 'combat:off-hand:weapon',
+  COMBAT_ATTACKS_THIS_ROUND: 'combat:attacks-this-round',
+  COMBAT_MULTIPLE_ATTACK_RESULTS: 'combat:multiple-attack:results',
+  COMBAT_FRACTIONAL_ATTACKS_CARRIED: 'combat:fractional-attacks-carried',
+  COMBAT_ATTACK_PRECEDENCE: 'combat:attack:precedence',
+
+  // Initiative
+  COMBAT_INITIATIVE_CONTEXT: 'combat:initiative:context',
+  COMBAT_INITIATIVE_RESULTS: 'combat:initiative:results',
+  COMBAT_INITIATIVE_ORDER: 'combat:initiative:order',
+
+  // Aerial combat
+  COMBAT_AERIAL_CONTEXT: 'combat:aerial:context',
+  COMBAT_AERIAL_MODIFIERS: 'combat:aerial:modifiers',
+  COMBAT_AERIAL_DIVE_EFFECTS: 'combat:aerial:dive:effects',
+  COMBAT_AERIAL_DAMAGE_MULTIPLIER: 'combat:aerial:damage:multiplier',
+  COMBAT_AERIAL_MOVEMENT: 'combat:aerial:movement',
+  COMBAT_AERIAL_MOVEMENT_DIRECTION: 'combat:aerial:movement:direction',
+  COMBAT_AERIAL_MOVEMENT_DISTANCE: 'combat:aerial:movement:distance',
 
   // Mounted combat
   COMBAT_MOUNTED_CONTEXT: 'combat:mounted:context',
@@ -118,6 +141,15 @@ export const ContextKeys = {
   SPELL_MAGIC_ITEM_TO_USE: 'spell:magic-item:to-use',
   SPELL_MAGIC_ITEM_SAVING_THROW: 'spell:magic-item:saving-throw',
   SPELL_IDENTIFICATION_ATTEMPT: 'spell:magic-item:identification-attempt',
+  SPELL_MAGIC_ITEM_USER: 'spell:magic-item:user',
 } as const;
 
 export type ContextKey = (typeof ContextKeys)[keyof typeof ContextKeys];
+
+// A lightweight typed wrapper for context keys to enable typed get/set without enforcing
+// a global mapping. Use `typedKey<T>(ContextKeys.SOME_KEY)` at the call site for type safety.
+export type TypedContextKey<T> = { key: ContextKey } & { __type?: T };
+
+export function typedKey<T>(key: ContextKey): TypedContextKey<T> {
+  return { key } as TypedContextKey<T>;
+}

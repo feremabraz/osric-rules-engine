@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { Character as CharacterData } from '@osric/types/character';
@@ -31,7 +32,7 @@ export class MultipleAttackRule extends BaseRule {
   name = 'multiple-attack';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const attackContext = context.getTemporary('combat:attack:context') as AttackContext;
+    const attackContext = context.getTemporary(ContextKeys.COMBAT_ATTACK_CONTEXT) as AttackContext;
 
     if (!attackContext) {
       return this.createFailureResult('No attack context found');
@@ -42,15 +43,18 @@ export class MultipleAttackRule extends BaseRule {
     const attacksPerRound = this.getAttacksPerRound(attacker, weapon, target);
 
     if (attacksPerRound <= 1) {
-      context.setTemporary('attacks-this-round', 1);
+      context.setTemporary(ContextKeys.COMBAT_ATTACKS_THIS_ROUND, 1);
       return this.createSuccessResult('Single attack - no multiple attack processing needed');
     }
 
     const results = this.resolveMultipleAttacks(attackContext, attacksPerRound);
 
-    context.setTemporary('multiple-attack-results', results.results);
-    context.setTemporary('fractional-attacks-carried', results.fractionalAttacksCarriedOver);
-    context.setTemporary('attacks-this-round', results.results.length);
+    context.setTemporary(ContextKeys.COMBAT_MULTIPLE_ATTACK_RESULTS, results.results);
+    context.setTemporary(
+      ContextKeys.COMBAT_FRACTIONAL_ATTACKS_CARRIED,
+      results.fractionalAttacksCarriedOver
+    );
+    context.setTemporary(ContextKeys.COMBAT_ATTACKS_THIS_ROUND, results.results.length);
 
     return this.createSuccessResult(
       `Multiple attacks resolved: ${results.results.length} attacks executed`,
@@ -64,7 +68,7 @@ export class MultipleAttackRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     if (command.type !== COMMAND_TYPES.ATTACK) return false;
 
-    const attackContext = context.getTemporary('combat:attack:context') as AttackContext;
+    const attackContext = context.getTemporary(ContextKeys.COMBAT_ATTACK_CONTEXT) as AttackContext;
     if (!attackContext) return false;
 
     const attacksPerRound = this.getAttacksPerRound(
@@ -242,7 +246,7 @@ export class AttackPrecedenceRule extends BaseRule {
   name = 'attack-precedence';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const attackContext = context.getTemporary('combat:attack:context') as AttackContext;
+    const attackContext = context.getTemporary(ContextKeys.COMBAT_ATTACK_CONTEXT) as AttackContext;
 
     if (!attackContext) {
       return this.createFailureResult('No attack context found');
@@ -252,7 +256,7 @@ export class AttackPrecedenceRule extends BaseRule {
     const hasMultipleAttacks = this.getAttacksPerRound(attacker, weapon) > 1;
     const precedence = this.getAttackPrecedence(hasMultipleAttacks);
 
-    context.setTemporary('attack-precedence', precedence);
+    context.setTemporary(ContextKeys.COMBAT_ATTACK_PRECEDENCE, precedence);
 
     return this.createSuccessResult(
       precedence < 0
@@ -264,7 +268,7 @@ export class AttackPrecedenceRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     if (command.type !== COMMAND_TYPES.ATTACK) return false;
 
-    const attackContext = context.getTemporary('combat:attack:context') as AttackContext;
+    const attackContext = context.getTemporary(ContextKeys.COMBAT_ATTACK_CONTEXT) as AttackContext;
     return attackContext !== null;
   }
 

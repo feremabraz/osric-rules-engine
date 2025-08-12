@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { Character as CharacterData } from '@osric/types/character';
@@ -46,7 +47,9 @@ export class AerialCombatRule extends BaseRule {
   name = 'aerial-combat';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const aerialContext = context.getTemporary('combat:aerial:context') as AerialCombatContext;
+    const aerialContext = context.getTemporary(
+      ContextKeys.COMBAT_AERIAL_CONTEXT
+    ) as AerialCombatContext;
 
     if (!aerialContext) {
       return this.createFailureResult('No aerial combat context found');
@@ -60,7 +63,7 @@ export class AerialCombatRule extends BaseRule {
       altitudeAdvantage
     );
 
-    context.setTemporary('aerial-combat-modifiers', modifiers);
+    context.setTemporary(ContextKeys.COMBAT_AERIAL_MODIFIERS, modifiers);
 
     let message = 'Aerial combat modifiers applied: ';
     message += `${modifiers.attackBonus >= 0 ? '+' : ''}${modifiers.attackBonus} attack, `;
@@ -77,7 +80,9 @@ export class AerialCombatRule extends BaseRule {
     if (command.type !== COMMAND_TYPES.ATTACK && command.type !== COMMAND_TYPES.AERIAL_COMBAT)
       return false;
 
-    const aerialContext = context.getTemporary('combat:aerial:context') as AerialCombatContext;
+    const aerialContext = context.getTemporary(
+      ContextKeys.COMBAT_AERIAL_CONTEXT
+    ) as AerialCombatContext;
     return aerialContext !== null;
   }
 
@@ -174,7 +179,9 @@ export class DiveAttackRule extends BaseRule {
   name = 'dive-attack';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const aerialContext = context.getTemporary('combat:aerial:context') as AerialCombatContext;
+    const aerialContext = context.getTemporary(
+      ContextKeys.COMBAT_AERIAL_CONTEXT
+    ) as AerialCombatContext;
 
     if (!aerialContext || !aerialContext.isDiveAttack) {
       return this.createFailureResult('No dive attack context found');
@@ -188,8 +195,8 @@ export class DiveAttackRule extends BaseRule {
 
     const diveEffects = this.calculateDiveAttackEffects(aerialMovement);
 
-    context.setTemporary('dive-attack-effects', diveEffects);
-    context.setTemporary('damage-multiplier', diveEffects.damageMultiplier);
+    context.setTemporary(ContextKeys.COMBAT_AERIAL_DIVE_EFFECTS, diveEffects);
+    context.setTemporary(ContextKeys.COMBAT_AERIAL_DAMAGE_MULTIPLIER, diveEffects.damageMultiplier);
 
     return this.createSuccessResult(
       `Dive attack executed: ${diveEffects.damageMultiplier}x damage, +${diveEffects.attackBonus} to hit (${aerialMovement.diveDistance} ft dive)`
@@ -200,7 +207,9 @@ export class DiveAttackRule extends BaseRule {
     if (command.type !== COMMAND_TYPES.ATTACK && command.type !== COMMAND_TYPES.DIVE_ATTACK)
       return false;
 
-    const aerialContext = context.getTemporary('combat:aerial:context') as AerialCombatContext;
+    const aerialContext = context.getTemporary(
+      ContextKeys.COMBAT_AERIAL_CONTEXT
+    ) as AerialCombatContext;
     return aerialContext !== null && aerialContext.isDiveAttack === true;
   }
 
@@ -395,15 +404,20 @@ export class AerialMovementRule extends BaseRule {
   name = 'aerial-movement';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const aerialContext = context.getTemporary('combat:aerial:context') as AerialCombatContext;
+    const aerialContext = context.getTemporary(
+      ContextKeys.COMBAT_AERIAL_CONTEXT
+    ) as AerialCombatContext;
 
     if (!aerialContext) {
       return this.createFailureResult('No aerial movement context found');
     }
 
     const { aerialMovement } = aerialContext;
-    const direction = context.getTemporary('movement-direction') as 'ascend' | 'descend' | 'level';
-    const distance = context.getTemporary('movement-distance') as number;
+    const direction = context.getTemporary(ContextKeys.COMBAT_AERIAL_MOVEMENT_DIRECTION) as
+      | 'ascend'
+      | 'descend'
+      | 'level';
+    const distance = context.getTemporary(ContextKeys.COMBAT_AERIAL_MOVEMENT_DISTANCE) as number;
 
     if (!direction || !distance) {
       return this.createFailureResult('Movement direction and distance required');
@@ -411,7 +425,7 @@ export class AerialMovementRule extends BaseRule {
 
     const newMovement = handleAerialMovement(aerialMovement, direction, distance);
 
-    context.setTemporary('aerial-movement', newMovement);
+    context.setTemporary(ContextKeys.COMBAT_AERIAL_MOVEMENT, newMovement);
 
     return this.createSuccessResult(
       `Aerial movement: ${direction} ${distance} ft, now at ${newMovement.currentAltitude} ft altitude, ` +
@@ -423,7 +437,9 @@ export class AerialMovementRule extends BaseRule {
     if (command.type !== COMMAND_TYPES.MOVE && command.type !== COMMAND_TYPES.AERIAL_MOVE)
       return false;
 
-    const aerialContext = context.getTemporary('combat:aerial:context') as AerialCombatContext;
+    const aerialContext = context.getTemporary(
+      ContextKeys.COMBAT_AERIAL_CONTEXT
+    ) as AerialCombatContext;
     return aerialContext !== null;
   }
 

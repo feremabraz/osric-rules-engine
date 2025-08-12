@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { Character as CharacterData } from '@osric/types/character';
@@ -33,12 +34,12 @@ export class AttackRollRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     return (
       command.type === COMMAND_TYPES.ATTACK &&
-      context.getTemporary('combat:attack:context') !== null
+      context.getTemporary(ContextKeys.COMBAT_ATTACK_CONTEXT) !== null
     );
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const attackContext = context.getTemporary('combat:attack:context') as AttackContext;
+    const attackContext = context.getTemporary(ContextKeys.COMBAT_ATTACK_CONTEXT) as AttackContext;
 
     if (!attackContext) {
       return this.createFailureResult('No attack context found');
@@ -77,7 +78,7 @@ export class AttackRollRule extends BaseRule {
         weapon,
       };
 
-      context.setTemporary('combat:attack:roll-result', attackRollResult);
+      context.setTemporary(ContextKeys.COMBAT_ATTACK_ROLL_RESULT, attackRollResult);
 
       const message = hit
         ? `Attack ${critical ? '(critical!) ' : ''}hits! Roll: ${totalAttackRoll} vs target: ${targetNumber}`
@@ -153,14 +154,16 @@ export class DamageCalculationRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     return (
       command.type === COMMAND_TYPES.ATTACK &&
-      context.getTemporary('combat:attack:context') !== null &&
-      context.getTemporary('combat:attack:roll-result') !== null
+      context.getTemporary(ContextKeys.COMBAT_ATTACK_CONTEXT) !== null &&
+      context.getTemporary(ContextKeys.COMBAT_ATTACK_ROLL_RESULT) !== null
     );
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const attackContext = context.getTemporary('combat:attack:context') as AttackContext;
-    const attackRollResult = context.getTemporary('combat:attack:roll-result') as AttackRollResult;
+    const attackContext = context.getTemporary(ContextKeys.COMBAT_ATTACK_CONTEXT) as AttackContext;
+    const attackRollResult = context.getTemporary(
+      ContextKeys.COMBAT_ATTACK_ROLL_RESULT
+    ) as AttackRollResult;
 
     if (!attackContext || !attackRollResult) {
       return this.createFailureResult('Missing attack context or attack roll result');

@@ -4,6 +4,7 @@ import type { Item } from '@osric/types/item';
 import type { Monster } from '@osric/types/monster';
 import type { Spell } from '@osric/types/spell';
 import { atom, type createStore } from 'jotai';
+import type { TypedContextKey } from './ContextKeys';
 import type { RuleEngine } from './RuleEngine';
 
 export type GameEntity = Character | Monster;
@@ -127,14 +128,20 @@ export class GameContext {
     this.store.set(spellsAtom, newSpells);
   }
 
-  getTemporary<T>(key: string): T | null {
+  getTemporary<T>(key: string): T | null;
+  getTemporary<T>(key: TypedContextKey<T>): T | null;
+  getTemporary<T>(key: string | TypedContextKey<T>): T | null {
     const tempData = this.store.get(temporaryDataAtom);
-    return (tempData[key] as T) || null;
+    const k = typeof key === 'string' ? key : key.key;
+    return (tempData[k] as T) || null;
   }
 
-  setTemporary(key: string, value: unknown): void {
+  setTemporary<T>(key: string, value: T): void;
+  setTemporary<T>(key: TypedContextKey<T>, value: T): void;
+  setTemporary<T>(key: string | TypedContextKey<T>, value: T): void {
     const tempData = this.store.get(temporaryDataAtom);
-    const newTempData = { ...tempData, [key]: value };
+    const k = typeof key === 'string' ? key : key.key;
+    const newTempData = { ...tempData, [k]: value };
     this.store.set(temporaryDataAtom, newTempData);
   }
 

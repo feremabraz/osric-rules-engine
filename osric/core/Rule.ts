@@ -1,19 +1,24 @@
 import type { Command } from './Command';
 import type { GameContext } from './GameContext';
 
-export interface BaseRuleResult {
+export interface BaseRuleResult<T = Record<string, unknown>> {
   kind: 'success' | 'failure';
   message: string;
   stopChain?: boolean;
   critical?: boolean;
-  data?: Record<string, unknown>;
+  data?: T;
   effects?: string[];
   damage?: number[];
 }
 
-export type SuccessRuleResult = BaseRuleResult & { kind: 'success'; critical?: false };
-export type FailureRuleResult = BaseRuleResult & { kind: 'failure' };
-export type RuleResult = SuccessRuleResult | FailureRuleResult;
+export type SuccessRuleResult<T = Record<string, unknown>> = BaseRuleResult<T> & {
+  kind: 'success';
+  critical?: false;
+};
+export type FailureRuleResult<T = Record<string, unknown>> = BaseRuleResult<T> & {
+  kind: 'failure';
+};
+export type RuleResult<T = Record<string, unknown>> = SuccessRuleResult<T> | FailureRuleResult<T>;
 
 // Ergonomic helpers for discriminated results
 export function isSuccess<T extends { kind: 'success' | 'failure' }>(
@@ -26,6 +31,27 @@ export function isFailure<T extends { kind: 'success' | 'failure' }>(
   result: T
 ): result is T & { kind: 'failure' } {
   return result.kind === 'failure';
+}
+
+// Functional helpers for ergonomics
+export function matchResult<TData, R>(
+  result: RuleResult<TData>,
+  branches: {
+    success: (ok: SuccessRuleResult<TData>) => R;
+    failure: (err: FailureRuleResult<TData>) => R;
+  }
+): R {
+  return isSuccess(result)
+    ? branches.success(result as SuccessRuleResult<TData>)
+    : branches.failure(result as FailureRuleResult<TData>);
+}
+
+export function unwrapSuccess<TData>(result: RuleResult<TData>): SuccessRuleResult<TData> {
+  if (isFailure(result)) {
+    const msg = result.message || 'Expected success but received failure result';
+    throw new Error(msg);
+  }
+  return result;
 }
 
 export interface Rule {
@@ -42,8 +68,13 @@ export abstract class BaseRule implements Rule {
   readonly priority: number = 100;
 
   // Default implementation that can be overridden
-  async apply(_context: GameContext, _command: Command): Promise<RuleResult> {
-    return this.createSuccessResult(`Rule ${this.name} executed successfully`);
+  async apply(
+    _context: GameContext,
+    _command: Command
+  ): Promise<RuleResult<Record<string, unknown>>> {
+    return this.createSuccessResult<Record<string, unknown>>(
+      `Rule ${this.name} executed successfully`
+    );
   }
 
   // Default implementation that can be overridden
@@ -79,21 +110,21 @@ export abstract class BaseRule implements Rule {
     return { valid: missing.length === 0, missing };
   }
 
-  protected createSuccessResult(
+  protected createSuccessResult<TData = Record<string, unknown>>(
     message: string,
-    data?: Record<string, unknown>,
+    data?: TData,
     effects?: string[],
     damage?: number[],
     stopChain = false
-  ): SuccessRuleResult {
+  ): SuccessRuleResult<TData> {
     return { kind: 'success', message, data, effects, damage, stopChain };
   }
 
-  protected createFailureResult(
+  protected createFailureResult<TData = Record<string, unknown>>(
     message: string,
-    data?: Record<string, unknown>,
+    data?: TData,
     critical = false
-  ): FailureRuleResult {
+  ): FailureRuleResult<TData> {
     return { kind: 'failure', message, data, critical, stopChain: critical };
   }
 

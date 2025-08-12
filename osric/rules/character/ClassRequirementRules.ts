@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { AbilityScores, CharacterClass, CharacterRace } from '@osric/types/character';
@@ -18,11 +19,11 @@ export class ClassRequirementRule extends BaseRule {
   async apply(context: GameContext, _command: Command): Promise<RuleResult> {
     const creationData = this.getRequiredContext<CharacterCreationData>(
       context,
-      'character:creation:params'
+      ContextKeys.CHARACTER_CREATION_PARAMS
     );
     const abilityScores = this.getRequiredContext<AbilityScores>(
       context,
-      'character:creation:ability-scores'
+      ContextKeys.CHARACTER_CREATION_ABILITY_SCORES
     );
 
     const meetsRequirements = this.meetsClassRequirements(
@@ -55,8 +56,8 @@ export class ClassRequirementRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     if (command.type !== COMMAND_TYPES.CREATE_CHARACTER) return false;
 
-    const abilityScores = context.getTemporary('character:creation:adjusted-scores');
-    const creationData = context.getTemporary('character:creation:params');
+    const abilityScores = context.getTemporary(ContextKeys.CHARACTER_CREATION_ADJUSTED_SCORES);
+    const creationData = context.getTemporary(ContextKeys.CHARACTER_CREATION_PARAMS);
 
     return abilityScores != null && creationData != null;
   }

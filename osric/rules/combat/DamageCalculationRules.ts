@@ -57,7 +57,7 @@ export class DamageCalculationRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     if (command.type !== COMMAND_TYPES.ATTACK) return false;
 
-    const attackContext = context.getTemporary('combat:attack:context') as AttackContext;
+    const attackContext = context.getTemporary(ContextKeys.COMBAT_ATTACK_CONTEXT) as AttackContext;
     return Boolean(attackContext && attackContext.hitRoll !== undefined);
   }
 

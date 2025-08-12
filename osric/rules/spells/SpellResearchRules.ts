@@ -10,7 +10,7 @@ export class SpellResearchRequirementsRule extends BaseRule {
   description = 'Validate requirements for beginning spell research';
 
   canApply(context: GameContext): boolean {
-    const researchRequest = context.getTemporary('researchRequest');
+    const researchRequest = context.getTemporary(ContextKeys.SPELL_RESEARCH_REQUEST);
     return researchRequest !== null;
   }
 
@@ -107,7 +107,7 @@ export class SpellResearchStartRule extends BaseRule {
   description = 'Begin a new spell research project';
 
   canApply(context: GameContext): boolean {
-    const researchStart = context.getTemporary('startResearch');
+    const researchStart = context.getTemporary(ContextKeys.SPELL_RESEARCH_START);
     return researchStart !== null;
   }
 
@@ -211,7 +211,7 @@ export class SpellResearchProgressRule extends BaseRule {
   description = 'Continue work on spell research project';
 
   canApply(context: GameContext): boolean {
-    const researchProgress = context.getTemporary('continueResearch');
+    const researchProgress = context.getTemporary(ContextKeys.SPELL_RESEARCH_PROGRESS);
     return researchProgress !== null;
   }
 
@@ -241,7 +241,7 @@ export class SpellResearchProgressRule extends BaseRule {
     if (progressRoll.total <= 10) {
       const setbackRoll = DiceEngine.roll('1d10');
       progressMade = -5 + setbackRoll.total;
-      context.setTemporary('researchSetback', true);
+      context.setTemporary(ContextKeys.SPELL_RESEARCH_SETBACK, true);
     } else {
       progressMade = (daysWorked * progressRate * 100) / research.estimatedCompletion;
     }
@@ -296,7 +296,7 @@ export class SpellResearchSuccessRule extends BaseRule {
   description = 'Attempt to complete spell research';
 
   canApply(context: GameContext): boolean {
-    const researchCompletion = context.getTemporary('completeResearch');
+    const researchCompletion = context.getTemporary(ContextKeys.SPELL_RESEARCH_COMPLETE);
     return researchCompletion !== null;
   }
 
@@ -324,7 +324,7 @@ export class SpellResearchSuccessRule extends BaseRule {
     if (success) {
       const message = `SUCCESS! ${character.name} successfully completes research on "${research.spellName}"!`;
 
-      context.setTemporary('researchCompleted', {
+      context.setTemporary(ContextKeys.SPELL_RESEARCH_COMPLETED_EVENT, {
         spellName: research.spellName,
         spellLevel: research.targetLevel,
         totalTime: research.daysSpent,
@@ -346,7 +346,7 @@ export class SpellResearchSuccessRule extends BaseRule {
     if (catastrophe) {
       const message = `CATASTROPHIC FAILURE! ${character.name}'s research on "${research.spellName}" fails spectacularly! Wild magical energies are unleashed!`;
 
-      context.setTemporary('researchCatastrophe', {
+      context.setTemporary(ContextKeys.SPELL_RESEARCH_CATASTROPHE, {
         character: character.id,
         spellLevel: research.targetLevel,
         damage: research.targetLevel * 2,
@@ -386,7 +386,7 @@ export class SpellLearningRule extends BaseRule {
   description = 'Learn spells from external sources';
 
   canApply(context: GameContext): boolean {
-    const spellLearning = context.getTemporary('learnSpell');
+    const spellLearning = context.getTemporary(ContextKeys.SPELL_RESEARCH_LEARN);
     return spellLearning !== null;
   }
 

@@ -278,7 +278,7 @@ export class MagicItemIdentificationRule extends BaseRule {
   description = 'Handle magic item identification through different methods';
 
   canApply(context: GameContext): boolean {
-    const identificationAttempt = context.getTemporary('identificationAttempt');
+    const identificationAttempt = context.getTemporary(ContextKeys.SPELL_IDENTIFICATION_ATTEMPT);
     return identificationAttempt !== null;
   }
 
@@ -288,7 +288,7 @@ export class MagicItemIdentificationRule extends BaseRule {
       item: Item;
       method: 'identify_spell' | 'arcane_study' | 'divine_knowledge';
       hasPearl?: boolean;
-    }>('identificationAttempt');
+    }>(ContextKeys.SPELL_IDENTIFICATION_ATTEMPT);
 
     if (!identificationAttempt) {
       return this.createFailureResult('No identification attempt data found');

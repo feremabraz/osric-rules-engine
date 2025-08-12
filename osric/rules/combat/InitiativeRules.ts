@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { Character as CharacterData } from '@osric/types/character';
@@ -32,13 +33,13 @@ export class InitiativeRollRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     return (
       command.type === COMMAND_TYPES.INITIATIVE &&
-      context.getTemporary('combat:initiative:context') !== null
+      context.getTemporary(ContextKeys.COMBAT_INITIATIVE_CONTEXT) !== null
     );
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
     const initiativeContext = context.getTemporary(
-      'combat:initiative:context'
+      ContextKeys.COMBAT_INITIATIVE_CONTEXT
     ) as InitiativeContext;
 
     if (!initiativeContext) {
@@ -66,7 +67,7 @@ export class InitiativeRollRule extends BaseRule {
         return a.weaponSpeedFactor - b.weaponSpeedFactor;
       });
 
-      context.setTemporary('combat:initiative:results', results);
+      context.setTemporary(ContextKeys.COMBAT_INITIATIVE_RESULTS, results);
 
       const message = `Initiative rolled for ${results.length} entities`;
       return this.createSuccessResult(message);
@@ -226,7 +227,7 @@ export class SurpriseCheckRule extends BaseRule {
 
   canApply(context: GameContext, command: Command): boolean {
     const initiativeContext = context.getTemporary(
-      'combat:initiative:context'
+      ContextKeys.COMBAT_INITIATIVE_CONTEXT
     ) as InitiativeContext;
     return (
       command.type === COMMAND_TYPES.INITIATIVE &&
@@ -236,7 +237,9 @@ export class SurpriseCheckRule extends BaseRule {
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const results = context.getTemporary('combat:initiative:results') as EntityInitiativeResult[];
+    const results = context.getTemporary(
+      ContextKeys.COMBAT_INITIATIVE_RESULTS
+    ) as EntityInitiativeResult[];
 
     if (!results) {
       return this.createFailureResult('No initiative results found for surprise check');
@@ -253,7 +256,7 @@ export class SurpriseCheckRule extends BaseRule {
         }
       }
 
-      context.setTemporary('combat:initiative:results', results);
+      context.setTemporary(ContextKeys.COMBAT_INITIATIVE_RESULTS, results);
 
       const message =
         surprisedCount > 0
@@ -295,12 +298,14 @@ export class InitiativeOrderRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     return (
       command.type === COMMAND_TYPES.INITIATIVE &&
-      context.getTemporary('combat:initiative:results') !== null
+      context.getTemporary(ContextKeys.COMBAT_INITIATIVE_RESULTS) !== null
     );
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const results = context.getTemporary('combat:initiative:results') as EntityInitiativeResult[];
+    const results = context.getTemporary(
+      ContextKeys.COMBAT_INITIATIVE_RESULTS
+    ) as EntityInitiativeResult[];
 
     if (!results) {
       return this.createFailureResult('No initiative results found for ordering');

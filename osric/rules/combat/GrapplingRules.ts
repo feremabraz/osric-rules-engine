@@ -120,7 +120,9 @@ export class StrengthComparisonRule extends BaseRule {
   readonly priority = 20;
 
   canApply(context: GameContext, command: Command): boolean {
-    const attackResult = context.getTemporary('grapple-attack-result') as GrappleAttackResult;
+    const attackResult = context.getTemporary(
+      ContextKeys.COMBAT_GRAPPLE_ATTACK_RESULT
+    ) as GrappleAttackResult;
     return (
       command.type === COMMAND_TYPES.GRAPPLE &&
       context.getTemporary(ContextKeys.COMBAT_GRAPPLE_CONTEXT) !== null &&

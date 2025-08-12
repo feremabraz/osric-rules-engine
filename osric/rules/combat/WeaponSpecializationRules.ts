@@ -246,7 +246,7 @@ export class SpecializationRequirementRule extends BaseRule {
   name = 'specialization-requirement';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const character = context.getTemporary('character:creation:data') as CharacterData;
+    const character = context.getTemporary(ContextKeys.CHARACTER_CREATION_DATA) as CharacterData;
     const weapon = context.getTemporary(ContextKeys.COMBAT_ATTACK_WEAPON) as Weapon;
 
     if (!character || !weapon) {
@@ -266,7 +266,7 @@ export class SpecializationRequirementRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     if (command.type !== COMMAND_TYPES.CHECK_SPECIALIZATION) return false;
 
-    const character = context.getTemporary('character:creation:data') as CharacterData;
+    const character = context.getTemporary(ContextKeys.CHARACTER_CREATION_DATA) as CharacterData;
     const weapon = context.getTemporary(ContextKeys.COMBAT_ATTACK_WEAPON) as Weapon;
 
     return character !== null && weapon !== null;
