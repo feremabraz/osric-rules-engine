@@ -2,7 +2,7 @@
 
 This document is the canonical reference for the repository’s structure, how to extend it safely, and what’s next. It focuses on the unified model (Option A) and only lists active or upcoming work; completed phases are summarized briefly.
 
-Last updated: 2025-08-11 (Phase 5 complete)
+Last updated: 2025-08-12 (Phases 5–6 complete)
 
 
 ## Project overview
@@ -12,7 +12,7 @@ Last updated: 2025-08-11 (Phase 5 complete)
 - Lint/format: Biome
 - Package manager: pnpm
 - Source layout:
-  - `osric/core`: engine primitives (Command, Rule, RuleChain, RuleEngine, Dice, Grid/Movement, ValidationEngine, GameContext)
+  - `osric/core`: engine primitives (Command, Rule, RuleChain, RuleEngine, Dice, Grid/Movement, ValidationPrimitives, GameContext)
   - `osric/types`: canonical public types and constants (COMMAND_TYPES, RULE_NAMES, domain types, rules metadata)
   - `osric/entities`: thin OO wrappers/factories around typed entities
   - `osric/commands`: strongly-typed command classes (user intents)
@@ -24,6 +24,7 @@ Last updated: 2025-08-11 (Phase 5 complete)
 
 - Commands
   - Represent user intent. Implement `BaseCommand` with `type` and parameters. Keep mechanics out; delegate to rules via RuleEngine.
+  - Runtime contract: Each command must validate its parameters using its specific validator in `validateParameters()` before `execute` runs (validators are imported from `@osric/types`).
 
 - Rules
   - Implement mechanics. Must implement `BaseRule.apply(context, command)` and `canApply()`. Scheduled into `RuleChain`s and ordered by `priority` and/or prerequisites.
@@ -67,7 +68,7 @@ Note: Use the canonical modules above exclusively. The legacy barrel `@osric/cor
   - Rule names come from `RULE_NAMES` (no ad-hoc strings). All rules implement `apply(context, command)` and can report prerequisites.
 
 - Commands
-  - `getRequiredRules()` should return `RULE_NAMES` values. Validate parameters (ValidationEngine or explicit checks). `execute` should set context and delegate to the engine.
+  - `getRequiredRules()` should return `RULE_NAMES` values. Validate parameters using the command’s specific validator (from `@osric/types`) inside `validateParameters()`; avoid ad-hoc checks. `execute` should set context and delegate to the engine.
 
 - Temporary context keys
   - Namespaced keys: `domain:feature:detail` (e.g., `character:saving-throw:params`). Use `BaseRule.getRequiredContext()` and `setContext()`.
@@ -117,7 +118,7 @@ Only merge when all gates pass. Keep a minimal smoke path (command → chain →
 
 - Core engine
   - `osric/core/Command.ts`, `osric/core/Rule.ts`, `osric/core/RuleChain.ts`, `osric/core/RuleEngine.ts`
-  - `osric/core/ValidationEngine.ts`, `osric/core/Dice.ts`, `osric/core/GameContext.ts`
+  - `osric/core/ValidationPrimitives.ts`, `osric/core/Dice.ts`, `osric/core/GameContext.ts`
   - `osric/core/GridSystem.ts`, `osric/core/MovementCalculator.ts`
 
 - Types/constants
@@ -135,78 +136,23 @@ Only merge when all gates pass. Keep a minimal smoke path (command → chain →
 
 ## Upcoming Phases & Improvements
 
-### Phase 5: Types and Structure Refactor
-
-- Split monolithic files: The former `osric/types/entities.ts` has been replaced by domain-specific files: `character.ts`, `monster.ts`, `item.ts`, `spell.ts`, and `shared.ts`.
-- **Consistent file naming:** Rename `SpellTypes.ts` to `spell-types.ts` for consistency; use kebab-case for all type files.
-Breaking changes (Phase 5)
-
-- The compatibility barrel `@osric/core/Types` was removed. Import directly from domain modules in `@osric/types/*`.
-- The file `@osric/types/SpellTypes` was renamed to `@osric/types/spell-types` (kebab-case). Update imports accordingly.
-- The legacy monolith `osric/types/entities.ts` was deleted earlier; continue to use domain files: `character`, `monster`, `item`, `spell`, `shared`, and `spell-types`.
-- **Separation of concerns:** Move branded ID types and helpers to a single file (`id-utils.ts`).
-- **Non-mixing:** Ensure utility functions are not mixed with type definitions; keep helpers/utilities in their own files.
-- **Consistent export style:** Use named exports everywhere; avoid default exports and mixed export styles.
-- **Domain-driven organization:** Ensure each file covers a single domain or concern.
-
-### Phase 6: Validation Architecture
-
-- **Centralized contract validation:** Move all contract validation logic to a dedicated file (e.g., `validation.ts` in `core/` or `types/`).
-- **Validator interface:** Define and adopt a `Validator` interface for reusable validation logic across rules and commands.
-- **Unified ValidationResult:** Use a single `ValidationResult` type everywhere; remove ad-hoc validation result shapes.
-- **Shared validation helpers:** Ensure all rules and commands use shared validation helpers, not custom logic.
-- **Document validation flow:** Clearly document validation phases (pre-validation, main execution, post-processing).
-
-#### Centralized validators quick reference
-
-- Engine primitives: `osric/core/ValidationEngine.ts`
-  - Provides ValidationRule, Validator<TParams>
-  - Helpers: required, stringLength, numberRange, oneOf, arrayNotEmpty, positiveInteger, nonNegativeInteger, pattern, custom, and/or combinators, toValidationResult
-
-- Concrete validators and helpers: `osric/core/Validators.ts`
-  - Contains validators for commands like Attack, Move, Search, WeatherCheck, Foraging, TerrainNavigation, Initiative, Grapple, CastSpell, MemorizeSpell, ScrollRead, IdentifyMagicItem, CreateCharacter, LevelUp, ThiefSkillCheck, GainExperience, FallingDamage, MonsterGeneration, ReactionRoll, SpellResearch, TurnUndead
-  - Typed helper `isStringOneOf` for clean union checks
-  - Registries: `Validators` and `ExtendedValidators` for discoverability
-
-- Public exports: `@osric/types`
-  - Import validators ergonomically: `import { MoveValidator } from '@osric/types'`
-
-Using a validator in a command
-1) Import the validator from `@osric/types`
-2) Override `protected validateParameters()` and delegate:
-   - `const r = SomeValidator.validate(this.parameters as unknown as Record<string, unknown>)`
-   - If `!r.valid`, throw `new Error("Parameter validation failed: ...")`
-
-Design notes
-- Keep validators decoupled from domain types to avoid cycles; validate plain object shapes
-- For conditional requirements (e.g., field required when another has a value), prefer a soft check and handle edge cases in command `execute` if execution context is needed
-- Re-export validators via `@osric/types` for uniform imports across commands and tests
-
-Testing tips
-- Unit: call `Validator.validate(params)` and assert `valid`/`errors`
-- E2E: construct commands; `BaseCommand` will run `validateParameters()` on instantiation
-
-
 ### Phase 7: Additional Separation of Concerns and Domain-Driven Refactors
 
 - Further split and reorganize code to ensure every module/file has a single responsibility and clear domain boundaries.
 - Refactor any remaining cross-domain logic into dedicated modules.
 - Review and update folder structure to match domain-driven design principles.
 
-### Phase 8: Enhanced Error Handling and Diagnostics
+### Phase 8: API Surface Review and Simplification
+
+- Audit all public APIs (types, classes, functions) for clarity and minimalism.
+- Remove legacy or redundant APIs, shims, types, and exports.
+- Simplify and document (JSDoc) the canonical API surface for engine extension and integration.
+- Ensure all exports are intentional and domain-appropriate.
+
+### Phase 9+: TBD
 
 - Standardize error handling across all layers (core, rules, commands, entities).
 - Expand and unify error types, error factories, and error reporting.
 - Improve diagnostics and error context for debugging and user feedback.
 - Add structured logging and tracing for rule/command execution.
-
-### Phase 9: API Surface Review and Simplification
-
-- Audit all public APIs (types, classes, functions) for clarity and minimalism.
-- Remove legacy or redundant APIs, types, and exports.
-- Simplify and document the canonical API surface for engine extension and integration.
-- Ensure all exports are intentional and domain-appropriate.
-
-### Phase 10+: More robust test coverage and property-based testing (and future improvements)
-
 - TBD

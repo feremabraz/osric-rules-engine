@@ -1,6 +1,5 @@
 /**
- * Comprehensive Validation System for the OSRIC Rules Engine
- * Provides declarative validation rules for commands and parameters
+ * ValidationPrimitives: Declarative validation rule builders and helpers
  */
 
 export interface ValidationRule<T = unknown> {
@@ -21,10 +20,27 @@ export interface Validator<TParams> {
   validate(params: TParams): { valid: boolean; errors: ValidationError[] };
 }
 
+// Standard formatter to turn validator errors into user-facing strings
+export function formatValidationErrors(errors: ReadonlyArray<ValidationError | string>): string[] {
+  return errors.map((e) =>
+    typeof e === 'string' ? e : e.field ? `${e.field}: ${e.message}` : e.message
+  );
+}
+
+// Typed membership check for string unions (helper)
+export function isStringOneOf<T extends readonly string[]>(
+  value: unknown,
+  allowed: T
+): value is T[number] {
+  return typeof value === 'string' && (allowed as readonly string[]).includes(value);
+}
+
+export type AnyParams = Record<string, unknown>;
+
 /**
- * ValidationEngine provides fluent interface for creating validation rules
+ * ValidationPrimitives provides fluent interfaces for creating validation rules
  */
-export namespace ValidationEngine {
+export namespace ValidationPrimitives {
   export function required<T>(field: string): ValidationRule<T> {
     return {
       validate: (value: T) => value !== null && value !== undefined && value !== '',
@@ -227,18 +243,13 @@ export namespace ValidationEngine {
  * Validation utilities for OSRIC-specific concepts
  */
 export namespace OSRICValidation {
-  /**
-   * Normalize OSRIC enum-like values: lower-case and replace spaces with hyphens
-   * Accepts inputs like "Lawful Good" or "Magic-User" and compares against
-   * canonical lower-case lists like "lawful-good" or "magic-user".
-   */
   function normalizeOsricValue(value: unknown): string | null {
     if (typeof value !== 'string') return null;
     return value.trim().toLowerCase().replace(/\s+/g, '-');
   }
 
   export function abilityScore(field: string): ValidationRule<number> {
-    return ValidationEngine.numberRange(field, 3, 18);
+    return ValidationPrimitives.numberRange(field, 3, 18);
   }
 
   export function characterClass(field: string): ValidationRule<string> {
@@ -255,7 +266,7 @@ export namespace OSRICValidation {
       'monk',
       'bard',
     ];
-    return ValidationEngine.custom<string>(
+    return ValidationPrimitives.custom<string>(
       field,
       (value) => {
         const norm = normalizeOsricValue(value);
@@ -267,7 +278,7 @@ export namespace OSRICValidation {
 
   export function characterRace(field: string): ValidationRule<string> {
     const races = ['human', 'elf', 'dwarf', 'halfling', 'gnome', 'half-elf', 'half-orc'];
-    return ValidationEngine.custom<string>(
+    return ValidationPrimitives.custom<string>(
       field,
       (value) => {
         const norm = normalizeOsricValue(value);
@@ -289,7 +300,7 @@ export namespace OSRICValidation {
       'neutral-evil',
       'chaotic-evil',
     ];
-    return ValidationEngine.custom<string>(
+    return ValidationPrimitives.custom<string>(
       field,
       (value) => {
         const norm = normalizeOsricValue(value);
@@ -300,24 +311,24 @@ export namespace OSRICValidation {
   }
 
   export function spellLevel(field: string): ValidationRule<number> {
-    return ValidationEngine.numberRange(field, 1, 9);
+    return ValidationPrimitives.numberRange(field, 1, 9);
   }
 
   export function characterLevel(field: string): ValidationRule<number> {
-    return ValidationEngine.numberRange(field, 1, 36);
+    return ValidationPrimitives.numberRange(field, 1, 36);
   }
 
   export function hitPoints(field: string): ValidationRule<number> {
-    return ValidationEngine.nonNegativeInteger(field);
+    return ValidationPrimitives.nonNegativeInteger(field);
   }
 
   export function armorClass(field: string): ValidationRule<number> {
-    return ValidationEngine.numberRange(field, -10, 10);
+    return ValidationPrimitives.numberRange(field, -10, 10);
   }
 
   export function diceNotation(field: string): ValidationRule<string> {
     const dicePattern = /^\d*d\d+([+-]\d+)?$/i;
-    return ValidationEngine.pattern(
+    return ValidationPrimitives.pattern(
       field,
       dicePattern,
       'must be valid dice notation (e.g., "1d6", "3d8+2")'
@@ -325,7 +336,7 @@ export namespace OSRICValidation {
   }
 
   export function entityId(field: string): ValidationRule<string> {
-    return ValidationEngine.custom<string>(
+    return ValidationPrimitives.custom<string>(
       field,
       (value) => typeof value === 'string' && value.length > 0 && /^[a-zA-Z0-9_-]+$/.test(value),
       'must be a valid entity ID (alphanumeric, underscore, or dash)'

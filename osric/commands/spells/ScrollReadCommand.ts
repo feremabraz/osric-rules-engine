@@ -1,9 +1,10 @@
-import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
-import type { GameContext } from '../../core/GameContext';
+import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
 
+import { ScrollReadValidator } from '@osric/commands/spells/validators/ScrollReadValidator';
+import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { Character, CharacterId, Item, ItemId, MonsterId } from '@osric/types';
-import { ScrollReadValidator } from '@osric/types';
-import { COMMAND_TYPES } from '../../types/constants';
+import { COMMAND_TYPES } from '@osric/types/constants';
 
 export interface ScrollReadParameters {
   readerId: string | CharacterId;
@@ -21,12 +22,10 @@ export class ScrollReadCommand extends BaseCommand<ScrollReadParameters> {
   }
 
   protected validateParameters(): void {
-    const result = ScrollReadValidator.validate(
-      this.parameters as unknown as Record<string, unknown>
-    );
+    const result = ScrollReadValidator.validate(this.parameters);
     if (!result.valid) {
-      const errorMessages = result.errors.map((e) => String(e));
-      throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
+      const messages = formatValidationErrors(result.errors);
+      throw new Error(`Parameter validation failed: ${messages.join(', ')}`);
     }
   }
 

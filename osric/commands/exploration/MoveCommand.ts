@@ -1,9 +1,10 @@
+import { MoveValidator } from '@osric/commands/exploration/validators/MoveValidator';
+import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
+import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { CharacterId } from '@osric/types';
-import { MoveValidator } from '@osric/types';
 import type { Character } from '@osric/types/character';
-import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
-import type { GameContext } from '../../core/GameContext';
-import { COMMAND_TYPES } from '../../types/constants';
+import { COMMAND_TYPES } from '@osric/types/constants';
 
 export interface MoveParameters {
   characterId: string | CharacterId;
@@ -34,8 +35,8 @@ export class MoveCommand extends BaseCommand<MoveParameters> {
   protected validateParameters(): void {
     const result = MoveValidator.validate(this.parameters);
     if (!result.valid) {
-      const errorMessages = result.errors.map((e) => String(e));
-      throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
+      const messages = formatValidationErrors(result.errors);
+      throw new Error(`Parameter validation failed: ${messages.join(', ')}`);
     }
   }
 

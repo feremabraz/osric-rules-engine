@@ -1,10 +1,11 @@
+import { SearchValidator } from '@osric/commands/exploration/validators/SearchValidator';
+import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import { DiceEngine } from '@osric/core/Dice';
+import type { GameContext } from '@osric/core/GameContext';
+import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { CharacterId } from '@osric/types';
-import { SearchValidator } from '@osric/types';
 import type { Character } from '@osric/types/character';
-import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
-import { DiceEngine } from '../../core/Dice';
-import type { GameContext } from '../../core/GameContext';
-import { COMMAND_TYPES } from '../../types/constants';
+import { COMMAND_TYPES } from '@osric/types/constants';
 
 export interface SearchParameters {
   characterId: string | CharacterId;
@@ -29,10 +30,8 @@ export class SearchCommand extends BaseCommand<SearchParameters> {
   protected validateParameters(): void {
     const result = SearchValidator.validate(this.parameters);
     if (!result.valid) {
-      const errorMessages = result.errors.map((e) =>
-        typeof e === 'string' ? e : `${e.field}: ${e.message}`
-      );
-      throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
+      const msgs = formatValidationErrors(result.errors);
+      throw new Error(`Parameter validation failed: ${msgs.join(', ')}`);
     }
   }
 

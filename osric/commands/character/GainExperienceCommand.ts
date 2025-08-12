@@ -1,14 +1,15 @@
+import { GainExperienceValidator } from '@osric/commands/character/validators/GainExperienceValidator';
+import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
+import { calculateGroupXP, calculateMonsterXP } from '@osric/core/MonsterXP';
+import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import {
   determineLevel,
   getExperienceForNextLevel,
 } from '@osric/rules/experience/LevelProgressionRules';
-import { GainExperienceValidator } from '@osric/types';
 import type { Character } from '@osric/types/character';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 import type { Monster } from '@osric/types/monster';
-import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
-import type { GameContext } from '../../core/GameContext';
-import { calculateGroupXP, calculateMonsterXP } from '../../core/MonsterXP';
-import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
 
 export interface GainExperienceParameters {
   characterId: string | import('@osric/types').CharacterId;
@@ -41,14 +42,10 @@ export class GainExperienceCommand extends BaseCommand<GainExperienceParameters>
   }
 
   protected validateParameters(): void {
-    const result = GainExperienceValidator.validate(
-      this.parameters as unknown as Record<string, unknown>
-    );
+    const result = GainExperienceValidator.validate(this.parameters);
     if (!result.valid) {
-      const msgs = result.errors.map((e) =>
-        typeof e === 'string' ? e : `${e.field}: ${e.message}`
-      );
-      throw new Error(`Parameter validation failed: ${msgs.join(', ')}`);
+      const messages = formatValidationErrors(result.errors);
+      throw new Error(`Parameter validation failed: ${messages.join(', ')}`);
     }
   }
 

@@ -1,8 +1,9 @@
+import { IdentifyMagicItemValidator } from '@osric/commands/spells/validators/IdentifyMagicItemValidator';
+import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
+import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { Character, Item } from '@osric/types';
-import { IdentifyMagicItemValidator } from '@osric/types';
-import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
-import type { GameContext } from '../../core/GameContext';
-import { COMMAND_TYPES } from '../../types/constants';
+import { COMMAND_TYPES } from '@osric/types/constants';
 
 import type { CharacterId, ItemId } from '@osric/types';
 
@@ -26,12 +27,10 @@ export class IdentifyMagicItemCommand extends BaseCommand<IdentifyMagicItemParam
   }
 
   protected validateParameters(): void {
-    const result = IdentifyMagicItemValidator.validate(
-      this.parameters as unknown as Record<string, unknown>
-    );
+    const result = IdentifyMagicItemValidator.validate(this.parameters);
     if (!result.valid) {
-      const errorMessages = result.errors.map((e) => String(e));
-      throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
+      const messages = formatValidationErrors(result.errors);
+      throw new Error(`Parameter validation failed: ${messages.join(', ')}`);
     }
   }
 

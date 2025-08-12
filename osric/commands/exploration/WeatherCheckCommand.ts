@@ -1,9 +1,10 @@
-import { WeatherCheckValidator } from '@osric/types';
+import { WeatherCheckValidator } from '@osric/commands/exploration/validators/WeatherCheckValidator';
+import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import { DiceEngine } from '@osric/core/Dice';
+import type { GameContext } from '@osric/core/GameContext';
+import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { Character } from '@osric/types/character';
-import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
-import { DiceEngine } from '../../core/Dice';
-import type { GameContext } from '../../core/GameContext';
-import { COMMAND_TYPES } from '../../types/constants';
+import { COMMAND_TYPES } from '@osric/types/constants';
 
 export interface WeatherCondition {
   type:
@@ -53,10 +54,8 @@ export class WeatherCheckCommand extends BaseCommand<WeatherCheckParameters> {
   protected validateParameters(): void {
     const result = WeatherCheckValidator.validate(this.parameters);
     if (!result.valid) {
-      const errorMessages = result.errors.map((e) =>
-        typeof e === 'string' ? e : `${e.field}: ${e.message}`
-      );
-      throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
+      const msgs = formatValidationErrors(result.errors);
+      throw new Error(`Parameter validation failed: ${msgs.join(', ')}`);
     }
   }
 

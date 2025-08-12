@@ -1,9 +1,10 @@
+import { ReactionRollValidator } from '@osric/commands/npc/validators/ReactionRollValidator';
+import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
+import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { ReactionRollParams } from '@osric/rules/npc/ReactionRules';
 import type { CharacterId, MonsterId } from '@osric/types';
-import { ReactionRollValidator } from '@osric/types';
-import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
-import type { GameContext } from '../../core/GameContext';
-import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 
 export interface ReactionRollParameters {
   characterId: string | CharacterId | MonsterId;
@@ -23,13 +24,9 @@ export class ReactionRollCommand extends BaseCommand<ReactionRollParameters> {
   }
 
   protected validateParameters(): void {
-    const result = ReactionRollValidator.validate(
-      this.parameters as unknown as Record<string, unknown>
-    );
+    const result = ReactionRollValidator.validate(this.parameters);
     if (!result.valid) {
-      const msgs = result.errors.map((e) =>
-        typeof e === 'string' ? e : `${e.field}: ${e.message}`
-      );
+      const msgs = formatValidationErrors(result.errors);
       throw new Error(`Parameter validation failed: ${msgs.join(', ')}`);
     }
   }

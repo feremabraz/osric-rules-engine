@@ -1,9 +1,10 @@
-import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
-import type { GameContext } from '../../core/GameContext';
+import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
 
+import { MemorizeSpellValidator } from '@osric/commands/spells/validators/MemorizeSpellValidator';
+import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { Character, Spell } from '@osric/types';
-import { MemorizeSpellValidator } from '@osric/types';
-import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 
 export interface MemorizeSpellParameters {
   casterId: string;
@@ -22,12 +23,10 @@ export class MemorizeSpellCommand extends BaseCommand<MemorizeSpellParameters> {
   }
 
   protected validateParameters(): void {
-    const result = MemorizeSpellValidator.validate(
-      this.parameters as unknown as Record<string, unknown>
-    );
+    const result = MemorizeSpellValidator.validate(this.parameters);
     if (!result.valid) {
-      const errorMessages = result.errors.map((e) => String(e));
-      throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
+      const messages = formatValidationErrors(result.errors);
+      throw new Error(`Parameter validation failed: ${messages.join(', ')}`);
     }
   }
 

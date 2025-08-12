@@ -1,5 +1,12 @@
+import { CreateCharacterValidator } from '@osric/commands/character/validators/CreateCharacterValidator';
+import { BaseCommand, type CommandResult } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
+import {
+  ValidationPrimitives,
+  type ValidationRule,
+  formatValidationErrors,
+} from '@osric/core/ValidationPrimitives';
 import { createCharacterId } from '@osric/types';
-import { CreateCharacterValidator } from '@osric/types';
 import type {
   AbilityScores,
   Alignment,
@@ -7,10 +14,7 @@ import type {
   Character as CharacterData,
   CharacterRace,
 } from '@osric/types/character';
-import { BaseCommand, type CommandResult } from '../../core/Command';
-import type { GameContext } from '../../core/GameContext';
-import { ValidationEngine, type ValidationRule } from '../../core/ValidationEngine';
-import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 
 export interface CreateCharacterParameters {
   name: string;
@@ -45,14 +49,10 @@ export class CreateCharacterCommand extends BaseCommand<CreateCharacterParameter
   }
 
   protected validateParameters(): void {
-    const result = CreateCharacterValidator.validate(
-      this.parameters as unknown as Record<string, unknown>
-    );
+    const result = CreateCharacterValidator.validate(this.parameters);
     if (!result.valid) {
-      const errorMessages = result.errors.map((error) =>
-        typeof error === 'string' ? error : error.message
-      );
-      throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
+      const messages = formatValidationErrors(result.errors);
+      throw new Error(`Parameter validation failed: ${messages.join(', ')}`);
     }
   }
 

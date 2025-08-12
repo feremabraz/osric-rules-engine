@@ -1,9 +1,10 @@
+import { FallingDamageValidator } from '@osric/commands/exploration/validators/FallingDamageValidator';
+import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
+import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { CharacterId } from '@osric/types';
-import { FallingDamageValidator } from '@osric/types';
 import type { Character } from '@osric/types/character';
-import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
-import type { GameContext } from '../../core/GameContext';
-import { COMMAND_TYPES } from '../../types/constants';
+import { COMMAND_TYPES } from '@osric/types/constants';
 
 export interface FallingDamageParameters {
   characterId: string | CharacterId;
@@ -29,13 +30,9 @@ export class FallingDamageCommand extends BaseCommand<FallingDamageParameters> {
   }
 
   protected validateParameters(): void {
-    const result = FallingDamageValidator.validate(
-      this.parameters as unknown as Record<string, unknown>
-    );
+    const result = FallingDamageValidator.validate(this.parameters);
     if (!result.valid) {
-      const msgs = result.errors.map((e) =>
-        typeof e === 'string' ? e : `${e.field}: ${e.message}`
-      );
+      const msgs = formatValidationErrors(result.errors);
       throw new Error(`Parameter validation failed: ${msgs.join(', ')}`);
     }
   }

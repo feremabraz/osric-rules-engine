@@ -21,7 +21,7 @@ export interface CommandRuleContract {
 /**
  * Command-Rule Contract Validation System for the OSRIC Rules Engine
  * Provides static analysis of command-rule dependencies without instantiation
- * Follows the same namespace pattern as ValidationEngine to avoid circular dependencies
+ * Follows the same namespace pattern as ValidationPrimitives to avoid circular dependencies
  */
 export namespace RuleContractValidator {
   /**

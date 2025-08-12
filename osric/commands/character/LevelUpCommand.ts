@@ -1,3 +1,8 @@
+import { LevelUpValidator } from '@osric/commands/character/validators/LevelUpValidator';
+import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import { DiceEngine } from '@osric/core/Dice';
+import type { GameContext } from '@osric/core/GameContext';
+import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import {
   determineLevel,
   getExperienceForNextLevel,
@@ -6,12 +11,8 @@ import {
   getTrainingRequirements,
   meetsTrainingRequirements,
 } from '@osric/rules/experience/LevelProgressionRules.js';
-import { LevelUpValidator } from '@osric/types';
 import type { Character } from '@osric/types/character';
-import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
-import { DiceEngine } from '../../core/Dice';
-import type { GameContext } from '../../core/GameContext';
-import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 
 export interface LevelUpParameters {
   characterId: string | import('@osric/types').CharacterId;
@@ -35,11 +36,9 @@ export class LevelUpCommand extends BaseCommand<LevelUpParameters> {
   }
 
   protected validateParameters(): void {
-    const result = LevelUpValidator.validate(this.parameters as unknown as Record<string, unknown>);
+    const result = LevelUpValidator.validate(this.parameters);
     if (!result.valid) {
-      const msgs = result.errors.map((e) =>
-        typeof e === 'string' ? e : `${e.field}: ${e.message}`
-      );
+      const msgs = formatValidationErrors(result.errors);
       throw new Error(`Parameter validation failed: ${msgs.join(', ')}`);
     }
   }

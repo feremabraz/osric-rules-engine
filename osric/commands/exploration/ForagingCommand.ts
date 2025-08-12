@@ -1,10 +1,11 @@
+import { ForagingValidator } from '@osric/commands/exploration/validators/ForagingValidator';
+import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import { DiceEngine } from '@osric/core/Dice';
+import type { GameContext } from '@osric/core/GameContext';
+import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { CharacterId } from '@osric/types';
-import { ForagingValidator } from '@osric/types';
 import type { Character } from '@osric/types/character';
-import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
-import { DiceEngine } from '../../core/Dice';
-import type { GameContext } from '../../core/GameContext';
-import { COMMAND_TYPES } from '../../types/constants';
+import { COMMAND_TYPES } from '@osric/types/constants';
 
 export interface ForagingParameters {
   characterId: string | CharacterId;
@@ -41,8 +42,8 @@ export class ForagingCommand extends BaseCommand<ForagingParameters> {
   protected validateParameters(): void {
     const result = ForagingValidator.validate(this.parameters);
     if (!result.valid) {
-      const errorMessages = result.errors.map((e) => String(e));
-      throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
+      const msgs = formatValidationErrors(result.errors);
+      throw new Error(`Parameter validation failed: ${msgs.join(', ')}`);
     }
   }
 

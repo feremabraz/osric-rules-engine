@@ -1,10 +1,11 @@
+import { TurnUndeadValidator } from '@osric/commands/character/validators/TurnUndeadValidator';
+import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
+import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { CharacterId, MonsterId } from '@osric/types';
-import { TurnUndeadValidator } from '@osric/types';
 import type { Character } from '@osric/types/character';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 import type { Monster } from '@osric/types/monster';
-import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
-import type { GameContext } from '../../core/GameContext';
-import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
 
 export interface TurnUndeadParameters {
   characterId: string | CharacterId;
@@ -29,13 +30,9 @@ export class TurnUndeadCommand extends BaseCommand<TurnUndeadParameters> {
   }
 
   protected validateParameters(): void {
-    const result = TurnUndeadValidator.validate(
-      this.parameters as unknown as Record<string, unknown>
-    );
+    const result = TurnUndeadValidator.validate(this.parameters);
     if (!result.valid) {
-      const msgs = result.errors.map((e) =>
-        typeof e === 'string' ? e : `${e.field}: ${e.message}`
-      );
+      const msgs = formatValidationErrors(result.errors);
       throw new Error(`Parameter validation failed: ${msgs.join(', ')}`);
     }
   }

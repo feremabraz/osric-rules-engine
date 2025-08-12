@@ -1,5 +1,4 @@
 // Unified public types are re-exported from './entities' only.
-
 export type { Command, CommandResult } from '../core/Command';
 export type { Rule, RuleResult } from '../core/Rule';
 export type { RuleChain } from '../core/RuleChain';
@@ -151,35 +150,6 @@ export {
   isMonsterId,
   isSpellId,
 } from './id-utils';
-
-// Centralized validators (live under core for engine utilities)
-export {
-  SavingThrowValidator,
-  AttackValidator,
-  SearchValidator,
-  WeatherCheckValidator,
-  MoveValidator,
-  ForagingValidator,
-  TerrainNavigationValidator,
-  InitiativeValidator,
-  GrappleValidator,
-  CastSpellValidator,
-  MemorizeSpellValidator,
-  ScrollReadValidator,
-  IdentifyMagicItemValidator,
-  CreateCharacterValidator,
-  LevelUpValidator,
-  ThiefSkillCheckValidator,
-  GainExperienceValidator,
-  FallingDamageValidator,
-  MonsterGenerationValidator,
-  ReactionRollValidator,
-  MagicItemCreationValidator,
-  SpellResearchValidator,
-  TurnUndeadValidator,
-  Validators,
-  ExtendedValidators,
-} from '../core/Validators';
 
 export interface Result<T, E = Error> {
   success: boolean;

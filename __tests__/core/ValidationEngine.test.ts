@@ -1,7 +1,7 @@
-import { ValidationEngine } from '@osric/core/ValidationEngine';
+import { ValidationPrimitives as ValidationEngine } from '@osric/core/ValidationPrimitives';
 import { describe, expect, it } from 'vitest';
 
-describe('ValidationEngine', () => {
+describe('ValidationPrimitives', () => {
   it('required: fails on undefined, null, and empty string', () => {
     const rule = ValidationEngine.required('name');
     expect(rule.validate(undefined as unknown as string)).toBe(false);

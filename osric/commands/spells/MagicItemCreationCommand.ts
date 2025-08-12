@@ -1,10 +1,11 @@
+import { MagicItemCreationValidator } from '@osric/commands/spells/validators/MagicItemCreationValidator';
+import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
+import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { CharacterId } from '@osric/types';
-import { MagicItemCreationValidator } from '@osric/types';
 import type { Character } from '@osric/types/character';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 import type { Item } from '@osric/types/item';
-import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
-import type { GameContext } from '../../core/GameContext';
-import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
 
 export interface MagicItemCreationParameters {
   characterId: string | CharacterId;
@@ -67,13 +68,9 @@ export class MagicItemCreationCommand extends BaseCommand<MagicItemCreationParam
   }
 
   protected validateParameters(): void {
-    const result = MagicItemCreationValidator.validate(
-      this.parameters as unknown as Record<string, unknown>
-    );
+    const result = MagicItemCreationValidator.validate(this.parameters);
     if (!result.valid) {
-      const msgs = result.errors.map((e) =>
-        typeof e === 'string' ? e : `${e.field}: ${e.message}`
-      );
+      const msgs = formatValidationErrors(result.errors);
       throw new Error(`Parameter validation failed: ${msgs.join(', ')}`);
     }
   }

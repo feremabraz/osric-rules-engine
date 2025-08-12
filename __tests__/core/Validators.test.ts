@@ -1,21 +1,19 @@
-import type { Validator } from '@osric/core/ValidationEngine';
-import {
-  AttackValidator,
-  ForagingValidator,
-  GrappleValidator,
-  InitiativeValidator,
-  MoveValidator,
-  ReactionRollValidator,
-  SavingThrowValidator,
-  SpellResearchValidator,
-  TerrainNavigationValidator,
-  TurnUndeadValidator,
-} from '@osric/types';
+import { SavingThrowValidator } from '@osric/commands/character/validators/SavingThrowValidator';
+import { TurnUndeadValidator } from '@osric/commands/character/validators/TurnUndeadValidator';
+import { AttackValidator } from '@osric/commands/combat/validators/AttackValidator';
+import { GrappleValidator } from '@osric/commands/combat/validators/GrappleValidator';
+import { InitiativeValidator } from '@osric/commands/combat/validators/InitiativeValidator';
+import { ForagingValidator } from '@osric/commands/exploration/validators/ForagingValidator';
+import { MoveValidator } from '@osric/commands/exploration/validators/MoveValidator';
+import { TerrainNavigationValidator } from '@osric/commands/exploration/validators/TerrainNavigationValidator';
+import { ReactionRollValidator } from '@osric/commands/npc/validators/ReactionRollValidator';
+import { SpellResearchValidator } from '@osric/commands/spells/validators/SpellResearchValidator';
+import type { Validator } from '@osric/core/ValidationPrimitives';
 import type { ValidationResult } from '@osric/types';
 import { SAVING_THROW_TYPES } from '@osric/types/commands';
 import { describe, expect, it } from 'vitest';
 
-// Utility to run a validator via ValidationEngine.toValidationResult-like shape
+// Utility to run a validator via ValidationPrimitives.toValidationResult-like shape
 function runValidator<P>(validator: Validator<P>, params: P): ValidationResult {
   const res = validator.validate(params);
   return {

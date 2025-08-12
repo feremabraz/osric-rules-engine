@@ -1,9 +1,10 @@
-import { SavingThrowValidator } from '@osric/types';
+import { SavingThrowValidator } from '@osric/commands/character/validators/SavingThrowValidator';
+import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
+import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { Character } from '@osric/types/character';
 import type { SavingThrowParams } from '@osric/types/commands';
-import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
-import type { GameContext } from '../../core/GameContext';
-import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 
 export class SavingThrowCommand extends BaseCommand<SavingThrowParams> {
   readonly type = COMMAND_TYPES.SAVING_THROW;
@@ -17,7 +18,7 @@ export class SavingThrowCommand extends BaseCommand<SavingThrowParams> {
   protected validateParameters(): void {
     const result = SavingThrowValidator.validate(this.parameters);
     if (!result.valid) {
-      const errorMessages = result.errors.map((error) => error.message);
+      const errorMessages = formatValidationErrors(result.errors);
       throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
     }
   }

@@ -1,9 +1,10 @@
-import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
-import type { GameContext } from '../../core/GameContext';
-import { COMMAND_TYPES } from '../../types/constants';
+import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
+import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
+import { COMMAND_TYPES } from '@osric/types/constants';
 
+import { AttackValidator } from '@osric/commands/combat/validators/AttackValidator';
 import type { CharacterId, ItemId, MonsterId } from '@osric/types';
-import { AttackValidator } from '@osric/types';
 import type { Character as CharacterData } from '@osric/types/character';
 import type { Weapon } from '@osric/types/item';
 import type { Monster as MonsterData } from '@osric/types/monster';
@@ -30,10 +31,8 @@ export class AttackCommand extends BaseCommand<AttackParameters> {
   protected validateParameters(): void {
     const result = AttackValidator.validate(this.parameters);
     if (!result.valid) {
-      const errorMessages = result.errors.map((e) =>
-        typeof e === 'string' ? e : `${e.field}: ${e.message}`
-      );
-      throw new Error(`Parameter validation failed: ${errorMessages.join(', ')}`);
+      const messages = formatValidationErrors(result.errors);
+      throw new Error(`Parameter validation failed: ${messages.join(', ')}`);
     }
   }
 

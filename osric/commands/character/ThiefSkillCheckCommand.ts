@@ -1,8 +1,9 @@
-import { ThiefSkillCheckValidator } from '@osric/types';
+import { ThiefSkillCheckValidator } from '@osric/commands/character/validators/ThiefSkillCheckValidator';
+import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import type { GameContext } from '@osric/core/GameContext';
+import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { Character } from '@osric/types/character';
-import { BaseCommand, type CommandResult, type EntityId } from '../../core/Command';
-import type { GameContext } from '../../core/GameContext';
-import { COMMAND_TYPES, RULE_NAMES } from '../../types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 
 export interface ThiefSkillCheckParameters {
   characterId: string | import('@osric/types').CharacterId;
@@ -39,13 +40,9 @@ export class ThiefSkillCheckCommand extends BaseCommand<ThiefSkillCheckParameter
   }
 
   protected validateParameters(): void {
-    const result = ThiefSkillCheckValidator.validate(
-      this.parameters as unknown as Record<string, unknown>
-    );
+    const result = ThiefSkillCheckValidator.validate(this.parameters);
     if (!result.valid) {
-      const msgs = result.errors.map((e) =>
-        typeof e === 'string' ? e : `${e.field}: ${e.message}`
-      );
+      const msgs = formatValidationErrors(result.errors);
       throw new Error(`Parameter validation failed: ${msgs.join(', ')}`);
     }
   }
