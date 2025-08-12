@@ -1,4 +1,5 @@
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { isFailure } from '@osric/core/Rule';
 
@@ -58,9 +59,9 @@ export class MemorizeSpellCommand extends BaseCommand<MemorizeSpellParameters> {
         return this.createFailureResult(slotResult.message);
       }
 
-      context.setTemporary('spell:memorize:caster', caster);
-      context.setTemporary('spell:memorize:spell', spell);
-      context.setTemporary('spell:memorize:params', this.parameters);
+      context.setTemporary(ContextKeys.SPELL_CASTER, caster);
+      context.setTemporary(ContextKeys.SPELL_TO_CAST, spell);
+      context.setTemporary(ContextKeys.SPELL_CALC_CHARACTER, this.parameters);
 
       return this.createSuccessResult(`${caster.name} memorizes ${spell.name}`, {
         spell: spell.name,

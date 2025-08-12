@@ -5,7 +5,7 @@ import { RULE_NAMES } from '@osric/types/constants';
 import { ComponentTrackingRules } from './ComponentTrackingRules';
 
 // Adapter to satisfy contract name COMPONENT_CHECK by delegating to ComponentTrackingRules
-export class ComponentCheckRule extends BaseRule {
+export class ComponentCheckRules extends BaseRule {
   public readonly name = RULE_NAMES.COMPONENT_CHECK;
 
   private delegate = new ComponentTrackingRules();

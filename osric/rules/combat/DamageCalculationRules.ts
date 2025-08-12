@@ -13,7 +13,7 @@ import type { CombatResult } from '@osric/types/shared';
 
 // AttackContext now sourced from core CombatHelpers and extended in usage via optional fields
 
-export class DamageCalculationRule extends BaseRule {
+export class DamageCalculationRules extends BaseRule {
   readonly name = RULE_NAMES.DAMAGE_CALCULATION;
   readonly priority = 20;
 

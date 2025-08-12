@@ -25,7 +25,7 @@ interface MovementResult {
   message: string;
 }
 
-export class MovementRule extends BaseRule {
+export class MovementRules extends BaseRule {
   readonly name = RULE_NAMES.MOVEMENT_VALIDATION;
 
   canApply(context: GameContext, command: Command): boolean {

@@ -9,7 +9,7 @@ import type { Monster } from '@osric/types/monster';
  * Applies -1 HP to all entities that have the Bleeding status each round until -10 HP.
  * Stops applying if entity is Dead or Bleeding effect is absent.
  */
-export class BleedingTickRule extends BaseRule {
+export class BleedingTickRules extends BaseRule {
   readonly name = RULE_NAMES.BLEEDING_TICK;
   readonly priority = 5; // very early in round tick
 
@@ -61,4 +61,4 @@ export class BleedingTickRule extends BaseRule {
   }
 }
 
-export default BleedingTickRule;
+export default BleedingTickRules;

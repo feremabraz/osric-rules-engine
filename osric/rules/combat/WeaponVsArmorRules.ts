@@ -22,7 +22,7 @@ interface WeaponVsArmorContext {
   weapon: Weapon;
 }
 
-export class WeaponVsArmorRule extends BaseRule {
+export class WeaponVsArmorRules extends BaseRule {
   name = 'weapon-vs-armor';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
@@ -149,7 +149,7 @@ export class WeaponVsArmorRule extends BaseRule {
   }
 }
 
-export class WeaponTypeRule extends BaseRule {
+export class WeaponTypeRules extends BaseRule {
   name = 'weapon-type';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
@@ -227,7 +227,7 @@ export class WeaponTypeRule extends BaseRule {
   }
 }
 
-export class ArmorCategoryRule extends BaseRule {
+export class ArmorCategoryRules extends BaseRule {
   name = 'armor-category';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
@@ -288,7 +288,7 @@ export class ArmorCategoryRule extends BaseRule {
 }
 
 export function getWeaponVsArmorAdjustment(weapon: Weapon, targetAC: number): number {
-  const rule = new WeaponVsArmorRule();
+  const rule = new WeaponVsArmorRules();
   return rule.getWeaponVsArmorAdjustment(weapon, targetAC);
 }
 
@@ -301,6 +301,6 @@ export function applyWeaponVsArmorAdjustment(
     return 0;
   }
 
-  const rule = new WeaponVsArmorRule();
+  const rule = new WeaponVsArmorRules();
   return rule.getWeaponVsArmorAdjustment(weapon, target.armorClass);
 }

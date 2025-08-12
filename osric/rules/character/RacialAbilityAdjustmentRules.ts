@@ -61,7 +61,7 @@ const RACIAL_MODIFIERS: Record<CharacterRace, RacialModifiers> = {
   },
 };
 
-export class RacialAbilityAdjustmentRule extends BaseRule {
+export class RacialAbilityAdjustmentRules extends BaseRule {
   readonly name = RULE_NAMES.RACIAL_ABILITIES;
   readonly priority = 300; // After base generation, before class validation
 

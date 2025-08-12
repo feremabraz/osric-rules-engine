@@ -10,7 +10,7 @@ interface CharacterCreationParams {
   characterClass: CharacterClass;
 }
 
-export class RacialRestrictionsRule extends BaseRule {
+export class RacialRestrictionsRules extends BaseRule {
   readonly name = RULE_NAMES.RACIAL_RESTRICTIONS;
   readonly priority = 22;
 

@@ -6,7 +6,7 @@ import type { GameContext } from '../../core/GameContext';
 import { BaseRule, type RuleResult, isSuccess } from '../../core/Rule';
 import type { IdentificationResult } from '../../types/spell-types';
 
-export class MagicItemChargeCalculationRule extends BaseRule {
+export class MagicItemChargeCalculationRules extends BaseRule {
   name = 'magic-item-charge-calculation';
   description = 'Calculate initial charges for newly found magic items';
 
@@ -76,7 +76,7 @@ export class MagicItemChargeCalculationRule extends BaseRule {
   }
 }
 
-export class MagicItemChargeUsageRule extends BaseRule {
+export class MagicItemChargeUsageRules extends BaseRule {
   name = 'magic-item-charge-usage';
   description = 'Handle using charges from magic items';
 
@@ -152,7 +152,7 @@ export class MagicItemChargeUsageRule extends BaseRule {
   }
 }
 
-export class MagicItemSavingThrowRule extends BaseRule {
+export class MagicItemSavingThrowRules extends BaseRule {
   name = 'magic-item-saving-throw';
   description = 'Handle magic item saving throws against destructive effects';
 
@@ -273,7 +273,7 @@ export class MagicItemSavingThrowRule extends BaseRule {
   }
 }
 
-export class MagicItemIdentificationRule extends BaseRule {
+export class MagicItemIdentificationRules extends BaseRule {
   name = 'magic-item-identification';
   description = 'Handle magic item identification through different methods';
 

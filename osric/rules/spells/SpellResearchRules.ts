@@ -5,7 +5,7 @@ import type { GameContext } from '../../core/GameContext';
 import { BaseRule, type RuleResult } from '../../core/Rule';
 import type { ResearchDifficultyFactors, SpellResearch } from '../../types/spell-types';
 
-export class SpellResearchRequirementsRule extends BaseRule {
+export class SpellResearchRequirementsRules extends BaseRule {
   name = 'spell-research-requirements';
   description = 'Validate requirements for beginning spell research';
 
@@ -102,7 +102,7 @@ export class SpellResearchRequirementsRule extends BaseRule {
   }
 }
 
-export class SpellResearchStartRule extends BaseRule {
+export class SpellResearchStartRules extends BaseRule {
   name = 'spell-research-start';
   description = 'Begin a new spell research project';
 
@@ -206,7 +206,7 @@ export class SpellResearchStartRule extends BaseRule {
   }
 }
 
-export class SpellResearchProgressRule extends BaseRule {
+export class SpellResearchProgressRules extends BaseRule {
   name = 'spell-research-progress';
   description = 'Continue work on spell research project';
 
@@ -291,7 +291,7 @@ export class SpellResearchProgressRule extends BaseRule {
   }
 }
 
-export class SpellResearchSuccessRule extends BaseRule {
+export class SpellResearchSuccessRules extends BaseRule {
   name = 'spell-research-success';
   description = 'Attempt to complete spell research';
 
@@ -381,7 +381,7 @@ export class SpellResearchSuccessRule extends BaseRule {
   }
 }
 
-export class SpellLearningRule extends BaseRule {
+export class SpellLearningRules extends BaseRule {
   name = 'spell-learning';
   description = 'Learn spells from external sources';
 

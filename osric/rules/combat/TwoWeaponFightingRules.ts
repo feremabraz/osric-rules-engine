@@ -16,7 +16,7 @@ interface TwoWeaponContext {
   situationalModifiers?: number;
 }
 
-export class TwoWeaponFightingRule extends BaseRule {
+export class TwoWeaponFightingRules extends BaseRule {
   name = 'two-weapon-fighting';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
@@ -165,7 +165,7 @@ export class TwoWeaponFightingRule extends BaseRule {
   }
 }
 
-export class TwoWeaponEligibilityRule extends BaseRule {
+export class TwoWeaponEligibilityRules extends BaseRule {
   name = 'two-weapon-eligibility';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {

@@ -1,7 +1,6 @@
 import { ThiefSkillCheckValidator } from '@osric/commands/character/validators/ThiefSkillCheckValidator';
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
 import { ContextKeys } from '@osric/core/ContextKeys';
-import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { Character } from '@osric/types/character';
@@ -51,7 +50,7 @@ export class ThiefSkillCheckCommand extends BaseCommand<ThiefSkillCheckParameter
 
   async execute(context: GameContext): Promise<CommandResult> {
     try {
-      const { characterId, skillType, situationalModifiers, targetDifficulty } = this.parameters;
+      const { characterId } = this.parameters;
 
       const character = context.getEntity<Character>(characterId);
       if (!character) {
@@ -67,36 +66,8 @@ export class ThiefSkillCheckCommand extends BaseCommand<ThiefSkillCheckParameter
       // Normalize temporary key to the convention used by rules
       context.setTemporary(ContextKeys.THIEF_SKILL_PARAMS, this.parameters);
 
-      const baseSkillPercent = this.getBaseSkillPercentage(character, skillType);
-
-      const modifiedSkillPercent = this.applyModifiers(
-        baseSkillPercent,
-        situationalModifiers,
-        skillType
-      );
-
-      const finalSkillPercent = targetDifficulty ?? modifiedSkillPercent;
-
-      const roll = DiceEngine.roll('1d100').total;
-      const success = roll <= finalSkillPercent;
-
-      const modifierDescriptions = this.getModifierDescriptions(situationalModifiers, skillType);
-
-      return this.createSuccessResult(
-        `${character.name} ${success ? 'succeeded' : 'failed'} ${skillType} check (rolled ${roll} vs ${finalSkillPercent}%)`,
-        {
-          characterId,
-          skillType,
-          roll,
-          targetNumber: finalSkillPercent,
-          baseSkillPercent,
-          modifiedSkillPercent,
-          success,
-          modifiers: modifierDescriptions,
-          criticalFailure: roll === 100,
-          criticalSuccess: roll === 1,
-        }
-      );
+      // Publish params for rules and delegate to RuleEngine
+      return await this.executeWithRuleEngine(context);
     } catch (error) {
       return this.createFailureResult(
         `Failed to perform thief skill check: ${error instanceof Error ? error.message : String(error)}`

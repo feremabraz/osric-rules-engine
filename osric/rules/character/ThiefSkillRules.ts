@@ -26,7 +26,7 @@ interface ThiefSkillCheckParameters {
   targetDifficulty?: number;
 }
 
-export class ThiefSkillRule extends BaseRule {
+export class ThiefSkillRules extends BaseRule {
   readonly name = RULE_NAMES.THIEF_SKILLS;
   readonly priority = 500;
 

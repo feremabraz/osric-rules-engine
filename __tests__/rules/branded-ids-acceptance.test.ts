@@ -6,8 +6,8 @@ import { COMMAND_TYPES } from '@osric/types/constants';
 import { createStore } from 'jotai';
 import { describe, expect, it } from 'vitest';
 
-import { ExperienceGainRule } from '@osric/rules/experience/ExperienceGainRules';
-import { MovementRule } from '@osric/rules/exploration/MovementRules';
+import { ExperienceGainRules } from '@osric/rules/experience/ExperienceGainRules';
+import { MovementRules } from '@osric/rules/exploration/MovementRules';
 import { MoraleRules } from '@osric/rules/npc/MoraleRules';
 import { ReactionRules } from '@osric/rules/npc/ReactionRules';
 
@@ -167,7 +167,7 @@ describe('Rules accept branded IDs', () => {
       partyShare: { enabled: true, partyMemberIds: [cid], equalShare: true },
     });
 
-    const rule = new ExperienceGainRule();
+    const rule = new ExperienceGainRules();
     const result = await rule.apply(ctx, fakeCommand(COMMAND_TYPES.GAIN_EXPERIENCE));
     expect(result).toBeDefined();
     expect(['success', 'failure']).toContain(result.kind);
@@ -191,7 +191,7 @@ describe('Rules accept branded IDs', () => {
       encumbrance: 'light',
     });
 
-    const rule = new MovementRule();
+    const rule = new MovementRules();
     const result = await rule.execute(ctx, fakeCommand(COMMAND_TYPES.MOVE));
     expect(result).toBeDefined();
     expect(result.kind).toBe('success');

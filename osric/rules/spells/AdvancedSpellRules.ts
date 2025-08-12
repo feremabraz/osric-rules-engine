@@ -13,7 +13,7 @@ import { DiceEngine } from '../../core/Dice';
 import type { GameContext } from '../../core/GameContext';
 import { BaseRule, type RuleResult } from '../../core/Rule';
 
-export class SpellComponentManagementRule extends BaseRule {
+export class SpellComponentManagementRules extends BaseRule {
   name = 'spell-component-management';
   description = 'Manage detailed spell components and their availability';
 
@@ -114,7 +114,7 @@ export class SpellComponentManagementRule extends BaseRule {
   }
 }
 
-export class SpellFailureRule extends BaseRule {
+export class SpellFailureRules extends BaseRule {
   name = 'spell-failure';
   description = 'Handle spell failure and backfire effects';
 
@@ -253,7 +253,7 @@ export class SpellFailureRule extends BaseRule {
   }
 }
 
-export class SpellConcentrationRule extends BaseRule {
+export class SpellConcentrationRules extends BaseRule {
   name = RULE_NAMES.SPELL_INTERRUPTION;
   description = 'Manage spell concentration and duration';
 
@@ -337,7 +337,7 @@ export class SpellConcentrationRule extends BaseRule {
   }
 }
 
-export class SpellInteractionRule extends BaseRule {
+export class SpellInteractionRules extends BaseRule {
   name = 'spell-interaction';
   description = 'Handle spell interactions and counterspells';
 
@@ -510,7 +510,7 @@ export class SpellInteractionRule extends BaseRule {
   }
 }
 
-export class AdvancedSpellResearchRule extends BaseRule {
+export class AdvancedSpellResearchRules extends BaseRule {
   name = 'advanced-spell-research';
   description = 'Handle complex spell research requirements';
 

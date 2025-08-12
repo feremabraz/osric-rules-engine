@@ -7,12 +7,12 @@ Comprehensive task list to complete Phase 2.
 - [ ] Make chains mandatory
   - [ ] ↳ Remove legacy builders and aliases
   - [ ] ↳ Use `buildRuleEngine` as the only entry point
-- [ ] Ensure every command type has a registered chain under `osric/chains` by domain
-  - [ ] ↳ Domains: combat, character, exploration, npc, spells, system
-- [ ] Align `RuleContractValidator` with actual chains
-  - [ ] ↳ Update contracts or chains to match (no adapters)
-- [ ] Verify rule order and stop-on-failure semantics per command
-  - [ ] ↳ Fix priorities if needed
+- [x] Ensure every command type has a registered chain under `osric/chains` by domain
+  - [x] ↳ Domains: combat, character, exploration, npc, spells, system
+- [x] Align `RuleContractValidator` with actual chains
+  - [x] ↳ Update contracts or chains to match (no adapters)
+- [x] Verify rule order and stop-on-failure semantics per command
+  - [x] ↳ Fix priorities if needed
 
 ## Commands (Thinness and Delegation)
 
@@ -104,14 +104,6 @@ Comprehensive task list to complete Phase 2.
 - [ ] Ensure status effects are additive and consistent
   - [ ] ↳ Unconscious, Bleeding, Dead, Comatose
 
-## Error Model
-
-- [ ] Introduce `DomainError` (code/message/details) and adopt it
-  - [ ] ↳ Commands: parameter/validation failures → `DomainError`
-  - [ ] ↳ Rules: mechanics violations → `DomainError` where user-facing
-  - [ ] ↳ RuleEngine boundary: normalize thrown errors to `DomainError`
-- [ ] Replace ad-hoc errors; update callers to expect `DomainError`
-
 ## Cleanup and Consistency
 
 - [ ] Remove deprecated aliases/APIs
@@ -130,7 +122,10 @@ Comprehensive task list to complete Phase 2.
   - [ ] ↳ No missing-required rules
   - [ ] ↳ No unused rules in chains
 
-## Documentation and Guidance (Defer Until Stabilized)
+## Error Model
 
-- [ ] Dev Guide Phase 2 checklist updates when tasks complete
-- [ ] No additional
+- [ ] Introduce `DomainError` (code/message/details) and adopt it
+  - [ ] ↳ Commands: parameter/validation failures → `DomainError`
+  - [ ] ↳ Rules: mechanics violations → `DomainError` where user-facing
+  - [ ] ↳ RuleEngine boundary: normalize thrown errors to `DomainError`
+- [ ] Replace ad-hoc errors; update callers to expect `DomainError`

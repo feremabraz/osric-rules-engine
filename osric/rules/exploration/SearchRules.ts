@@ -25,7 +25,7 @@ interface SearchResult {
   message: string;
 }
 
-export class SearchRule extends BaseRule {
+export class SearchRules extends BaseRule {
   readonly name = RULE_NAMES.SEARCH_MECHANICS;
 
   canApply(context: GameContext, command: Command): boolean {

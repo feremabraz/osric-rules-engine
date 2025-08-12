@@ -1,4 +1,5 @@
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 
 import { ScrollReadValidator } from '@osric/commands/spells/validators/ScrollReadValidator';
@@ -45,11 +46,11 @@ export class ScrollReadCommand extends BaseCommand<ScrollReadParameters> {
         return this.createFailureResult(`${reader.name} does not have the scroll ${scroll.name}.`);
       }
 
-      context.setTemporary('spell:scroll:reader', reader);
-      context.setTemporary('spell:scroll:item', scroll);
-      context.setTemporary('spell:cast:targets', this.getTargets(context));
+      context.setTemporary(ContextKeys.SPELL_SCROLL_READER, reader);
+      context.setTemporary(ContextKeys.SPELL_SCROLL_ITEM, scroll);
+      context.setTemporary(ContextKeys.SPELL_CAST_TARGETS, this.getTargets(context));
 
-      context.setTemporary('spell:scroll:context', null);
+      context.setTemporary(ContextKeys.SPELL_SCROLL_CONTEXT, null);
 
       return this.createSuccessResult(`${reader.name} attempts to read ${scroll.name}`, {
         scroll: scroll.name,

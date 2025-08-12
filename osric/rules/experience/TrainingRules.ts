@@ -31,7 +31,7 @@ interface TrainingResult {
   message: string;
 }
 
-export class TrainingRule extends BaseRule {
+export class TrainingRules extends BaseRule {
   readonly name = RULE_NAMES.TRAINING_REQUIREMENTS;
 
   canApply(context: GameContext, command: Command): boolean {

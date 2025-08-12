@@ -10,7 +10,7 @@ interface CharacterCreationParams {
   characterClass: CharacterClass;
 }
 
-export class StartingEquipmentRule extends BaseRule {
+export class StartingEquipmentRules extends BaseRule {
   readonly name = RULE_NAMES.STARTING_EQUIPMENT;
   readonly priority = 60;
 

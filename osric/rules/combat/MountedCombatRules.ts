@@ -46,7 +46,7 @@ interface MountedCombatContext {
   isDismounting?: boolean;
 }
 
-export class MountedChargeRule extends BaseRule {
+export class MountedChargeRules extends BaseRule {
   name = 'mounted-charge';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
@@ -169,7 +169,7 @@ export class MountedChargeRule extends BaseRule {
   }
 }
 
-export class MountedCombatRule extends BaseRule {
+export class MountedCombatRules extends BaseRule {
   name = 'mounted-combat';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
@@ -253,7 +253,7 @@ export class MountedCombatRule extends BaseRule {
   }
 }
 
-export class DismountRule extends BaseRule {
+export class DismountRules extends BaseRule {
   name = 'dismount';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
@@ -337,7 +337,7 @@ export class DismountRule extends BaseRule {
   }
 }
 
-export class MountedCombatEligibilityRule extends BaseRule {
+export class MountedCombatEligibilityRules extends BaseRule {
   name = 'mounted-combat-eligibility';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {

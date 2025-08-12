@@ -20,7 +20,7 @@ class NoopCommand extends BaseCommand<Record<string, unknown>> {
 
 import { BaseRule } from '@osric/core/Rule';
 
-class SimpleSuccessRule extends BaseRule {
+class SimpleSuccessRules extends BaseRule {
   readonly name = 'simple-success';
   async apply(_ctx: GameContext, _cmd: Command) {
     return this.createSuccessResult('ok', { x: 1 });
@@ -30,7 +30,7 @@ class SimpleSuccessRule extends BaseRule {
   }
 }
 
-class SimpleFailureRule extends BaseRule {
+class SimpleFailureRules extends BaseRule {
   readonly name = 'simple-failure';
   async apply(_ctx: GameContext, _cmd: Command) {
     return this.createFailureResult('nope');
@@ -42,7 +42,7 @@ class SimpleFailureRule extends BaseRule {
 
 describe('Discriminated results', () => {
   it('Rule.createSuccessResult sets kind=success', async () => {
-    const rule = new SimpleSuccessRule();
+    const rule = new SimpleSuccessRules();
     const store = createStore();
     const ctx = new GameContext(store);
     const cmd = new NoopCommand({}, 'actor', []);
@@ -54,8 +54,8 @@ describe('Discriminated results', () => {
     const store = createStore();
     const ctx = new GameContext(store);
     const chain = new RuleChain({ stopOnFailure: false });
-    chain.addRule(new SimpleSuccessRule());
-    chain.addRule(new SimpleFailureRule());
+    chain.addRule(new SimpleSuccessRules());
+    chain.addRule(new SimpleFailureRules());
     const cmd = new NoopCommand({}, 'actor', []);
     const result = await chain.execute(cmd, ctx);
     expect(result.kind).toBe('failure');
@@ -66,7 +66,7 @@ describe('Discriminated results', () => {
     const ctx = new GameContext(store);
     const engine = new RuleEngine();
     const chain = new RuleChain();
-    chain.addRule(new SimpleSuccessRule());
+    chain.addRule(new SimpleSuccessRules());
     engine.registerRuleChain('noop', chain);
     const cmd = new NoopCommand({}, 'actor', []);
     const out = await engine.process(cmd, ctx);

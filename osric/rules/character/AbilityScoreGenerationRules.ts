@@ -13,7 +13,7 @@ interface CharacterCreationData {
   arrangedScores?: AbilityScores;
 }
 
-export class AbilityScoreGenerationRule extends BaseRule {
+export class AbilityScoreGenerationRules extends BaseRule {
   readonly name = RULE_NAMES.ABILITY_SCORE_GENERATION;
   readonly priority = 10;
 
@@ -128,7 +128,7 @@ export class AbilityScoreGenerationRule extends BaseRule {
   }
 }
 
-export class ExceptionalStrengthRule extends BaseRule {
+export class ExceptionalStrengthRules extends BaseRule {
   readonly name = RULE_NAMES.ABILITY_SCORE_MODIFIERS;
   readonly priority = 15;
 
@@ -196,7 +196,7 @@ export class ExceptionalStrengthRule extends BaseRule {
   }
 }
 
-export class RacialAbilityAdjustmentRule extends BaseRule {
+export class RacialAbilityAdjustmentRules extends BaseRule {
   readonly name = RULE_NAMES.RACIAL_ABILITIES;
   readonly priority = 20;
 

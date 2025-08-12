@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { Character } from '@osric/types/character';
@@ -9,7 +10,7 @@ import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
  * Prefers the character's stored movementRate; falls back to a simple
  * race/armor heuristic when missing. Publishes `movement:base-rate` in temp.
  */
-export class MovementRatesRule extends BaseRule {
+export class MovementRatesRules extends BaseRule {
   readonly name = RULE_NAMES.MOVEMENT_RATES;
   readonly priority = 90; // Run before validation/calculation rules
 
@@ -31,7 +32,7 @@ export class MovementRatesRule extends BaseRule {
     }
 
     const baseRate = this.deriveBaseRate(character);
-    context.setTemporary('movement:base-rate', baseRate);
+    context.setTemporary(ContextKeys.EXPLORATION_MOVEMENT_BASE_RATE, baseRate);
 
     return this.createSuccessResult('Movement base rate established', {
       baseRate,

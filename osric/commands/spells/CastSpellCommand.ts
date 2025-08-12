@@ -1,5 +1,6 @@
 import { CastSpellValidator } from '@osric/commands/spells/validators/CastSpellValidator';
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { Character, Monster, Spell } from '@osric/types';
@@ -50,13 +51,13 @@ export class CastSpellCommand extends BaseCommand<CastSpellParameters> {
 
       const targets = this.getTargets(context);
 
-      context.setTemporary('spell:cast:caster', caster);
-      context.setTemporary('spell:cast:spell', spell);
-      context.setTemporary('spell:cast:targets', targets);
-      context.setTemporary('spell:cast:components', this.parameters.overrideComponents);
+      context.setTemporary(ContextKeys.SPELL_CAST_CASTER, caster);
+      context.setTemporary(ContextKeys.SPELL_CAST_SPELL, spell);
+      context.setTemporary(ContextKeys.SPELL_CAST_TARGETS, targets);
+      context.setTemporary(ContextKeys.SPELL_CAST_COMPONENTS, this.parameters.overrideComponents);
 
-      context.setTemporary('spell:cast:validation', null);
-      context.setTemporary('spell:cast-spell:result', null);
+      context.setTemporary(ContextKeys.SPELL_CAST_VALIDATION, null);
+      context.setTemporary(ContextKeys.SPELL_CAST_RESULT, null);
 
       return this.createSuccessResult(`${caster.name} casts ${spell.name}`, {
         spell: spell.name,

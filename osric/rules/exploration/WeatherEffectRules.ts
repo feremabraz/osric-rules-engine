@@ -34,7 +34,7 @@ interface WeatherEffects {
   heatDamage: boolean;
 }
 
-export class WeatherEffectsRule extends BaseRule {
+export class WeatherEffectsRules extends BaseRule {
   readonly name = RULE_NAMES.WEATHER_EFFECTS;
   readonly priority = 10;
 

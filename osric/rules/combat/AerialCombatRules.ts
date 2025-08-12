@@ -43,7 +43,7 @@ interface AerialCombatContext {
   altitudeAdvantage?: boolean;
 }
 
-export class AerialCombatRule extends BaseRule {
+export class AerialCombatRules extends BaseRule {
   name = 'aerial-combat';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
@@ -175,7 +175,7 @@ export class AerialCombatRule extends BaseRule {
   }
 }
 
-export class DiveAttackRule extends BaseRule {
+export class DiveAttackRules extends BaseRule {
   name = 'dive-attack';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
@@ -400,7 +400,7 @@ function applyEnvironmentalEffects(movement: AerialMovement): void {
   }
 }
 
-export class AerialMovementRule extends BaseRule {
+export class AerialMovementRules extends BaseRule {
   name = 'aerial-movement';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {

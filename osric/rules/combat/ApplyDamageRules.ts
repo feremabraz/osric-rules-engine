@@ -6,7 +6,7 @@ import type { Character as CharacterData } from '@osric/types/character';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 import type { Monster as MonsterData } from '@osric/types/monster';
 
-export class ApplyDamageRule extends BaseRule {
+export class ApplyDamageRules extends BaseRule {
   readonly name = RULE_NAMES.APPLY_DAMAGE;
   readonly priority = 30;
 
@@ -62,4 +62,4 @@ export class ApplyDamageRule extends BaseRule {
   }
 }
 
-export default ApplyDamageRule;
+export default ApplyDamageRules;

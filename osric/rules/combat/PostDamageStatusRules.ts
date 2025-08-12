@@ -13,7 +13,7 @@ import type { Monster as MonsterData } from '@osric/types/monster';
  * - Bleeding can be stopped by aid in same round (outside of this rule)
  * - Returning to >=1 HP leaves target comatose for 1-6 turns (tracked via status effect)
  */
-export class PostDamageStatusRule extends BaseRule {
+export class PostDamageStatusRules extends BaseRule {
   readonly name = RULE_NAMES.POST_DAMAGE_STATUS;
   readonly priority = 35; // After ApplyDamage (30)
 
@@ -141,4 +141,4 @@ export class PostDamageStatusRule extends BaseRule {
   }
 }
 
-export default PostDamageStatusRule;
+export default PostDamageStatusRules;

@@ -12,7 +12,7 @@ interface CharacterCreationData {
   arrangedScores?: AbilityScores;
 }
 
-export class ClassRequirementRule extends BaseRule {
+export class ClassRequirementRules extends BaseRule {
   readonly name = RULE_NAMES.CLASS_REQUIREMENTS;
   readonly priority = 25;
 

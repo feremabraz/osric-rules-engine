@@ -40,7 +40,7 @@ export interface ScrollCastingCheck {
   backfireChance: number;
 }
 
-export class ScrollCreationRequirementsRule extends BaseRule {
+export class ScrollCreationRequirementsRules extends BaseRule {
   public readonly name = RULE_NAMES.SCROLL_CREATION_REQUIREMENTS;
   public readonly description =
     'Calculates requirements for creating magic scrolls using OSRIC formulas';
@@ -102,7 +102,7 @@ export class ScrollCreationRequirementsRule extends BaseRule {
   }
 }
 
-export class ScrollCreationStartRule extends BaseRule {
+export class ScrollCreationStartRules extends BaseRule {
   public readonly name = RULE_NAMES.SCROLL_CREATION_START;
   public readonly description = 'Starts a scroll creation project with OSRIC requirements';
 
@@ -203,7 +203,7 @@ export class ScrollCreationStartRule extends BaseRule {
   }
 }
 
-export class ScrollCreationProgressRule extends BaseRule {
+export class ScrollCreationProgressRules extends BaseRule {
   public readonly name = RULE_NAMES.SCROLL_CREATION_PROGRESS;
   public readonly description = 'Updates progress on an ongoing scroll creation project';
 
@@ -247,7 +247,7 @@ export class ScrollCreationProgressRule extends BaseRule {
   }
 }
 
-export class ScrollUsageValidationRule extends BaseRule {
+export class ScrollUsageValidationRules extends BaseRule {
   public readonly name = RULE_NAMES.SCROLL_USAGE_VALIDATION;
   public readonly description = 'Validates if a character can use a specific scroll';
 
@@ -301,7 +301,7 @@ export class ScrollUsageValidationRule extends BaseRule {
   }
 }
 
-export class ScrollCastingFailureRule extends BaseRule {
+export class ScrollCastingFailureRules extends BaseRule {
   public readonly name = RULE_NAMES.SCROLL_CASTING_FAILURE;
   public readonly description =
     'Calculates failure chances for scroll casting using OSRIC formulas';
@@ -349,7 +349,7 @@ export class ScrollCastingFailureRule extends BaseRule {
   }
 }
 
-export class ScrollSpellCastingRule extends BaseRule {
+export class ScrollSpellCastingRules extends BaseRule {
   public readonly name = RULE_NAMES.SCROLL_SPELL_CASTING;
   public readonly description =
     'Executes scroll spell casting with OSRIC success/failure mechanics';

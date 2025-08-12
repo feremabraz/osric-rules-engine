@@ -7,7 +7,6 @@ export const ContextKeys = {
   CHARACTER_CREATION_PARAMS: 'character:creation:params',
   CHARACTER_CREATION_ABILITY_SCORES: 'character:creation:ability-scores',
   CHARACTER_CREATION_ADJUSTED_SCORES: 'character:creation:adjusted-scores',
-  CHARACTER_CREATION_COMPLETE: 'character:creation:complete',
   CHARACTER_CREATION_DATA: 'character:creation:data',
 
   // Saving throws
@@ -16,8 +15,13 @@ export const ContextKeys = {
   // Thief skills
   THIEF_SKILL_PARAMS: 'character:thief-skill:params',
 
+  // Turn Undead
+  TURN_UNDEAD_PARAMS: 'character:turn-undead:params',
+
   // Exploration
   FORAGING_CONTEXT: 'exploration:foraging:context',
+  EXPLORATION_MOVEMENT_ENCUMBRANCE_LEVEL: 'movement:encumbrance-level',
+  EXPLORATION_MOVEMENT_BASE_RATE: 'movement:base-rate',
 
   // Combat (attack preparation, two weapon, etc.)
   COMBAT_ATTACK_CONTEXT: 'combat:attack:context',
@@ -37,7 +41,6 @@ export const ContextKeys = {
   // Initiative
   COMBAT_INITIATIVE_CONTEXT: 'combat:initiative:context',
   COMBAT_INITIATIVE_RESULTS: 'combat:initiative:results',
-  COMBAT_INITIATIVE_ORDER: 'combat:initiative:order',
 
   // Aerial combat
   COMBAT_AERIAL_CONTEXT: 'combat:aerial:context',
@@ -74,7 +77,6 @@ export const ContextKeys = {
   COMBAT_ARMOR_EFFECTIVENESS: 'combat:armor:effectiveness',
   COMBAT_DAMAGE_RESULT: 'combat:damage:result',
   COMBAT_DAMAGE_VALUES: 'combat:damage:values',
-  COMBAT_DAMAGE_APPLIED: 'combat:damage:applied',
 
   // Attack weapon/target (frequently accessed)
   COMBAT_ATTACK_WEAPON: 'combat:attack:weapon',
@@ -89,7 +91,6 @@ export const ContextKeys = {
   // Spells (research / progression / magic item)
   SPELL_RESEARCH_ACTIVE: 'spell:research:active',
   SPELL_SCROLL_CREATION_PROJECT: 'spell:scroll:creation:project',
-  SPELL_SCROLL_CREATION_REQS: 'spell:scroll:creation:requirements',
   SPELL_SCROLL_USAGE_VALIDATED: 'spell:scroll:usage:validated',
   SPELL_UPDATED_MAGIC_ITEM: 'spell:magic-item:updated',
 
@@ -100,6 +101,13 @@ export const ContextKeys = {
   // Advanced spell casting & events
   SPELL_CASTER: 'spell:caster',
   SPELL_TO_CAST: 'spell:to-cast',
+  // Legacy-cast names still used by rules; keep as constants
+  SPELL_CAST_CASTER: 'spell:cast:caster',
+  SPELL_CAST_SPELL: 'spell:cast:spell',
+  SPELL_CAST_TARGETS: 'spell:cast:targets',
+  SPELL_CAST_COMPONENTS: 'spell:cast:components',
+  SPELL_CAST_VALIDATION: 'spell:cast:validation',
+  SPELL_CAST_RESULT: 'spell:cast-spell:result',
   SPELL_ATTEMPT: 'spell:attempt',
   SPELL_CONCENTRATION_CHECK: 'spell:concentration:check',
   SPELL_INTERACTION: 'spell:interaction',
@@ -127,6 +135,9 @@ export const ContextKeys = {
   SPELL_SCROLL_CAST_RESULT: 'spell:scroll:cast:result',
   SPELL_SCROLL_CASTING_SCROLL: 'spell:scroll:casting:scroll',
   SPELL_SCROLL_CASTING_CASTER: 'spell:scroll:casting:caster',
+  SPELL_SCROLL_READER: 'spell:scroll:reader',
+  SPELL_SCROLL_ITEM: 'spell:scroll:item',
+  SPELL_SCROLL_CONTEXT: 'spell:scroll:context',
 
   // Scroll start parameters
 
@@ -142,7 +153,10 @@ export const ContextKeys = {
   SPELL_MAGIC_ITEM_TO_USE: 'spell:magic-item:to-use',
   SPELL_MAGIC_ITEM_SAVING_THROW: 'spell:magic-item:saving-throw',
   SPELL_IDENTIFICATION_ATTEMPT: 'spell:magic-item:identification-attempt',
-  SPELL_MAGIC_ITEM_USER: 'spell:magic-item:user',
+  IDENTIFY_ITEM_IDENTIFIER: 'identifyItem_identifier',
+  IDENTIFY_ITEM_ITEM: 'identifyItem_item',
+  IDENTIFY_ITEM_METHOD: 'identifyItem_method',
+  IDENTIFY_ITEM_RESULT: 'identifyItem_result',
 } as const;
 
 export type ContextKey = (typeof ContextKeys)[keyof typeof ContextKeys];

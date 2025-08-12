@@ -17,7 +17,7 @@ export enum AttackSequence {
   FINAL = 'final',
 }
 
-export class MultipleAttackRule extends BaseRule {
+export class MultipleAttackRules extends BaseRule {
   name = 'multiple-attack';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
@@ -151,7 +151,7 @@ export class MultipleAttackRule extends BaseRule {
   }
 }
 
-export class AttackPrecedenceRule extends BaseRule {
+export class AttackPrecedenceRules extends BaseRule {
   name = 'attack-precedence';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {

@@ -19,7 +19,7 @@ interface FallingDamageParameters {
   description?: string;
 }
 
-export class FallingDamageRule extends BaseRule {
+export class FallingDamageRules extends BaseRule {
   readonly name = RULE_NAMES.FALLING_DAMAGE;
   readonly priority = 500;
 

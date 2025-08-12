@@ -19,7 +19,7 @@ interface SpecializationContext {
   calculateBonuses?: boolean;
 }
 
-export class WeaponSpecializationRule extends BaseRule {
+export class WeaponSpecializationRules extends BaseRule {
   name = 'weapon-specialization';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
@@ -242,7 +242,7 @@ export class WeaponSpecializationRule extends BaseRule {
   }
 }
 
-export class SpecializationRequirementRule extends BaseRule {
+export class SpecializationRequirementRules extends BaseRule {
   name = 'specialization-requirement';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {

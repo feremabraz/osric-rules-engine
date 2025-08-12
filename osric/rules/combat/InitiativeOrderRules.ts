@@ -24,7 +24,7 @@ interface InitiativeOrderResult {
   currentActorIndex: number;
 }
 
-export class InitiativeOrderRule extends BaseRule {
+export class InitiativeOrderRules extends BaseRule {
   readonly name = RULE_NAMES.INITIATIVE_ORDER;
   readonly priority = 200; // After initiative rolls, before combat resolution
 

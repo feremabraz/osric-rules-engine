@@ -6,7 +6,7 @@ import type { Character } from '@osric/types/character';
 import type { ForagingParams, TerrainNavigationParams } from '@osric/types/commands';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 
-export class SurvivalChecksRule extends BaseRule {
+export class SurvivalChecksRules extends BaseRule {
   public readonly name = RULE_NAMES.SURVIVAL_CHECKS;
   public readonly priority = 50;
 

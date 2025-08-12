@@ -17,7 +17,7 @@ interface UnderwaterCombatContext {
   isCastingSpell?: boolean;
 }
 
-export class UnderwaterCombatRule extends BaseRule {
+export class UnderwaterCombatRules extends BaseRule {
   name = 'underwater-combat';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
@@ -279,7 +279,7 @@ export class UnderwaterCombatRule extends BaseRule {
   }
 }
 
-export class UnderwaterMovementRule extends BaseRule {
+export class UnderwaterMovementRules extends BaseRule {
   name = 'underwater-movement';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {

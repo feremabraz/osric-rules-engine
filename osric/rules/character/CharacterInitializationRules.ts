@@ -15,7 +15,7 @@ export interface CharacterInitializationParams {
   playerName: string;
 }
 
-export class CharacterInitializationRule extends BaseRule {
+export class CharacterInitializationRules extends BaseRule {
   readonly name = RULE_NAMES.CHARACTER_INITIALIZATION;
 
   async apply(

@@ -1,12 +1,12 @@
 import { RuleChain } from '@osric/core/RuleChain';
 import {
-  InitiativeOrderRule,
-  InitiativeRollRule,
-  SurpriseCheckRule,
+  InitiativeOrderRules,
+  InitiativeRollRules,
+  SurpriseCheckRules,
 } from '@osric/rules/combat/InitiativeRules';
 
 export function buildInitiativeChain(): RuleChain {
   const chain = new RuleChain();
-  chain.addRules([new InitiativeRollRule(), new SurpriseCheckRule(), new InitiativeOrderRule()]);
+  chain.addRules([new InitiativeRollRules(), new SurpriseCheckRules(), new InitiativeOrderRules()]);
   return chain;
 }

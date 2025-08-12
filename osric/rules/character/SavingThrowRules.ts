@@ -63,7 +63,7 @@ interface SavingThrowParameters {
   description?: string;
 }
 
-export class SavingThrowRule extends BaseRule {
+export class SavingThrowRules extends BaseRule {
   readonly name = RULE_NAMES.SAVING_THROWS;
   readonly priority = 500;
 

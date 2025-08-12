@@ -5,7 +5,7 @@ import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { Character } from '@osric/types/character';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 
-export class ForagingRule extends BaseRule {
+export class ForagingRules extends BaseRule {
   readonly name = RULE_NAMES.FORAGING_RULES;
   readonly priority = 10;
 

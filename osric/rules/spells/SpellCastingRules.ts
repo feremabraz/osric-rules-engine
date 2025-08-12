@@ -2,6 +2,7 @@ import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult, isFailure } from '@osric/core/Rule';
 
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { Character, Monster, Spell, SpellResult, StatusEffect } from '@osric/types';
 import { RULE_NAMES } from '@osric/types/constants';
 
@@ -17,8 +18,8 @@ export class SpellCastingRules extends BaseRule {
 
   public async execute(context: GameContext): Promise<RuleResult> {
     try {
-      const caster = this.getRequiredContext<Character>(context, 'spell:cast:caster');
-      const spell = this.getRequiredContext<Spell>(context, 'spell:cast:spell');
+      const caster = this.getRequiredContext<Character>(context, ContextKeys.SPELL_CAST_CASTER);
+      const spell = this.getRequiredContext<Spell>(context, ContextKeys.SPELL_CAST_SPELL);
       const targets =
         this.getOptionalContext<(Character | Monster)[]>(context, 'spell:cast:targets') || [];
       const _overrideComponents =

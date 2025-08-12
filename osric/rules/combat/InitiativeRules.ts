@@ -27,7 +27,7 @@ interface EntityInitiativeResult {
   surprised: boolean;
 }
 
-export class InitiativeRollRule extends BaseRule {
+export class InitiativeRollRules extends BaseRule {
   readonly name = RULE_NAMES.INITIATIVE_ROLL;
   readonly priority = 10;
 
@@ -220,7 +220,7 @@ export class InitiativeRollRule extends BaseRule {
   // d10 initiative now uses DiceEngine directly
 }
 
-export class SurpriseCheckRule extends BaseRule {
+export class SurpriseCheckRules extends BaseRule {
   readonly name = RULE_NAMES.SURPRISE_CHECK;
   readonly priority = 20;
 
@@ -288,7 +288,7 @@ export class SurpriseCheckRule extends BaseRule {
   // d6 surprise now uses DiceEngine directly
 }
 
-export class InitiativeOrderRule extends BaseRule {
+export class InitiativeOrderRules extends BaseRule {
   readonly name = RULE_NAMES.INITIATIVE_ORDER;
   readonly priority = 30;
 

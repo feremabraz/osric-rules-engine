@@ -1,10 +1,10 @@
 import { RuleChain } from '@osric/core/RuleChain';
-import { EncumbranceRule } from '@osric/rules/exploration/EncumbranceRules';
-import { MovementRatesRule } from '@osric/rules/exploration/MovementRateRules';
-import { MovementRule } from '@osric/rules/exploration/MovementRules';
+import { EncumbranceRules } from '@osric/rules/exploration/EncumbranceRules';
+import { MovementRatesRules } from '@osric/rules/exploration/MovementRateRules';
+import { MovementRules } from '@osric/rules/exploration/MovementRules';
 
 export function buildMoveChain(): RuleChain {
   const chain = new RuleChain();
-  chain.addRules([new MovementRatesRule(), new EncumbranceRule(), new MovementRule()]);
+  chain.addRules([new MovementRatesRules(), new EncumbranceRules(), new MovementRules()]);
   return chain;
 }

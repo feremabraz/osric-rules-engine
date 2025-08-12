@@ -1,5 +1,6 @@
 import { TurnUndeadValidator } from '@osric/commands/character/validators/TurnUndeadValidator';
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
@@ -78,7 +79,7 @@ export class TurnUndeadCommand extends BaseCommand<TurnUndeadParameters> {
       }
 
       // Normalize temporary key to the convention used by rules
-      context.setTemporary('character:turn-undead:params', this.parameters);
+      context.setTemporary(ContextKeys.TURN_UNDEAD_PARAMS, this.parameters);
 
       const turnResults = this.performTurnUndead(
         character,

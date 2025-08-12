@@ -19,7 +19,7 @@ interface TurnUndeadParameters {
   massAttempt?: boolean;
 }
 
-export class TurnUndeadRule extends BaseRule {
+export class TurnUndeadRules extends BaseRule {
   readonly name = RULE_NAMES.TURN_UNDEAD;
   readonly priority = 500;
 

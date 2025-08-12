@@ -1,10 +1,10 @@
 import { RuleChain } from '@osric/core/RuleChain';
-import { SurvivalChecksRule } from '@osric/rules/exploration/SurvivalChecksRules';
-import { TerrainNavigationRule } from '@osric/rules/exploration/TerrainNavigationRules';
+import { SurvivalChecksRules } from '@osric/rules/exploration/SurvivalChecksRules';
+import { TerrainNavigationRules } from '@osric/rules/exploration/TerrainNavigationRules';
 
 export function buildTerrainNavigationChain(): RuleChain {
   const chain = new RuleChain();
-  chain.addRule(new TerrainNavigationRule());
-  chain.addRule(new SurvivalChecksRule());
+  chain.addRule(new TerrainNavigationRules());
+  chain.addRule(new SurvivalChecksRules());
   return chain;
 }

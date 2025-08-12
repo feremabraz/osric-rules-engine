@@ -26,7 +26,7 @@ interface AttackRollResult {
   weapon?: Weapon;
 }
 
-export class AttackRollRule extends BaseRule {
+export class AttackRollRules extends BaseRule {
   readonly name = RULE_NAMES.ATTACK_ROLL;
   readonly priority = 10;
 

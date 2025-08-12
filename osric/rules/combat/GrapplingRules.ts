@@ -36,7 +36,7 @@ export enum GrapplingOutcome {
   STALEMATE = 'stalemate',
 }
 
-export class GrappleAttackRule extends BaseRule {
+export class GrappleAttackRules extends BaseRule {
   readonly name = RULE_NAMES.GRAPPLE_ATTACK;
   readonly priority = 10;
 
@@ -114,7 +114,7 @@ export class GrappleAttackRule extends BaseRule {
   // d20 and dice utilities now centralized in core/Dice
 }
 
-export class StrengthComparisonRule extends BaseRule {
+export class StrengthComparisonRules extends BaseRule {
   readonly name = RULE_NAMES.STRENGTH_COMPARISON;
   readonly priority = 20;
 
@@ -217,7 +217,7 @@ export class StrengthComparisonRule extends BaseRule {
   }
 }
 
-export class GrappleEffectRule extends BaseRule {
+export class GrappleEffectRules extends BaseRule {
   readonly name = RULE_NAMES.GRAPPLE_EFFECT;
   readonly priority = 30;
 

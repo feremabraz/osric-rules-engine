@@ -35,7 +35,7 @@ interface SurpriseCheckResult {
   };
 }
 
-export class SurpriseCheckRule extends BaseRule {
+export class SurpriseCheckRules extends BaseRule {
   readonly name = RULE_NAMES.SURPRISE_CHECK;
   readonly priority = 50; // Very early in initiative, before rolls
 

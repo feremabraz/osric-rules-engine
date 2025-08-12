@@ -1,5 +1,6 @@
 import { IdentifyMagicItemValidator } from '@osric/commands/spells/validators/IdentifyMagicItemValidator';
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { Character, Item } from '@osric/types';
@@ -50,11 +51,11 @@ export class IdentifyMagicItemCommand extends BaseCommand<IdentifyMagicItemParam
         return this.createFailureResult(`${identifier.name} does not have access to ${item.name}.`);
       }
 
-      context.setTemporary('identifyItem_identifier', identifier);
-      context.setTemporary('identifyItem_item', item);
-      context.setTemporary('identifyItem_method', this.parameters.method);
+      context.setTemporary(ContextKeys.IDENTIFY_ITEM_IDENTIFIER, identifier);
+      context.setTemporary(ContextKeys.IDENTIFY_ITEM_ITEM, item);
+      context.setTemporary(ContextKeys.IDENTIFY_ITEM_METHOD, this.parameters.method);
 
-      context.setTemporary('identifyItem_result', null);
+      context.setTemporary(ContextKeys.IDENTIFY_ITEM_RESULT, null);
 
       return this.createSuccessResult(
         `${identifier.name} attempts to identify ${item.name} using ${this.parameters.method}`,

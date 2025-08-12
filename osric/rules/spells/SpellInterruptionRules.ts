@@ -2,12 +2,12 @@ import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import { RULE_NAMES } from '@osric/types/constants';
-import { SpellConcentrationRule, SpellFailureRule } from './AdvancedSpellRules';
+import { SpellConcentrationRules, SpellFailureRules } from './AdvancedSpellRules';
 
-export class SpellInterruptionRule extends BaseRule {
+export class SpellInterruptionRules extends BaseRule {
   public readonly name = RULE_NAMES.SPELL_INTERRUPTION;
-  private concentration = new SpellConcentrationRule();
-  private failure = new SpellFailureRule();
+  private concentration = new SpellConcentrationRules();
+  private failure = new SpellFailureRules();
 
   canApply(context: GameContext, _command: Command): boolean {
     // Apply when there is any ongoing spell attempt or concentration check in context

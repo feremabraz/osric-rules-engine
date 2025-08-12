@@ -23,7 +23,7 @@ interface ExperienceGainParameters {
   };
 }
 
-export class ExperienceGainRule extends BaseRule {
+export class ExperienceGainRules extends BaseRule {
   readonly name = RULE_NAMES.EXPERIENCE_GAIN;
   readonly priority = 500;
 

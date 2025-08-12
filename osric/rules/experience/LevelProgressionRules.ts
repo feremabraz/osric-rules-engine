@@ -11,7 +11,7 @@ interface LevelUpParameters {
   skipTraining?: boolean;
 }
 
-export class LevelProgressionRule extends BaseRule {
+export class LevelProgressionRules extends BaseRule {
   readonly name = RULE_NAMES.LEVEL_PROGRESSION;
   readonly priority = 600;
 

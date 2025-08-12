@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { Character } from '@osric/types/character';
@@ -8,7 +9,7 @@ import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
  * Computes an encumbrance band for the current MOVE flow and publishes it
  * as `movement:encumbrance-level` in the temporary context.
  */
-export class EncumbranceRule extends BaseRule {
+export class EncumbranceRules extends BaseRule {
   readonly name = RULE_NAMES.ENCUMBRANCE;
   readonly priority = 95; // After base rate, before validation/calculation
 
@@ -30,7 +31,7 @@ export class EncumbranceRule extends BaseRule {
     }
 
     const encumbrance = this.classifyEncumbrance(character.encumbrance ?? 0);
-    context.setTemporary('movement:encumbrance-level', encumbrance);
+    context.setTemporary(ContextKeys.EXPLORATION_MOVEMENT_ENCUMBRANCE_LEVEL, encumbrance);
 
     return this.createSuccessResult('Encumbrance level established', {
       encumbrance,
