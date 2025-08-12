@@ -1,5 +1,6 @@
 import type { Command } from '@osric/core/Command';
 import { ContextKeys } from '@osric/core/ContextKeys';
+import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { Character as CharacterData } from '@osric/types/character';
@@ -58,7 +59,7 @@ export class GrappleAttackRule extends BaseRule {
     try {
       const { attacker, target } = grappleContext;
 
-      const attackRoll = this.rollD20();
+      const attackRoll = DiceEngine.roll('1d20').total;
       const attackModifiers = this.calculateGrappleAttackModifiers(attacker, grappleContext);
       const totalAttackRoll = attackRoll + attackModifiers;
 
@@ -110,9 +111,7 @@ export class GrappleAttackRule extends BaseRule {
     return modifier;
   }
 
-  private rollD20(): number {
-    return Math.floor(Math.random() * 20) + 1;
-  }
+  // d20 and dice utilities now centralized in core/Dice
 }
 
 export class StrengthComparisonRule extends BaseRule {
@@ -357,7 +356,8 @@ export class GrappleEffectRule extends BaseRule {
   }
 
   private rollGrappleDamage(): number {
-    return Math.floor(Math.random() * 2);
+    // OSRIC grappling damage is often small; 1d2 is a reasonable default
+    return DiceEngine.roll('1d2').total;
   }
 
   private generateEffectMessage(

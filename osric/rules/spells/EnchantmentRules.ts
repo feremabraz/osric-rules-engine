@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult, isFailure, isSuccess } from '@osric/core/Rule';
 import type { Character } from '@osric/types/character';
@@ -275,14 +276,14 @@ export class EnchantmentRules extends BaseRule {
     itemDestroyed?: boolean;
     materialsLost?: string[];
   } {
-    const roll = Math.random();
-    const succeeded = roll <= requirements.baseSuccessChance;
+    const roll = DiceEngine.roll('1d100').total; // 1-100 percentile
+    const succeeded = roll <= Math.round(requirements.baseSuccessChance * 100);
 
     if (succeeded) {
-      const powerRoll = Math.random();
+      const powerRoll = DiceEngine.roll('1d100').total;
       let powerLevel = context.enchantmentLevel;
 
-      if (powerRoll >= 0.95) {
+      if (powerRoll >= 95) {
         powerLevel += 1;
       }
 
@@ -293,11 +294,11 @@ export class EnchantmentRules extends BaseRule {
       };
     }
 
-    const failureRoll = Math.random();
+    const failureRoll = DiceEngine.roll('1d100').total;
     let itemDestroyed = false;
     let materialsLost: string[] = [];
 
-    if (failureRoll <= 0.1) {
+    if (failureRoll <= 10) {
       itemDestroyed = true;
       materialsLost = requirements.materialsRequired.map((m) => m.name);
     } else {
@@ -311,9 +312,10 @@ export class EnchantmentRules extends BaseRule {
       'Material components were improperly prepared',
     ];
 
+    const idx = DiceEngine.roll(`1d${failureReasons.length}`).total - 1;
     return {
       kind: 'failure',
-      reason: failureReasons[Math.floor(Math.random() * failureReasons.length)],
+      reason: failureReasons[idx],
       itemDestroyed,
       materialsLost,
     };

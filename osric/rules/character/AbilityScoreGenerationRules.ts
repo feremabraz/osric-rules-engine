@@ -1,5 +1,6 @@
 import type { Command } from '@osric/core/Command';
 import { ContextKeys } from '@osric/core/ContextKeys';
+import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { AbilityScores, CharacterClass, CharacterRace } from '@osric/types/character';
@@ -73,8 +74,7 @@ export class AbilityScoreGenerationRule extends BaseRule {
   }
 
   private generateStandard3d6(): AbilityScores {
-    const rollDice = () => Math.floor(Math.random() * 6) + 1;
-    const roll3d6 = () => rollDice() + rollDice() + rollDice();
+    const roll3d6 = () => DiceEngine.roll('3d6').total;
 
     return {
       strength: roll3d6(),
@@ -87,8 +87,7 @@ export class AbilityScoreGenerationRule extends BaseRule {
   }
 
   private generate3d6Arranged(): number[] {
-    const rollDice = () => Math.floor(Math.random() * 6) + 1;
-    const roll3d6 = () => rollDice() + rollDice() + rollDice();
+    const roll3d6 = () => DiceEngine.roll('3d6').total;
 
     return Array(6)
       .fill(0)
@@ -96,10 +95,13 @@ export class AbilityScoreGenerationRule extends BaseRule {
   }
 
   private generate4d6DropLowest(): number[] {
-    const rollDice = () => Math.floor(Math.random() * 6) + 1;
-
     const roll4d6DropLowest = () => {
-      const rolls = [rollDice(), rollDice(), rollDice(), rollDice()];
+      const rolls = [
+        DiceEngine.roll('1d6').total,
+        DiceEngine.roll('1d6').total,
+        DiceEngine.roll('1d6').total,
+        DiceEngine.roll('1d6').total,
+      ];
       const minRoll = Math.min(...rolls);
       const minIndex = rolls.indexOf(minRoll);
       return rolls.reduce((sum, val, index) => (index !== minIndex ? sum + val : sum), 0);
@@ -185,7 +187,7 @@ export class ExceptionalStrengthRule extends BaseRule {
       return null;
     }
 
-    const roll = Math.floor(Math.random() * 100) + 1;
+    const roll = DiceEngine.roll('1d100').total;
     return roll;
   }
 

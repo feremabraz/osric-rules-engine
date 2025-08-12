@@ -1,3 +1,4 @@
+import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult, isFailure } from '@osric/core/Rule';
 
@@ -173,7 +174,7 @@ export class SpellCastingRules extends BaseRule {
         const missiles = Math.min(5, Math.floor((casterLevel + 1) / 2));
         const damage = Array(missiles)
           .fill(0)
-          .map(() => this.rollDice(1, 4) + 1);
+          .map(() => DiceEngine.roll('1d4').total + 1);
         return {
           damage,
           healing: null,
@@ -183,7 +184,7 @@ export class SpellCastingRules extends BaseRule {
       }
 
       case 'cure light wounds': {
-        const healing = [this.rollDice(1, 8)];
+        const healing = [DiceEngine.roll('1d8').total];
         return {
           damage: null,
           healing,
@@ -193,7 +194,7 @@ export class SpellCastingRules extends BaseRule {
       }
 
       case 'sleep': {
-        const sleepHD = this.rollDice(2, 4);
+        const sleepHD = DiceEngine.roll('2d4').total;
         const sleepEffect: StatusEffect = {
           name: 'Asleep',
           duration: casterLevel * 5,
@@ -251,7 +252,7 @@ export class SpellCastingRules extends BaseRule {
       let savingThrow: number | undefined;
 
       if (spell.savingThrow !== 'None') {
-        savingThrow = this.rollDice(1, 20);
+        savingThrow = DiceEngine.roll('1d20').total;
         const savingThrowTarget = this.getSavingThrowTarget(target, spell.savingThrow);
 
         if (savingThrow >= savingThrowTarget) {
@@ -288,11 +289,5 @@ export class SpellCastingRules extends BaseRule {
     }
   }
 
-  private rollDice(count: number, sides: number): number {
-    let total = 0;
-    for (let i = 0; i < count; i++) {
-      total += Math.floor(Math.random() * sides) + 1;
-    }
-    return total;
-  }
+  // dice now centralized in core/Dice
 }

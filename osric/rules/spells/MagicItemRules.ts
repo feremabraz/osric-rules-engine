@@ -563,7 +563,8 @@ export class MagicItemIdentificationRule extends BaseRule {
   private estimateItemValue(item: Item): number {
     const baseValue = item.value || 1000;
     const variance = 0.2;
-    const multiplier = 1 + (Math.random() * 2 * variance - variance);
+    const swing = DiceEngine.roll('1d200').total - 100; // -99..+100 approx uniform
+    const multiplier = 1 + (swing / 100) * variance;
     return Math.floor(baseValue * multiplier);
   }
 

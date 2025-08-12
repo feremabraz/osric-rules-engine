@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule } from '@osric/core/Rule';
 import type { RuleResult } from '@osric/core/Rule';
@@ -119,61 +120,61 @@ export class TreasureGenerationRules extends BaseRule {
 
     switch (treasureType.toUpperCase()) {
       case 'A':
-        treasure.copperPieces = this.rollDice(1, 6) * 1000 * multiplier;
-        treasure.silverPieces = this.rollDice(1, 6) * 1000 * multiplier;
-        treasure.electrumPieces = this.rollDice(1, 6) * 1000 * multiplier;
-        treasure.goldPieces = this.rollDice(3, 6) * 1000 * multiplier;
-        treasure.platinumPieces = this.rollDice(1, 6) * 100 * multiplier;
+        treasure.copperPieces = DiceEngine.roll('1d6').total * 1000 * multiplier;
+        treasure.silverPieces = DiceEngine.roll('1d6').total * 1000 * multiplier;
+        treasure.electrumPieces = DiceEngine.roll('1d6').total * 1000 * multiplier;
+        treasure.goldPieces = DiceEngine.roll('3d6').total * 1000 * multiplier;
+        treasure.platinumPieces = DiceEngine.roll('1d6').total * 100 * multiplier;
         break;
 
       case 'B':
-        treasure.copperPieces = this.rollDice(1, 8) * 1000 * multiplier;
-        treasure.silverPieces = this.rollDice(1, 6) * 1000 * multiplier;
-        treasure.electrumPieces = this.rollDice(1, 4) * 1000 * multiplier;
-        treasure.goldPieces = this.rollDice(1, 3) * 1000 * multiplier;
+        treasure.copperPieces = DiceEngine.roll('1d8').total * 1000 * multiplier;
+        treasure.silverPieces = DiceEngine.roll('1d6').total * 1000 * multiplier;
+        treasure.electrumPieces = DiceEngine.roll('1d4').total * 1000 * multiplier;
+        treasure.goldPieces = DiceEngine.roll('1d3').total * 1000 * multiplier;
         break;
 
       case 'C':
-        treasure.copperPieces = this.rollDice(1, 12) * 1000 * multiplier;
-        treasure.silverPieces = this.rollDice(1, 4) * 1000 * multiplier;
-        treasure.electrumPieces = this.rollDice(1, 4) * 1000 * multiplier;
+        treasure.copperPieces = DiceEngine.roll('1d12').total * 1000 * multiplier;
+        treasure.silverPieces = DiceEngine.roll('1d4').total * 1000 * multiplier;
+        treasure.electrumPieces = DiceEngine.roll('1d4').total * 1000 * multiplier;
         break;
 
       case 'D':
-        treasure.copperPieces = this.rollDice(1, 8) * 1000 * multiplier;
-        treasure.silverPieces = this.rollDice(1, 12) * 1000 * multiplier;
-        treasure.goldPieces = this.rollDice(1, 6) * 1000 * multiplier;
+        treasure.copperPieces = DiceEngine.roll('1d8').total * 1000 * multiplier;
+        treasure.silverPieces = DiceEngine.roll('1d12').total * 1000 * multiplier;
+        treasure.goldPieces = DiceEngine.roll('1d6').total * 1000 * multiplier;
         break;
 
       case 'E':
-        treasure.copperPieces = this.rollDice(1, 10) * 1000 * multiplier;
-        treasure.silverPieces = this.rollDice(1, 12) * 1000 * multiplier;
-        treasure.electrumPieces = this.rollDice(1, 6) * 1000 * multiplier;
-        treasure.goldPieces = this.rollDice(1, 8) * 1000 * multiplier;
+        treasure.copperPieces = DiceEngine.roll('1d10').total * 1000 * multiplier;
+        treasure.silverPieces = DiceEngine.roll('1d12').total * 1000 * multiplier;
+        treasure.electrumPieces = DiceEngine.roll('1d6').total * 1000 * multiplier;
+        treasure.goldPieces = DiceEngine.roll('1d8').total * 1000 * multiplier;
         break;
 
       case 'F':
-        treasure.silverPieces = this.rollDice(2, 10) * 1000 * multiplier;
-        treasure.electrumPieces = this.rollDice(1, 8) * 1000 * multiplier;
-        treasure.goldPieces = this.rollDice(1, 12) * 1000 * multiplier;
+        treasure.silverPieces = DiceEngine.roll('2d10').total * 1000 * multiplier;
+        treasure.electrumPieces = DiceEngine.roll('1d8').total * 1000 * multiplier;
+        treasure.goldPieces = DiceEngine.roll('1d12').total * 1000 * multiplier;
         break;
 
       case 'G':
-        treasure.goldPieces = this.rollDice(10, 4) * 100 * multiplier;
-        treasure.platinumPieces = this.rollDice(1, 6) * 10 * multiplier;
+        treasure.goldPieces = DiceEngine.roll('10d4').total * 100 * multiplier;
+        treasure.platinumPieces = DiceEngine.roll('1d6').total * 10 * multiplier;
         break;
 
       case 'H':
-        treasure.copperPieces = this.rollDice(3, 8) * 1000 * multiplier;
-        treasure.silverPieces = this.rollDice(1, 100) * 100 * multiplier;
-        treasure.electrumPieces = this.rollDice(1, 4) * 10 * multiplier;
-        treasure.goldPieces = this.rollDice(1, 6) * 100 * multiplier;
+        treasure.copperPieces = DiceEngine.roll('3d8').total * 1000 * multiplier;
+        treasure.silverPieces = DiceEngine.roll('1d100').total * 100 * multiplier;
+        treasure.electrumPieces = DiceEngine.roll('1d4').total * 10 * multiplier;
+        treasure.goldPieces = DiceEngine.roll('1d6').total * 100 * multiplier;
         break;
 
       default:
-        treasure.copperPieces = this.rollDice(1, 12) * 1000 * multiplier;
-        treasure.silverPieces = this.rollDice(1, 4) * 1000 * multiplier;
-        treasure.electrumPieces = this.rollDice(1, 4) * 1000 * multiplier;
+        treasure.copperPieces = DiceEngine.roll('1d12').total * 1000 * multiplier;
+        treasure.silverPieces = DiceEngine.roll('1d4').total * 1000 * multiplier;
+        treasure.electrumPieces = DiceEngine.roll('1d4').total * 1000 * multiplier;
     }
   }
 
@@ -184,39 +185,39 @@ export class TreasureGenerationRules extends BaseRule {
     switch (treasureType.toUpperCase()) {
       case 'A':
         gemChance = 60;
-        gemCount = this.rollDice(3, 6);
+        gemCount = DiceEngine.roll('3d6').total;
         break;
       case 'B':
         gemChance = 50;
-        gemCount = this.rollDice(1, 8);
+        gemCount = DiceEngine.roll('1d8').total;
         break;
       case 'C':
         gemChance = 25;
-        gemCount = this.rollDice(1, 6);
+        gemCount = DiceEngine.roll('1d6').total;
         break;
       case 'D':
         gemChance = 30;
-        gemCount = this.rollDice(1, 8);
+        gemCount = DiceEngine.roll('1d8').total;
         break;
       case 'E':
         gemChance = 10;
-        gemCount = this.rollDice(1, 4);
+        gemCount = DiceEngine.roll('1d4').total;
         break;
       case 'F':
         gemChance = 20;
-        gemCount = this.rollDice(1, 12);
+        gemCount = DiceEngine.roll('1d12').total;
         break;
       case 'G':
         gemChance = 35;
-        gemCount = this.rollDice(3, 6);
+        gemCount = DiceEngine.roll('3d6').total;
         break;
       case 'H':
         gemChance = 15;
-        gemCount = this.rollDice(1, 6);
+        gemCount = DiceEngine.roll('1d6').total;
         break;
     }
 
-    if (this.rollDice(1, 100) <= gemChance) {
+    if (DiceEngine.roll('1d100').total <= gemChance) {
       for (let i = 0; i < gemCount; i++) {
         treasure.gems.push(this.generateGem(hitDice));
       }
@@ -287,14 +288,15 @@ export class TreasureGenerationRules extends BaseRule {
     ];
 
     let typeIndex = Math.min(gemTypes.length - 1, Math.floor(hitDice / 3));
-    if (this.rollDice(1, 100) <= 10 + hitDice) {
+    if (DiceEngine.roll('1d100').total <= 10 + hitDice) {
       typeIndex = Math.min(gemTypes.length - 1, typeIndex + 1);
     }
 
     const gemType = gemTypes[typeIndex];
-    const description = gemType.descriptions[this.rollDice(1, gemType.descriptions.length) - 1];
+    const description =
+      gemType.descriptions[DiceEngine.roll(`1d${gemType.descriptions.length}`).total - 1];
 
-    const valueMod = this.rollDice(1, 100);
+    const valueMod = DiceEngine.roll('1d100').total;
     let value = gemType.baseValue;
     if (valueMod <= 10) {
       value = Math.floor(value * 0.5);
@@ -316,39 +318,39 @@ export class TreasureGenerationRules extends BaseRule {
     switch (treasureType.toUpperCase()) {
       case 'A':
         jewelryChance = 40;
-        jewelryCount = this.rollDice(1, 10);
+        jewelryCount = DiceEngine.roll('1d10').total;
         break;
       case 'B':
         jewelryChance = 25;
-        jewelryCount = this.rollDice(1, 6);
+        jewelryCount = DiceEngine.roll('1d6').total;
         break;
       case 'C':
         jewelryChance = 15;
-        jewelryCount = this.rollDice(1, 4);
+        jewelryCount = DiceEngine.roll('1d4').total;
         break;
       case 'D':
         jewelryChance = 20;
-        jewelryCount = this.rollDice(1, 6);
+        jewelryCount = DiceEngine.roll('1d6').total;
         break;
       case 'E':
         jewelryChance = 5;
-        jewelryCount = this.rollDice(1, 4);
+        jewelryCount = DiceEngine.roll('1d4').total;
         break;
       case 'F':
         jewelryChance = 10;
-        jewelryCount = this.rollDice(1, 8);
+        jewelryCount = DiceEngine.roll('1d8').total;
         break;
       case 'G':
         jewelryChance = 25;
-        jewelryCount = this.rollDice(1, 10);
+        jewelryCount = DiceEngine.roll('1d10').total;
         break;
       case 'H':
         jewelryChance = 10;
-        jewelryCount = this.rollDice(1, 4);
+        jewelryCount = DiceEngine.roll('1d4').total;
         break;
     }
 
-    if (this.rollDice(1, 100) <= jewelryChance) {
+    if (DiceEngine.roll('1d100').total <= jewelryChance) {
       for (let i = 0; i < jewelryCount; i++) {
         treasure.jewelry.push(this.generateJewelryItem(hitDice));
       }
@@ -387,15 +389,15 @@ export class TreasureGenerationRules extends BaseRule {
       { name: 'platinum', multiplier: 10 },
     ];
 
-    const jewelryType = jewelryTypes[this.rollDice(1, jewelryTypes.length) - 1];
+    const jewelryType = jewelryTypes[DiceEngine.roll(`1d${jewelryTypes.length}`).total - 1];
 
     let materialIndex = Math.max(0, Math.min(materials.length - 1, Math.floor(hitDice / 4)));
-    if (this.rollDice(1, 20) <= hitDice) {
+    if (DiceEngine.roll('1d20').total <= hitDice) {
       materialIndex = Math.min(materials.length - 1, materialIndex + 1);
     }
 
     const material = materials[materialIndex];
-    const baseValue = this.rollDice(3, 6) * 100;
+    const baseValue = DiceEngine.roll('3d6').total * 100;
     const value = Math.floor(baseValue * material.multiplier);
 
     return {
@@ -412,42 +414,42 @@ export class TreasureGenerationRules extends BaseRule {
     switch (context.treasureType.toUpperCase()) {
       case 'A':
         magicChance = 30;
-        magicCount = this.rollDice(1, 6);
+        magicCount = DiceEngine.roll('1d6').total;
         break;
       case 'B':
         magicChance = 25;
-        magicCount = this.rollDice(1, 4);
+        magicCount = DiceEngine.roll('1d4').total;
         break;
       case 'C':
         magicChance = 10;
-        magicCount = this.rollDice(1, 3);
+        magicCount = DiceEngine.roll('1d3').total;
         break;
       case 'D':
         magicChance = 15;
-        magicCount = this.rollDice(1, 4);
+        magicCount = DiceEngine.roll('1d4').total;
         break;
       case 'E':
         magicChance = 25;
-        magicCount = this.rollDice(1, 6);
+        magicCount = DiceEngine.roll('1d6').total;
         break;
       case 'F':
         magicChance = 30;
-        magicCount = this.rollDice(1, 6);
+        magicCount = DiceEngine.roll('1d6').total;
         break;
       case 'G':
         magicChance = 35;
-        magicCount = this.rollDice(1, 8);
+        magicCount = DiceEngine.roll('1d8').total;
         break;
       case 'H':
         magicChance = 15;
-        magicCount = this.rollDice(1, 4);
+        magicCount = DiceEngine.roll('1d4').total;
         break;
     }
 
     magicChance += Math.floor(context.monsterHitDice / 2);
     magicChance += Math.floor(context.partyLevel / 3);
 
-    if (this.rollDice(1, 100) <= magicChance) {
+    if (DiceEngine.roll('1d100').total <= magicChance) {
       for (let i = 0; i < magicCount; i++) {
         treasure.magicItems.push(this.generateMagicItem(context));
       }
@@ -468,7 +470,7 @@ export class TreasureGenerationRules extends BaseRule {
     ];
 
     const totalWeight = itemTypes.reduce((sum, item) => sum + item.weight, 0);
-    const roll = this.rollDice(1, totalWeight);
+    const roll = DiceEngine.roll(`1d${totalWeight}`).total;
 
     let currentWeight = 0;
     let selectedType = itemTypes[0].type;
@@ -485,7 +487,7 @@ export class TreasureGenerationRules extends BaseRule {
   }
 
   private createSpecificMagicItem(type: MagicItem['type'], context: TreasureContext): MagicItem {
-    const rarityRoll = this.rollDice(1, 100) + context.monsterHitDice + context.partyLevel;
+    const rarityRoll = DiceEngine.roll('1d100').total + context.monsterHitDice + context.partyLevel;
     let rarity: MagicItem['rarity'] = 'common';
 
     if (rarityRoll >= 150) rarity = 'artifact';
@@ -518,7 +520,7 @@ export class TreasureGenerationRules extends BaseRule {
 
   private createMagicWeapon(rarity: MagicItem['rarity']): MagicItem {
     const weapons = ['sword', 'dagger', 'mace', 'axe', 'bow', 'spear', 'hammer'];
-    const weapon = weapons[this.rollDice(1, weapons.length) - 1];
+    const weapon = weapons[DiceEngine.roll(`1d${weapons.length}`).total - 1];
 
     let bonus = 1;
     if (rarity === 'uncommon') bonus = 2;
@@ -537,7 +539,7 @@ export class TreasureGenerationRules extends BaseRule {
 
   private createMagicArmor(rarity: MagicItem['rarity']): MagicItem {
     const armors = ['leather', 'chain mail', 'scale mail', 'plate mail', 'shield'];
-    const armor = armors[this.rollDice(1, armors.length) - 1];
+    const armor = armors[DiceEngine.roll(`1d${armors.length}`).total - 1];
 
     let bonus = 1;
     if (rarity === 'uncommon') bonus = 2;
@@ -566,7 +568,7 @@ export class TreasureGenerationRules extends BaseRule {
       'giant strength',
       'extra healing',
     ];
-    const potion = potions[this.rollDice(1, potions.length) - 1];
+    const potion = potions[DiceEngine.roll(`1d${potions.length}`).total - 1];
 
     return {
       name: `potion of ${potion}`,
@@ -607,7 +609,7 @@ export class TreasureGenerationRules extends BaseRule {
       'telekinesis',
       'wishes',
     ];
-    const ring = rings[this.rollDice(1, rings.length) - 1];
+    const ring = rings[DiceEngine.roll(`1d${rings.length}`).total - 1];
 
     return {
       name: `ring of ${ring}`,
@@ -619,8 +621,8 @@ export class TreasureGenerationRules extends BaseRule {
 
   private createMagicWand(rarity: MagicItem['rarity']): MagicItem {
     const wands = ['magic missiles', 'lightning bolts', 'fireballs', 'ice storms', 'polymorph'];
-    const wand = wands[this.rollDice(1, wands.length) - 1];
-    const charges = this.rollDice(1, 50) + 10;
+    const wand = wands[DiceEngine.roll(`1d${wands.length}`).total - 1];
+    const charges = DiceEngine.roll('1d50').total + 10;
 
     return {
       name: `wand of ${wand}`,
@@ -633,7 +635,7 @@ export class TreasureGenerationRules extends BaseRule {
 
   private createMagicRod(rarity: MagicItem['rarity']): MagicItem {
     const rods = ['cancellation', 'lordly might', 'resurrection', 'rulership', 'absorption'];
-    const rod = rods[this.rollDice(1, rods.length) - 1];
+    const rod = rods[DiceEngine.roll(`1d${rods.length}`).total - 1];
 
     return {
       name: `rod of ${rod}`,
@@ -645,8 +647,8 @@ export class TreasureGenerationRules extends BaseRule {
 
   private createMagicStaff(rarity: MagicItem['rarity']): MagicItem {
     const staves = ['power', 'wizardry', 'the magi', 'striking', 'healing'];
-    const staff = staves[this.rollDice(1, staves.length) - 1];
-    const charges = this.rollDice(1, 50) + 20;
+    const staff = staves[DiceEngine.roll(`1d${staves.length}`).total - 1];
+    const charges = DiceEngine.roll('1d50').total + 20;
 
     return {
       name: `staff of ${staff}`,
@@ -668,7 +670,7 @@ export class TreasureGenerationRules extends BaseRule {
       'figurine of wondrous power',
       'portable hole',
     ];
-    const item = items[this.rollDice(1, items.length) - 1];
+    const item = items[DiceEngine.roll(`1d${items.length}`).total - 1];
 
     return {
       name: item,
@@ -748,13 +750,5 @@ export class TreasureGenerationRules extends BaseRule {
     }
 
     return descriptions.join('; ');
-  }
-
-  private rollDice(count: number, sides: number): number {
-    let total = 0;
-    for (let i = 0; i < count; i++) {
-      total += Math.floor(Math.random() * sides) + 1;
-    }
-    return total;
   }
 }

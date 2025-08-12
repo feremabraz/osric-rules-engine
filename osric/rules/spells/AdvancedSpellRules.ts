@@ -1,4 +1,5 @@
 import type { Character } from '@osric/types/character';
+import { RULE_NAMES } from '@osric/types/constants';
 import type { Item } from '@osric/types/item';
 import type { Spell } from '@osric/types/spell';
 import type {
@@ -143,7 +144,7 @@ export class SpellFailureRule extends BaseRule {
       return this.createSuccessResult(`${caster.name} successfully casts "${spell.name}"`);
     }
 
-    const backfireRoll = DiceEngine.rollPercentile();
+    const backfireRoll = DiceEngine.roll('1d100');
     const backfireFailed = backfireRoll.total <= backfireChance;
 
     if (backfireFailed) {
@@ -179,7 +180,7 @@ export class SpellFailureRule extends BaseRule {
   }
 
   private determineBackfireEffect(spellLevel: number): { description: string; effect: string } {
-    const roll = DiceEngine.rollD20();
+    const roll = DiceEngine.roll('1d20');
     const adjustedRoll = roll.total + spellLevel;
 
     if (adjustedRoll <= 5) {
@@ -253,7 +254,7 @@ export class SpellFailureRule extends BaseRule {
 }
 
 export class SpellConcentrationRule extends BaseRule {
-  name = 'spell-concentration';
+  name = RULE_NAMES.SPELL_INTERRUPTION;
   description = 'Manage spell concentration and duration';
 
   canApply(context: GameContext): boolean {
@@ -296,7 +297,7 @@ export class SpellConcentrationRule extends BaseRule {
     const proficiencyBonus = caster.level ? Math.ceil(caster.level / 4) + 1 : 2;
     const hasConcentrationProficiency = false;
 
-    const concentrationRoll = DiceEngine.rollD20();
+    const concentrationRoll = DiceEngine.roll('1d20');
     const totalRoll =
       concentrationRoll.total +
       constitutionModifier +
@@ -408,7 +409,7 @@ export class SpellInteractionRule extends BaseRule {
     const casterLevel = caster.level || 1;
     const dispelDC = 11 + targetSpell.level;
 
-    const dispelRoll = DiceEngine.rollD20();
+    const dispelRoll = DiceEngine.roll('1d20');
     const totalRoll = dispelRoll.total + casterLevel;
 
     const dispelSuccess = totalRoll >= dispelDC;

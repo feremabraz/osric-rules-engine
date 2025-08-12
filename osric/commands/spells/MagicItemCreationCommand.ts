@@ -1,5 +1,6 @@
 import { MagicItemCreationValidator } from '@osric/commands/spells/validators/MagicItemCreationValidator';
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { isSuccess } from '@osric/core/Rule';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
@@ -336,8 +337,8 @@ export class MagicItemCreationCommand extends BaseCommand<MagicItemCreationParam
     requirements: CreationRequirements,
     parameters: MagicItemCreationParameters
   ): CreationResult {
-    const roll = Math.random();
-    const succeeded = roll <= requirements.successChance;
+    const roll = DiceEngine.roll('1d100').total;
+    const succeeded = roll <= Math.round(requirements.successChance * 100);
 
     const costsIncurred = {
       time: requirements.timeInDays,
@@ -353,9 +354,10 @@ export class MagicItemCreationCommand extends BaseCommand<MagicItemCreationParam
         'Insufficient focus during critical creation phase',
       ];
 
+      const idx = DiceEngine.roll(`1d${failureReasons.length}`).total - 1;
       return {
         kind: 'failure',
-        reason: failureReasons[Math.floor(Math.random() * failureReasons.length)],
+        reason: failureReasons[idx],
         costsIncurred,
       };
     }

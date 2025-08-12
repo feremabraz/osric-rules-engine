@@ -1,6 +1,7 @@
 import { CreateCharacterValidator } from '@osric/commands/character/validators/CreateCharacterValidator';
 import { BaseCommand, type CommandResult } from '@osric/core/Command';
 import { ContextKeys } from '@osric/core/ContextKeys';
+import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import { createCharacterId } from '@osric/types';
@@ -77,14 +78,17 @@ export class CreateCharacterCommand extends BaseCommand<CreateCharacterParameter
     return [
       RULE_NAMES.ABILITY_SCORE_GENERATION,
       RULE_NAMES.RACIAL_ABILITIES,
+      RULE_NAMES.RACIAL_RESTRICTIONS,
       RULE_NAMES.CLASS_REQUIREMENTS,
+      RULE_NAMES.STARTING_EQUIPMENT,
       RULE_NAMES.CHARACTER_INITIALIZATION,
     ];
   }
 
   private generateCharacterId(): string {
     const timestamp = Date.now();
-    const random = Math.floor(Math.random() * 1000);
+    // Use dice engine for deterministic RNG path
+    const random = DiceEngine.roll('1d1000').total - 1;
     return `char_${timestamp}_${random}`;
   }
 

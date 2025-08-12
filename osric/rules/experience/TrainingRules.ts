@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, isFailure, isSuccess } from '@osric/core/Rule';
 import type { RuleResult } from '@osric/core/Rule';
@@ -304,7 +305,8 @@ export class TrainingRule extends BaseRule {
       skill_improvement: 0.8,
     };
 
-    return Math.random() < (baseChance[trainingType] || 0.5);
+    const percent = Math.round((baseChance[trainingType] || 0.5) * 100);
+    return DiceEngine.roll('1d100').total <= percent;
   }
 
   private getTrainingBenefits(trainingType: string): string[] {

@@ -230,7 +230,7 @@ export class TerrainNavigationCommand extends BaseCommand<NavigationParameters> 
 
     const finalChance = Math.max(1, Math.min(95, baseChance - navigationBonus));
 
-    const roll = DiceEngine.rollPercentile().total;
+    const roll = DiceEngine.roll('1d100').total;
     const gotLost = roll <= finalChance;
 
     let extraDistanceMultiplier = 1.0;
@@ -255,7 +255,7 @@ export class TerrainNavigationCommand extends BaseCommand<NavigationParameters> 
 
     const eventChance = Math.min(50, travelTime.hours * 2);
 
-    if (DiceEngine.rollPercentile().total <= eventChance) {
+    if (DiceEngine.roll('1d100').total <= eventChance) {
       const eventType = this.determineEventType(terrain);
       events.push(this.generateEvent(character, terrain, eventType));
     }
@@ -264,7 +264,7 @@ export class TerrainNavigationCommand extends BaseCommand<NavigationParameters> 
   }
 
   private determineEventType(terrain: TerrainType): string {
-    const roll = DiceEngine.rollD20().total;
+    const roll = DiceEngine.roll('1d20').total;
 
     if (terrain.name.toLowerCase().includes('forest')) {
       if (roll <= 5) return 'animal-encounter';

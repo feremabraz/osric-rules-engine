@@ -1,5 +1,6 @@
 import { TurnUndeadValidator } from '@osric/commands/character/validators/TurnUndeadValidator';
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { CharacterId, MonsterId } from '@osric/types';
@@ -202,8 +203,8 @@ export class TurnUndeadCommand extends BaseCommand<TurnUndeadParameters> {
     const turnAbility = this.validateTurnUndeadAbility(character);
     const effectiveLevel = turnAbility.effectiveLevel || 1;
 
-    const dice1 = Math.floor(Math.random() * 6) + 1;
-    const dice2 = Math.floor(Math.random() * 6) + 1;
+    const dice1 = DiceEngine.roll('1d6').total;
+    const dice2 = DiceEngine.roll('1d6').total;
     const baseRoll = dice1 + dice2;
 
     let modifiedRoll = baseRoll;
@@ -312,7 +313,7 @@ export class TurnUndeadCommand extends BaseCommand<TurnUndeadParameters> {
       return {
         effect: isEvil ? 'commanded' : 'destroyed',
         duration: isEvil ? 24 * 60 : undefined,
-        count: 2 + Math.floor(Math.random() * 6),
+        count: 2 + DiceEngine.roll('1d6').total,
       };
     }
 
@@ -338,14 +339,14 @@ export class TurnUndeadCommand extends BaseCommand<TurnUndeadParameters> {
         effect = isEvil ? 'commanded' : 'turned';
       }
 
-      const baseCount = 1 + Math.floor(Math.random() * 6);
+      const baseCount = 1 + DiceEngine.roll('1d6').total;
       const count = Math.max(1, baseCount + Math.floor(levelDifference / 2));
 
       return {
         effect,
         duration:
           effect === 'commanded' || effect === 'turned'
-            ? 3 + Math.floor(Math.random() * 6)
+            ? 3 + DiceEngine.roll('1d6').total
             : undefined,
         count,
       };
@@ -357,9 +358,9 @@ export class TurnUndeadCommand extends BaseCommand<TurnUndeadParameters> {
   private getTurnDuration(clericLevel: number, undeadHD: number): number {
     const baseDuration =
       3 +
-      Math.floor(Math.random() * 4) +
-      Math.floor(Math.random() * 4) +
-      Math.floor(Math.random() * 4);
+      DiceEngine.roll('1d4').total +
+      DiceEngine.roll('1d4').total +
+      DiceEngine.roll('1d4').total;
     const levelBonus = Math.max(0, clericLevel - undeadHD);
 
     return baseDuration + levelBonus;

@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult, isFailure, isSuccess } from '@osric/core/Rule';
 import type { Character } from '@osric/types/character';
@@ -362,13 +363,13 @@ export class ScrollScribingRules extends BaseRule {
 
     successChance = Math.max(0.1, Math.min(0.95, successChance));
 
-    const roll = Math.random();
-    const succeeded = roll <= successChance;
+    const roll = DiceEngine.roll('1d100').total; // 1-100
+    const succeeded = roll <= Math.round(successChance * 100);
 
     if (succeeded) {
       const scroll = this.createScroll(context, materials);
 
-      const qualityRoll = Math.random();
+      const qualityRoll = DiceEngine.roll('1d100').total / 100;
       let qualityLevel = context.scrollQuality;
 
       if (qualityRoll >= 0.9) {
@@ -392,7 +393,7 @@ export class ScrollScribingRules extends BaseRule {
       };
     }
 
-    const failureRoll = Math.random();
+    const failureRoll = DiceEngine.roll('1d100').total / 100;
     let timeWasted = timeRequired;
     let materialsLost: string[] = [];
     let canRetry = true;
@@ -416,7 +417,7 @@ export class ScrollScribingRules extends BaseRule {
 
     return {
       kind: 'failure',
-      reason: failureReasons[Math.floor(Math.random() * failureReasons.length)],
+      reason: failureReasons[DiceEngine.roll(`1d${failureReasons.length}`).total - 1],
       timeWasted,
       materialsLost,
       canRetry,

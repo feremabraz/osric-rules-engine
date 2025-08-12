@@ -1,5 +1,6 @@
 import { FallingDamageValidator } from '@osric/commands/exploration/validators/FallingDamageValidator';
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { isFailure, isSuccess } from '@osric/core/Rule';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
@@ -184,7 +185,7 @@ export class FallingDamageCommand extends BaseCommand<FallingDamageParameters> {
     let totalDamage = 0;
 
     for (let i = 0; i < tenFootIncrements; i++) {
-      const roll = Math.floor(Math.random() * 6) + 1;
+      const roll = DiceEngine.roll('1d6').total;
       diceRolled.push({ die: i + 1, result: roll });
       totalDamage += roll;
     }
@@ -238,7 +239,7 @@ export class FallingDamageCommand extends BaseCommand<FallingDamageParameters> {
     roll: number;
   } {
     const targetNumber = character.abilities.dexterity;
-    const roll = Math.floor(Math.random() * 20) + 1;
+    const roll = DiceEngine.roll('1d20').total;
 
     return {
       kind: roll <= targetNumber ? 'success' : 'failure',
@@ -251,7 +252,7 @@ export class FallingDamageCommand extends BaseCommand<FallingDamageParameters> {
     kind: 'success' | 'failure';
     roll: number;
   } {
-    const roll = Math.floor(Math.random() * 20) + 1;
+    const roll = DiceEngine.roll('1d20').total;
 
     const characterClass = character.class.toLowerCase();
     let saveTarget = 14;

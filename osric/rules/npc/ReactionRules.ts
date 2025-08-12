@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { CharacterId } from '@osric/types';
@@ -95,8 +96,7 @@ export class ReactionRules extends BaseRule {
   }
 
   private roll2d6(): number {
-    const rollDie = () => Math.floor(Math.random() * 6) + 1;
-    return rollDie() + rollDie();
+    return DiceEngine.roll('2d6').total;
   }
 
   private getCharismaReactionModifier(charisma: number): number {

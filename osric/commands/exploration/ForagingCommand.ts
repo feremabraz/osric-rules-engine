@@ -240,7 +240,7 @@ export class ForagingCommand extends BaseCommand<ForagingParameters> {
     const waterChance = Math.max(5, Math.min(95, baseWaterChance + modifiers.total));
 
     if (forageType === 'food' || forageType === 'both') {
-      const foodRoll = DiceEngine.rollPercentile().total;
+      const foodRoll = DiceEngine.roll('1d100').total;
       if (foodRoll <= foodChance) {
         result.foodFound = this.calculateFoodYield(
           terrain,
@@ -249,14 +249,14 @@ export class ForagingCommand extends BaseCommand<ForagingParameters> {
           character.abilities.wisdom
         );
 
-        if (DiceEngine.rollD20().total <= 3) {
+        if (DiceEngine.roll('1d20').total <= 3) {
           result.specialFinds.push(this.generateSpecialFind(terrain, season));
         }
       }
     }
 
     if (forageType === 'water' || forageType === 'both') {
-      const waterRoll = DiceEngine.rollPercentile().total;
+      const waterRoll = DiceEngine.roll('1d100').total;
       if (waterRoll <= waterChance) {
         const waterResult = this.calculateWaterYield(terrain, season, timeSpent);
         result.waterFound = waterResult.amount;
@@ -421,7 +421,7 @@ export class ForagingCommand extends BaseCommand<ForagingParameters> {
 
     const encounterChance = baseChance + (terrainMods[terrain.toLowerCase()] || 0);
 
-    const roll = DiceEngine.rollPercentile().total;
+    const roll = DiceEngine.roll('1d100').total;
     const occurred = roll <= encounterChance;
 
     return {

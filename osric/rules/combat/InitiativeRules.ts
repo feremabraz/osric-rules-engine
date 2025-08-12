@@ -1,5 +1,6 @@
 import type { Command } from '@osric/core/Command';
 import { ContextKeys } from '@osric/core/ContextKeys';
+import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { Character as CharacterData } from '@osric/types/character';
@@ -82,7 +83,7 @@ export class InitiativeRollRule extends BaseRule {
     entity: CharacterData | MonsterData,
     context: InitiativeContext
   ): EntityInitiativeResult {
-    const naturalRoll = this.rollD10();
+    const naturalRoll = DiceEngine.roll('1d10').total;
 
     let modifiers = 0;
 
@@ -162,7 +163,7 @@ export class InitiativeRollRule extends BaseRule {
     modifiers: number;
     bestWeaponSpeed: number;
   } {
-    const naturalRoll = this.rollD10();
+    const naturalRoll = DiceEngine.roll('1d10').total;
 
     let bestReactionAdj = 0;
     for (const entity of entities) {
@@ -216,9 +217,7 @@ export class InitiativeRollRule extends BaseRule {
     return 1;
   }
 
-  private rollD10(): number {
-    return Math.floor(Math.random() * 10) + 1;
-  }
+  // d10 initiative now uses DiceEngine directly
 }
 
 export class SurpriseCheckRule extends BaseRule {
@@ -272,7 +271,7 @@ export class SurpriseCheckRule extends BaseRule {
   }
 
   private checkSurprise(entity: CharacterData | MonsterData): boolean {
-    const roll = this.rollD6();
+    const roll = DiceEngine.roll('1d6').total;
     let surpriseThreshold = 2;
 
     if ('race' in entity) {
@@ -286,9 +285,7 @@ export class SurpriseCheckRule extends BaseRule {
     return roll <= surpriseThreshold;
   }
 
-  private rollD6(): number {
-    return Math.floor(Math.random() * 6) + 1;
-  }
+  // d6 surprise now uses DiceEngine directly
 }
 
 export class InitiativeOrderRule extends BaseRule {

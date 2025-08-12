@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { CharacterId, MonsterId } from '@osric/types';
@@ -153,7 +154,7 @@ export class MoraleRules extends BaseRule {
 
     const finalValue = baseValue + totalModifier;
 
-    const rollResult = this.rollPercentile();
+    const rollResult = DiceEngine.roll('1d100').total;
 
     const passed = rollResult <= finalValue;
 
@@ -388,9 +389,7 @@ export class MoraleRules extends BaseRule {
     return `Morale check (${triggerDesc}): ${result.rollResult} vs ${result.finalValue} (${modifierStr}) - ${characterName} ${result.outcome.replace('_', ' ')}`;
   }
 
-  private rollPercentile(): number {
-    return Math.floor(Math.random() * 100) + 1;
-  }
+  // Removed custom RNG; using DiceEngine.roll for canonical dice
 
   private calculateGroupEffects(
     groupIds: Array<string | CharacterId | MonsterId>,

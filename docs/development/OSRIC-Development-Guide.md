@@ -2,7 +2,7 @@
 
 This document is the canonical reference for how to extend the engine safely, plus a concise roadmap with clear status markers (Done, Pending, Planned).
 
-Last updated: 2025-08-12 (Phase 1: completed; Phase 2: planned)
+Last updated: 2025-08-12 (Phase 1: completed; Phase 2: in progress — PostDamageStatus and bleeding tick scaffolding added)
 
 
 ## Project overview
@@ -106,11 +106,13 @@ All configs are green today.
   - Pending
     - (none)
 
-- Phase 2 — Behavior and Structure Normalization: Planned
+- Phase 2 — Behavior and Structure Normalization: In Progress
   - [ ] Keep commands thin; move mechanics into rules where needed (single responsibility)
   - [ ] Naming normalization: one file → one purpose (each rule file exports one rule)
-  - [ ] Extract duplicated logic (dice/modifiers) into shared helpers
+  - [x] Extract duplicated logic (dice/modifiers) into shared helpers
   - [ ] Error model: converge on a simple DomainError (code/message/details)
+  - [x] PostDamageStatus rule after ApplyDamage (ATTACK chain)
+  - [x] RoundTick command and BleedingTick rule scaffolding (optional ongoing effects)
 
 - Phase 3 — Public Surface Pruning: Planned
   - [ ] Replace export * barrels with explicit exports or internalize
@@ -148,7 +150,7 @@ Exit Criteria
 - Rule results are generically typed where a stable data shape exists
 - All quality gates green
 
-### Phase 2: Behavior and Structure Normalization (Planned)
+### Phase 2: Behavior and Structure Normalization (In Progress)
 
 Objective: Ensure single responsibility and remove duplication.
 
@@ -158,7 +160,7 @@ Deliverables / Checklist
 2. Files and naming
   - [ ] One file → one rule class; consistent naming via `RULE_NAMES`
 3. Duplicate logic
-  - [ ] Extract shared dice/modifier routines used 2+ times
+  - [x] Extract shared dice/modifier routines used 2+ times (DiceEngine; wrappers deprecated)
 4. Error model
   - [ ] Introduce simple `DomainError` (code/message/details) and use where it helps clarity
 
@@ -166,6 +168,8 @@ Exit Criteria
 - Thin commands, focused rules
 - Reused helpers for common calculations
 - Minimal, consistent error surface
+ - ATTACK chain includes PostDamageStatus after ApplyDamage
+ - Optional: ongoing effects handled via RoundTick + BleedingTick
 
 ### Phase 3: Public Surface Pruning (Planned)
 

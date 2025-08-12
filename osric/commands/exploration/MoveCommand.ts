@@ -42,68 +42,44 @@ export class MoveCommand extends BaseCommand<MoveParameters> {
 
   async execute(context: GameContext): Promise<CommandResult> {
     try {
-      const { characterId, movement, terrain, timeScale, forcedMarch = false } = this.parameters;
+      const { characterId, movement, terrain } = this.parameters;
 
       const character = context.getEntity<Character>(characterId);
-      if (!character) {
+      if (!character)
         return this.createFailureResult(`Character with ID "${characterId}" not found`);
-      }
 
-      if (!this.isTerrainNavigable(terrain.type, movement.type)) {
-        return this.createFailureResult(`Cannot ${movement.type} through ${terrain.type} terrain`);
-      }
+      // Normalize parameters for the MOVE rule chain
+      const movementTypeMap: Record<
+        MoveParameters['movement']['type'],
+        'walk' | 'run' | 'swim' | 'climb' | 'fly'
+      > = {
+        walk: 'walk',
+        run: 'run',
+        sneak: 'walk',
+        fly: 'fly',
+        swim: 'swim',
+        climb: 'climb',
+      };
+      const movementType = movementTypeMap[movement.type];
 
-      const movementRates = this.calculateMovementRates(character, timeScale);
-
-      const adjustedMovementRate = this.calculateTerrainAdjustedMovement(
-        movementRates.baseRate,
-        terrain.type,
-        terrain.environment,
-        terrain.environmentalFeature
-      );
-
-      const finalMovementRate = this.applyMovementTypeModifiers(
-        adjustedMovementRate,
-        movement.type,
-        forcedMarch
-      );
-
-      const movementValidation = this.validateMovementDistance(
-        movement.distance,
-        finalMovementRate,
-        timeScale
-      );
-
-      if (!movementValidation.canMove) {
-        return this.createFailureResult(movementValidation.reason || 'Movement not possible');
-      }
-
-      const timeTaken = this.calculateTimeTaken(movement.distance, finalMovementRate, timeScale);
-
-      const movementEffects = this.calculateMovementEffects(
-        movement,
-        terrain,
-        forcedMarch,
-        timeTaken
-      );
-
-      const finalCharacter = this.applyMovementEffects(character, movement);
-
-      context.setEntity(characterId, finalCharacter);
-
-      const resultData = {
-        characterId,
-        movement,
-        terrain,
-        movementRate: finalMovementRate,
-        timeTaken,
-        effects: movementEffects,
-        newPosition: movement.destination || finalCharacter.position,
+      const terrainMap: Record<string, string> = {
+        Normal: 'clear',
+        Difficult: 'difficult',
+        'Very Difficult': 'difficult',
+        Impassable: 'difficult',
       };
 
-      const message = this.createMovementMessage(character, movement, timeTaken, movementEffects);
+      context.setTemporary('movement-request-params', {
+        characterId,
+        fromPosition: character.position,
+        toPosition: movement.destination ?? character.position,
+        movementType,
+        distance: movement.distance,
+        terrainType: terrainMap[terrain.type] ?? 'clear',
+      });
 
-      return this.createSuccessResult(message, resultData, movementEffects.statusEffects);
+      // Delegate to the Rules Engine (MOVE chain)
+      return await this.executeWithRuleEngine(context);
     } catch (error) {
       return this.createFailureResult(
         `Failed to move character: ${error instanceof Error ? error.message : String(error)}`
@@ -116,7 +92,8 @@ export class MoveCommand extends BaseCommand<MoveParameters> {
   }
 
   getRequiredRules(): string[] {
-    return ['movement-rates', 'terrain-effects', 'encumbrance', 'environmental-hazards'];
+    // Aligns with RuleContractValidator for MOVE
+    return ['movement-validation', 'movement-rates', 'encumbrance'];
   }
 
   private isTerrainNavigable(terrainType: string, movementType: string): boolean {

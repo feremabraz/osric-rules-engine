@@ -5,8 +5,8 @@ import type { Character, Item, Spell } from '@osric/types';
 import { RULE_NAMES } from '@osric/types/constants';
 
 export class ComponentTrackingRules extends BaseRule {
-  public readonly name = RULE_NAMES.COMPONENT_TRACKING;
-  public readonly description = 'Validates and tracks spell component requirements';
+  public readonly name = RULE_NAMES.COMPONENT_CHECK;
+  public readonly description = 'Validates spell component requirements';
 
   public canApply(context: GameContext): boolean {
     const caster = this.getOptionalContext<Character>(context, 'spell:cast:caster');

@@ -74,6 +74,7 @@ export const ContextKeys = {
   COMBAT_ARMOR_EFFECTIVENESS: 'combat:armor:effectiveness',
   COMBAT_DAMAGE_RESULT: 'combat:damage:result',
   COMBAT_DAMAGE_VALUES: 'combat:damage:values',
+  COMBAT_DAMAGE_APPLIED: 'combat:damage:applied',
 
   // Attack weapon/target (frequently accessed)
   COMBAT_ATTACK_WEAPON: 'combat:attack:weapon',

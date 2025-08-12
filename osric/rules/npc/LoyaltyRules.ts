@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { CharacterId } from '@osric/types';
@@ -191,7 +192,7 @@ export class LoyaltyRules extends BaseRule {
 
     const finalValue = Math.max(0, Math.min(99, baseValue + totalModifier));
 
-    const rollResult = this.rollPercentile();
+    const rollResult = DiceEngine.roll('1d100').total;
 
     const passed = rollResult <= finalValue;
 
@@ -443,7 +444,5 @@ export class LoyaltyRules extends BaseRule {
     return `Loyalty check (${triggerDesc}): ${result.rollResult} vs ${result.finalValue} (${modifierStr}) - ${characterName} ${result.outcome.replace('_', ' ')}`;
   }
 
-  private rollPercentile(): number {
-    return Math.floor(Math.random() * 100) + 1;
-  }
+  // Removed custom RNG; using DiceEngine.roll for canonical dice
 }

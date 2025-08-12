@@ -90,10 +90,10 @@ export class CastSpellCommand extends BaseCommand<CastSpellParameters> {
 
   public getRequiredRules(): string[] {
     return [
+      RULE_NAMES.COMPONENT_CHECK,
       RULE_NAMES.SPELL_CASTING,
-      RULE_NAMES.COMPONENT_TRACKING,
-      RULE_NAMES.SPELL_MEMORIZATION,
-      RULE_NAMES.SPELL_EFFECT_RESOLUTION,
+      RULE_NAMES.SPELL_INTERRUPTION,
+      RULE_NAMES.SPELL_EFFECTS,
     ];
   }
 

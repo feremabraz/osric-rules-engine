@@ -1,5 +1,6 @@
 import { MonsterGenerationValidator } from '@osric/commands/npc/validators/MonsterGenerationValidator';
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import { COMMAND_TYPES } from '@osric/types/constants';
@@ -177,7 +178,8 @@ export class MonsterGenerationCommand extends BaseCommand<MonsterGenerationParam
       return [this.createGenericMonster(encounterLevel)];
     }
 
-    const selectedMonster = possibleMonsters[Math.floor(Math.random() * possibleMonsters.length)];
+    const selectedMonster =
+      possibleMonsters[DiceEngine.roll(`1d${possibleMonsters.length}`).total - 1];
     const numberAppearing = this.rollNumberAppearing(selectedMonster.numberAppearing, partySize);
 
     const monsters: Monster[] = [];
@@ -235,7 +237,7 @@ export class MonsterGenerationCommand extends BaseCommand<MonsterGenerationParam
 
     let total = 0;
     for (let i = 0; i < numDice; i++) {
-      total += Math.floor(Math.random() * dieSize) + 1;
+      total += DiceEngine.roll(`1d${dieSize}`).total;
     }
 
     const sizeAdjustment = partySize > 4 ? Math.floor(partySize / 4) : 0;
@@ -296,7 +298,7 @@ export class MonsterGenerationCommand extends BaseCommand<MonsterGenerationParam
   }
 
   private createMonsterByType(monsterType: string, level: number): Monster {
-    const hitPoints = Math.max(1, level * 4 + Math.floor(Math.random() * 8));
+    const hitPoints = Math.max(1, level * 4 + DiceEngine.roll('1d8').total);
     const stats = this.getMonsterStatsByHD(`${level}`);
 
     return {
@@ -341,7 +343,7 @@ export class MonsterGenerationCommand extends BaseCommand<MonsterGenerationParam
 
     let total = 0;
     for (let i = 0; i < numDice; i++) {
-      total += Math.floor(Math.random() * 8) + 1;
+      total += DiceEngine.roll('1d8').total;
     }
 
     return Math.max(1, total + modifier);

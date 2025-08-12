@@ -44,7 +44,7 @@ export class SearchCommand extends BaseCommand<SearchParameters> {
         return this.createFailureResult(`Character with ID "${characterId}" not found`);
       }
 
-      // Set standardized context for rule processing
+      // Set standardized context for rule processing (legacy/ad-hoc)
       context.setTemporary('exploration:search:context', {
         character,
         searchType,
@@ -53,13 +53,32 @@ export class SearchCommand extends BaseCommand<SearchParameters> {
         thoroughness,
       });
 
+      // Also set normalized params for SearchRule chain compatibility
+      const normalizedType =
+        searchType === 'secret-doors'
+          ? 'secret_doors'
+          : searchType === 'hidden-objects'
+            ? 'hidden_objects'
+            : (searchType as 'traps' | 'general');
+      const normalizedThoroughness =
+        thoroughness === 'quick' ? 'hasty' : (thoroughness as 'normal' | 'careful' | 'meticulous');
+
+      context.setTemporary('search-request-params', {
+        characterId,
+        searchType: normalizedType,
+        area: target?.area ?? 'unknown',
+        timeSpent,
+        thoroughness: normalizedThoroughness,
+        assistingCharacterIds: undefined,
+      });
+
       const searchModifiers = this.calculateSearchModifiers(character, searchType, thoroughness);
 
       const baseChance = this.getBaseSearchChance(character, searchType);
 
       const finalChance = Math.min(95, Math.max(5, baseChance + searchModifiers.total));
 
-      const searchRoll = DiceEngine.rollPercentile();
+      const searchRoll = DiceEngine.roll('1d100');
       const isSuccessful = searchRoll.total <= finalChance;
 
       const actualTime = this.calculateSearchTime(timeSpent, thoroughness, isSuccessful);
@@ -279,7 +298,7 @@ export class SearchCommand extends BaseCommand<SearchParameters> {
       findings.push('Search revealed nothing of interest');
 
       if (searchType === 'traps') {
-        const triggerRoll = DiceEngine.rollD20();
+        const triggerRoll = DiceEngine.roll('1d20');
         if (triggerRoll.total <= 2) {
           consequences.push({
             type: 'trap-triggered',

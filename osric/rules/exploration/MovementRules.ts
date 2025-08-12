@@ -62,7 +62,7 @@ export class MovementRule extends BaseRule {
       return this.createFailureResult(validation.message, { context: 'movement:validation' });
     }
 
-    const result = this.calculateMovement(character, data);
+    const result = this.calculateMovement(context, character, data);
 
     if (isSuccess(result)) {
       this.applyMovementEffects(character, result, context);
@@ -105,9 +105,19 @@ export class MovementRule extends BaseRule {
     return { kind: 'success', message: 'Movement is valid' };
   }
 
-  private calculateMovement(character: Character, data: MovementRequest): MovementResult {
-    const baseMovement = this.getBaseMovementRate(character);
-    const encumbranceModifier = this.getEncumbranceModifier(character, data.encumbrance);
+  private calculateMovement(
+    context: GameContext,
+    character: Character,
+    data: MovementRequest
+  ): MovementResult {
+    const baseFromContext = this.getOptionalContext<number>(context, 'movement:base-rate');
+    const baseMovement = baseFromContext ?? this.getBaseMovementRate(character);
+    const encumbranceLevel =
+      this.getOptionalContext<'light' | 'moderate' | 'heavy' | 'severe'>(
+        context,
+        'movement:encumbrance-level'
+      ) ?? data.encumbrance;
+    const encumbranceModifier = this.getEncumbranceModifier(character, encumbranceLevel);
     const terrainModifier = this.getTerrainModifier(data.terrainType);
     const movementTypeModifier = this.getMovementTypeModifier(data.movementType);
 

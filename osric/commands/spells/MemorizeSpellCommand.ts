@@ -102,7 +102,7 @@ export class MemorizeSpellCommand extends BaseCommand<MemorizeSpellParameters> {
   }
 
   public getRequiredRules(): string[] {
-    return [RULE_NAMES.SPELL_MEMORIZATION_VALIDATION, RULE_NAMES.SPELL_SLOT_ALLOCATION];
+    return [RULE_NAMES.SPELL_MEMORIZATION, RULE_NAMES.SPELL_PROGRESSION];
   }
 
   private isSpellcaster(character: Character): boolean {

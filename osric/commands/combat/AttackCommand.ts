@@ -91,6 +91,8 @@ export class AttackCommand extends BaseCommand<AttackParameters> {
     return [
       RULE_NAMES.ATTACK_ROLL,
       RULE_NAMES.DAMAGE_CALCULATION,
+      RULE_NAMES.APPLY_DAMAGE,
+      RULE_NAMES.POST_DAMAGE_STATUS,
       RULE_NAMES.CRITICAL_HITS,
       RULE_NAMES.MULTIPLE_ATTACKS,
     ];

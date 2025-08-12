@@ -1,3 +1,4 @@
+import { type AttackContext, getAttacksPerRound } from '@osric/core/CombatHelpers';
 import type { Command } from '@osric/core/Command';
 import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
@@ -8,19 +9,7 @@ import type { Weapon } from '@osric/types/item';
 import type { Monster as MonsterData } from '@osric/types/monster';
 import type { CombatResult } from '@osric/types/shared';
 
-interface AttackContext {
-  attacker: CharacterData | MonsterData;
-  target: CharacterData | MonsterData;
-  weapon?: Weapon;
-  attackType?: string;
-  situationalModifiers?: number;
-  isChargedAttack?: boolean;
-  multipleAttacks?: boolean;
-  roundState?: {
-    currentRound: number;
-    fractionalAttacksCarriedOver: number;
-  };
-}
+// AttackContext now sourced from core CombatHelpers
 
 export enum AttackSequence {
   FIRST = 'first',
@@ -40,7 +29,7 @@ export class MultipleAttackRule extends BaseRule {
 
     const { attacker, target, weapon } = attackContext;
 
-    const attacksPerRound = this.getAttacksPerRound(attacker, weapon, target);
+    const attacksPerRound = getAttacksPerRound(attacker, weapon, target);
 
     if (attacksPerRound <= 1) {
       context.setTemporary(ContextKeys.COMBAT_ATTACKS_THIS_ROUND, 1);
@@ -71,7 +60,7 @@ export class MultipleAttackRule extends BaseRule {
     const attackContext = context.getTemporary(ContextKeys.COMBAT_ATTACK_CONTEXT) as AttackContext;
     if (!attackContext) return false;
 
-    const attacksPerRound = this.getAttacksPerRound(
+    const attacksPerRound = getAttacksPerRound(
       attackContext.attacker,
       attackContext.weapon,
       attackContext.target
@@ -80,87 +69,7 @@ export class MultipleAttackRule extends BaseRule {
     return attacksPerRound > 1 || attackContext.multipleAttacks === true;
   }
 
-  private getAttacksPerRound(
-    attacker: CharacterData | MonsterData,
-    weapon?: Weapon,
-    target?: CharacterData | MonsterData
-  ): number {
-    if ('hitDice' in attacker) {
-      return attacker.damagePerAttack ? attacker.damagePerAttack.length : 1;
-    }
-
-    const character = attacker as CharacterData;
-
-    const isFighterClass = ['Fighter', 'Paladin', 'Ranger'].includes(character.class);
-
-    if (isFighterClass && target && this.hasLessThanOneHD(target)) {
-      return character.level;
-    }
-
-    let attacksPerRound = 1;
-
-    if (isFighterClass) {
-      if (character.level >= 13) {
-        attacksPerRound = 2;
-      } else if (character.level >= 7) {
-        attacksPerRound = 1.5;
-      }
-    }
-
-    if (weapon && character.weaponSpecializations) {
-      const specialization = character.weaponSpecializations.find(
-        (spec) => spec.weapon.toLowerCase() === weapon.name.toLowerCase()
-      );
-
-      if (specialization) {
-        const specializationLevel = specialization.bonuses.attackRate || 1;
-
-        attacksPerRound = this.getSpecializedAttackRate(
-          character.level,
-          specializationLevel,
-          attacksPerRound
-        );
-      }
-    }
-
-    return attacksPerRound;
-  }
-
-  private getSpecializedAttackRate(
-    level: number,
-    specializationLevel: number,
-    baseAttacks: number
-  ): number {
-    if (specializationLevel === 1) {
-      if (level >= 13) return 2.5;
-      if (level >= 7) return 2.0;
-      return 1.5;
-    }
-
-    if (specializationLevel === 2) {
-      if (level >= 13) return 3.0;
-      if (level >= 7) return 2.5;
-      return 2.0;
-    }
-
-    return baseAttacks;
-  }
-
-  private hasLessThanOneHD(target: CharacterData | MonsterData): boolean {
-    if ('hitDice' in target) {
-      const match = target.hitDice.match(/^([\d.]+)/);
-      if (match) {
-        const hdValue = Number.parseFloat(match[1]);
-        return hdValue < 1;
-      }
-    }
-
-    if ('level' in target) {
-      return target.level === 0 || (target.hitPoints.maximum <= 4 && target.level === 1);
-    }
-
-    return false;
-  }
+  // helper methods removed; using shared helpers from core
 
   private resolveMultipleAttacks(
     attackContext: AttackContext,
@@ -253,7 +162,7 @@ export class AttackPrecedenceRule extends BaseRule {
     }
 
     const { attacker, weapon } = attackContext;
-    const hasMultipleAttacks = this.getAttacksPerRound(attacker, weapon) > 1;
+    const hasMultipleAttacks = getAttacksPerRound(attacker, weapon) > 1;
     const precedence = this.getAttackPrecedence(hasMultipleAttacks);
 
     context.setTemporary(ContextKeys.COMBAT_ATTACK_PRECEDENCE, precedence);
@@ -278,18 +187,5 @@ export class AttackPrecedenceRule extends BaseRule {
     return -1;
   }
 
-  private getAttacksPerRound(attacker: CharacterData | MonsterData, _weapon?: Weapon): number {
-    if ('hitDice' in attacker) {
-      return attacker.damagePerAttack ? attacker.damagePerAttack.length : 1;
-    }
-
-    const character = attacker as CharacterData;
-    const isFighterClass = ['Fighter', 'Paladin', 'Ranger'].includes(character.class);
-
-    if (!isFighterClass) return 1;
-
-    if (character.level >= 13) return 2;
-    if (character.level >= 7) return 1.5;
-    return 1;
-  }
+  // duplicate attacks-per-round logic removed in favor of shared helper
 }

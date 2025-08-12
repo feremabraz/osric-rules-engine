@@ -54,6 +54,8 @@ export const COMMAND_TYPES = {
   WEATHER_CHECK: 'weather-check',
   TERRAIN_NAVIGATION: 'terrain-navigation',
   FORAGING: 'foraging',
+  // System/utility
+  ROUND_TICK: 'round-tick',
 } as const;
 
 export const RULE_NAMES = {
@@ -83,6 +85,8 @@ export const RULE_NAMES = {
   GRAPPLE_ATTACK: 'grapple-attack',
   STRENGTH_COMPARISON: 'strength-comparison',
   GRAPPLE_EFFECT: 'grapple-effect',
+  APPLY_DAMAGE: 'apply-damage',
+  POST_DAMAGE_STATUS: 'post-damage-status',
   MOUNTED_COMBAT: 'mounted-combat',
   AERIAL_COMBAT: 'aerial-combat',
   UNDERWATER_COMBAT: 'underwater-combat',
@@ -144,6 +148,9 @@ export const RULE_NAMES = {
   MOVEMENT_RATES: 'movement-rates',
   ENCUMBRANCE: 'encumbrance',
   LIGHTING_EFFECTS: 'lighting-effects',
+
+  // System/utility rules
+  BLEEDING_TICK: 'bleeding-tick',
 
   MONSTER_BEHAVIOR: 'monster-behavior',
   SPECIAL_ABILITIES: 'special-abilities',

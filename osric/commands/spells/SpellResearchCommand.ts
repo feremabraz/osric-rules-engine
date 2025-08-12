@@ -1,5 +1,6 @@
 import { SpellResearchValidator } from '@osric/commands/spells/validators/SpellResearchValidator';
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { isSuccess } from '@osric/core/Rule';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
@@ -313,7 +314,7 @@ export class SpellResearchCommand extends BaseCommand<SpellResearchParameters> {
 
     successChance = Math.max(5, Math.min(95, successChance));
 
-    const roll = Math.floor(Math.random() * 100) + 1;
+    const roll = DiceEngine.roll('1d100').total;
     const success = roll <= successChance;
 
     return {

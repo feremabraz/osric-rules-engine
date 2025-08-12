@@ -1,4 +1,5 @@
 import { ContextKeys } from '@osric/core/ContextKeys';
+import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult, isFailure } from '@osric/core/Rule';
 import type { Character } from '@osric/types/character';
@@ -371,7 +372,7 @@ export class ScrollSpellCastingRule extends BaseRule {
 
     const { scroll, caster, failureChance, backfireChance } = castingCheck;
 
-    const failureRoll = Math.floor(Math.random() * 100) + 1;
+    const failureRoll = DiceEngine.roll('1d100').total;
     const success = failureRoll > failureChance;
 
     if (success) {
@@ -401,7 +402,7 @@ export class ScrollSpellCastingRule extends BaseRule {
       });
     }
 
-    const backfireRoll = Math.floor(Math.random() * 100) + 1;
+    const backfireRoll = DiceEngine.roll('1d100').total;
     const backfired = backfireRoll <= backfireChance;
 
     const updatedScroll = { ...scroll, consumed: true };

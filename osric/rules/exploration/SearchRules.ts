@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, isFailure, isSuccess } from '@osric/core/Rule';
 import type { RuleResult } from '@osric/core/Rule';
@@ -118,7 +119,7 @@ export class SearchRule extends BaseRule {
       racialModifier + classModifier + thoroughnessModifier + timeModifier + assistanceModifier;
     const finalChance = Math.min(95, Math.max(5, baseChance + totalModifier));
 
-    const roll = Math.random() * 100;
+    const roll = DiceEngine.roll('1d100').total;
     const succeeded = roll <= finalChance;
 
     const timeRequired = this.calculateActualSearchTime(data.timeSpent, data.thoroughness);
@@ -329,8 +330,8 @@ export class SearchRule extends BaseRule {
 
     if (possibleFinds.length === 0) return [];
 
-    const numFinds = Math.random() < 0.7 ? 1 : 2;
-    const shuffled = [...possibleFinds].sort(() => Math.random() - 0.5);
+    const numFinds = DiceEngine.roll('1d100').total <= 70 ? 1 : 2;
+    const shuffled = this.shuffleWithDice(possibleFinds);
 
     return shuffled.slice(0, Math.min(numFinds, possibleFinds.length));
   }
@@ -359,4 +360,15 @@ export class SearchRule extends BaseRule {
     _result: SearchResult,
     _context: GameContext
   ): void {}
+
+  private shuffleWithDice<T>(arr: T[]): T[] {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = DiceEngine.roll(`1d${i + 1}`).total - 1; // 0..i
+      const tmp = a[i];
+      a[i] = a[j];
+      a[j] = tmp;
+    }
+    return a;
+  }
 }
