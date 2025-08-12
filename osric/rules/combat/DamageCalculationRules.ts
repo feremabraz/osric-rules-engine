@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import { rollExpression } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
@@ -23,7 +24,7 @@ export class DamageCalculationRule extends BaseRule {
   name = 'damage-calculation';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const attackContext = context.getTemporary('combat:attack:context') as AttackContext;
+    const attackContext = context.getTemporary(ContextKeys.COMBAT_ATTACK_CONTEXT) as AttackContext;
 
     if (!attackContext) {
       return this.createFailureResult('No attack context found');
@@ -42,8 +43,8 @@ export class DamageCalculationRule extends BaseRule {
       combatResult = this.applyDamage(attacker, target, damage, isCriticalHit || false);
     }
 
-    context.setTemporary('combat:damage:result', combatResult);
-    context.setTemporary('damage-values', damage);
+    context.setTemporary(ContextKeys.COMBAT_DAMAGE_RESULT, combatResult);
+    context.setTemporary(ContextKeys.COMBAT_DAMAGE_VALUES, damage);
 
     return this.createSuccessResult(
       `Damage calculated: ${damage.join(', ')} points`,

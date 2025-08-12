@@ -1,5 +1,6 @@
 import { ForagingValidator } from '@osric/commands/exploration/validators/ForagingValidator';
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
@@ -66,7 +67,7 @@ export class ForagingCommand extends BaseCommand<ForagingParameters> {
       }
 
       // Set standardized context for rule processing
-      context.setTemporary('exploration:foraging:context', {
+      context.setTemporary(ContextKeys.FORAGING_CONTEXT, {
         character,
         forageType,
         terrain,

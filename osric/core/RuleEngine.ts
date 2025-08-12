@@ -1,6 +1,7 @@
 import type { Command, CommandResult } from './Command';
 import type { GameContext } from './GameContext';
 import type { Rule } from './Rule';
+import { isFailure, isSuccess } from './Rule';
 import { RuleChain, type RuleChainConfig } from './RuleChain';
 
 export interface RuleEngineConfig {
@@ -101,7 +102,6 @@ export class RuleEngine {
       if (!command.canExecute(context)) {
         const result: CommandResult = {
           kind: 'failure',
-          success: false,
           message: `Command ${command.type} cannot be executed in current context`,
         };
         this.updateMetrics(startTime, false, command.type);
@@ -119,18 +119,17 @@ export class RuleEngine {
 
       const commandResult: CommandResult = {
         kind: chainResult.kind,
-        success: chainResult.success,
         message: chainResult.message,
         data: chainResult.data,
         effects: chainResult.effects,
         damage: chainResult.damage,
       };
 
-      this.updateMetrics(startTime, chainResult.success, command.type);
+      this.updateMetrics(startTime, isSuccess(chainResult), command.type);
 
       if (this.config.enableLogging) {
         console.log(
-          `Command ${command.type} completed: ${chainResult.success ? 'SUCCESS' : 'FAILURE'}`
+          `Command ${command.type} completed: ${isSuccess(chainResult) ? 'SUCCESS' : 'FAILURE'}`
         );
       }
 
@@ -143,7 +142,6 @@ export class RuleEngine {
 
       const errorResult: CommandResult = {
         kind: 'failure',
-        success: false,
         message: `Error processing command ${command.type}: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
 
@@ -164,7 +162,7 @@ export class RuleEngine {
       const result = await this.process(command, context);
       results.push(result);
 
-      if (!result.success && this.isCriticalCommand(command)) {
+      if (isFailure(result) && this.isCriticalCommand(command)) {
         break;
       }
     }

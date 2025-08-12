@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { AbilityScores, CharacterClass, CharacterRace } from '@osric/types/character';
@@ -18,7 +19,7 @@ export class AbilityScoreGenerationRule extends BaseRule {
   async apply(context: GameContext, _command: Command): Promise<RuleResult> {
     const creationData = this.getRequiredContext<CharacterCreationData>(
       context,
-      'character:creation:params'
+      ContextKeys.CHARACTER_CREATION_PARAMS
     );
 
     try {
@@ -48,7 +49,7 @@ export class AbilityScoreGenerationRule extends BaseRule {
           );
       }
 
-      this.setContext(context, 'character:creation:ability-scores', abilityScores);
+      this.setContext(context, ContextKeys.CHARACTER_CREATION_ABILITY_SCORES, abilityScores);
 
       return this.createSuccessResult(
         `Generated ability scores using ${creationData.abilityScoreMethod}`,
@@ -67,7 +68,7 @@ export class AbilityScoreGenerationRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     if (command.type !== COMMAND_TYPES.CREATE_CHARACTER) return false;
 
-    const creationParams = context.getTemporary('character:creation:params');
+    const creationParams = context.getTemporary(ContextKeys.CHARACTER_CREATION_PARAMS);
     return creationParams != null;
   }
 
@@ -130,9 +131,11 @@ export class ExceptionalStrengthRule extends BaseRule {
   readonly priority = 15;
 
   async apply(context: GameContext, _command: Command): Promise<RuleResult> {
-    const creationData = context.getTemporary('character:creation:params') as CharacterCreationData;
+    const creationData = context.getTemporary(
+      ContextKeys.CHARACTER_CREATION_PARAMS
+    ) as CharacterCreationData;
     const abilityScores = context.getTemporary(
-      'character:creation:ability-scores'
+      ContextKeys.CHARACTER_CREATION_ABILITY_SCORES
     ) as AbilityScores;
 
     if (!abilityScores) {
@@ -145,7 +148,7 @@ export class ExceptionalStrengthRule extends BaseRule {
     );
 
     if (exceptionalStrength !== null) {
-      context.setTemporary('character:creation:exceptional-strength', exceptionalStrength);
+      context.setTemporary(ContextKeys.CHARACTER_CREATION_ABILITY_SCORES, exceptionalStrength);
 
       return this.createSuccessResult(
         `Rolled exceptional strength: 18/${exceptionalStrength.toString().padStart(2, '0')}`,
@@ -160,10 +163,10 @@ export class ExceptionalStrengthRule extends BaseRule {
     if (command.type !== COMMAND_TYPES.CREATE_CHARACTER) return false;
 
     const abilityScores = context.getTemporary(
-      'character:creation:ability-scores'
+      ContextKeys.CHARACTER_CREATION_ABILITY_SCORES
     ) as AbilityScores;
     const creationParams = context.getTemporary(
-      'character:creation:params'
+      ContextKeys.CHARACTER_CREATION_PARAMS
     ) as CharacterCreationData;
 
     return (
@@ -196,9 +199,11 @@ export class RacialAbilityAdjustmentRule extends BaseRule {
   readonly priority = 20;
 
   async apply(context: GameContext, _command: Command): Promise<RuleResult> {
-    const creationData = context.getTemporary('character:creation:params') as CharacterCreationData;
+    const creationData = context.getTemporary(
+      ContextKeys.CHARACTER_CREATION_PARAMS
+    ) as CharacterCreationData;
     const abilityScores = context.getTemporary(
-      'character:creation:ability-scores'
+      ContextKeys.CHARACTER_CREATION_ABILITY_SCORES
     ) as AbilityScores;
 
     if (!abilityScores) {
@@ -217,7 +222,7 @@ export class RacialAbilityAdjustmentRule extends BaseRule {
       );
     }
 
-    context.setTemporary('character:creation:adjusted-scores', adjustedScores);
+    context.setTemporary(ContextKeys.CHARACTER_CREATION_ABILITY_SCORES, adjustedScores);
 
     const adjustmentMessage = this.getAdjustmentMessage(
       abilityScores,
@@ -238,8 +243,8 @@ export class RacialAbilityAdjustmentRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     if (command.type !== COMMAND_TYPES.CREATE_CHARACTER) return false;
 
-    const abilityScores = context.getTemporary('character:creation:ability-scores');
-    const creationData = context.getTemporary('character:creation:params');
+    const abilityScores = context.getTemporary(ContextKeys.CHARACTER_CREATION_ABILITY_SCORES);
+    const creationData = context.getTemporary(ContextKeys.CHARACTER_CREATION_PARAMS);
 
     return abilityScores != null && creationData != null;
   }

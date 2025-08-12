@@ -1,6 +1,7 @@
 import { FallingDamageValidator } from '@osric/commands/exploration/validators/FallingDamageValidator';
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
+import { isFailure, isSuccess } from '@osric/core/Rule';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { CharacterId } from '@osric/types';
 import type { Character } from '@osric/types/character';
@@ -89,7 +90,7 @@ export class FallingDamageCommand extends BaseCommand<FallingDamageParameters> {
 
       if (circumstances?.dexterityCheck) {
         const dexCheck = this.performDexterityCheck(character);
-        if (dexCheck.success) {
+        if (isSuccess(dexCheck)) {
           finalDamage = Math.floor(finalDamage / 2);
           modifiers.push(`Dexterity check success: damage halved (rolled ${dexCheck.roll})`);
         } else {
@@ -103,14 +104,18 @@ export class FallingDamageCommand extends BaseCommand<FallingDamageParameters> {
         modifiers.push(`${surfaceType} surface: ${originalDamage} → ${finalDamage} damage`);
       }
 
-      let deathSave: { required: boolean; success?: boolean; roll?: number } = { required: false };
+      type DeathSave =
+        | { required: true; kind: 'success' | 'failure'; roll: number }
+        | { required: false };
+      let deathSave: DeathSave = { required: false };
       if (savingThrow && finalDamage >= character.hitPoints.current) {
-        deathSave = this.performDeathSave(character);
-        if (deathSave.success) {
-          modifiers.push(`Death save success: survives at 1 HP (rolled ${deathSave.roll})`);
+        const ds = this.performDeathSave(character);
+        deathSave = ds;
+        if (isSuccess(ds)) {
+          modifiers.push(`Death save success: survives at 1 HP (rolled ${ds.roll})`);
           finalDamage = character.hitPoints.current - 1;
         } else {
-          modifiers.push(`Death save failed: fatal fall (rolled ${deathSave.roll})`);
+          modifiers.push(`Death save failed: fatal fall (rolled ${ds.roll})`);
         }
       }
 
@@ -128,7 +133,7 @@ export class FallingDamageCommand extends BaseCommand<FallingDamageParameters> {
       const fallDescription = description || `${fallDistance}-foot fall`;
       let resultMessage: string;
 
-      if (newHitPoints <= 0 && !deathSave.success) {
+      if (newHitPoints <= 0 && deathSave.required && isFailure(deathSave)) {
         resultMessage = `${character.name} dies from the ${fallDescription} (${finalDamage} damage)`;
       } else if (newHitPoints <= 0) {
         resultMessage = `${character.name} is knocked unconscious by the ${fallDescription} (${finalDamage} damage)`;
@@ -144,7 +149,7 @@ export class FallingDamageCommand extends BaseCommand<FallingDamageParameters> {
         surfaceType: surfaceType || 'normal',
         newHitPoints,
         wasKnockedOut: newHitPoints <= 0,
-        died: newHitPoints <= 0 && !deathSave.success,
+        died: newHitPoints <= 0 && deathSave.required && isFailure(deathSave),
         modifiers,
         diceRolled: damageCalculation.diceRolled,
         deathSave,
@@ -228,19 +233,22 @@ export class FallingDamageCommand extends BaseCommand<FallingDamageParameters> {
     }
   }
 
-  private performDexterityCheck(character: Character): { success: boolean; roll: number } {
+  private performDexterityCheck(character: Character): {
+    kind: 'success' | 'failure';
+    roll: number;
+  } {
     const targetNumber = character.abilities.dexterity;
     const roll = Math.floor(Math.random() * 20) + 1;
 
     return {
-      success: roll <= targetNumber,
+      kind: roll <= targetNumber ? 'success' : 'failure',
       roll,
     };
   }
 
   private performDeathSave(character: Character): {
     required: boolean;
-    success: boolean;
+    kind: 'success' | 'failure';
     roll: number;
   } {
     const roll = Math.floor(Math.random() * 20) + 1;
@@ -267,7 +275,7 @@ export class FallingDamageCommand extends BaseCommand<FallingDamageParameters> {
 
     return {
       required: true,
-      success: roll >= finalTarget,
+      kind: roll >= finalTarget ? 'success' : 'failure',
       roll,
     };
   }

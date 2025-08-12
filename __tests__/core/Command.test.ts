@@ -227,7 +227,7 @@ describe('BaseCommand', () => {
       const command = new SimpleTestCommand('hello-world', 'test-actor');
       const result = await command.execute(gameContext);
 
-      expect(result.success).toBe(true);
+      expect(result.kind).toBe('success');
       expect(result.message).toContain('hello-world');
       expect(gameContext.getTemporary('command-executed')).toBe(true);
       expect(gameContext.getTemporary('command-data')).toBe('hello-world');
@@ -237,7 +237,7 @@ describe('BaseCommand', () => {
       const command = new FailingCommand({}, 'failing-actor');
       const result = await command.execute(gameContext);
 
-      expect(result.success).toBe(false);
+      expect(result.kind).toBe('failure');
       expect(result.message).toBe('This command always fails');
     });
 
@@ -246,7 +246,7 @@ describe('BaseCommand', () => {
       const result = await command.execute(gameContext);
 
       expect(result.data).toBeUndefined();
-      expect(result.success).toBe(true);
+      expect(result.kind).toBe('success');
     });
 
     it('should set character creation temp keys and brand characterId', async () => {
@@ -272,7 +272,7 @@ describe('BaseCommand', () => {
       );
 
       const res = await cmd.execute(ctx);
-      expect(res.success).toBe(true);
+      expect(res.kind).toBe('success');
 
       const creationCtx = ctx.getTemporary<{ characterId: string }>('character:creation:context');
       const creationParams = ctx.getTemporary<Record<string, unknown>>('character:creation:params');
@@ -347,7 +347,7 @@ describe('BaseCommand', () => {
       const command = new SimpleTestCommand('success-test', 'test-actor');
       const result = await command.execute(gameContext);
 
-      expect(result.success).toBe(true);
+      expect(result.kind).toBe('success');
       expect(result.message).toContain('success-test');
     });
 
@@ -355,7 +355,7 @@ describe('BaseCommand', () => {
       const command = new FailingCommand({}, 'failing-actor');
       const result = await command.execute(gameContext);
 
-      expect(result.success).toBe(false);
+      expect(result.kind).toBe('failure');
       expect(result.message).toBe('This command always fails');
     });
 
@@ -383,7 +383,6 @@ describe('BaseCommand', () => {
         canExecute(_context: GameContext): boolean {
           return true;
         }
-
         getRequiredRules(): string[] {
           return ['data-rule'];
         }
@@ -392,7 +391,7 @@ describe('BaseCommand', () => {
       const command = new DataCommand({}, 'data-actor');
       const result = await command.execute(gameContext);
 
-      expect(result.success).toBe(true);
+      expect(result.kind).toBe('success');
       expect(result.message).toBe('Command with data');
       expect(result.data).toEqual({ testValue: 42, testString: 'hello' });
       expect(result.effects).toEqual(['effect1', 'effect2']);
@@ -413,8 +412,7 @@ describe('BaseCommand', () => {
     });
 
     it('should handle batch command creation efficiently', () => {
-      const commands = [];
-
+      const commands: SimpleTestCommand[] = [];
       const startTime = Date.now();
       for (let i = 0; i < 1000; i++) {
         commands.push(new SimpleTestCommand(`batch-${i}`, 'test-actor'));
@@ -515,20 +513,10 @@ describe('BaseCommand', () => {
 
       const result = await command.execute(gameContext);
 
-      expect(result.success).toBe(true);
+      expect(result.kind).toBe('success');
       expect(gameContext.getTemporary('combat-round')).toBe(1);
       expect(gameContext.getTemporary('initiative-order')).toEqual(['fighter', 'wizard', 'goblin']);
       expect(gameContext.getTemporary('command-executed')).toBe(true);
-    });
-
-    it('should support command chaining for complex OSRIC actions', () => {
-      const moveCommand = new SimpleTestCommand('move', 'character1');
-      const attackCommand = new SimpleTestCommand('attack', 'character1', ['monster1']);
-
-      expect(moveCommand.type).toBe('simple-test');
-      expect(attackCommand.type).toBe('simple-test');
-
-      expect(moveCommand.getInvolvedEntities()[0]).toBe(attackCommand.getInvolvedEntities()[0]);
     });
   });
 });

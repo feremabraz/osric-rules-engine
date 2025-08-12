@@ -115,7 +115,7 @@ describe('LoyaltyRules branded ID acceptance', () => {
       parameters: {},
       actorId: charId,
       targetIds: [leaderId],
-      execute: async () => ({ kind: 'success', success: true, message: 'noop' }),
+      execute: async () => ({ kind: 'success', message: 'noop' }),
       canExecute: () => true,
       getRequiredRules: () => [],
       getInvolvedEntities: () => [charId, leaderId],
@@ -123,6 +123,6 @@ describe('LoyaltyRules branded ID acceptance', () => {
 
     const result = await rule.execute(ctx, cmd);
     expect(result).toBeDefined();
-    expect(typeof result.success).toBe('boolean');
+    expect(['success', 'failure']).toContain(result.kind);
   });
 });

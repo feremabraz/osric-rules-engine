@@ -1,5 +1,5 @@
 import type { GameContext } from '@osric/core/GameContext';
-import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import { BaseRule, type RuleResult, isFailure } from '@osric/core/Rule';
 
 import type { Character, Monster, Spell, SpellResult, StatusEffect } from '@osric/types';
 import { RULE_NAMES } from '@osric/types/constants';
@@ -24,12 +24,12 @@ export class SpellCastingRules extends BaseRule {
         this.getOptionalContext<boolean>(context, 'spell:cast:components') || false;
 
       const validationResult = this.validateSpellCasting(caster, spell, targets);
-      if (!validationResult.success) {
+      if (isFailure(validationResult)) {
         return validationResult;
       }
 
       const slotResult = this.consumeSpellSlot(caster, spell);
-      if (!slotResult.success) {
+      if (isFailure(slotResult)) {
         return slotResult;
       }
 

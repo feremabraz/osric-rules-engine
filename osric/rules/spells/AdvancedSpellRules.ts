@@ -7,6 +7,7 @@ import type {
   MaterialComponent,
   SpellWithComponents,
 } from '@osric/types/spell-types';
+import { ContextKeys } from '../../core/ContextKeys';
 import { DiceEngine } from '../../core/Dice';
 import type { GameContext } from '../../core/GameContext';
 import { BaseRule, type RuleResult } from '../../core/Rule';
@@ -16,14 +17,14 @@ export class SpellComponentManagementRule extends BaseRule {
   description = 'Manage detailed spell components and their availability';
 
   canApply(context: GameContext): boolean {
-    const caster = context.getTemporary('caster');
-    const spell = context.getTemporary('spellToCast');
+    const caster = context.getTemporary(ContextKeys.SPELL_CASTER);
+    const spell = context.getTemporary(ContextKeys.SPELL_TO_CAST);
     return caster !== null && spell !== null;
   }
 
   async execute(context: GameContext): Promise<RuleResult> {
-    const caster = context.getTemporary<Character>('caster');
-    const spell = context.getTemporary<SpellWithComponents>('spellToCast');
+    const caster = context.getTemporary<Character>(ContextKeys.SPELL_CASTER);
+    const spell = context.getTemporary<SpellWithComponents>(ContextKeys.SPELL_TO_CAST);
 
     if (!caster || !spell) {
       return this.createFailureResult('Missing caster or spell information');
@@ -117,7 +118,7 @@ export class SpellFailureRule extends BaseRule {
   description = 'Handle spell failure and backfire effects';
 
   canApply(context: GameContext): boolean {
-    const spellAttempt = context.getTemporary('spellAttempt');
+    const spellAttempt = context.getTemporary(ContextKeys.SPELL_ATTEMPT);
     return spellAttempt !== null;
   }
 
@@ -128,7 +129,7 @@ export class SpellFailureRule extends BaseRule {
       failureRoll: number;
       failureChance: number;
       backfireChance?: number;
-    }>('spellAttempt');
+    }>(ContextKeys.SPELL_ATTEMPT);
 
     if (!spellAttempt) {
       return this.createFailureResult('No spell attempt information found');
@@ -243,7 +244,7 @@ export class SpellFailureRule extends BaseRule {
         break;
       }
       case 'wild_surge':
-        context.setTemporary('wildMagicSurge', { caster: caster.id, radius: 10 });
+        context.setTemporary(ContextKeys.SPELL_WILD_MAGIC_SURGE, { caster: caster.id, radius: 10 });
         break;
     }
 
@@ -256,7 +257,7 @@ export class SpellConcentrationRule extends BaseRule {
   description = 'Manage spell concentration and duration';
 
   canApply(context: GameContext): boolean {
-    const concentrationCheck = context.getTemporary('concentrationCheck');
+    const concentrationCheck = context.getTemporary(ContextKeys.SPELL_CONCENTRATION_CHECK);
     return concentrationCheck !== null;
   }
 
@@ -266,7 +267,7 @@ export class SpellConcentrationRule extends BaseRule {
       spell: Spell;
       distraction: 'damage' | 'spell' | 'environmental' | 'movement';
       distractionSeverity: number;
-    }>('concentrationCheck');
+    }>(ContextKeys.SPELL_CONCENTRATION_CHECK);
 
     if (!concentrationCheck) {
       return this.createFailureResult('No concentration check information found');
@@ -322,7 +323,7 @@ export class SpellConcentrationRule extends BaseRule {
       `${caster.name} loses concentration on "${spell.name}" ` +
       `(rolled ${concentrationRoll.total} + ${constitutionModifier} ${hasConcentrationProficiency ? `+ ${proficiencyBonus}` : ''} = ${totalRoll} vs DC ${baseDC}). Spell effect ends.`;
 
-    context.setTemporary('spellEnded', { caster: caster.id, spell: spell.name });
+    context.setTemporary(ContextKeys.SPELL_ENDED, { caster: caster.id, spell: spell.name });
 
     return this.createFailureResult(message, {
       spellName: spell.name,
@@ -340,7 +341,7 @@ export class SpellInteractionRule extends BaseRule {
   description = 'Handle spell interactions and counterspells';
 
   canApply(context: GameContext): boolean {
-    const spellInteraction = context.getTemporary('spellInteraction');
+    const spellInteraction = context.getTemporary(ContextKeys.SPELL_INTERACTION);
     return spellInteraction !== null;
   }
 
@@ -351,7 +352,7 @@ export class SpellInteractionRule extends BaseRule {
       interactingSpell: Spell;
       caster: Character;
       target?: Character;
-    }>('spellInteraction');
+    }>(ContextKeys.SPELL_INTERACTION);
 
     if (!spellInteraction) {
       return this.createFailureResult('No spell interaction information found');
@@ -391,7 +392,6 @@ export class SpellInteractionRule extends BaseRule {
       return this.createSuccessResult(message, {
         targetSpell: targetSpell.name,
         counterspell: counterspell.name,
-        success: true,
         automatic: true,
       });
     }
@@ -425,7 +425,6 @@ export class SpellInteractionRule extends BaseRule {
         casterLevel,
         total: totalRoll,
         dc: dispelDC,
-        success: true,
       });
     }
 
@@ -440,7 +439,6 @@ export class SpellInteractionRule extends BaseRule {
       casterLevel,
       total: totalRoll,
       dc: dispelDC,
-      success: false,
     });
   }
 
@@ -516,7 +514,7 @@ export class AdvancedSpellResearchRule extends BaseRule {
   description = 'Handle complex spell research requirements';
 
   canApply(context: GameContext): boolean {
-    const researchProject = context.getTemporary('advancedResearchProject');
+    const researchProject = context.getTemporary(ContextKeys.SPELL_ADV_RESEARCH_PROJECT);
     return researchProject !== null;
   }
 
@@ -528,7 +526,7 @@ export class AdvancedSpellResearchRule extends BaseRule {
       complexity: 'simple' | 'moderate' | 'complex' | 'legendary';
       specialRequirements: string[];
       researchType: 'modify' | 'create' | 'reverse';
-    }>('advancedResearchProject');
+    }>(ContextKeys.SPELL_ADV_RESEARCH_PROJECT);
 
     if (!researchProject) {
       return this.createFailureResult('No advanced research project found');

@@ -1,6 +1,7 @@
 import { SpellResearchValidator } from '@osric/commands/spells/validators/SpellResearchValidator';
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
+import { isSuccess } from '@osric/core/Rule';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { CharacterId } from '@osric/types';
 import type { Character } from '@osric/types/character';
@@ -37,7 +38,7 @@ export interface ResearchRequirements {
 }
 
 export interface ResearchResult {
-  success: boolean;
+  kind: 'success' | 'failure';
   reason: string;
   details: {
     roll: number;
@@ -121,7 +122,7 @@ export class SpellResearchCommand extends BaseCommand<SpellResearchParameters> {
         libraryQuality
       );
 
-      if (researchResult.success) {
+      if (isSuccess(researchResult)) {
         const newSpell = this.createResearchedSpell(
           spellName,
           spellDescription,
@@ -287,7 +288,7 @@ export class SpellResearchCommand extends BaseCommand<SpellResearchParameters> {
     _requirements: ResearchRequirements,
     mentorAvailable: boolean,
     libraryQuality: string
-  ): { success: boolean; reason: string; details: Record<string, unknown> } {
+  ): { kind: 'success' | 'failure'; reason: string; details: Record<string, unknown> } {
     const relevantStat = ['Magic-User', 'Illusionist'].includes(character.class)
       ? character.abilities.intelligence
       : character.abilities.wisdom;
@@ -316,7 +317,7 @@ export class SpellResearchCommand extends BaseCommand<SpellResearchParameters> {
     const success = roll <= successChance;
 
     return {
-      success,
+      kind: success ? 'success' : 'failure',
       reason: success
         ? 'Research breakthrough achieved!'
         : `Research failed (rolled ${roll}, needed ${successChance} or less)`,
@@ -358,7 +359,6 @@ export class SpellResearchCommand extends BaseCommand<SpellResearchParameters> {
         damage: null,
         healing: null,
         statusEffects: [],
-        success: true,
         message: `${name} spell effect activated`,
         narrative: `The ${name} spell takes effect`,
       }),

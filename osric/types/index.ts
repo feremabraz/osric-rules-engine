@@ -131,9 +131,6 @@ export {
   getErrorTypeByValue,
 } from './constants';
 
-export type { OSRICError } from './errors';
-export { OSRICErrorBuilder, ErrorFactory, ErrorUtils } from './errors';
-
 export { Character as EnhancedCharacter, CharacterFactory } from '../entities/Character';
 export { Monster as EnhancedMonster, MonsterFactory } from '../entities/Monster';
 export { Item as EnhancedItem, ItemFactory } from '../entities/Item';
@@ -152,7 +149,7 @@ export {
 } from './id-utils';
 
 export interface Result<T, E = Error> {
-  success: boolean;
+  kind: 'success' | 'failure';
   data?: T;
   error?: E;
 }

@@ -1,6 +1,6 @@
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
-import { BaseRule } from '@osric/core/Rule';
+import { BaseRule, isFailure, isSuccess } from '@osric/core/Rule';
 import type { RuleResult } from '@osric/core/Rule';
 import type { CharacterId } from '@osric/types';
 import type { Character } from '@osric/types/character';
@@ -23,7 +23,7 @@ interface TrainingRequirements {
 }
 
 interface TrainingResult {
-  success: boolean;
+  kind: 'success' | 'failure';
   timeSpent: number;
   costPaid: number;
   benefits?: string[];
@@ -63,13 +63,13 @@ export class TrainingRule extends BaseRule {
     const requirements = this.calculateTrainingRequirements(character, data);
 
     const prerequisiteCheck = this.checkPrerequisites(character, requirements);
-    if (!prerequisiteCheck.success) {
+    if (isFailure(prerequisiteCheck)) {
       return this.createFailureResult(prerequisiteCheck.message);
     }
 
     const result = this.processTraining(character, data, requirements);
 
-    if (result.success) {
+    if (isSuccess(result)) {
       this.applyTrainingEffects(character, data, context);
     }
 
@@ -227,14 +227,14 @@ export class TrainingRule extends BaseRule {
   private checkPrerequisites(
     character: Character,
     requirements: TrainingRequirements
-  ): { success: boolean; message: string } {
+  ): { kind: 'success' | 'failure'; message: string } {
     if (requirements.prerequisites.some((p) => p.includes('XP'))) {
       const requiredXP = Number.parseInt(
         requirements.prerequisites.find((p) => p.includes('XP'))?.split(' ')[0] || '0'
       );
       if (character.experience.current < requiredXP) {
         return {
-          success: false,
+          kind: 'failure',
           message: `Insufficient experience points. Need ${requiredXP}, have ${character.experience.current}`,
         };
       }
@@ -244,13 +244,13 @@ export class TrainingRule extends BaseRule {
       const primeRequisite = this.getPrimeRequisite(character);
       if (primeRequisite < 15) {
         return {
-          success: false,
+          kind: 'failure',
           message: 'Prime requisite ability score too low for advanced training',
         };
       }
     }
 
-    return { success: true, message: 'Prerequisites satisfied' };
+    return { kind: 'success', message: 'Prerequisites satisfied' };
   }
 
   private getPrimeRequisite(character: Character): number {
@@ -277,11 +277,11 @@ export class TrainingRule extends BaseRule {
     data: TrainingRequestData,
     requirements: TrainingRequirements
   ): TrainingResult {
-    const success = this.rollTrainingSuccess(data.trainingType);
+    const succeeded = this.rollTrainingSuccess(data.trainingType);
 
-    if (success) {
+    if (succeeded) {
       return {
-        success: true,
+        kind: 'success',
         timeSpent: requirements.timeRequired,
         costPaid: requirements.costRequired,
         benefits: this.getTrainingBenefits(data.trainingType),
@@ -290,7 +290,7 @@ export class TrainingRule extends BaseRule {
     }
 
     return {
-      success: false,
+      kind: 'failure',
       timeSpent: Math.floor(requirements.timeRequired / 2),
       costPaid: Math.floor(requirements.costRequired / 2),
       message: 'Training failed. Partial time and cost expended.',

@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { CharacterClass, Character as CharacterData } from '@osric/types/character';
@@ -22,7 +23,9 @@ export class WeaponSpecializationRule extends BaseRule {
   name = 'weapon-specialization';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const specContext = context.getTemporary('specialization-context') as SpecializationContext;
+    const specContext = context.getTemporary(
+      ContextKeys.COMBAT_SPECIALIZATION_CONTEXT
+    ) as SpecializationContext;
 
     if (!specContext) {
       return this.createFailureResult('No specialization context found');
@@ -32,7 +35,7 @@ export class WeaponSpecializationRule extends BaseRule {
 
     if (checkEligibility) {
       const eligibility = this.checkSpecializationEligibility(character, weapon);
-      context.setTemporary('specialization-eligibility', eligibility);
+      context.setTemporary(ContextKeys.COMBAT_SPECIALIZATION_ELIGIBILITY, eligibility);
 
       return this.createSuccessResult(
         eligibility.canSpecialize
@@ -43,7 +46,7 @@ export class WeaponSpecializationRule extends BaseRule {
 
     if (calculateBonuses) {
       const bonuses = this.calculateSpecializationBonuses(character, weapon);
-      context.setTemporary('specialization-bonuses', bonuses);
+      context.setTemporary(ContextKeys.COMBAT_SPECIALIZATION_BONUSES, bonuses);
 
       return this.createSuccessResult(
         bonuses.level > 0
@@ -62,7 +65,9 @@ export class WeaponSpecializationRule extends BaseRule {
     )
       return false;
 
-    const specContext = context.getTemporary('specialization-context') as SpecializationContext;
+    const specContext = context.getTemporary(
+      ContextKeys.COMBAT_SPECIALIZATION_CONTEXT
+    ) as SpecializationContext;
     return specContext !== null;
   }
 
@@ -242,14 +247,14 @@ export class SpecializationRequirementRule extends BaseRule {
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
     const character = context.getTemporary('character:creation:data') as CharacterData;
-    const weapon = context.getTemporary('combat:attack:weapon') as Weapon;
+    const weapon = context.getTemporary(ContextKeys.COMBAT_ATTACK_WEAPON) as Weapon;
 
     if (!character || !weapon) {
       return this.createFailureResult('Character or weapon not found in context');
     }
 
     const requirements = this.checkSpecializationRequirements(character, weapon);
-    context.setTemporary('specialization-requirements', requirements);
+    context.setTemporary(ContextKeys.COMBAT_SPECIALIZATION_REQUIREMENTS, requirements);
 
     return this.createSuccessResult(
       requirements.meetsRequirements
@@ -262,7 +267,7 @@ export class SpecializationRequirementRule extends BaseRule {
     if (command.type !== COMMAND_TYPES.CHECK_SPECIALIZATION) return false;
 
     const character = context.getTemporary('character:creation:data') as CharacterData;
-    const weapon = context.getTemporary('combat:attack:weapon') as Weapon;
+    const weapon = context.getTemporary(ContextKeys.COMBAT_ATTACK_WEAPON) as Weapon;
 
     return character !== null && weapon !== null;
   }

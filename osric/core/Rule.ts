@@ -3,24 +3,30 @@ import type { GameContext } from './GameContext';
 
 export interface BaseRuleResult {
   kind: 'success' | 'failure';
-  success: boolean; // retained for backward compatibility
   message: string;
   stopChain?: boolean;
   critical?: boolean;
   data?: Record<string, unknown>;
   effects?: string[];
   damage?: number[];
-  // Optional sub-discriminant for payload semantics (Phase 4 deepening)
-  dataKind?: string;
 }
 
-export type SuccessRuleResult = BaseRuleResult & {
-  kind: 'success';
-  success: true;
-  critical?: false;
-};
-export type FailureRuleResult = BaseRuleResult & { kind: 'failure'; success: false };
+export type SuccessRuleResult = BaseRuleResult & { kind: 'success'; critical?: false };
+export type FailureRuleResult = BaseRuleResult & { kind: 'failure' };
 export type RuleResult = SuccessRuleResult | FailureRuleResult;
+
+// Ergonomic helpers for discriminated results
+export function isSuccess<T extends { kind: 'success' | 'failure' }>(
+  result: T
+): result is T & { kind: 'success' } {
+  return result.kind === 'success';
+}
+
+export function isFailure<T extends { kind: 'success' | 'failure' }>(
+  result: T
+): result is T & { kind: 'failure' } {
+  return result.kind === 'failure';
+}
 
 export interface Rule {
   readonly name: string;
@@ -78,27 +84,17 @@ export abstract class BaseRule implements Rule {
     data?: Record<string, unknown>,
     effects?: string[],
     damage?: number[],
-    stopChain = false,
-    dataKind?: string
+    stopChain = false
   ): SuccessRuleResult {
-    return { kind: 'success', success: true, message, data, effects, damage, stopChain, dataKind };
+    return { kind: 'success', message, data, effects, damage, stopChain };
   }
 
   protected createFailureResult(
     message: string,
     data?: Record<string, unknown>,
-    critical = false,
-    dataKind?: string
+    critical = false
   ): FailureRuleResult {
-    return {
-      kind: 'failure',
-      success: false,
-      message,
-      data,
-      critical,
-      stopChain: critical,
-      dataKind,
-    };
+    return { kind: 'failure', message, data, critical, stopChain: critical };
   }
 
   protected isCommandType(command: Command, type: string): boolean {

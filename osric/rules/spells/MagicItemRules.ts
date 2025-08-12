@@ -1,8 +1,9 @@
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { Character } from '@osric/types/character';
 import type { Item } from '@osric/types/item';
 import { DiceEngine } from '../../core/Dice';
 import type { GameContext } from '../../core/GameContext';
-import { BaseRule, type RuleResult } from '../../core/Rule';
+import { BaseRule, type RuleResult, isSuccess } from '../../core/Rule';
 import type { IdentificationResult } from '../../types/spell-types';
 
 export class MagicItemChargeCalculationRule extends BaseRule {
@@ -10,12 +11,14 @@ export class MagicItemChargeCalculationRule extends BaseRule {
   description = 'Calculate initial charges for newly found magic items';
 
   canApply(context: GameContext): boolean {
-    const item = context.getTemporary('newMagicItem');
+    const item = context.getTemporary(ContextKeys.SPELL_NEW_MAGIC_ITEM);
     return item !== null;
   }
 
   async execute(context: GameContext): Promise<RuleResult> {
-    const item = context.getTemporary<Item & { itemType: string }>('newMagicItem');
+    const item = context.getTemporary<Item & { itemType: string }>(
+      ContextKeys.SPELL_NEW_MAGIC_ITEM
+    );
 
     if (!item) {
       return this.createFailureResult('No magic item found for charge calculation');
@@ -60,7 +63,7 @@ export class MagicItemChargeCalculationRule extends BaseRule {
       charges,
     };
 
-    context.setTemporary('updatedMagicItem', updatedItem);
+    context.setTemporary(ContextKeys.SPELL_UPDATED_MAGIC_ITEM, updatedItem);
 
     const message = `${item.name} (${item.itemType}) has ${charges} charges (${chargeFormula})`;
 
@@ -78,12 +81,12 @@ export class MagicItemChargeUsageRule extends BaseRule {
   description = 'Handle using charges from magic items';
 
   canApply(context: GameContext): boolean {
-    const item = context.getTemporary('magicItemToUse');
+    const item = context.getTemporary(ContextKeys.SPELL_MAGIC_ITEM_TO_USE);
     return item !== null;
   }
 
   async execute(context: GameContext): Promise<RuleResult> {
-    const item = context.getTemporary<Item>('magicItemToUse');
+    const item = context.getTemporary<Item>(ContextKeys.SPELL_MAGIC_ITEM_TO_USE);
     const user = context.getTemporary<Character>('itemUser');
 
     if (!item || !user) {
@@ -124,7 +127,7 @@ export class MagicItemChargeUsageRule extends BaseRule {
       charges: newCharges,
     };
 
-    context.setTemporary('updatedMagicItem', updatedItem);
+    context.setTemporary(ContextKeys.SPELL_UPDATED_MAGIC_ITEM, updatedItem);
 
     let message: string;
     if (disintegrated) {
@@ -169,7 +172,7 @@ export class MagicItemSavingThrowRule extends BaseRule {
   };
 
   canApply(context: GameContext): boolean {
-    const savingThrowData = context.getTemporary('magicItemSavingThrow');
+    const savingThrowData = context.getTemporary(ContextKeys.SPELL_MAGIC_ITEM_SAVING_THROW);
     return savingThrowData !== null;
   }
 
@@ -177,7 +180,7 @@ export class MagicItemSavingThrowRule extends BaseRule {
     const savingThrowData = context.getTemporary<{
       item: Item;
       effectType: 'rod_of_cancellation' | 'dispel_magic' | 'antimagic_field';
-    }>('magicItemSavingThrow');
+    }>(ContextKeys.SPELL_MAGIC_ITEM_SAVING_THROW);
 
     if (!savingThrowData) {
       return this.createFailureResult('No saving throw data found');
@@ -202,12 +205,12 @@ export class MagicItemSavingThrowRule extends BaseRule {
     }
 
     const savingThrowRoll = DiceEngine.roll('1d20');
-    const success = savingThrowRoll.total >= adjustedTarget;
+    const saved = savingThrowRoll.total >= adjustedTarget;
 
     const effectName = this.formatEffectType(effectType);
     let message: string;
 
-    if (success) {
+    if (saved) {
       message = `${item.name} resists the ${effectName}! (rolled ${savingThrowRoll.total} vs ${adjustedTarget})`;
     } else {
       message = `${item.name} fails to resist the ${effectName} and is affected. (rolled ${savingThrowRoll.total} vs ${adjustedTarget})`;
@@ -219,7 +222,7 @@ export class MagicItemSavingThrowRule extends BaseRule {
       effectType,
       targetRoll: adjustedTarget,
       actualRoll: savingThrowRoll.total,
-      success,
+      saved,
     });
   }
 
@@ -332,7 +335,7 @@ export class MagicItemIdentificationRule extends BaseRule {
       context.setEntity(character.id, updatedCharacter);
     }
 
-    const message = result.success
+    const message = isSuccess(result)
       ? `${character.name} successfully identifies ${item.name} using ${method.replace('_', ' ')}`
       : `${character.name} fails to identify ${item.name} using ${method.replace('_', ' ')}`;
 
@@ -350,7 +353,7 @@ export class MagicItemIdentificationRule extends BaseRule {
   ): IdentificationResult {
     if (!hasPearl) {
       return {
-        success: false,
+        kind: 'failure',
         itemIdentified: false,
         propertiesRevealed: [],
         commandWordRevealed: false,
@@ -366,13 +369,13 @@ export class MagicItemIdentificationRule extends BaseRule {
     const totalChance = baseChance + levelBonus;
 
     const successRoll = DiceEngine.roll('1d100');
-    const success = successRoll.total <= totalChance;
+    const succeeded = successRoll.total <= totalChance;
 
     const constitutionLoss = 8;
 
-    if (!success) {
+    if (!succeeded) {
       return {
-        success: false,
+        kind: 'failure',
         itemIdentified: false,
         propertiesRevealed: [],
         commandWordRevealed: false,
@@ -405,7 +408,7 @@ export class MagicItemIdentificationRule extends BaseRule {
     const curseDetected = curseRoll.total <= character.level;
 
     return {
-      success: true,
+      kind: 'success',
       itemIdentified: true,
       propertiesRevealed,
       commandWordRevealed,
@@ -424,14 +427,14 @@ export class MagicItemIdentificationRule extends BaseRule {
     const totalChance = baseChance + intelligenceBonus + levelBonus;
 
     const successRoll = DiceEngine.roll('1d100');
-    const success = successRoll.total <= totalChance;
+    const succeeded = successRoll.total <= totalChance;
 
     const constitutionRoll = DiceEngine.roll('1d10');
     const constitutionLoss = constitutionRoll.total === 1 ? DiceEngine.roll('1d3').total : 0;
 
-    if (!success) {
+    if (!succeeded) {
       return {
-        success: false,
+        kind: 'failure',
         itemIdentified: false,
         propertiesRevealed: [],
         commandWordRevealed: false,
@@ -474,7 +477,7 @@ export class MagicItemIdentificationRule extends BaseRule {
     const curseDetected = curseRoll.total <= curseDetectionChance;
 
     return {
-      success: true,
+      kind: 'success',
       itemIdentified: true,
       propertiesRevealed,
       commandWordRevealed,
@@ -490,7 +493,7 @@ export class MagicItemIdentificationRule extends BaseRule {
 
     if (!isDivine) {
       return {
-        success: false,
+        kind: 'failure',
         itemIdentified: false,
         propertiesRevealed: [],
         commandWordRevealed: false,
@@ -507,11 +510,11 @@ export class MagicItemIdentificationRule extends BaseRule {
     const totalChance = baseChance + wisdomBonus + levelBonus;
 
     const successRoll = DiceEngine.roll('1d100');
-    const success = successRoll.total <= totalChance;
+    const succeeded = successRoll.total <= totalChance;
 
-    if (!success) {
+    if (!succeeded) {
       return {
-        success: false,
+        kind: 'failure',
         itemIdentified: false,
         propertiesRevealed: [],
         commandWordRevealed: false,
@@ -532,7 +535,7 @@ export class MagicItemIdentificationRule extends BaseRule {
     const curseDetected = curseRoll.total <= character.abilities.wisdom * 3;
 
     return {
-      success: true,
+      kind: 'success',
       itemIdentified: true,
       propertiesRevealed,
       commandWordRevealed: false,

@@ -1,6 +1,6 @@
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
-import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import { BaseRule, type RuleResult, isFailure } from '@osric/core/Rule';
 import type { CharacterId, MonsterId } from '@osric/types';
 import type { Character } from '@osric/types/character';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
@@ -31,40 +31,25 @@ export class TurnUndeadRule extends BaseRule {
     const turnData = context.getTemporary<TurnUndeadParameters>('character:turn-undead:params');
 
     if (!turnData) {
-      return this.createFailureResult(
-        'No turn undead data provided',
-        undefined,
-        false,
-        'turn-undead:error'
-      );
+      return this.createFailureResult('No turn undead data provided');
     }
 
     try {
       const character = context.getEntity<Character>(turnData.characterId);
       if (!character) {
-        return this.createFailureResult(
-          `Character ${turnData.characterId} not found`,
-          undefined,
-          false,
-          'turn-undead:error'
-        );
+        return this.createFailureResult(`Character ${turnData.characterId} not found`);
       }
 
       const validationResult = this.validateTurnUndead(character, turnData);
-      if (!validationResult.success) {
-        return { ...validationResult, dataKind: 'turn-undead:validation' };
+      if (isFailure(validationResult)) {
+        return validationResult;
       }
 
       const targetUndead: Monster[] = [];
       for (const undeadId of turnData.targetUndeadIds) {
         const undead = context.getEntity<Monster>(undeadId);
         if (!undead) {
-          return this.createFailureResult(
-            `Undead creature ${undeadId} not found`,
-            undefined,
-            false,
-            'turn-undead:error'
-          );
+          return this.createFailureResult(`Undead creature ${undeadId} not found`);
         }
         targetUndead.push(undead);
       }
@@ -73,24 +58,17 @@ export class TurnUndeadRule extends BaseRule {
 
       const specialRules = this.applySpecialRules(character, turnData, turnCalculation);
 
-      return this.createSuccessResult(
-        'Turn undead validation complete',
-        {
-          characterId: turnData.characterId,
-          effectiveLevel: turnCalculation.effectiveLevel,
-          targetUndead: turnCalculation.targetAnalysis,
-          targetAnalysis: turnCalculation.targetAnalysis,
-          modifiers: turnCalculation.modifiers,
-          specialRules,
-          canAttempt: validationResult.canAttempt,
-          restrictions: validationResult.restrictions,
-          turnLimit: validationResult.turnLimit,
-        },
-        undefined,
-        undefined,
-        false,
-        'turn-undead:calculation'
-      );
+      return this.createSuccessResult('Turn undead validation complete', {
+        characterId: turnData.characterId,
+        effectiveLevel: turnCalculation.effectiveLevel,
+        targetUndead: turnCalculation.targetAnalysis,
+        targetAnalysis: turnCalculation.targetAnalysis,
+        modifiers: turnCalculation.modifiers,
+        specialRules,
+        canAttempt: validationResult.canAttempt,
+        restrictions: validationResult.restrictions,
+        turnLimit: validationResult.turnLimit,
+      });
     } catch (error) {
       return this.createFailureResult(
         `Failed to process turn undead rule: ${error instanceof Error ? error.message : String(error)}`

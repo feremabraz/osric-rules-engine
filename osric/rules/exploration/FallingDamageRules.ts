@@ -1,6 +1,6 @@
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
-import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import { BaseRule, type RuleResult, isFailure } from '@osric/core/Rule';
 import type { CharacterId } from '@osric/types';
 import type { Character } from '@osric/types/character';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
@@ -33,53 +33,36 @@ export class FallingDamageRule extends BaseRule {
     );
 
     if (!fallData) {
-      return this.createFailureResult(
-        'No falling damage data provided',
-        undefined,
-        false,
-        'falling-damage:error'
-      );
+      return this.createFailureResult('No falling damage data provided');
     }
 
     try {
       const character = context.getEntity<Character>(fallData.characterId);
       if (!character) {
-        return this.createFailureResult(
-          `Character ${fallData.characterId} not found`,
-          undefined,
-          false,
-          'falling-damage:error'
-        );
+        return this.createFailureResult(`Character ${fallData.characterId} not found`);
       }
 
       const validationResult = this.validateFallingDamage(character, fallData);
-      if (!validationResult.success) {
-        return { ...validationResult, dataKind: 'falling-damage:validation' };
+      if (isFailure(validationResult)) {
+        return validationResult;
       }
 
       const damageCalculation = this.calculateFallingDamageRules(character, fallData);
 
       const specialRules = this.applyEnvironmentalRules(character, fallData, damageCalculation);
 
-      return this.createSuccessResult(
-        'Falling damage validation complete',
-        {
-          characterId: fallData.characterId,
-          fallDistance: fallData.fallDistance,
-          baseDamageRange: damageCalculation.baseDamageRange,
-          expectedDamage: damageCalculation.expectedDamage,
-          surfaceModifier: damageCalculation.surfaceModifier,
-          modifiers: damageCalculation.modifiers,
-          specialRules,
-          canSurvive: validationResult.canSurvive,
-          deathSaveRequired: validationResult.deathSaveRequired,
-          immunities: validationResult.immunities,
-        },
-        undefined,
-        undefined,
-        false,
-        'falling-damage:calculation'
-      );
+      return this.createSuccessResult('Falling damage validation complete', {
+        characterId: fallData.characterId,
+        fallDistance: fallData.fallDistance,
+        baseDamageRange: damageCalculation.baseDamageRange,
+        expectedDamage: damageCalculation.expectedDamage,
+        surfaceModifier: damageCalculation.surfaceModifier,
+        modifiers: damageCalculation.modifiers,
+        specialRules,
+        canSurvive: validationResult.canSurvive,
+        deathSaveRequired: validationResult.deathSaveRequired,
+        immunities: validationResult.immunities,
+      });
     } catch (error) {
       return this.createFailureResult(
         `Failed to process falling damage rule: ${error instanceof Error ? error.message : String(error)}`

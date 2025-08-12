@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { Character as CharacterData } from '@osric/types/character';
@@ -41,12 +42,14 @@ export class GrappleAttackRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     return (
       command.type === COMMAND_TYPES.GRAPPLE &&
-      context.getTemporary('combat:grapple:context') !== null
+      context.getTemporary(ContextKeys.COMBAT_GRAPPLE_CONTEXT) !== null
     );
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const grappleContext = context.getTemporary('combat:grapple:context') as GrappleContext;
+    const grappleContext = context.getTemporary(
+      ContextKeys.COMBAT_GRAPPLE_CONTEXT
+    ) as GrappleContext;
 
     if (!grappleContext) {
       return this.createFailureResult('No grapple context found');
@@ -71,7 +74,7 @@ export class GrappleAttackRule extends BaseRule {
           message: `${attacker.name}'s grapple attempt misses ${target.name}`,
         };
 
-        context.setTemporary('grapple-result', grappleResult);
+        context.setTemporary(ContextKeys.COMBAT_GRAPPLE_RESULT, grappleResult);
         return this.createSuccessResult('Grapple attack missed');
       }
 
@@ -81,7 +84,7 @@ export class GrappleAttackRule extends BaseRule {
         targetNumber,
       };
 
-      context.setTemporary('grapple-attack-result', attackResult);
+      context.setTemporary(ContextKeys.COMBAT_GRAPPLE_ATTACK_RESULT, attackResult);
       return this.createSuccessResult('Grapple attack hits - proceeding to strength comparison');
     } catch (error) {
       return this.createFailureResult(
@@ -120,13 +123,15 @@ export class StrengthComparisonRule extends BaseRule {
     const attackResult = context.getTemporary('grapple-attack-result') as GrappleAttackResult;
     return (
       command.type === COMMAND_TYPES.GRAPPLE &&
-      context.getTemporary('combat:grapple:context') !== null &&
+      context.getTemporary(ContextKeys.COMBAT_GRAPPLE_CONTEXT) !== null &&
       attackResult?.hit === true
     );
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const grappleContext = context.getTemporary('combat:grapple:context') as GrappleContext;
+    const grappleContext = context.getTemporary(
+      ContextKeys.COMBAT_GRAPPLE_CONTEXT
+    ) as GrappleContext;
 
     if (!grappleContext) {
       return this.createFailureResult('No grapple context found');
@@ -143,7 +148,7 @@ export class StrengthComparisonRule extends BaseRule {
         targetStrength: this.getEffectiveStrength(target),
       };
 
-      context.setTemporary('strength-comparison-result', strengthResult);
+      context.setTemporary(ContextKeys.COMBAT_GRAPPLE_STRENGTH_COMPARISON, strengthResult);
 
       const message = this.getOutcomeMessage(outcome, attacker.name, target.name);
       return this.createSuccessResult(message);
@@ -218,15 +223,17 @@ export class GrappleEffectRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     return (
       command.type === COMMAND_TYPES.GRAPPLE &&
-      context.getTemporary('combat:grapple:context') !== null &&
-      context.getTemporary('strength-comparison-result') !== null
+      context.getTemporary(ContextKeys.COMBAT_GRAPPLE_CONTEXT) !== null &&
+      context.getTemporary(ContextKeys.COMBAT_GRAPPLE_STRENGTH_COMPARISON) !== null
     );
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const grappleContext = context.getTemporary('combat:grapple:context') as GrappleContext;
+    const grappleContext = context.getTemporary(
+      ContextKeys.COMBAT_GRAPPLE_CONTEXT
+    ) as GrappleContext;
     const strengthResult = context.getTemporary(
-      'strength-comparison-result'
+      ContextKeys.COMBAT_GRAPPLE_STRENGTH_COMPARISON
     ) as StrengthComparisonResult;
 
     if (!grappleContext || !strengthResult) {
@@ -239,7 +246,7 @@ export class GrappleEffectRule extends BaseRule {
 
       const effects = this.applyGrappleEffects(attacker, target, outcome);
 
-      context.setTemporary('grapple-final-result', effects);
+      context.setTemporary(ContextKeys.COMBAT_GRAPPLE_FINAL_RESULT, effects);
 
       return this.createSuccessResult('Grapple effects applied');
     } catch (error) {

@@ -1,5 +1,6 @@
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
-import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import { BaseRule, type RuleResult, isFailure } from '@osric/core/Rule';
 import type { Character } from '@osric/types/character';
 import { RULE_NAMES } from '@osric/types/constants';
 import type { Item } from '@osric/types/item';
@@ -44,14 +45,14 @@ export class ScrollCreationRequirementsRule extends BaseRule {
     'Calculates requirements for creating magic scrolls using OSRIC formulas';
 
   public canApply(context: GameContext): boolean {
-    const characterId = context.getTemporary<string>('spell:scroll:creation-character');
-    const spellLevel = context.getTemporary<number>('spell:scroll:creation-level');
+    const characterId = context.getTemporary<string>(ContextKeys.SPELL_SCROLL_CREATION_CHARACTER);
+    const spellLevel = context.getTemporary<number>(ContextKeys.SPELL_SCROLL_CREATION_LEVEL);
     return !!(characterId && spellLevel);
   }
 
   public async execute(context: GameContext): Promise<RuleResult> {
-    const characterId = context.getTemporary<string>('spell:scroll:creation-character');
-    const spellLevel = context.getTemporary<number>('spell:scroll:creation-level');
+    const characterId = context.getTemporary<string>(ContextKeys.SPELL_SCROLL_CREATION_CHARACTER);
+    const spellLevel = context.getTemporary<number>(ContextKeys.SPELL_SCROLL_CREATION_LEVEL);
 
     if (!characterId || !spellLevel) {
       return this.createFailureResult('Missing character ID or spell level for scroll creation');
@@ -84,15 +85,15 @@ export class ScrollCreationRequirementsRule extends BaseRule {
 
     const message = `Creating a level ${spellLevel} scroll will require ${daysRequired} days and ${goldCost} gold pieces`;
 
-    context.setTemporary('scrollCreation_requirements', {
-      canCreate: true,
+    context.setTemporary(ContextKeys.SPELL_SCROLL_REQUIREMENTS, {
+      kind: 'success' as const,
       daysRequired,
       goldCost,
       minimumCasterLevel,
     });
 
     return this.createSuccessResult(message, {
-      canCreate: true,
+      kind: 'success',
       daysRequired,
       goldCost,
       minimumCasterLevel,
@@ -105,16 +106,16 @@ export class ScrollCreationStartRule extends BaseRule {
   public readonly description = 'Starts a scroll creation project with OSRIC requirements';
 
   public canApply(context: GameContext): boolean {
-    const characterId = context.getTemporary<string>('scrollStart_characterId');
-    const spellName = context.getTemporary<string>('scrollStart_spellName');
-    const spellLevel = context.getTemporary<number>('scrollStart_spellLevel');
+    const characterId = context.getTemporary<string>(ContextKeys.SPELL_SCROLL_CREATION_CHARACTER);
+    const spellName = context.getTemporary<string>('spell:scroll:creation:spell-name');
+    const spellLevel = context.getTemporary<number>(ContextKeys.SPELL_SCROLL_CREATION_LEVEL);
     return !!(characterId && spellName && spellLevel);
   }
 
   public async execute(context: GameContext): Promise<RuleResult> {
-    const characterId = context.getTemporary<string>('scrollStart_characterId');
-    const spellName = context.getTemporary<string>('scrollStart_spellName');
-    const spellLevel = context.getTemporary<number>('scrollStart_spellLevel');
+    const characterId = context.getTemporary<string>(ContextKeys.SPELL_SCROLL_CREATION_CHARACTER);
+    const spellName = context.getTemporary<string>('spell:scroll:creation:spell-name');
+    const spellLevel = context.getTemporary<number>(ContextKeys.SPELL_SCROLL_CREATION_LEVEL);
 
     if (!characterId || !spellName || !spellLevel) {
       return this.createFailureResult('Missing parameters for scroll creation start');
@@ -125,11 +126,11 @@ export class ScrollCreationStartRule extends BaseRule {
       return this.createFailureResult('Character not found');
     }
 
-    context.setTemporary('spell:scroll:creation-character', characterId);
-    context.setTemporary('spell:scroll:creation-level', spellLevel);
+    context.setTemporary(ContextKeys.SPELL_SCROLL_CREATION_CHARACTER, characterId);
+    context.setTemporary(ContextKeys.SPELL_SCROLL_CREATION_LEVEL, spellLevel);
 
     const requirements = this.calculateRequirements(character, spellLevel);
-    if (!requirements.canCreate) {
+    if (isFailure(requirements)) {
       return this.createFailureResult(requirements.message);
     }
 
@@ -142,7 +143,7 @@ export class ScrollCreationStartRule extends BaseRule {
       progressPercentage: 0,
     };
 
-    context.setTemporary('scrollCreation_project', scrollCreation);
+    context.setTemporary(ContextKeys.SPELL_SCROLL_CREATION_PROJECT, scrollCreation);
 
     const message = `Started creating scroll of ${spellName} (level ${spellLevel}). Progress: 0%`;
 
@@ -160,7 +161,7 @@ export class ScrollCreationStartRule extends BaseRule {
     character: Character,
     spellLevel: number
   ): {
-    canCreate: boolean;
+    kind: 'success' | 'failure';
     daysRequired: number;
     goldCost: number;
     message: string;
@@ -170,7 +171,7 @@ export class ScrollCreationStartRule extends BaseRule {
     );
     if (!isSpellcaster) {
       return {
-        canCreate: false,
+        kind: 'failure',
         daysRequired: 0,
         goldCost: 0,
         message: 'Only spellcasters can create scrolls',
@@ -180,7 +181,7 @@ export class ScrollCreationStartRule extends BaseRule {
     const minimumCasterLevel = Math.max(1, spellLevel * 2 - 1);
     if (character.level < minimumCasterLevel) {
       return {
-        canCreate: false,
+        kind: 'failure',
         daysRequired: 0,
         goldCost: 0,
         message: `You must be at least level ${minimumCasterLevel} to create a level ${spellLevel} scroll`,
@@ -193,7 +194,7 @@ export class ScrollCreationStartRule extends BaseRule {
     const goldCost = 100 * spellLevel ** 2;
 
     return {
-      canCreate: true,
+      kind: 'success',
       daysRequired,
       goldCost,
       message: `Creating a level ${spellLevel} scroll will require ${daysRequired} days and ${goldCost} gold`,
@@ -206,14 +207,14 @@ export class ScrollCreationProgressRule extends BaseRule {
   public readonly description = 'Updates progress on an ongoing scroll creation project';
 
   public canApply(context: GameContext): boolean {
-    const project = context.getTemporary<ScrollCreation>('scrollProgress_project');
-    const daysWorked = context.getTemporary<number>('scrollProgress_daysWorked');
+    const project = context.getTemporary<ScrollCreation>(ContextKeys.SPELL_SCROLL_CREATION_PROJECT);
+    const daysWorked = context.getTemporary<number>(ContextKeys.SPELL_SCROLL_PROGRESS_DAYS_WORKED);
     return !!(project && daysWorked);
   }
 
   public async execute(context: GameContext): Promise<RuleResult> {
-    const project = context.getTemporary<ScrollCreation>('scrollProgress_project');
-    const daysWorked = context.getTemporary<number>('scrollProgress_daysWorked');
+    const project = context.getTemporary<ScrollCreation>(ContextKeys.SPELL_SCROLL_CREATION_PROJECT);
+    const daysWorked = context.getTemporary<number>(ContextKeys.SPELL_SCROLL_PROGRESS_DAYS_WORKED);
 
     if (!project || !daysWorked) {
       return this.createFailureResult('Missing project or days worked for progress update');
@@ -227,7 +228,7 @@ export class ScrollCreationProgressRule extends BaseRule {
       progressPercentage: newProgress,
     };
 
-    context.setTemporary('scrollProgress_result', updatedProject);
+    context.setTemporary(ContextKeys.SPELL_SCROLL_PROGRESS_RESULT, updatedProject);
 
     const message =
       newProgress >= 100
@@ -250,14 +251,14 @@ export class ScrollUsageValidationRule extends BaseRule {
   public readonly description = 'Validates if a character can use a specific scroll';
 
   public canApply(context: GameContext): boolean {
-    const characterId = context.getTemporary<string>('scrollUsage_characterId');
-    const scrollId = context.getTemporary<string>('scrollUsage_scrollId');
+    const characterId = context.getTemporary<string>(ContextKeys.SPELL_SCROLL_USAGE_CHARACTER);
+    const scrollId = context.getTemporary<string>(ContextKeys.SPELL_SCROLL_USAGE_SCROLL_ID);
     return !!(characterId && scrollId);
   }
 
   public async execute(context: GameContext): Promise<RuleResult> {
-    const characterId = context.getTemporary<string>('scrollUsage_characterId');
-    const scrollId = context.getTemporary<string>('scrollUsage_scrollId');
+    const characterId = context.getTemporary<string>(ContextKeys.SPELL_SCROLL_USAGE_CHARACTER);
+    const scrollId = context.getTemporary<string>(ContextKeys.SPELL_SCROLL_USAGE_SCROLL_ID);
 
     if (!characterId || !scrollId) {
       return this.createFailureResult('Missing character ID or scroll ID for usage validation');
@@ -286,8 +287,8 @@ export class ScrollUsageValidationRule extends BaseRule {
       );
     }
 
-    context.setTemporary('scrollUsage_validated', true);
-    context.setTemporary('scrollUsage_scroll', scroll);
+    context.setTemporary(ContextKeys.SPELL_SCROLL_USAGE_VALIDATED, true);
+    context.setTemporary(ContextKeys.SPELL_SCROLL_USAGE_SCROLL, scroll);
 
     const message = `${character.name} can use the scroll of ${scroll.spell.name}`;
 
@@ -305,14 +306,14 @@ export class ScrollCastingFailureRule extends BaseRule {
     'Calculates failure chances for scroll casting using OSRIC formulas';
 
   public canApply(context: GameContext): boolean {
-    const scroll = context.getTemporary<MagicScroll>('scrollCasting_scroll');
-    const caster = context.getTemporary<Character>('scrollCasting_caster');
+    const scroll = context.getTemporary<MagicScroll>(ContextKeys.SPELL_SCROLL_CASTING_SCROLL);
+    const caster = context.getTemporary<Character>(ContextKeys.SPELL_SCROLL_CASTING_CASTER);
     return !!(scroll && caster);
   }
 
   public async execute(context: GameContext): Promise<RuleResult> {
-    const scroll = context.getTemporary<MagicScroll>('scrollCasting_scroll');
-    const caster = context.getTemporary<Character>('scrollCasting_caster');
+    const scroll = context.getTemporary<MagicScroll>(ContextKeys.SPELL_SCROLL_CASTING_SCROLL);
+    const caster = context.getTemporary<Character>(ContextKeys.SPELL_SCROLL_CASTING_CASTER);
 
     if (!scroll || !caster) {
       return this.createFailureResult('Missing scroll or caster for failure calculation');
@@ -331,7 +332,7 @@ export class ScrollCastingFailureRule extends BaseRule {
       backfireChance,
     };
 
-    context.setTemporary('scrollCasting_check', castingCheck);
+    context.setTemporary(ContextKeys.SPELL_SCROLL_CASTING_CHECK, castingCheck);
 
     const message =
       levelDifference > 0
@@ -353,12 +354,16 @@ export class ScrollSpellCastingRule extends BaseRule {
     'Executes scroll spell casting with OSRIC success/failure mechanics';
 
   public canApply(context: GameContext): boolean {
-    const castingCheck = context.getTemporary<ScrollCastingCheck>('scrollCast_check');
+    const castingCheck = context.getTemporary<ScrollCastingCheck>(
+      ContextKeys.SPELL_SCROLL_CASTING_CHECK
+    );
     return !!castingCheck;
   }
 
   public async execute(context: GameContext): Promise<RuleResult> {
-    const castingCheck = context.getTemporary<ScrollCastingCheck>('scrollCast_check');
+    const castingCheck = context.getTemporary<ScrollCastingCheck>(
+      ContextKeys.SPELL_SCROLL_CASTING_CHECK
+    );
 
     if (!castingCheck) {
       return this.createFailureResult('Missing casting check for scroll spell casting');
@@ -379,8 +384,8 @@ export class ScrollSpellCastingRule extends BaseRule {
 
       context.setEntity(caster.id, updatedCharacter);
 
-      context.setTemporary('scrollCast_result', {
-        success: true,
+      context.setTemporary(ContextKeys.SPELL_SCROLL_CAST_RESULT, {
+        kind: 'success',
         backfired: false,
         spell: scroll.spell,
         scrollConsumed: true,
@@ -389,7 +394,7 @@ export class ScrollSpellCastingRule extends BaseRule {
       const message = `${caster.name} successfully casts ${scroll.spell.name} from the scroll`;
 
       return this.createSuccessResult(message, {
-        success: true,
+        kind: 'success',
         backfired: false,
         spell: scroll.spell,
         scrollConsumed: true,
@@ -416,15 +421,15 @@ export class ScrollSpellCastingRule extends BaseRule {
       message = `${caster.name} fails to cast ${scroll.spell.name} from the scroll, but nothing bad happens`;
     }
 
-    context.setTemporary('scrollCast_result', {
-      success: false,
+    context.setTemporary(ContextKeys.SPELL_SCROLL_CAST_RESULT, {
+      kind: 'failure',
       backfired,
       spell: null,
       scrollConsumed: true,
     });
 
     return this.createSuccessResult(message, {
-      success: false,
+      kind: 'failure',
       backfired,
       spell: null,
       scrollConsumed: true,

@@ -1,6 +1,7 @@
 import { GrappleValidator } from '@osric/commands/combat/validators/GrappleValidator';
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
+import { isFailure, isSuccess } from '@osric/core/Rule';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { Character as CharacterData } from '@osric/types/character';
 import { COMMAND_TYPES } from '@osric/types/constants';
@@ -41,8 +42,8 @@ export class GrappleCommand extends BaseCommand<GrappleParameters> {
       }
 
       const validationResult = this.validateGrapple(attacker, target);
-      if (!validationResult.success) {
-        return this.createFailureResult(validationResult.message);
+      if (isFailure(validationResult)) {
+        return validationResult;
       }
 
       const grappleContext = {
@@ -72,7 +73,7 @@ export class GrappleCommand extends BaseCommand<GrappleParameters> {
     }
 
     const validationResult = this.validateGrapple(attacker, target);
-    return validationResult.success;
+    return isSuccess(validationResult);
   }
 
   getRequiredRules(): string[] {
@@ -98,13 +99,13 @@ export class GrappleCommand extends BaseCommand<GrappleParameters> {
   private validateGrapple(
     attacker: CharacterData | MonsterData,
     target: CharacterData | MonsterData
-  ): { success: boolean; message: string } {
+  ): { kind: 'success' | 'failure'; message: string } {
     if (attacker.hitPoints.current <= 0) {
-      return { success: false, message: 'Attacker is unconscious or dead' };
+      return { kind: 'failure', message: 'Attacker is unconscious or dead' };
     }
 
     if (target.hitPoints.current <= 0) {
-      return { success: false, message: 'Cannot grapple unconscious or dead target' };
+      return { kind: 'failure', message: 'Cannot grapple unconscious or dead target' };
     }
 
     const preventingEffects =
@@ -118,7 +119,7 @@ export class GrappleCommand extends BaseCommand<GrappleParameters> {
       ) || [];
 
     if (preventingEffects.length > 0) {
-      return { success: false, message: `Attacker is ${preventingEffects[0].name.toLowerCase()}` };
+      return { kind: 'failure', message: `Attacker is ${preventingEffects[0].name.toLowerCase()}` };
     }
 
     const targetGrappled =
@@ -129,14 +130,14 @@ export class GrappleCommand extends BaseCommand<GrappleParameters> {
       ) || false;
 
     if (targetGrappled) {
-      return { success: false, message: 'Target is already grappled' };
+      return { kind: 'failure', message: 'Target is already grappled' };
     }
 
     if (this.parameters.grappleType === 'overbearing' && !this.parameters.isChargedAttack) {
-      return { success: false, message: 'Overbearing requires a charge attack' };
+      return { kind: 'failure', message: 'Overbearing requires a charge attack' };
     }
 
-    return { success: true, message: 'Grapple is valid' };
+    return { kind: 'success', message: 'Grapple is valid' };
   }
 
   getCommandType(): string {

@@ -4,7 +4,6 @@ import type { RuleEngine } from './RuleEngine';
 
 export interface CommandResult<TData = Record<string, unknown>> {
   kind: 'success' | 'failure';
-  success: boolean;
   message: string;
   data?: TData;
   effects?: string[];
@@ -81,25 +80,10 @@ export abstract class BaseCommand<TParams = unknown> implements Command<TParams>
     effects?: string[],
     damage?: number[]
   ): CommandResult<T> {
-    return {
-      kind: 'success',
-      success: true,
-      message,
-      data,
-      effects,
-      damage,
-      commandType: this.type,
-    };
+    return { kind: 'success', message, data, effects, damage, commandType: this.type };
   }
 
   protected createFailureResult<T>(message: string, error?: Error, data?: T): CommandResult<T> {
-    return {
-      kind: 'failure',
-      success: false,
-      message,
-      error,
-      data,
-      commandType: this.type,
-    };
+    return { kind: 'failure', message, error, data, commandType: this.type };
   }
 }

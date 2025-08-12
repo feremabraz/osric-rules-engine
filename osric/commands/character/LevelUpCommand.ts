@@ -2,6 +2,7 @@ import { LevelUpValidator } from '@osric/commands/character/validators/LevelUpVa
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
 import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
+import { isFailure } from '@osric/core/Rule';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import {
   determineLevel,
@@ -87,7 +88,7 @@ export class LevelUpCommand extends BaseCommand<LevelUpParameters> {
           trainerDetails
         );
 
-        if (!trainingCheck.success) {
+        if (isFailure(trainingCheck)) {
           return trainingCheck;
         }
       }

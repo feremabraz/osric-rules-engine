@@ -395,14 +395,14 @@ export function applyUnderwaterPenalties(
   action: Action,
   _attacker: CharacterData | MonsterData
 ): {
-  success: boolean;
+  kind: 'success' | 'failure';
   message: string;
   damage: number[] | null;
   effects: string[] | Array<{ type: string; duration: number }> | null;
 } {
   if (!action.item) {
     return {
-      success: true,
+      kind: 'success',
       message: '',
       damage: null,
       effects: null,
@@ -414,7 +414,7 @@ export function applyUnderwaterPenalties(
 
   if (!isEffective) {
     return {
-      success: false,
+      kind: 'failure',
       message: 'Weapon is ineffective underwater',
       damage: null,
       effects: null,
@@ -425,7 +425,7 @@ export function applyUnderwaterPenalties(
 
   if (weapon.type === 'Ranged') {
     return {
-      success: true,
+      kind: 'success',
       message: 'Ranged weapon must reload after this shot',
       damage: null,
       effects: [{ type: 'reloadRequired', duration: 1 }],
@@ -433,7 +433,7 @@ export function applyUnderwaterPenalties(
   }
 
   return {
-    success: true,
+    kind: 'success',
     message: 'Attack with reduced effectiveness underwater',
     damage: null,
     effects: effects,
@@ -465,7 +465,7 @@ export function handleUnderwaterSpell(
   spell: Spell,
   caster: CharacterData | MonsterData
 ): {
-  success: boolean;
+  kind: 'success' | 'failure';
   message: string;
   damage: number[] | null;
   effects: Array<{ type: string; duration: number }> | null;
@@ -473,7 +473,7 @@ export function handleUnderwaterSpell(
   if (spell.name.toLowerCase().includes('lightning')) {
     const spellLevel = spell.level || 0;
     return {
-      success: false,
+      kind: 'failure',
       message: 'Lightning spell backfires underwater!',
       damage: [spellLevel * 2],
       effects: [{ type: 'stun', duration: 1 }],
@@ -482,7 +482,7 @@ export function handleUnderwaterSpell(
 
   if (!canCastSpellUnderwater(spell)) {
     return {
-      success: false,
+      kind: 'failure',
       message: 'cannot cast spells with material components underwater',
       damage: null,
       effects: null,
@@ -491,7 +491,7 @@ export function handleUnderwaterSpell(
 
   const casterName = 'name' in caster ? caster.name : 'Caster';
   return {
-    success: true,
+    kind: 'success',
     message: `${casterName} casts ${spell.name}`,
     damage: null,
     effects: null,

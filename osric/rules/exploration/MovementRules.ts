@@ -1,6 +1,6 @@
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
-import { BaseRule } from '@osric/core/Rule';
+import { BaseRule, isFailure, isSuccess } from '@osric/core/Rule';
 import type { RuleResult } from '@osric/core/Rule';
 import type { CharacterId } from '@osric/types';
 import type { Character } from '@osric/types/character';
@@ -17,7 +17,7 @@ interface MovementRequest {
 }
 
 interface MovementResult {
-  success: boolean;
+  kind: 'success' | 'failure';
   actualDistance: number;
   timeRequired: number;
   fatigueGained: number;
@@ -46,47 +46,37 @@ export class MovementRule extends BaseRule {
     const data = context.getTemporary<MovementRequest>('movement-request-params');
 
     if (!data) {
-      return this.createFailureResult(
-        'No movement request data provided',
-        undefined,
-        false,
-        'movement:error'
-      );
+      return this.createFailureResult('No movement request data provided', {
+        context: 'movement:error',
+      });
     }
 
     const character = context.getEntity<Character>(data.characterId);
 
     if (!character) {
-      return this.createFailureResult('Character not found', undefined, false, 'movement:error');
+      return this.createFailureResult('Character not found', { context: 'movement:error' });
     }
 
     const validation = this.validateMovement(character, data);
-    if (!validation.success) {
-      return this.createFailureResult(validation.message, undefined, false, 'movement:validation');
+    if (isFailure(validation)) {
+      return this.createFailureResult(validation.message, { context: 'movement:validation' });
     }
 
     const result = this.calculateMovement(character, data);
 
-    if (result.success) {
+    if (isSuccess(result)) {
       this.applyMovementEffects(character, result, context);
     }
 
-    return this.createSuccessResult(
-      result.message,
-      { result },
-      undefined,
-      undefined,
-      false,
-      'movement:calculation'
-    );
+    return this.createSuccessResult(result.message, { result, context: 'movement:calculation' });
   }
 
   private validateMovement(
     character: Character,
     data: MovementRequest
-  ): { success: boolean; message: string } {
+  ): { kind: 'success' | 'failure'; message: string } {
     if (character.hitPoints.current <= 0) {
-      return { success: false, message: 'Character is unconscious or dead' };
+      return { kind: 'failure', message: 'Character is unconscious or dead' };
     }
 
     const restrictingEffects =
@@ -99,7 +89,7 @@ export class MovementRule extends BaseRule {
 
     if (restrictingEffects.length > 0) {
       return {
-        success: false,
+        kind: 'failure',
         message: `Cannot move due to: ${restrictingEffects.map((e) => e.name).join(', ')}`,
       };
     }
@@ -107,12 +97,12 @@ export class MovementRule extends BaseRule {
     const maxMovement = this.getMaxMovementDistance(character, data.movementType);
     if (data.distance > maxMovement * 4) {
       return {
-        success: false,
+        kind: 'failure',
         message: `Distance ${data.distance} feet exceeds maximum possible movement of ${maxMovement * 4} feet`,
       };
     }
 
-    return { success: true, message: 'Movement is valid' };
+    return { kind: 'success', message: 'Movement is valid' };
   }
 
   private calculateMovement(character: Character, data: MovementRequest): MovementResult {
@@ -129,7 +119,7 @@ export class MovementRule extends BaseRule {
 
     if (canComplete) {
       return {
-        success: true,
+        kind: 'success',
         actualDistance: data.distance,
         timeRequired: this.calculateTimeRequired(
           data.distance,
@@ -144,7 +134,7 @@ export class MovementRule extends BaseRule {
 
     const maxPossible = effectiveMovement;
     return {
-      success: false,
+      kind: 'failure',
       actualDistance: maxPossible,
       timeRequired: this.calculateTimeRequired(maxPossible, effectiveMovement, data.movementType),
       fatigueGained: this.calculateFatigueGain(character, { ...data, distance: maxPossible }),

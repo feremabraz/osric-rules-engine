@@ -1,6 +1,6 @@
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
-import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import { BaseRule, type RuleResult, isFailure, isSuccess } from '@osric/core/Rule';
 import type { Character } from '@osric/types/character';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 import type { Item } from '@osric/types/item';
@@ -51,7 +51,7 @@ export class ScrollScribingRules extends BaseRule {
 
     try {
       const validation = this.validateScribe(scribingContext.scribe, scribingContext.spellToScribe);
-      if (!validation.success) {
+      if (isFailure(validation)) {
         return this.createFailureResult(validation.reason, {
           scribe: scribingContext.scribe.name,
           spell: scribingContext.spellToScribe.name,
@@ -62,7 +62,7 @@ export class ScrollScribingRules extends BaseRule {
       const timeRequired = this.calculateScribingTime(scribingContext);
 
       const resourceCheck = this.checkResources(scribingContext.scribe, materials, timeRequired);
-      if (!resourceCheck.success) {
+      if (isFailure(resourceCheck)) {
         return this.createFailureResult(resourceCheck.reason, {
           missingResources: resourceCheck.missing,
         });
@@ -70,7 +70,7 @@ export class ScrollScribingRules extends BaseRule {
 
       const scribingResult = this.performScrollScribing(scribingContext, materials, timeRequired);
 
-      if (scribingResult.success && scribingResult.scroll) {
+      if (isSuccess(scribingResult) && scribingResult.scroll) {
         return this.createSuccessResult(
           `Successfully scribed scroll of ${scribingContext.spellToScribe.name}`,
           {
@@ -103,7 +103,10 @@ export class ScrollScribingRules extends BaseRule {
     return null;
   }
 
-  private validateScribe(scribe: Character, spell: Spell): { success: boolean; reason: string } {
+  private validateScribe(
+    scribe: Character,
+    spell: Spell
+  ): { kind: 'success' | 'failure'; reason: string } {
     const magicUserLevel = scribe.classes['Magic-User'];
     const clericLevel = scribe.classes.Cleric;
     const druidLevel = scribe.classes.Druid;
@@ -111,7 +114,7 @@ export class ScrollScribingRules extends BaseRule {
 
     if (!magicUserLevel && !clericLevel && !druidLevel && !illusionistLevel) {
       return {
-        success: false,
+        kind: 'failure',
         reason: 'Only spellcasters can scribe scrolls',
       };
     }
@@ -119,7 +122,7 @@ export class ScrollScribingRules extends BaseRule {
     const characterCanCastSpell = this.canCharacterCastSpell(scribe, spell);
     if (!characterCanCastSpell) {
       return {
-        success: false,
+        kind: 'failure',
         reason: `${scribe.class} cannot cast ${spell.class} spells`,
       };
     }
@@ -127,7 +130,7 @@ export class ScrollScribingRules extends BaseRule {
     const knowsSpell = scribe.spells.some((knownSpell) => knownSpell.name === spell.name);
     if (!knowsSpell) {
       return {
-        success: false,
+        kind: 'failure',
         reason: `Character does not know the spell: ${spell.name}`,
       };
     }
@@ -137,7 +140,7 @@ export class ScrollScribingRules extends BaseRule {
 
     if (characterLevel < minimumLevelForSpell) {
       return {
-        success: false,
+        kind: 'failure',
         reason: `Minimum level ${minimumLevelForSpell} required to scribe ${spell.name}`,
       };
     }
@@ -153,13 +156,12 @@ export class ScrollScribingRules extends BaseRule {
           ? 'Intelligence'
           : 'Wisdom';
         return {
-          success: false,
+          kind: 'failure',
           reason: `${statName} ${minimumStat}+ required to scribe level ${spell.level} spells`,
         };
       }
     }
-
-    return { success: true, reason: '' };
+    return { kind: 'success', reason: '' };
   }
 
   private canCharacterCastSpell(character: Character, spell: Spell): boolean {
@@ -310,7 +312,7 @@ export class ScrollScribingRules extends BaseRule {
     scribe: Character,
     materials: ScrollMaterials,
     timeRequired: number
-  ): { success: boolean; reason: string; missing?: string[] } {
+  ): { kind: 'success' | 'failure'; reason: string; missing?: string[] } {
     const missing: string[] = [];
 
     const totalCost =
@@ -328,13 +330,12 @@ export class ScrollScribingRules extends BaseRule {
 
     if (missing.length > 0) {
       return {
-        success: false,
+        kind: 'failure',
         reason: `Insufficient resources: ${missing.join(', ')}`,
         missing,
       };
     }
-
-    return { success: true, reason: '' };
+    return { kind: 'success', reason: '' };
   }
 
   private performScrollScribing(
@@ -342,7 +343,7 @@ export class ScrollScribingRules extends BaseRule {
     materials: ScrollMaterials,
     timeRequired: number
   ): {
-    success: boolean;
+    kind: 'success' | 'failure';
     reason: string;
     scroll?: Item;
     qualityLevel?: string;
@@ -362,9 +363,9 @@ export class ScrollScribingRules extends BaseRule {
     successChance = Math.max(0.1, Math.min(0.95, successChance));
 
     const roll = Math.random();
-    const success = roll <= successChance;
+    const succeeded = roll <= successChance;
 
-    if (success) {
+    if (succeeded) {
       const scroll = this.createScroll(context, materials);
 
       const qualityRoll = Math.random();
@@ -384,7 +385,7 @@ export class ScrollScribingRules extends BaseRule {
       }
 
       return {
-        success: true,
+        kind: 'success',
         reason: 'Scroll scribing completed successfully',
         scroll,
         qualityLevel,
@@ -414,7 +415,7 @@ export class ScrollScribingRules extends BaseRule {
     ];
 
     return {
-      success: false,
+      kind: 'failure',
       reason: failureReasons[Math.floor(Math.random() * failureReasons.length)],
       timeWasted,
       materialsLost,

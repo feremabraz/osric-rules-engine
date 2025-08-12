@@ -1,6 +1,7 @@
 import { MagicItemCreationValidator } from '@osric/commands/spells/validators/MagicItemCreationValidator';
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
+import { isSuccess } from '@osric/core/Rule';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { CharacterId } from '@osric/types';
 import type { Character } from '@osric/types/character';
@@ -44,7 +45,7 @@ interface CreationRequirements {
 }
 
 interface CreationResult {
-  success: boolean;
+  kind: 'success' | 'failure';
   reason: string;
   item?: Item;
   costsIncurred: {
@@ -101,7 +102,7 @@ export class MagicItemCreationCommand extends BaseCommand<MagicItemCreationParam
 
       const creationResult = this.attemptCreation(character, requirements, this.parameters);
 
-      if (creationResult.success && creationResult.item) {
+      if (isSuccess(creationResult) && creationResult.item) {
         const updatedCharacter = this.updateCharacterAfterCreation(
           character,
           requirements,
@@ -336,15 +337,15 @@ export class MagicItemCreationCommand extends BaseCommand<MagicItemCreationParam
     parameters: MagicItemCreationParameters
   ): CreationResult {
     const roll = Math.random();
-    const success = roll <= requirements.successChance;
+    const succeeded = roll <= requirements.successChance;
 
     const costsIncurred = {
       time: requirements.timeInDays,
-      gold: success ? requirements.totalCost : Math.floor(requirements.totalCost * 0.75),
+      gold: succeeded ? requirements.totalCost : Math.floor(requirements.totalCost * 0.75),
       materials: requirements.specialRequirements,
     };
 
-    if (!success) {
+    if (!succeeded) {
       const failureReasons = [
         'Magical energy dissipated during the creation process',
         'Materials were not properly aligned during enchantment',
@@ -353,7 +354,7 @@ export class MagicItemCreationCommand extends BaseCommand<MagicItemCreationParam
       ];
 
       return {
-        success: false,
+        kind: 'failure',
         reason: failureReasons[Math.floor(Math.random() * failureReasons.length)],
         costsIncurred,
       };
@@ -362,7 +363,7 @@ export class MagicItemCreationCommand extends BaseCommand<MagicItemCreationParam
     const item = this.createMagicItem(character, parameters, requirements);
 
     return {
-      success: true,
+      kind: 'success',
       reason: 'Creation successful',
       item,
       costsIncurred,
@@ -438,7 +439,7 @@ export class MagicItemCreationCommand extends BaseCommand<MagicItemCreationParam
     character: Character,
     requirements: CreationRequirements,
     item: Item | null,
-    success: boolean
+    success: boolean // kept for now since called internally; will be removed in later refactor if unused
   ): Character {
     const goldCost = success ? requirements.totalCost : Math.floor(requirements.totalCost * 0.75);
 

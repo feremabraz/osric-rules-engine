@@ -1,5 +1,6 @@
 import { SavingThrowValidator } from '@osric/commands/character/validators/SavingThrowValidator';
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { Character } from '@osric/types/character';
@@ -40,7 +41,7 @@ export class SavingThrowCommand extends BaseCommand<SavingThrowParams> {
       }
 
       // Normalize temporary key to the convention used by rules
-      context.setTemporary('character:saving-throw:params', this.parameters);
+      context.setTemporary(ContextKeys.SAVING_THROW_PARAMS, this.parameters); // TODO: add to ContextKeys
 
       const baseSaveNumber = this.getBaseSavingThrow(character, saveType);
 

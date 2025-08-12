@@ -3,15 +3,11 @@ import type { BaseRuleResult } from '@osric/core/Rule';
 
 export type SavingThrowErrorResult = BaseRuleResult & {
   kind: 'failure';
-  success: false;
-  dataKind: 'saving-throw:error';
   data?: Record<string, unknown>;
 };
 
 export type SavingThrowValidationResult = BaseRuleResult & {
   kind: 'success' | 'failure';
-  success: boolean;
-  dataKind: 'saving-throw:validation';
   canAttempt?: boolean;
   automaticSuccess?: boolean;
   automaticFailure?: boolean;
@@ -20,8 +16,6 @@ export type SavingThrowValidationResult = BaseRuleResult & {
 
 export type SavingThrowCalculationResult = BaseRuleResult & {
   kind: 'success';
-  success: true;
-  dataKind: 'saving-throw:calculation';
   data: {
     characterId: string | CharacterId;
     saveType: string;
@@ -41,7 +35,7 @@ export type SavingThrowRuleResult =
   | SavingThrowCalculationResult;
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
-import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import { BaseRule, type RuleResult, isFailure } from '@osric/core/Rule';
 
 import type { CharacterId } from '@osric/types';
 import type { Character } from '@osric/types/character';
@@ -85,19 +79,13 @@ export class SavingThrowRule extends BaseRule {
 
     if (!saveData) {
       return this.createFailureResult(
-        'No saving throw parameters provided',
-        undefined,
-        false,
-        'saving-throw:error'
+        'No saving throw parameters provided'
       ) as SavingThrowErrorResult;
     }
 
     if (!saveData.saveType) {
       return this.createFailureResult(
-        `Invalid save type: ${saveData.saveType}`,
-        undefined,
-        false,
-        'saving-throw:error'
+        `Invalid save type: ${saveData.saveType}`
       ) as SavingThrowErrorResult;
     }
 
@@ -105,25 +93,13 @@ export class SavingThrowRule extends BaseRule {
       const character = context.getEntity<Character>(saveData.characterId);
       if (!character) {
         return this.createFailureResult(
-          `Character ${saveData.characterId} not found`,
-          undefined,
-          false,
-          'saving-throw:error'
+          `Character ${saveData.characterId} not found`
         ) as SavingThrowErrorResult;
       }
 
       const validationResult = this.validateSavingThrow(character, saveData);
-      if (!validationResult.success) {
-        // Return a strict FailureRuleResult
-        return {
-          kind: 'failure',
-          success: false,
-          message: validationResult.message,
-          data: validationResult.data,
-          dataKind: validationResult.dataKind,
-          critical: validationResult.critical,
-          stopChain: validationResult.stopChain,
-        };
+      if (isFailure(validationResult)) {
+        return validationResult;
       }
 
       const saveCalculation = this.calculateSavingThrow(character, saveData);
@@ -132,7 +108,6 @@ export class SavingThrowRule extends BaseRule {
       // Return a strict SuccessRuleResult
       return {
         kind: 'success',
-        success: true,
         message: 'Saving throw calculation complete',
         data: {
           characterId: saveData.characterId,
@@ -145,16 +120,12 @@ export class SavingThrowRule extends BaseRule {
           automaticSuccess: validationResult.automaticSuccess,
           automaticFailure: validationResult.automaticFailure,
         },
-        dataKind: 'saving-throw:calculation',
         critical: false,
         stopChain: false,
       };
     } catch (error) {
       return this.createFailureResult(
-        `Failed to process saving throw rule: ${error instanceof Error ? error.message : String(error)}`,
-        undefined,
-        false,
-        'saving-throw:error'
+        `Failed to process saving throw rule: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -164,47 +135,23 @@ export class SavingThrowRule extends BaseRule {
     saveData: SavingThrowParameters
   ): RuleResult & { canAttempt?: boolean; automaticSuccess?: boolean; automaticFailure?: boolean } {
     if (character.hitPoints.current <= 0) {
-      return {
-        ...this.createFailureResult(
-          'Cannot make saving throws while unconscious or dead',
-          undefined,
-          false,
-          'saving-throw:validation'
-        ),
-        canAttempt: false,
-      };
+      const fail = this.createFailureResult('Cannot make saving throws while unconscious or dead');
+      return { ...fail, canAttempt: false };
     }
 
     const autoResult = this.checkAutomaticResults(character, saveData.saveType);
     if (autoResult) {
+      const success = this.createSuccessResult(autoResult.message);
       return {
-        ...this.createSuccessResult(
-          autoResult.message,
-          undefined,
-          undefined,
-          undefined,
-          false,
-          'saving-throw:validation'
-        ),
+        ...success,
         canAttempt: true,
         automaticSuccess: autoResult.type === 'success',
         automaticFailure: autoResult.type === 'failure',
-        critical: false,
       };
     }
 
-    return {
-      ...this.createSuccessResult(
-        'Saving throw can be attempted',
-        undefined,
-        undefined,
-        undefined,
-        false,
-        'saving-throw:validation'
-      ),
-      canAttempt: true,
-      critical: false,
-    };
+    const ok = this.createSuccessResult('Saving throw can be attempted');
+    return { ...ok, canAttempt: true };
   }
 
   private checkAutomaticResults(

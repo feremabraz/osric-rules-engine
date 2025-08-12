@@ -58,7 +58,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
-      expect(result.success).toBe(true);
+      expect(result.kind).toBe('success');
       expect(result.finalPosition).toEqual(to);
       expect(result.timeElapsed).toBeGreaterThan(0);
       expect(result.movementUsed).toBeGreaterThan(0);
@@ -71,7 +71,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
-      expect(result.success).toBe(false);
+      expect(result.kind).toBe('failure');
       expect(result.finalPosition).not.toEqual(to);
       expect(result.penalties).toContain('Insufficient movement to reach destination');
     });
@@ -82,7 +82,7 @@ describe('MovementCalculator', () => {
 
       const result = gridCalculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
-      expect(result.success).toBeDefined();
+      expect(['success', 'failure']).toContain(result.kind);
       expect(result.finalPosition).toBeDefined();
       expect(result.path).toBeDefined();
       expect(result.path?.length).toBeGreaterThan(0);
@@ -94,7 +94,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
-      expect(result.success).toBe(true);
+      expect(result.kind).toBe('success');
       expect(result.movementUsed).toBeLessThanOrEqual(mockCapabilities.baseMovementRate);
     });
   });
@@ -115,7 +115,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Running, mockContext);
 
-      expect(result.success).toBe(true);
+      expect(result.kind).toBe('success');
     });
 
     it('should handle charging movement', () => {
@@ -124,7 +124,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Charging, mockContext);
 
-      expect(result.success).toBe(true);
+      expect(result.kind).toBe('success');
     });
 
     it('should handle flying movement', () => {
@@ -133,7 +133,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Flying, mockContext);
 
-      expect(result.success).toBe(true);
+      expect(result.kind).toBe('success');
     });
 
     it('should handle swimming movement', () => {
@@ -142,7 +142,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Swimming, mockContext);
 
-      expect(result.success).toBe(true);
+      expect(result.kind).toBe('success');
     });
 
     it('should handle climbing movement', () => {
@@ -151,7 +151,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Climbing, mockContext);
 
-      expect(result.success).toBe(true);
+      expect(result.kind).toBe('success');
     });
 
     it('should handle crawling movement with speed penalty', () => {
@@ -160,7 +160,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Crawling, mockContext);
 
-      expect(result.success).toBe(true);
+      expect(result.kind).toBe('success');
     });
   });
 
@@ -174,7 +174,7 @@ describe('MovementCalculator', () => {
       const result = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
       expect(result.terrainEncountered).toContain(TerrainType.Clear);
-      expect(result.success).toBe(true);
+      expect(result.kind).toBe('success');
     });
 
     it('should apply difficult terrain penalties', () => {
@@ -233,7 +233,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
-      expect(result.success).toBe(false);
+      expect(result.kind).toBe('failure');
     });
 
     it('should block non-flying movement through lava', () => {
@@ -243,10 +243,10 @@ describe('MovementCalculator', () => {
       mockContext.environment.terrain.set('10,0,0', TerrainType.Lava);
 
       const walkResult = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
-      expect(walkResult.success).toBe(false);
+      expect(walkResult.kind).toBe('failure');
 
       const flyResult = calculator.calculateMovement(from, to, MovementType.Flying, mockContext);
-      expect(flyResult.success).toBe(false);
+      expect(flyResult.kind).toBe('failure');
     });
   });
 
@@ -259,7 +259,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
-      expect(result.success).toBe(true);
+      expect(result.kind).toBe('success');
     });
 
     it('should apply dark lighting penalties', () => {
@@ -270,7 +270,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
-      expect(result.success).toBe(true);
+      expect(result.kind).toBe('success');
     });
 
     it('should handle encumbrance modifiers', () => {
@@ -281,7 +281,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
-      expect(result.success).toBe(false);
+      expect(result.kind).toBe('failure');
     });
   });
 
@@ -405,7 +405,7 @@ describe('MovementCalculator', () => {
 
       expect(results).toHaveLength(2);
 
-      expect(results[0].success).toBe(true);
+      expect(results[0].kind).toBe('success');
     });
   });
 
@@ -427,10 +427,10 @@ describe('MovementCalculator', () => {
       const to: Position = { x: 100, y: 0 };
 
       const walkResult = calculator.calculateMovement(from, to, MovementType.Walking, humanFighter);
-      expect(walkResult.success).toBe(true);
+      expect(walkResult.kind).toBe('success');
 
       const runResult = calculator.calculateMovement(from, to, MovementType.Running, humanFighter);
-      expect(runResult.success).toBe(true);
+      expect(runResult.kind).toBe('success');
     });
 
     it('should support OSRIC terrain movement penalties', () => {
@@ -478,8 +478,8 @@ describe('MovementCalculator', () => {
       mockContext.character.capabilities.encumbranceModifier = 0.6;
       const heavyResult = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
-      expect(lightResult.success).toBe(true);
-      expect(heavyResult.success).toBe(false);
+      expect(lightResult.kind).toBe('success');
+      expect(heavyResult.kind).toBe('failure');
     });
   });
 
@@ -490,7 +490,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
-      expect(result.success).toBe(true);
+      expect(result.kind).toBe('success');
       expect(result.movementUsed).toBe(0);
       expect(result.finalPosition).toEqual(from);
     });
@@ -517,7 +517,7 @@ describe('MovementCalculator', () => {
         contextWithNoCaps
       );
 
-      expect(result.success).toBe(false);
+      expect(result.kind).toBe('failure');
     });
 
     it('should handle invalid positions', () => {
@@ -526,7 +526,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
-      expect(result.success).toBe(true);
+      expect(result.kind).toBe('success');
     });
 
     it('should handle very large distances', () => {
@@ -535,7 +535,7 @@ describe('MovementCalculator', () => {
 
       const result = calculator.calculateMovement(from, to, MovementType.Walking, mockContext);
 
-      expect(result.success).toBe(false);
+      expect(result.kind).toBe('failure');
       expect(result.penalties).toContain('Insufficient movement to reach destination');
     });
   });

@@ -1,5 +1,5 @@
 import type { GameContext } from '@osric/core/GameContext';
-import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import { BaseRule, type RuleResult, isFailure } from '@osric/core/Rule';
 
 import type { Character, Item, Spell } from '@osric/types';
 import { RULE_NAMES } from '@osric/types/constants';
@@ -26,7 +26,7 @@ export class ComponentTrackingRules extends BaseRule {
       }
 
       const componentResult = this.validateComponents(caster, spell);
-      if (!componentResult.success) {
+      if (isFailure(componentResult)) {
         return componentResult;
       }
 

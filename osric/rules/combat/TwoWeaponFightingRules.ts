@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { Character as CharacterData } from '@osric/types/character';
@@ -19,7 +20,9 @@ export class TwoWeaponFightingRule extends BaseRule {
   name = 'two-weapon-fighting';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const twoWeaponContext = context.getTemporary('combat:two-weapon:context') as TwoWeaponContext;
+    const twoWeaponContext = context.getTemporary(
+      ContextKeys.COMBAT_TWO_WEAPON_CONTEXT
+    ) as TwoWeaponContext;
 
     if (!twoWeaponContext) {
       return this.createFailureResult('No two-weapon fighting context found');
@@ -50,9 +53,9 @@ export class TwoWeaponFightingRule extends BaseRule {
       penalties
     );
 
-    context.setTemporary('two-weapon-results', results);
-    context.setTemporary('main-hand-result', results.mainHandResult);
-    context.setTemporary('off-hand-result', results.offHandResult);
+    context.setTemporary(ContextKeys.COMBAT_TWO_WEAPON_RESULTS, results);
+    context.setTemporary(ContextKeys.COMBAT_MAIN_HAND_RESULT, results.mainHandResult);
+    context.setTemporary(ContextKeys.COMBAT_OFF_HAND_RESULT, results.offHandResult);
 
     return this.createSuccessResult(
       `Two-weapon attack resolved: Main hand ${results.mainHandResult.hit ? 'hit' : 'missed'}, ` +
@@ -67,7 +70,9 @@ export class TwoWeaponFightingRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     if (command.type !== COMMAND_TYPES.ATTACK) return false;
 
-    const twoWeaponContext = context.getTemporary('combat:two-weapon:context') as TwoWeaponContext;
+    const twoWeaponContext = context.getTemporary(
+      ContextKeys.COMBAT_TWO_WEAPON_CONTEXT
+    ) as TwoWeaponContext;
     return twoWeaponContext !== null;
   }
 
@@ -173,7 +178,7 @@ export class TwoWeaponEligibilityRule extends BaseRule {
     }
 
     const eligibility = this.checkTwoWeaponEligibility(character, mainHandWeapon, offHandWeapon);
-    context.setTemporary('two-weapon-eligibility', eligibility);
+    context.setTemporary(ContextKeys.COMBAT_TWO_WEAPON_ELIGIBILITY, eligibility);
 
     return this.createSuccessResult(
       eligibility.canUseTwoWeapons

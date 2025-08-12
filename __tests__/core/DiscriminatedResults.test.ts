@@ -47,7 +47,6 @@ describe('Discriminated results', () => {
     const ctx = new GameContext(store);
     const cmd = new NoopCommand({}, 'actor', []);
     const res = await rule.apply(ctx, cmd as Command);
-    expect(res.success).toBe(true);
     expect(res.kind).toBe('success');
   });
 
@@ -59,7 +58,6 @@ describe('Discriminated results', () => {
     chain.addRule(new SimpleFailureRule());
     const cmd = new NoopCommand({}, 'actor', []);
     const result = await chain.execute(cmd, ctx);
-    expect(result.success).toBe(false);
     expect(result.kind).toBe('failure');
   });
 
@@ -72,7 +70,6 @@ describe('Discriminated results', () => {
     engine.registerRuleChain('noop', chain);
     const cmd = new NoopCommand({}, 'actor', []);
     const out = await engine.process(cmd, ctx);
-    expect(out.success).toBe(true);
     expect(out.kind).toBe('success');
   });
 });

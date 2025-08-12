@@ -1,11 +1,8 @@
 import { CreateCharacterValidator } from '@osric/commands/character/validators/CreateCharacterValidator';
 import { BaseCommand, type CommandResult } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
-import {
-  ValidationPrimitives,
-  type ValidationRule,
-  formatValidationErrors,
-} from '@osric/core/ValidationPrimitives';
+import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import { createCharacterId } from '@osric/types';
 import type {
   AbilityScores,
@@ -43,11 +40,6 @@ export class CreateCharacterCommand extends BaseCommand<CreateCharacterParameter
     super(parameters, actorId, targetIds);
   }
 
-  protected getValidationRules(): ValidationRule[] {
-    // kept for backward compatibility; not used as we call centralized validator below
-    return [];
-  }
-
   protected validateParameters(): void {
     const result = CreateCharacterValidator.validate(this.parameters);
     if (!result.valid) {
@@ -61,8 +53,8 @@ export class CreateCharacterCommand extends BaseCommand<CreateCharacterParameter
       // Validation is already done in constructor via super() call
       const characterId = createCharacterId(this.generateCharacterId());
 
-      context.setTemporary('character:creation:context', { characterId });
-      context.setTemporary('character:creation:params', { ...this.parameters });
+      context.setTemporary(ContextKeys.CHARACTER_CREATION_CONTEXT, { characterId });
+      context.setTemporary(ContextKeys.CHARACTER_CREATION_PARAMS, { ...this.parameters });
 
       return this.createSuccessResult(`Character creation initiated for ${this.parameters.name}`, {
         characterId,

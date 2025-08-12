@@ -88,8 +88,8 @@ const makeCharacter = (): CharacterType => ({
   secondarySkills: [],
 });
 
-describe('RuleResult.dataKind tagging', () => {
-  it('SavingThrowRule sets dataKind for calculation and validation', async () => {
+describe('RuleResult structure without dataKind', () => {
+  it('SavingThrowRule returns success or failure with expected data shape', async () => {
     const store = createStore();
     const ctx = new GameContext(store);
     const chain = new RuleChain();
@@ -104,20 +104,14 @@ describe('RuleResult.dataKind tagging', () => {
     const cmd = new SavingThrowCommand({ characterId: character.id, saveType: 'spell' });
     const result = await engine.process(cmd, ctx);
 
-    expect(result.success).toBeTypeOf('boolean');
-    const chainResult = await chain.execute(cmd, ctx);
-    const kinds = chainResult.results.map((r) => r.dataKind);
-    expect(
-      kinds.some(
-        (k) =>
-          k === 'saving-throw:calculation' ||
-          k === 'saving-throw:validation' ||
-          k === 'saving-throw:error'
-      )
-    ).toBe(true);
+    expect(result.kind === 'success' || result.kind === 'failure').toBe(true);
+    if (result.kind === 'success') {
+      expect(result.data).toHaveProperty('characterId');
+      expect(result.data).toHaveProperty('finalSave');
+    }
   });
 
-  it('ThiefSkillRule sets dataKind for calculation and validation', async () => {
+  it('ThiefSkillRule returns success or failure with expected data shape', async () => {
     const store = createStore();
     const ctx = new GameContext(store);
     const chain = new RuleChain();
@@ -150,16 +144,9 @@ describe('RuleResult.dataKind tagging', () => {
     });
     const result = await engine.process(cmd, ctx);
 
-    expect(result.success).toBeTypeOf('boolean');
-    const chainResult = await chain.execute(cmd, ctx);
-    const kinds = chainResult.results.map((r) => r.dataKind);
-    expect(
-      kinds.some(
-        (k) =>
-          k === 'thief-skill:calculation' ||
-          k === 'thief-skill:validation' ||
-          k === 'thief-skill:error'
-      )
-    ).toBe(true);
+    expect(result.kind === 'success' || result.kind === 'failure').toBe(true);
+    if (result.kind === 'success') {
+      expect(result.data).toHaveProperty('characterId');
+    }
   });
 });

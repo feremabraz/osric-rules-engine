@@ -1,3 +1,4 @@
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { Character, SpellSlots } from '@osric/types';
@@ -8,13 +9,13 @@ export class SpellProgressionRules extends BaseRule {
   public readonly description = 'Calculates spell slots and progression by OSRIC rules';
 
   public canApply(context: GameContext): boolean {
-    const character = context.getTemporary<Character>('calculateSpells_character');
+    const character = context.getTemporary<Character>(ContextKeys.SPELL_CALC_CHARACTER);
     return !!character;
   }
 
   public async execute(context: GameContext): Promise<RuleResult> {
     try {
-      const character = context.getTemporary<Character>('calculateSpells_character');
+      const character = context.getTemporary<Character>(ContextKeys.SPELL_CALC_CHARACTER);
 
       if (!character) {
         return this.createFailureResult('Missing character in context');
@@ -22,7 +23,7 @@ export class SpellProgressionRules extends BaseRule {
 
       const spellSlots = this.calculateSpellSlots(character);
 
-      context.setTemporary('calculateSpells_result', spellSlots);
+      context.setTemporary(ContextKeys.SPELL_CALC_RESULT, spellSlots);
 
       return this.createSuccessResult(`Calculated spell slots for ${character.name}`, {
         spellSlots,

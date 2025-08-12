@@ -130,7 +130,7 @@ function fakeCommand(type: string): Command {
     actorId: 'c-1',
     targetIds: [],
     async execute() {
-      return { kind: 'success', success: true, message: 'noop' };
+      return { kind: 'success', message: 'noop' };
     },
     canExecute() {
       return true;
@@ -170,7 +170,7 @@ describe('Rules accept branded IDs', () => {
     const rule = new ExperienceGainRule();
     const result = await rule.apply(ctx, fakeCommand(COMMAND_TYPES.GAIN_EXPERIENCE));
     expect(result).toBeDefined();
-    expect(typeof result.success).toBe('boolean');
+    expect(['success', 'failure']).toContain(result.kind);
   });
 
   it('MovementRule.execute accepts CharacterId in temp data', async () => {
@@ -194,7 +194,7 @@ describe('Rules accept branded IDs', () => {
     const rule = new MovementRule();
     const result = await rule.execute(ctx, fakeCommand(COMMAND_TYPES.MOVE));
     expect(result).toBeDefined();
-    expect(result.success).toBe(true);
+    expect(result.kind).toBe('success');
   });
 
   it('ReactionRules.execute accepts CharacterId in params (temporary context)', async () => {
@@ -230,7 +230,7 @@ describe('Rules accept branded IDs', () => {
     const rule = new ReactionRules();
     const result = await rule.execute(ctx, fakeCommand(COMMAND_TYPES.REACTION_ROLL));
     expect(result).toBeDefined();
-    expect(typeof result.success).toBe('boolean');
+    expect(['success', 'failure']).toContain(result.kind);
   });
 
   it('MoraleRules.execute accepts CharacterId in params and groupIds as branded arrays', async () => {
@@ -256,7 +256,7 @@ describe('Rules accept branded IDs', () => {
 
     const result = await rule.execute(ctx, cmd);
     expect(result).toBeDefined();
-    expect(typeof result.success).toBe('boolean');
+    expect(['success', 'failure']).toContain(result.kind);
     expect(result.message).toContain('Morale check');
   });
 });

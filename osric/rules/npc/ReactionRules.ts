@@ -61,12 +61,9 @@ export class ReactionRules extends BaseRule {
 
     const character = context.getEntity<Character>(params.characterId);
     if (!character) {
-      return this.createFailureResult(
-        `Character not found: ${params.characterId}`,
-        undefined,
-        false,
-        'reaction:error'
-      );
+      return this.createFailureResult(`Character not found: ${params.characterId}`, {
+        context: 'reaction:error',
+      });
     }
 
     const charismaModifier = this.getCharismaReactionModifier(character.abilities.charisma);
@@ -91,11 +88,9 @@ export class ReactionRules extends BaseRule {
         characterId: params.characterId,
         targetId: params.targetId,
         interactionType: params.interactionType,
+        context: 'reaction:calculation',
       },
-      [`${character.name} receives ${reactionResult.reaction} reaction from target`],
-      undefined,
-      false,
-      'reaction:calculation'
+      [`${character.name} receives ${reactionResult.reaction} reaction from target`]
     );
   }
 

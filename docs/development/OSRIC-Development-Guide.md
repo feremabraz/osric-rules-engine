@@ -2,7 +2,7 @@
 
 This document is the canonical reference for the repository’s structure, how to extend it safely, and what’s next. It focuses on the unified model (Option A) and only lists active or upcoming work; completed phases are summarized briefly.
 
-Last updated: 2025-08-12 (Phases 5–6 complete)
+Last updated: 2025-08-12 (Phases 5–6 complete; Phase 7–8 planning drafted)
 
 
 ## Project overview
@@ -24,7 +24,7 @@ Last updated: 2025-08-12 (Phases 5–6 complete)
 
 - Commands
   - Represent user intent. Implement `BaseCommand` with `type` and parameters. Keep mechanics out; delegate to rules via RuleEngine.
-  - Runtime contract: Each command must validate its parameters using its specific validator in `validateParameters()` before `execute` runs (validators are imported from `@osric/types`).
+  - Runtime contract: Each command must validate its parameters using its co-located validator (e.g. `osric/commands/character/validators/CreateCharacterValidator`) inside `validateParameters()` before `execute` runs. Validators are NOT re‑exported through `@osric/types`; always import them directly.
 
 - Rules
   - Implement mechanics. Must implement `BaseRule.apply(context, command)` and `canApply()`. Scheduled into `RuleChain`s and ordered by `priority` and/or prerequisites.
@@ -68,7 +68,7 @@ Note: Use the canonical modules above exclusively. The legacy barrel `@osric/cor
   - Rule names come from `RULE_NAMES` (no ad-hoc strings). All rules implement `apply(context, command)` and can report prerequisites.
 
 - Commands
-  - `getRequiredRules()` should return `RULE_NAMES` values. Validate parameters using the command’s specific validator (from `@osric/types`) inside `validateParameters()`; avoid ad-hoc checks. `execute` should set context and delegate to the engine.
+  - `getRequiredRules()` should return `RULE_NAMES` values. Validate parameters using the command’s co‑located validator inside `validateParameters()`; avoid ad-hoc checks. `execute` should set context and delegate to the engine.
 
 - Temporary context keys
   - Namespaced keys: `domain:feature:detail` (e.g., `character:saving-throw:params`). Use `BaseRule.getRequiredContext()` and `setContext()`.
@@ -136,23 +136,135 @@ Only merge when all gates pass. Keep a minimal smoke path (command → chain →
 
 ## Upcoming Phases & Improvements
 
-### Phase 7: Additional Separation of Concerns and Domain-Driven Refactors
+The next work is strictly about internal clarity and consistency. No new gameplay feature scope (items expansion, loot generation, crafting, performance profiling, etc.) is part of these phases unless required to eliminate duplication or ambiguity.
 
-- Further split and reorganize code to ensure every module/file has a single responsibility and clear domain boundaries.
-- Refactor any remaining cross-domain logic into dedicated modules.
-- Review and update folder structure to match domain-driven design principles.
+### Phase 7: Pattern Unification & Single Responsibility Pass
 
-### Phase 8: API Surface Review and Simplification
+Objective: Ensure every file/module has one purpose and that there is exactly one blessed pattern for each architectural concern (commands, validators, rules, context usage, IDs, error handling).
 
-- Audit all public APIs (types, classes, functions) for clarity and minimalism.
-- Remove legacy or redundant APIs, shims, types, and exports.
-- Simplify and document (JSDoc) the canonical API surface for engine extension and integration.
-- Ensure all exports are intentional and domain-appropriate.
+Key Goals:
+- Identify and refactor any modules doing more than one thing (split or extract helpers).
+- Eliminate divergent patterns for: command validation, rule registration, ID creation, result typing.
+- Normalize naming conventions (e.g., `<Domain><Concept><Suffix>`). No mixed suffix styles.
+- Co-locate all validators (already mostly done) and remove any lingering shared validator logic that is domain-specific.
+- Centralize cross-domain constants into `osric/types/constants.ts` only when truly shared; otherwise keep domain-local.
+- Remove dead or redundant helper functions / types uncovered during pass.
 
-### Phase 9+: TBD
+Deliverables / Checklist:
+1. Inventory: Automated or manual list of patterns & outliers (added to this doc under an "Inconsistencies Report" subsection).
+2. Validators: Confirm every command has exactly one validator file named `<CommandName>Validator.ts` with a consistent exported symbol.
+3. Commands: Ensure uniform structure order: imports, types, validator import, class, validateParameters, execute.
+4. Rules: Standardize rule file naming `<Domain><RuleName>Rule.ts` (or keep existing if already consistent) and ensure each exports exactly one rule class + rule name constant reference.
+5. Context Keys: Add a small `ContextKeys` (type-only) map or literal union centralizing existing keys; eliminate ad-hoc strings.
+6. Results: Ensure discriminated result types share a common `kind` field pattern; remove alternative naming (`type`, `resultType`, etc. if any exist).
+7. Errors: Provide a single `DomainError` shape or enum-driven variant; remove duplicate error utility functions.
+8. Duplicate Logic: Extract repeated dice / movement / modifier calculations into a single helper if they appear 2+ times.
+9. Remove Legacy: Delete any commented or unused exports that survived prior phases.
+10. Update Docs: This guide gains an "Unified Patterns" section enumerating the final canonical shapes.
 
-- Standardize error handling across all layers (core, rules, commands, entities).
-- Expand and unify error types, error factories, and error reporting.
-- Improve diagnostics and error context for debugging and user feedback.
-- Add structured logging and tracing for rule/command execution.
-- TBD
+Exit Criteria:
+- No TODO comments referencing “unify later” remain in touched areas.
+- Grep for alternative patterns (e.g. `resultType:`) yields zero matches once normalized.
+- Tests, typecheck, lint all green.
+
+### Phase 8: Public Surface Pruning (Code-Only)
+
+Objective: Strip exports to the smallest coherent set. Rely on TypeScript types and inline JSDoc for discoverability—no separate docs, tables, or changelog generation.
+
+Scope (code actions only):
+- Inline review of each top-level exported symbol; remove or rename in-place.
+- Collapse duplicate type aliases (keep the most descriptive name).
+- Delete shim / transitional barrels; favor direct module imports.
+- Ensure validators stay unexported from public type barrels.
+- Remove dead constants or re-export chains that point to a single symbol.
+- Add minimal JSDoc only where a type’s intent is not obvious from its name.
+
+Minimal Checklist:
+1. Grep for `export \*` barrels and replace with explicit exports or internalize.
+2. Grep for duplicate alias patterns (e.g. `type X = Y`) and eliminate redundant layer if X adds no semantic value.
+3. Remove unused exports (verified by TypeScript errors after deletion).
+4. Ensure no command or validator is exported through `@osric/types` (commands are consumed internally; external API remains types + core engine primitives only).
+5. Confirm tree-shaking friendliness: no side-effect code at module top-level beyond constant declarations.
+
+Exit Criteria:
+- Running `pnpm typecheck` after removals yields zero references to removed symbols.
+- Searching for `export *` in repo returns only intentionally retained cases (ideally zero or a justified small set).
+- Public surface = core primitives + domain types; nothing else.
+
+### Phase 9 (Optional Cleanup — Only If Gaps Remain)
+
+Only executed if Phase 7/8 leave residual inconsistencies:
+- Final micro-splits of any remaining multi-purpose files.
+- Consolidate error handling if still fragmented.
+- Optional codemod(s) for future large-scale refactors.
+
+---
+
+## Inconsistencies Report (Populate During Phase 7)
+
+Use this section as a living scratchpad. Keep only active discrepancies; remove rows once fixed.
+
+| Category | Instance | Issue | Planned Fix | Done? |
+|----------|----------|-------|------------|-------|
+| Command | AttackCommand | Raw rule name strings | Switched to RULE_NAMES | Done |
+| Command | CreateCharacterCommand | Legacy getValidationRules method | Removed method | Done |
+| Core | * | OSRICError complex system unused | Removed exports & file | Done |
+| Context | Multiple rules | Ad-hoc temp keys (wildMagicSurge, etc.) | Introduce ContextKeys + rename (pending) | Pending |
+| Command | AttackCommand | Domain validation logic inside command | Move to rule or guard pattern | Pending |
+| Results | BaseCommand / Rule | Dual success + kind fields | Removed success field; unified on 'kind' | Done |
+| Rules | Various | dataKind inconsistently used | Removed dataKind; rely on 'kind' + domain data | Done |
+
+---
+
+## Unified Patterns (Finalize End of Phase 7)
+
+Command skeleton:
+```ts
+// imports
+import { RULE_NAMES } from '@osric/types/rules';
+import { validateAttack } from './validators/AttackCommandValidator';
+
+export class AttackCommand extends BaseCommand<AttackParams, AttackResult> {
+  readonly type = COMMAND_TYPES.ATTACK;
+  validateParameters() { return validateAttack(this.params); }
+  getRequiredRules() { return [RULE_NAMES.ATTACK_SEQUENCE]; }
+  execute(ctx: GameContext) { /* set context keys, no mechanics */ }
+}
+```
+
+Validator skeleton:
+```ts
+import { validateObject, rules } from '@osric/core/ValidationPrimitives';
+export function validateAttack(p: AttackParams) {
+  return validateObject(p, {
+    attackerId: [rules.required('attackerId')],
+    targetId: [rules.required('targetId')],
+    weaponId: [rules.required('weaponId')],
+  });
+}
+```
+
+Rule skeleton:
+```ts
+export class AttackRollRule extends BaseRule<AttackCommand> {
+  name = RULE_NAMES.ATTACK_ROLL;
+  apply(ctx, command) { /* pure mechanics, returns result fragment */ }
+}
+```
+
+Result type pattern:
+```ts
+export type AttackResult =
+  | { kind: 'attack:hit'; damage: number }
+  | { kind: 'attack:miss'; reason: 'AC' | 'FUMBLE' };
+```
+
+Error pattern:
+```ts
+export interface DomainError { code: string; message: string; details?: unknown }
+```
+
+No alternative field names (`resultType`, `status`) are allowed; always use `kind` for discriminants.
+
+---
+

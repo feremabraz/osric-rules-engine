@@ -1,6 +1,6 @@
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
-import { BaseRule } from '@osric/core/Rule';
+import { BaseRule, isFailure, isSuccess } from '@osric/core/Rule';
 import type { RuleResult } from '@osric/core/Rule';
 import type { CharacterId } from '@osric/types';
 import type { Character } from '@osric/types/character';
@@ -16,7 +16,7 @@ interface SearchRequest {
 }
 
 interface SearchResult {
-  success: boolean;
+  kind: 'success' | 'failure';
   foundItems: string[];
   timeRequired: number;
   discoveryDetails: string[];
@@ -55,13 +55,13 @@ export class SearchRule extends BaseRule {
     }
 
     const validation = this.validateSearch(character, data);
-    if (!validation.success) {
+    if (isFailure(validation)) {
       return this.createFailureResult(validation.message);
     }
 
     const result = this.performSearch(character, data, context);
 
-    if (result.success) {
+    if (isSuccess(result)) {
       this.applySearchEffects(character, result, context);
     }
 
@@ -71,9 +71,9 @@ export class SearchRule extends BaseRule {
   private validateSearch(
     character: Character,
     data: SearchRequest
-  ): { success: boolean; message: string } {
+  ): { kind: 'success' | 'failure'; message: string } {
     if (character.hitPoints.current <= 0) {
-      return { success: false, message: 'Character is unconscious or dead' };
+      return { kind: 'failure', message: 'Character is unconscious or dead' };
     }
 
     const hinderingEffects =
@@ -86,7 +86,7 @@ export class SearchRule extends BaseRule {
 
     if (hinderingEffects.length > 0) {
       return {
-        success: false,
+        kind: 'failure',
         message: `Cannot search effectively due to: ${hinderingEffects.map((e) => e.name).join(', ')}`,
       };
     }
@@ -94,12 +94,12 @@ export class SearchRule extends BaseRule {
     const minTime = this.getMinimumSearchTime(data.searchType, data.thoroughness);
     if (data.timeSpent < minTime) {
       return {
-        success: false,
+        kind: 'failure',
         message: `${data.searchType} requires at least ${minTime} rounds for ${data.thoroughness} search`,
       };
     }
 
-    return { success: true, message: 'Search is valid' };
+    return { kind: 'success', message: 'Search is valid' };
   }
 
   private performSearch(
@@ -119,17 +119,17 @@ export class SearchRule extends BaseRule {
     const finalChance = Math.min(95, Math.max(5, baseChance + totalModifier));
 
     const roll = Math.random() * 100;
-    const success = roll <= finalChance;
+    const succeeded = roll <= finalChance;
 
     const timeRequired = this.calculateActualSearchTime(data.timeSpent, data.thoroughness);
     const fatigueGained = this.calculateSearchFatigue(character, timeRequired);
 
-    if (success) {
+    if (succeeded) {
       const foundItems = this.determineFoundItems(data.searchType, data.area);
       const discoveryDetails = this.generateDiscoveryDetails(foundItems, data.searchType);
 
       return {
-        success: true,
+        kind: 'success',
         foundItems,
         timeRequired,
         discoveryDetails,
@@ -139,7 +139,7 @@ export class SearchRule extends BaseRule {
     }
 
     return {
-      success: false,
+      kind: 'failure',
       foundItems: [],
       timeRequired,
       discoveryDetails: ['No significant discoveries made'],

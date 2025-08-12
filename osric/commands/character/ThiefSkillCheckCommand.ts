@@ -1,5 +1,6 @@
 import { ThiefSkillCheckValidator } from '@osric/commands/character/validators/ThiefSkillCheckValidator';
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { Character } from '@osric/types/character';
@@ -63,7 +64,7 @@ export class ThiefSkillCheckCommand extends BaseCommand<ThiefSkillCheckParameter
       }
 
       // Normalize temporary key to the convention used by rules
-      context.setTemporary('character:thief-skill:params', this.parameters);
+      context.setTemporary(ContextKeys.THIEF_SKILL_PARAMS, this.parameters);
 
       const baseSkillPercent = this.getBaseSkillPercentage(character, skillType);
 

@@ -1,5 +1,6 @@
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
+import { isFailure } from '@osric/core/Rule';
 
 import { MemorizeSpellValidator } from '@osric/commands/spells/validators/MemorizeSpellValidator';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
@@ -53,7 +54,7 @@ export class MemorizeSpellCommand extends BaseCommand<MemorizeSpellParameters> {
       }
 
       const slotResult = this.checkSpellSlotAvailability(caster, this.parameters.spellLevel);
-      if (!slotResult.success) {
+      if (isFailure(slotResult)) {
         return this.createFailureResult(slotResult.message);
       }
 
@@ -97,7 +98,7 @@ export class MemorizeSpellCommand extends BaseCommand<MemorizeSpellParameters> {
     }
 
     const slotResult = this.checkSpellSlotAvailability(caster, this.parameters.spellLevel);
-    return slotResult.success || !!this.parameters.replaceSpell;
+    return isFailure(slotResult) === false || !!this.parameters.replaceSpell;
   }
 
   public getRequiredRules(): string[] {
@@ -214,12 +215,12 @@ export class MemorizeSpellCommand extends BaseCommand<MemorizeSpellParameters> {
   private checkSpellSlotAvailability(
     character: Character,
     spellLevel: number
-  ): { success: boolean; message: string } {
+  ): { kind: 'success' | 'failure'; message: string } {
     const totalSlots = character.spellSlots[spellLevel] || 0;
 
     if (totalSlots === 0) {
       return {
-        success: false,
+        kind: 'failure',
         message: `${character.name} has no spell slots for level ${spellLevel} spells`,
       };
     }
@@ -229,13 +230,13 @@ export class MemorizeSpellCommand extends BaseCommand<MemorizeSpellParameters> {
 
     if (usedSlots >= totalSlots) {
       return {
-        success: false,
+        kind: 'failure',
         message: `${character.name} has no available spell slots for level ${spellLevel} spells (${usedSlots}/${totalSlots} used)`,
       };
     }
 
     return {
-      success: true,
+      kind: 'success',
       message: `Available spell slot found (${usedSlots + 1}/${totalSlots})`,
     };
   }

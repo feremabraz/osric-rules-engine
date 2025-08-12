@@ -1,6 +1,7 @@
 import { ReactionRollValidator } from '@osric/commands/npc/validators/ReactionRollValidator';
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
+import { isFailure } from '@osric/core/Rule';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { ReactionRollParams } from '@osric/rules/npc/ReactionRules';
 import type { CharacterId, MonsterId } from '@osric/types';
@@ -47,7 +48,7 @@ export class ReactionRollCommand extends BaseCommand<ReactionRollParameters> {
 
     const ruleResult = await reactionRule.execute(context, this);
 
-    if (!ruleResult.success) {
+    if (isFailure(ruleResult)) {
       return this.createFailureResult(ruleResult.message, undefined, ruleResult.data);
     }
 

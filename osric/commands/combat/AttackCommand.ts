@@ -1,7 +1,9 @@
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
+import { isFailure, isSuccess } from '@osric/core/Rule';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
-import { COMMAND_TYPES } from '@osric/types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 
 import { AttackValidator } from '@osric/commands/combat/validators/AttackValidator';
 import type { CharacterId, ItemId, MonsterId } from '@osric/types';
@@ -48,8 +50,8 @@ export class AttackCommand extends BaseCommand<AttackParameters> {
       const weapon = this.getWeapon(attacker);
 
       const validationResult = this.validateAttack(attacker, target, weapon);
-      if (!validationResult.success) {
-        return this.createFailureResult(validationResult.message);
+      if (isFailure(validationResult)) {
+        return validationResult;
       }
 
       const attackContext = {
@@ -61,7 +63,7 @@ export class AttackCommand extends BaseCommand<AttackParameters> {
         isChargedAttack: this.parameters.isChargedAttack || false,
       };
 
-      context.setTemporary('combat:attack:context', attackContext);
+      context.setTemporary(ContextKeys.COMBAT_ATTACK_CONTEXT, attackContext);
 
       return this.createSuccessResult('Attack command prepared for rule processing');
     } catch (error) {
@@ -82,11 +84,16 @@ export class AttackCommand extends BaseCommand<AttackParameters> {
     const weapon = this.getWeapon(attacker);
     const validationResult = this.validateAttack(attacker, target, weapon);
 
-    return validationResult.success;
+    return isSuccess(validationResult);
   }
 
   getRequiredRules(): string[] {
-    return ['attack-roll', 'damage-calculation', 'combat-effects', 'combat-result'];
+    return [
+      RULE_NAMES.ATTACK_ROLL,
+      RULE_NAMES.DAMAGE_CALCULATION,
+      RULE_NAMES.CRITICAL_HITS,
+      RULE_NAMES.MULTIPLE_ATTACKS,
+    ];
   }
 
   private getAttacker(context: GameContext): CharacterData | MonsterData | null {
@@ -125,19 +132,19 @@ export class AttackCommand extends BaseCommand<AttackParameters> {
     attacker: CharacterData | MonsterData,
     target: CharacterData | MonsterData,
     weapon?: Weapon
-  ): { success: boolean; message: string } {
+  ): { kind: 'success' | 'failure'; message: string } {
     if (attacker.hitPoints.current <= 0) {
-      return { success: false, message: 'Attacker is unconscious or dead' };
+      return { kind: 'failure', message: 'Attacker is unconscious or dead' };
     }
 
     if (target.hitPoints.current < -10) {
-      return { success: false, message: 'Target is already dead' };
+      return { kind: 'failure', message: 'Target is already dead' };
     }
 
     if (weapon && 'inventory' in attacker) {
       const hasWeapon = attacker.inventory.some((item) => item.id === weapon.id);
       if (!hasWeapon) {
-        return { success: false, message: 'Attacker does not have the specified weapon' };
+        return { kind: 'failure', message: 'Attacker does not have the specified weapon' };
       }
     }
 
@@ -150,10 +157,10 @@ export class AttackCommand extends BaseCommand<AttackParameters> {
       ) || [];
 
     if (preventingEffects.length > 0) {
-      return { success: false, message: `Attacker is ${preventingEffects[0].name.toLowerCase()}` };
+      return { kind: 'failure', message: `Attacker is ${preventingEffects[0].name.toLowerCase()}` };
     }
 
-    return { success: true, message: 'Attack is valid' };
+    return { kind: 'success', message: 'Attack is valid' };
   }
 
   getCommandType(): string {

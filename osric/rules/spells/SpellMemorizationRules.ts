@@ -1,5 +1,5 @@
 import type { GameContext } from '@osric/core/GameContext';
-import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import { BaseRule, type RuleResult, isFailure } from '@osric/core/Rule';
 import type { Character, Spell } from '@osric/types';
 import { RULE_NAMES } from '@osric/types/constants';
 
@@ -25,7 +25,7 @@ export class SpellMemorizationRules extends BaseRule {
       }
 
       const validationResult = this.validateMemorization(caster, spell, spellLevel);
-      if (!validationResult.success) {
+      if (isFailure(validationResult)) {
         return validationResult;
       }
 

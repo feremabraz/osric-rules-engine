@@ -203,15 +203,15 @@ export namespace DiceEngine {
     saveValue: number,
     modifier = 0
   ): {
-    success: boolean;
+    kind: 'success' | 'failure';
     roll: DiceRoll;
     target: number;
   } {
     const rollResult = roll(`1d20+${modifier}`);
-    const success = rollResult.total >= saveValue;
+    const succeeded = rollResult.total >= saveValue;
 
     return {
-      success,
+      kind: succeeded ? 'success' : 'failure',
       roll: rollResult,
       target: saveValue,
     };
@@ -296,14 +296,14 @@ export function rollSavingThrow(
   saveValue: number,
   modifier = 0
 ): {
-  success: boolean;
+  kind: 'success' | 'failure';
   roll: number;
   total: number;
   target: number;
 } {
   const result = DiceEngine.rollSavingThrow(saveValue, modifier);
   return {
-    success: result.success,
+    kind: result.kind,
     roll: result.roll.rolls[0], // First die roll
     total: result.roll.total,
     target: result.target,

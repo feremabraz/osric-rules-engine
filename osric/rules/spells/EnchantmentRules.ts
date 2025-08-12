@@ -1,6 +1,6 @@
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
-import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import { BaseRule, type RuleResult, isFailure, isSuccess } from '@osric/core/Rule';
 import type { Character } from '@osric/types/character';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 import type { Item } from '@osric/types/item';
@@ -41,7 +41,7 @@ export class EnchantmentRules extends BaseRule {
 
     try {
       const validation = this.validateEnchanter(enchantmentContext.enchanter, enchantmentContext);
-      if (!validation.success) {
+      if (isFailure(validation)) {
         return this.createFailureResult(validation.reason, {
           enchanter: enchantmentContext.enchanter.name,
           issue: validation.reason,
@@ -51,7 +51,7 @@ export class EnchantmentRules extends BaseRule {
       const requirements = this.calculateEnchantmentRequirements(enchantmentContext);
 
       const requirementCheck = this.checkRequirements(enchantmentContext.enchanter, requirements);
-      if (!requirementCheck.success) {
+      if (isFailure(requirementCheck)) {
         return this.createFailureResult(requirementCheck.reason, {
           missingRequirements: requirementCheck.missing,
         });
@@ -59,7 +59,7 @@ export class EnchantmentRules extends BaseRule {
 
       const enchantmentResult = this.performEnchantment(enchantmentContext, requirements);
 
-      if (enchantmentResult.success) {
+      if (isSuccess(enchantmentResult)) {
         const enchantedItem = this.applyEnchantment(
           enchantmentContext.targetItem,
           enchantmentContext.enchantmentLevel,
@@ -101,13 +101,13 @@ export class EnchantmentRules extends BaseRule {
   private validateEnchanter(
     enchanter: Character,
     context: EnchantmentContext
-  ): { success: boolean; reason: string } {
+  ): { kind: 'success' | 'failure'; reason: string } {
     const magicUserLevel = enchanter.classes['Magic-User'];
     const clericLevel = enchanter.classes.Cleric;
 
     if (!magicUserLevel && !clericLevel) {
       return {
-        success: false,
+        kind: 'failure',
         reason: 'Only Magic-Users and Clerics can perform enchantments',
       };
     }
@@ -117,14 +117,14 @@ export class EnchantmentRules extends BaseRule {
 
     if (characterLevel < minLevelRequired) {
       return {
-        success: false,
+        kind: 'failure',
         reason: `Minimum level ${minLevelRequired} required for +${context.enchantmentLevel} enchantment`,
       };
     }
 
     if (context.enchantmentLevel > 2 && enchanter.abilities.intelligence < 15) {
       return {
-        success: false,
+        kind: 'failure',
         reason: 'Intelligence 15+ required for +3 or higher enchantments',
       };
     }
@@ -138,12 +138,11 @@ export class EnchantmentRules extends BaseRule {
 
     if (missingSpells.length > 0) {
       return {
-        success: false,
+        kind: 'failure',
         reason: `Missing required spells: ${missingSpells.join(', ')}`,
       };
     }
-
-    return { success: true, reason: '' };
+    return { kind: 'success', reason: '' };
   }
 
   private calculateEnchantmentRequirements(context: EnchantmentContext) {
@@ -244,7 +243,7 @@ export class EnchantmentRules extends BaseRule {
       materialsRequired: MaterialRequirement[];
       baseSuccessChance: number;
     }
-  ): { success: boolean; reason: string; missing?: string[] } {
+  ): { kind: 'success' | 'failure'; reason: string; missing?: string[] } {
     const missing: string[] = [];
 
     const totalCost = requirements.materialsRequired.reduce(
@@ -258,29 +257,28 @@ export class EnchantmentRules extends BaseRule {
 
     if (missing.length > 0) {
       return {
-        success: false,
+        kind: 'failure',
         reason: `Insufficient resources: ${missing.join(', ')}`,
         missing,
       };
     }
-
-    return { success: true, reason: '' };
+    return { kind: 'success', reason: '' };
   }
 
   private performEnchantment(
     context: EnchantmentContext,
     requirements: { baseSuccessChance: number; materialsRequired: MaterialRequirement[] }
   ): {
-    success: boolean;
+    kind: 'success' | 'failure';
     reason: string;
     powerLevel?: number;
     itemDestroyed?: boolean;
     materialsLost?: string[];
   } {
     const roll = Math.random();
-    const success = roll <= requirements.baseSuccessChance;
+    const succeeded = roll <= requirements.baseSuccessChance;
 
-    if (success) {
+    if (succeeded) {
       const powerRoll = Math.random();
       let powerLevel = context.enchantmentLevel;
 
@@ -289,7 +287,7 @@ export class EnchantmentRules extends BaseRule {
       }
 
       return {
-        success: true,
+        kind: 'success',
         reason: 'Enchantment ritual completed successfully',
         powerLevel,
       };
@@ -314,7 +312,7 @@ export class EnchantmentRules extends BaseRule {
     ];
 
     return {
-      success: false,
+      kind: 'failure',
       reason: failureReasons[Math.floor(Math.random() * failureReasons.length)],
       itemDestroyed,
       materialsLost,

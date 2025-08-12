@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { Character as CharacterData } from '@osric/types/character';
@@ -49,7 +50,9 @@ export class MountedChargeRule extends BaseRule {
   name = 'mounted-charge';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const mountedContext = context.getTemporary('combat:mounted:context') as MountedCombatContext;
+    const mountedContext = context.getTemporary(
+      ContextKeys.COMBAT_MOUNTED_CONTEXT
+    ) as MountedCombatContext;
 
     if (!mountedContext) {
       return this.createFailureResult('No mounted combat context found');
@@ -69,8 +72,11 @@ export class MountedChargeRule extends BaseRule {
 
     const chargeResult = this.resolveMountedCharge(rider, mount, target, weapon);
 
-    context.setTemporary('mounted-charge-result', chargeResult);
-    context.setTemporary('damage-multiplier', chargeResult.damageMultiplier);
+    context.setTemporary(ContextKeys.COMBAT_MOUNTED_CHARGE_RESULT, chargeResult);
+    context.setTemporary(
+      ContextKeys.COMBAT_MOUNTED_DAMAGE_MULTIPLIER,
+      chargeResult.damageMultiplier
+    );
 
     return this.createSuccessResult(
       chargeResult.message,
@@ -85,7 +91,9 @@ export class MountedChargeRule extends BaseRule {
     if (command.type !== COMMAND_TYPES.ATTACK && command.type !== COMMAND_TYPES.MOUNTED_CHARGE)
       return false;
 
-    const mountedContext = context.getTemporary('combat:mounted:context') as MountedCombatContext;
+    const mountedContext = context.getTemporary(
+      ContextKeys.COMBAT_MOUNTED_CONTEXT
+    ) as MountedCombatContext;
     return mountedContext !== null && mountedContext.isChargeAttack === true;
   }
 
@@ -165,7 +173,9 @@ export class MountedCombatRule extends BaseRule {
   name = 'mounted-combat';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const mountedContext = context.getTemporary('combat:mounted:context') as MountedCombatContext;
+    const mountedContext = context.getTemporary(
+      ContextKeys.COMBAT_MOUNTED_CONTEXT
+    ) as MountedCombatContext;
 
     if (!mountedContext) {
       return this.createFailureResult('No mounted combat context found');
@@ -175,7 +185,7 @@ export class MountedCombatRule extends BaseRule {
 
     const modifiers = this.getMountedCombatModifiers(rider, mount);
 
-    context.setTemporary('mounted-combat-modifiers', modifiers);
+    context.setTemporary(ContextKeys.COMBAT_MOUNTED_MODIFIERS, modifiers);
 
     return this.createSuccessResult(
       `Mounted combat modifiers applied: ${modifiers.attackBonus >= 0 ? '+' : ''}${modifiers.attackBonus} attack, ` +
@@ -188,7 +198,9 @@ export class MountedCombatRule extends BaseRule {
     if (command.type !== COMMAND_TYPES.ATTACK && command.type !== COMMAND_TYPES.MOUNTED_COMBAT)
       return false;
 
-    const mountedContext = context.getTemporary('combat:mounted:context') as MountedCombatContext;
+    const mountedContext = context.getTemporary(
+      ContextKeys.COMBAT_MOUNTED_CONTEXT
+    ) as MountedCombatContext;
     return (
       mountedContext !== null && !mountedContext.isChargeAttack && !mountedContext.isDismounting
     );
@@ -245,7 +257,9 @@ export class DismountRule extends BaseRule {
   name = 'dismount';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const mountedContext = context.getTemporary('combat:mounted:context') as MountedCombatContext;
+    const mountedContext = context.getTemporary(
+      ContextKeys.COMBAT_MOUNTED_CONTEXT
+    ) as MountedCombatContext;
 
     if (!mountedContext || !mountedContext.isDismounting) {
       return this.createFailureResult('No dismounting context found');
@@ -255,9 +269,9 @@ export class DismountRule extends BaseRule {
 
     const dismountResult = this.resolveDismount(rider, mount);
 
-    context.setTemporary('dismount-result', dismountResult);
+    context.setTemporary(ContextKeys.COMBAT_MOUNTED_DISMOUNT_RESULT, dismountResult);
 
-    context.setTemporary('combat:mounted:context', null);
+    context.setTemporary(ContextKeys.COMBAT_MOUNTED_CONTEXT, null);
 
     return this.createSuccessResult(
       dismountResult.message,
@@ -271,7 +285,9 @@ export class DismountRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     if (command.type !== COMMAND_TYPES.DISMOUNT) return false;
 
-    const mountedContext = context.getTemporary('combat:mounted:context') as MountedCombatContext;
+    const mountedContext = context.getTemporary(
+      ContextKeys.COMBAT_MOUNTED_CONTEXT
+    ) as MountedCombatContext;
     return mountedContext !== null && mountedContext.isDismounting === true;
   }
 
@@ -325,15 +341,15 @@ export class MountedCombatEligibilityRule extends BaseRule {
   name = 'mounted-combat-eligibility';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const rider = context.getTemporary('combat:mounted:rider') as CharacterData;
-    const mount = context.getTemporary('combat:mounted:mount') as Mount;
+    const rider = context.getTemporary(ContextKeys.COMBAT_MOUNTED_RIDER) as CharacterData;
+    const mount = context.getTemporary(ContextKeys.COMBAT_MOUNTED_MOUNT) as Mount;
 
     if (!rider || !mount) {
       return this.createFailureResult('Rider or mount not found in context');
     }
 
     const eligibility = this.checkMountedCombatEligibility(rider, mount);
-    context.setTemporary('mounted-combat-eligibility', eligibility);
+    context.setTemporary(ContextKeys.COMBAT_MOUNTED_ELIGIBILITY, eligibility);
 
     return this.createSuccessResult(
       eligibility.canFight
@@ -345,8 +361,8 @@ export class MountedCombatEligibilityRule extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     if (command.type !== COMMAND_TYPES.CHECK_MOUNTED_COMBAT) return false;
 
-    const rider = context.getTemporary('combat:mounted:rider') as CharacterData;
-    const mount = context.getTemporary('combat:mounted:mount') as Mount;
+    const rider = context.getTemporary(ContextKeys.COMBAT_MOUNTED_RIDER) as CharacterData;
+    const mount = context.getTemporary(ContextKeys.COMBAT_MOUNTED_MOUNT) as Mount;
 
     return rider !== null && mount !== null;
   }

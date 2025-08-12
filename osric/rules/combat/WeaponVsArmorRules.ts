@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { Character as CharacterData } from '@osric/types/character';
@@ -26,7 +27,7 @@ export class WeaponVsArmorRule extends BaseRule {
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
     const weaponArmorContext = context.getTemporary(
-      'combat:weapon-armor:context'
+      ContextKeys.COMBAT_WEAPON_ARMOR_CONTEXT
     ) as WeaponVsArmorContext;
 
     if (!weaponArmorContext) {
@@ -37,7 +38,7 @@ export class WeaponVsArmorRule extends BaseRule {
 
     const adjustment = this.getWeaponVsArmorAdjustment(weapon, defender.armorClass);
 
-    context.setTemporary('weapon-vs-armor-adjustment', adjustment);
+    context.setTemporary(ContextKeys.COMBAT_WEAPON_VS_ARMOR_ADJUSTMENT, adjustment);
 
     const adjustmentText =
       adjustment > 0 ? `+${adjustment}` : adjustment < 0 ? `${adjustment}` : '0';
@@ -51,7 +52,7 @@ export class WeaponVsArmorRule extends BaseRule {
     if (command.type !== COMMAND_TYPES.ATTACK) return false;
 
     const weaponArmorContext = context.getTemporary(
-      'combat:weapon-armor:context'
+      ContextKeys.COMBAT_WEAPON_ARMOR_CONTEXT
     ) as WeaponVsArmorContext;
     return weaponArmorContext !== null;
   }
@@ -152,7 +153,7 @@ export class WeaponTypeRule extends BaseRule {
   name = 'weapon-type';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const weapon = context.getTemporary('combat:attack:weapon') as Weapon;
+    const weapon = context.getTemporary(ContextKeys.COMBAT_ATTACK_WEAPON) as Weapon;
 
     if (!weapon) {
       return this.createFailureResult('No weapon found in context');
@@ -161,8 +162,8 @@ export class WeaponTypeRule extends BaseRule {
     const weaponType = this.getWeaponType(weapon);
     const isVersatile = this.isVersatileWeapon(weapon);
 
-    context.setTemporary('weapon-type', weaponType);
-    context.setTemporary('weapon-is-versatile', isVersatile);
+    context.setTemporary(ContextKeys.COMBAT_WEAPON_TYPE, weaponType);
+    context.setTemporary(ContextKeys.COMBAT_WEAPON_IS_VERSATILE, isVersatile);
 
     return this.createSuccessResult(
       `${weapon.name} is a ${weaponType.toLowerCase()} weapon${isVersatile ? ' (versatile damage type)' : ''}`
@@ -173,7 +174,7 @@ export class WeaponTypeRule extends BaseRule {
     if (command.type !== COMMAND_TYPES.ATTACK && command.type !== COMMAND_TYPES.CHECK_WEAPON_TYPE)
       return false;
 
-    const weapon = context.getTemporary('combat:attack:weapon') as Weapon;
+    const weapon = context.getTemporary(ContextKeys.COMBAT_ATTACK_WEAPON) as Weapon;
     return weapon !== null;
   }
 
@@ -230,7 +231,9 @@ export class ArmorCategoryRule extends BaseRule {
   name = 'armor-category';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const target = context.getTemporary('combat:attack:target') as CharacterData | MonsterData;
+    const target = context.getTemporary(ContextKeys.COMBAT_ATTACK_TARGET) as
+      | CharacterData
+      | MonsterData;
 
     if (!target) {
       return this.createFailureResult('No target found in context');
@@ -239,8 +242,8 @@ export class ArmorCategoryRule extends BaseRule {
     const armorCategory = this.getArmorCategory(target.armorClass);
     const armorEffectiveness = this.getArmorEffectiveness(target.armorClass);
 
-    context.setTemporary('armor-category', armorCategory);
-    context.setTemporary('armor-effectiveness', armorEffectiveness);
+    context.setTemporary(ContextKeys.COMBAT_ARMOR_CATEGORY, armorCategory);
+    context.setTemporary(ContextKeys.COMBAT_ARMOR_EFFECTIVENESS, armorEffectiveness);
 
     return this.createSuccessResult(
       `Target has ${armorCategory} (AC ${target.armorClass}) - ${armorEffectiveness} protection`
@@ -251,7 +254,9 @@ export class ArmorCategoryRule extends BaseRule {
     if (command.type !== COMMAND_TYPES.ATTACK && command.type !== COMMAND_TYPES.CHECK_ARMOR)
       return false;
 
-    const target = context.getTemporary('combat:attack:target') as CharacterData | MonsterData;
+    const target = context.getTemporary(ContextKeys.COMBAT_ATTACK_TARGET) as
+      | CharacterData
+      | MonsterData;
     return target !== null;
   }
 

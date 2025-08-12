@@ -1,7 +1,7 @@
 import type { Character } from './character';
 import type { Item } from './item';
-import type { Spell } from './spell';
 import type { SavingThrowType } from './shared';
+import type { Spell } from './spell';
 
 export type SpellComponentType = 'V' | 'S' | 'M';
 
@@ -63,7 +63,7 @@ export interface MagicScroll extends Item {
 }
 
 export interface IdentificationResult {
-  success: boolean;
+  kind: 'success' | 'failure';
   itemIdentified: boolean;
   propertiesRevealed: string[];
   commandWordRevealed: boolean;

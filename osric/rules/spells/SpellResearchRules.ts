@@ -1,4 +1,5 @@
 import type { Character } from '@osric/types/character';
+import { ContextKeys } from '../../core/ContextKeys';
 import { DiceEngine } from '../../core/Dice';
 import type { GameContext } from '../../core/GameContext';
 import { BaseRule, type RuleResult } from '../../core/Rule';
@@ -19,7 +20,7 @@ export class SpellResearchRequirementsRule extends BaseRule {
       spellName: string;
       spellLevel: number;
       spellRarity: number;
-    }>('researchRequest');
+    }>(ContextKeys.SPELL_RESEARCH_REQUEST);
 
     if (!researchRequest) {
       return this.createFailureResult('No spell research request found');
@@ -116,7 +117,7 @@ export class SpellResearchStartRule extends BaseRule {
       spellName: string;
       spellLevel: number;
       spellRarity: number;
-    }>('startResearch');
+    }>(ContextKeys.SPELL_RESEARCH_START);
 
     if (!researchStart) {
       return this.createFailureResult('No research start data found');
@@ -148,7 +149,7 @@ export class SpellResearchStartRule extends BaseRule {
       failureChance: finalFailureChance,
     };
 
-    context.setTemporary('spell:research:active', research);
+    context.setTemporary(ContextKeys.SPELL_RESEARCH_ACTIVE, research);
 
     const message =
       `${character.name} begins researching "${spellName}". ` +
@@ -220,7 +221,7 @@ export class SpellResearchProgressRule extends BaseRule {
       character: Character;
       daysWorked: number;
       goldSpent: number;
-    }>('continueResearch');
+    }>(ContextKeys.SPELL_RESEARCH_PROGRESS);
 
     if (!researchProgress) {
       return this.createFailureResult('No research progress data found');
@@ -268,7 +269,7 @@ export class SpellResearchProgressRule extends BaseRule {
       estimatedCompletion: newEstimatedCompletion,
     };
 
-    context.setTemporary('spell:research:active', updatedResearch);
+    context.setTemporary(ContextKeys.SPELL_RESEARCH_ACTIVE, updatedResearch);
 
     let message: string;
     if (progressMade < 0) {
@@ -303,7 +304,7 @@ export class SpellResearchSuccessRule extends BaseRule {
     const researchCompletion = context.getTemporary<{
       research: SpellResearch;
       character: Character;
-    }>('completeResearch');
+    }>(ContextKeys.SPELL_RESEARCH_COMPLETE);
 
     if (!researchCompletion) {
       return this.createFailureResult('No research completion data found');
@@ -328,12 +329,12 @@ export class SpellResearchSuccessRule extends BaseRule {
         spellLevel: research.targetLevel,
         totalTime: research.daysSpent,
         totalCost: research.goldSpent,
-        success: true,
+        kind: 'success' as const,
       });
 
       return this.createSuccessResult(message, {
         research,
-        success: true,
+        kind: 'success' as const,
         rollResult: successRoll.total,
         failureChance: research.failureChance,
       });
@@ -353,7 +354,7 @@ export class SpellResearchSuccessRule extends BaseRule {
 
       return this.createFailureResult(message, {
         research,
-        success: false,
+        kind: 'failure' as const,
         catastrophe: true,
         rollResult: successRoll.total,
         catastropheRoll: catastropheRoll.total,
@@ -368,11 +369,11 @@ export class SpellResearchSuccessRule extends BaseRule {
       failureChance: Math.max(1, research.failureChance - 5),
     };
 
-    context.setTemporary('spell:research:active', updatedResearch);
+    context.setTemporary(ContextKeys.SPELL_RESEARCH_ACTIVE, updatedResearch);
 
     return this.createFailureResult(message, {
       research: updatedResearch,
-      success: false,
+      kind: 'failure' as const,
       catastrophe: false,
       rollResult: successRoll.total,
       canContinue: true,
@@ -396,7 +397,7 @@ export class SpellLearningRule extends BaseRule {
       spellLevel: number;
       source: 'scroll' | 'spellbook' | 'tutor' | 'library';
       difficultyModifier?: number;
-    }>('learnSpell');
+    }>(ContextKeys.SPELL_RESEARCH_LEARN);
 
     if (!spellLearning) {
       return this.createFailureResult('No spell learning data found');

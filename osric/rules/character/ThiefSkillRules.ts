@@ -1,6 +1,6 @@
 import type { Command } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
-import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import { BaseRule, type RuleResult, isFailure } from '@osric/core/Rule';
 import type { CharacterId } from '@osric/types';
 import type { Character } from '@osric/types/character';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
@@ -40,27 +40,17 @@ export class ThiefSkillRule extends BaseRule {
     );
 
     if (!skillData) {
-      return this.createFailureResult(
-        'No thief skill check data provided',
-        undefined,
-        false,
-        'thief-skill:error'
-      );
+      return this.createFailureResult('No thief skill check data provided');
     }
 
     try {
       const character = context.getEntity<Character>(skillData.characterId);
       if (!character) {
-        return this.createFailureResult(
-          `Character ${skillData.characterId} not found`,
-          undefined,
-          false,
-          'thief-skill:error'
-        );
+        return this.createFailureResult(`Character ${skillData.characterId} not found`);
       }
 
       const validationResult = this.validateThiefSkillUse(character, skillData.skillType);
-      if (!validationResult.success) {
+      if (isFailure(validationResult)) {
         return validationResult;
       }
 
@@ -68,29 +58,19 @@ export class ThiefSkillRule extends BaseRule {
 
       const specialRules = this.applySpecialRules(character, skillData, skillCalculation);
 
-      return this.createSuccessResult(
-        'Thief skill validation complete',
-        {
-          characterId: skillData.characterId,
-          skillType: skillData.skillType,
-          baseChance: skillCalculation.baseChance,
-          finalChance: skillCalculation.finalChance,
-          modifiers: skillCalculation.modifiers,
-          specialRules,
-          canAttempt: validationResult.canAttempt,
-          restrictions: validationResult.restrictions,
-        },
-        undefined,
-        undefined,
-        false,
-        'thief-skill:calculation'
-      );
+      return this.createSuccessResult('Thief skill validation complete', {
+        characterId: skillData.characterId,
+        skillType: skillData.skillType,
+        baseChance: skillCalculation.baseChance,
+        finalChance: skillCalculation.finalChance,
+        modifiers: skillCalculation.modifiers,
+        specialRules,
+        canAttempt: validationResult.canAttempt,
+        restrictions: validationResult.restrictions,
+      });
     } catch (error) {
       return this.createFailureResult(
-        `Failed to process thief skill rule: ${error instanceof Error ? error.message : String(error)}`,
-        undefined,
-        false,
-        'thief-skill:error'
+        `Failed to process thief skill rule: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -110,24 +90,14 @@ export class ThiefSkillRule extends BaseRule {
 
     if (!hasThiefSkills) {
       return {
-        ...this.createFailureResult(
-          'Character does not have thief skills',
-          undefined,
-          false,
-          'thief-skill:validation'
-        ),
+        ...this.createFailureResult('Character does not have thief skills'),
         canAttempt: false,
       };
     }
 
     if (skillType === 'read-languages' && level < 4) {
       return {
-        ...this.createFailureResult(
-          'Read Languages skill requires level 4 or higher',
-          undefined,
-          false,
-          'thief-skill:validation'
-        ),
+        ...this.createFailureResult('Read Languages skill requires level 4 or higher'),
         canAttempt: false,
       };
     }
@@ -144,14 +114,7 @@ export class ThiefSkillRule extends BaseRule {
     }
 
     return {
-      ...this.createSuccessResult(
-        'Character can use thief skill',
-        undefined,
-        undefined,
-        undefined,
-        false,
-        'thief-skill:validation'
-      ),
+      ...this.createSuccessResult('Character can use thief skill'),
       canAttempt: true,
       restrictions,
     };

@@ -2,6 +2,7 @@ import { GainExperienceValidator } from '@osric/commands/character/validators/Ga
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
 import type { GameContext } from '@osric/core/GameContext';
 import { calculateGroupXP, calculateMonsterXP } from '@osric/core/MonsterXP';
+import { isFailure } from '@osric/core/Rule';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import {
   determineLevel,
@@ -111,7 +112,7 @@ export class GainExperienceCommand extends BaseCommand<GainExperienceParameters>
           partyShare.shareRatio
         );
 
-        if (!shareResult.success) {
+        if (isFailure(shareResult)) {
           return shareResult;
         }
 
@@ -250,9 +251,8 @@ export class GainExperienceCommand extends BaseCommand<GainExperienceParameters>
       if (!member) {
         return {
           kind: 'failure',
-          success: false,
           message: `Party member with ID "${memberId}" not found`,
-        };
+        } as CommandResult & { experienceShares?: Record<string, number> };
       }
       validMembers.push(member);
     }
@@ -260,9 +260,8 @@ export class GainExperienceCommand extends BaseCommand<GainExperienceParameters>
     if (validMembers.length === 0) {
       return {
         kind: 'failure',
-        success: false,
         message: 'No valid party members found for experience sharing',
-      };
+      } as CommandResult & { experienceShares?: Record<string, number> };
     }
 
     if (!shareRatio) {
@@ -279,9 +278,8 @@ export class GainExperienceCommand extends BaseCommand<GainExperienceParameters>
 
     return {
       kind: 'success',
-      success: true,
       message: 'Experience shares calculated',
       experienceShares,
-    };
+    } as CommandResult & { experienceShares?: Record<string, number> };
   }
 }

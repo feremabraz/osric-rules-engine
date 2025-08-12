@@ -64,7 +64,7 @@ export class OSRICErrorBuilder {
 }
 
 export interface CommandResult {
-  success: boolean;
+  kind: 'success' | 'failure';
   message: string;
   data?: Record<string, unknown>;
   effects?: string[];
@@ -73,7 +73,7 @@ export interface CommandResult {
 }
 
 export interface RuleResult {
-  success: boolean;
+  kind: 'success' | 'failure';
   message: string;
   stopChain?: boolean;
   critical?: boolean;

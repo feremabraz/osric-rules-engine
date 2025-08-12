@@ -27,7 +27,7 @@ export enum TerrainType {
 }
 
 export interface MovementResult {
-  success: boolean;
+  kind: 'success' | 'failure';
   finalPosition: Position;
   timeElapsed: number;
   movementUsed: number;
@@ -83,7 +83,7 @@ export class MovementCalculator {
 
     if (!path) {
       return {
-        success: false,
+        kind: 'failure',
         finalPosition: from,
         timeElapsed: 0,
         movementUsed: 0,
@@ -99,7 +99,7 @@ export class MovementCalculator {
       const reachablePosition = this.findReachablePosition(from, to, movementRate, context);
 
       return {
-        success: false,
+        kind: 'failure',
         finalPosition: reachablePosition,
         timeElapsed: 1,
         movementUsed: movementRate,
@@ -120,7 +120,7 @@ export class MovementCalculator {
     );
 
     return {
-      success: true,
+      kind: 'success',
       finalPosition: to,
       timeElapsed,
       movementUsed: totalCost,

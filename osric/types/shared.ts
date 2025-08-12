@@ -48,7 +48,7 @@ export interface ClassAbility {
 }
 
 export interface ActionResult {
-  success: boolean;
+  kind: 'success' | 'failure';
   message: string;
   damage: number[] | null;
   effects: string[] | null;
