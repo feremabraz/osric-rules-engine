@@ -23,6 +23,8 @@ export interface MoveParameters {
   forcedMarch?: boolean;
 }
 
+import { ContextKeys } from '@osric/core/ContextKeys';
+
 export class MoveCommand extends BaseCommand<MoveParameters> {
   readonly type = COMMAND_TYPES.MOVE;
   readonly parameters: MoveParameters;
@@ -69,7 +71,7 @@ export class MoveCommand extends BaseCommand<MoveParameters> {
         Impassable: 'difficult',
       };
 
-      context.setTemporary('movement-request-params', {
+      context.setTemporary(ContextKeys.EXPLORATION_MOVEMENT_REQUEST_PARAMS, {
         characterId,
         fromPosition: character.position,
         toPosition: movement.destination ?? character.position,

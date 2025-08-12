@@ -1,10 +1,11 @@
 import { GrappleValidator } from '@osric/commands/combat/validators/GrappleValidator';
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { isFailure, isSuccess } from '@osric/core/Rule';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { Character as CharacterData } from '@osric/types/character';
-import { COMMAND_TYPES } from '@osric/types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 import type { Monster as MonsterData } from '@osric/types/monster';
 
 export interface GrappleParameters {
@@ -54,7 +55,7 @@ export class GrappleCommand extends BaseCommand<GrappleParameters> {
         situationalModifiers: this.parameters.situationalModifiers || 0,
       };
 
-      context.setTemporary('grapple-context', grappleContext);
+      context.setTemporary(ContextKeys.COMBAT_GRAPPLE_CONTEXT, grappleContext);
 
       return this.createSuccessResult('Grapple command prepared for rule processing');
     } catch (error) {
@@ -77,7 +78,12 @@ export class GrappleCommand extends BaseCommand<GrappleParameters> {
   }
 
   getRequiredRules(): string[] {
-    return ['grapple-attack', 'strength-comparison', 'grapple-effects', 'grapple-result'];
+    return [
+      RULE_NAMES.GRAPPLE_ATTACK,
+      RULE_NAMES.STRENGTH_COMPARISON,
+      RULE_NAMES.GRAPPLE_EFFECT,
+      RULE_NAMES.GRAPPLING,
+    ];
   }
 
   private getAttacker(context: GameContext): CharacterData | MonsterData | null {

@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
@@ -36,7 +37,7 @@ export class MonsterBehaviorRules extends BaseRule {
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
     try {
       const behaviorData = context.getTemporary<MonsterBehaviorContext>(
-        'npc:monster:behavior-params'
+        ContextKeys.NPC_MONSTER_BEHAVIOR_PARAMS
       );
 
       if (!behaviorData) {

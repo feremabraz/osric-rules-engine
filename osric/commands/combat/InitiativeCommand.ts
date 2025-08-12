@@ -1,7 +1,8 @@
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
-import { COMMAND_TYPES } from '@osric/types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 
 import { InitiativeValidator } from '@osric/commands/combat/validators/InitiativeValidator';
 import type { CharacterId, ItemId, MonsterId } from '@osric/types';
@@ -64,7 +65,7 @@ export class InitiativeCommand extends BaseCommand<InitiativeParameters> {
         isFirstRound: this.parameters.isFirstRound || false,
       };
 
-      context.setTemporary('combat:initiative:context', initiativeContext);
+      context.setTemporary(ContextKeys.COMBAT_INITIATIVE_CONTEXT, initiativeContext);
 
       return this.createSuccessResult('Initiative command prepared for rule processing');
     } catch (error) {
@@ -102,7 +103,7 @@ export class InitiativeCommand extends BaseCommand<InitiativeParameters> {
   }
 
   getRequiredRules(): string[] {
-    return ['initiative-roll', 'surprise-check', 'initiative-order'];
+    return [RULE_NAMES.INITIATIVE_ROLL, RULE_NAMES.SURPRISE_CHECK, RULE_NAMES.INITIATIVE_ORDER];
   }
 
   private getEntities(context: GameContext): (CharacterData | MonsterData)[] {

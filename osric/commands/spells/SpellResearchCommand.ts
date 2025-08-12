@@ -1,6 +1,6 @@
 import { SpellResearchValidator } from '@osric/commands/spells/validators/SpellResearchValidator';
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
-import { DiceEngine } from '@osric/core/Dice';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { isSuccess } from '@osric/core/Rule';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
@@ -85,86 +85,21 @@ export class SpellResearchCommand extends BaseCommand<SpellResearchParameters> {
         return this.createFailureResult(`Character with ID "${characterId}" not found`);
       }
 
-      const canResearch = this.validateSpellResearcher(character, researchType);
-      if (!canResearch.valid) {
-        return this.createFailureResult(canResearch.reason);
-      }
-
-      const requirements = this.calculateResearchRequirements(
-        spellLevel,
-        researchType,
-        timeInWeeks,
-        costInGold,
-        specialMaterials,
-        mentorAvailable,
-        libraryQuality
-      );
-
-      const meetsRequirements = this.checkRequirements(character, requirements);
-      if (!meetsRequirements.valid) {
-        return this.createFailureResult(meetsRequirements.reason);
-      }
-
-      context.setTemporary('spell-research-params', {
+      // Publish normalized request; actual flow handled by SpellResearchRules and related rules.
+      context.setTemporary(ContextKeys.SPELL_RESEARCH_REQUEST, {
         characterId,
         spellLevel,
         spellName,
         spellDescription,
         researchType,
-        requirements,
+        timeInWeeks,
+        costInGold,
+        specialMaterials,
         mentorAvailable,
         libraryQuality,
       });
 
-      const researchResult = this.performResearch(
-        character,
-        requirements,
-        mentorAvailable,
-        libraryQuality
-      );
-
-      if (isSuccess(researchResult)) {
-        const newSpell = this.createResearchedSpell(
-          spellName,
-          spellDescription,
-          spellLevel,
-          researchType,
-          character
-        );
-
-        const updatedCharacter = this.updateCharacterAfterResearch(
-          character,
-          requirements,
-          newSpell,
-          true
-        );
-        context.setEntity(characterId, updatedCharacter);
-
-        return this.createSuccessResult(`Successfully researched new spell: ${spellName}`, {
-          spell: newSpell,
-          timeSpent: requirements.timeInWeeks,
-          goldSpent: requirements.totalCost,
-          researchDetails: researchResult.details,
-        });
-      }
-
-      const failedCharacter = this.updateCharacterAfterResearch(
-        character,
-        requirements,
-        null,
-        false
-      );
-      context.setEntity(characterId, failedCharacter);
-
-      return this.createFailureResult(
-        `Spell research failed: ${researchResult.reason}`,
-        undefined,
-        {
-          timeSpent: requirements.timeInWeeks,
-          goldLost: Math.floor(requirements.totalCost * 0.5),
-          researchDetails: researchResult.details,
-        }
-      );
+      return await this.executeWithRuleEngine(context);
     } catch (error: unknown) {
       return this.createFailureResult(
         `Error during spell research: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -284,57 +219,7 @@ export class SpellResearchCommand extends BaseCommand<SpellResearchParameters> {
     return { valid: true, reason: '' };
   }
 
-  public performResearch(
-    character: Character,
-    _requirements: ResearchRequirements,
-    mentorAvailable: boolean,
-    libraryQuality: string
-  ): { kind: 'success' | 'failure'; reason: string; details: Record<string, unknown> } {
-    const relevantStat = ['Magic-User', 'Illusionist'].includes(character.class)
-      ? character.abilities.intelligence
-      : character.abilities.wisdom;
-
-    let successChance = Math.max(10, relevantStat * 5);
-
-    if (mentorAvailable) {
-      successChance += 20;
-    }
-
-    const libraryBonuses = {
-      poor: -20,
-      average: 0,
-      good: +15,
-      excellent: +30,
-    };
-    successChance += libraryBonuses[libraryQuality as keyof typeof libraryBonuses] || 0;
-
-    successChance += character.level * 2;
-
-    successChance -= this.parameters.spellLevel * 10;
-
-    successChance = Math.max(5, Math.min(95, successChance));
-
-    const roll = DiceEngine.roll('1d100').total;
-    const success = roll <= successChance;
-
-    return {
-      kind: success ? 'success' : 'failure',
-      reason: success
-        ? 'Research breakthrough achieved!'
-        : `Research failed (rolled ${roll}, needed ${successChance} or less)`,
-      details: {
-        roll,
-        successChance,
-        modifiers: {
-          baseStat: relevantStat,
-          mentor: mentorAvailable ? 20 : 0,
-          library: libraryBonuses[libraryQuality as keyof typeof libraryBonuses] || 0,
-          level: character.level * 2,
-          spellLevelPenalty: this.parameters.spellLevel * -10,
-        },
-      },
-    };
-  }
+  // Research resolution now handled by rules; legacy method retained for backward compatibility tests if any.
 
   public createResearchedSpell(
     name: string,

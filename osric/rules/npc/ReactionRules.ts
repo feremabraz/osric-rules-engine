@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
@@ -53,12 +54,15 @@ export class ReactionRules extends BaseRule {
   canApply(context: GameContext, command: Command): boolean {
     return (
       this.isCommandType(command, COMMAND_TYPES.REACTION_ROLL) &&
-      this.getOptionalContext<ReactionRollParams>(context, 'reaction-roll-params') !== null
+      context.getTemporary(ContextKeys.NPC_REACTION_ROLL_PARAMS) !== null
     );
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const params = this.getRequiredContext<ReactionRollParams>(context, 'reaction-roll-params');
+    const params = context.getTemporary<ReactionRollParams>(ContextKeys.NPC_REACTION_ROLL_PARAMS);
+    if (!params) {
+      return this.createFailureResult('No reaction roll parameters provided');
+    }
 
     const character = context.getEntity<Character>(params.characterId);
     if (!character) {
@@ -78,7 +82,7 @@ export class ReactionRules extends BaseRule {
 
     const reactionResult = this.determineReaction(finalResult, params.interactionType);
 
-    this.setContext(context, 'last-reaction-result', reactionResult);
+    context.setTemporary(ContextKeys.NPC_LAST_REACTION_RESULT, reactionResult);
 
     const modifierStr = totalModifier >= 0 ? `+${totalModifier}` : `${totalModifier}`;
 

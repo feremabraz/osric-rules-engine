@@ -18,6 +18,8 @@ export interface SearchParameters {
   thoroughness: 'quick' | 'normal' | 'careful' | 'meticulous';
 }
 
+import { ContextKeys } from '@osric/core/ContextKeys';
+
 export class SearchCommand extends BaseCommand<SearchParameters> {
   readonly type = COMMAND_TYPES.SEARCH;
   readonly parameters: SearchParameters;
@@ -44,8 +46,8 @@ export class SearchCommand extends BaseCommand<SearchParameters> {
         return this.createFailureResult(`Character with ID "${characterId}" not found`);
       }
 
-      // Set standardized context for rule processing (legacy/ad-hoc)
-      context.setTemporary('exploration:search:context', {
+      // Set standardized context for rule processing
+      context.setTemporary(ContextKeys.EXPLORATION_SEARCH_CONTEXT, {
         character,
         searchType,
         target,
@@ -63,7 +65,7 @@ export class SearchCommand extends BaseCommand<SearchParameters> {
       const normalizedThoroughness =
         thoroughness === 'quick' ? 'hasty' : (thoroughness as 'normal' | 'careful' | 'meticulous');
 
-      context.setTemporary('search-request-params', {
+      context.setTemporary(ContextKeys.EXPLORATION_SEARCH_REQUEST_PARAMS, {
         characterId,
         searchType: normalizedType,
         area: target?.area ?? 'unknown',

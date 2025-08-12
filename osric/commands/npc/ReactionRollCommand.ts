@@ -1,5 +1,6 @@
 import { ReactionRollValidator } from '@osric/commands/npc/validators/ReactionRollValidator';
 import { BaseCommand, type CommandResult, type EntityId } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { isFailure } from '@osric/core/Rule';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
@@ -77,6 +78,6 @@ export class ReactionRollCommand extends BaseCommand<ReactionRollParameters> {
       isPartySpokesperson: this.parameters.isPartySpokesperson ?? true,
     };
 
-    context.setTemporary('reaction-roll-params', reactionParams);
+    context.setTemporary(ContextKeys.NPC_REACTION_ROLL_PARAMS, reactionParams);
   }
 }

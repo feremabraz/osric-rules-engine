@@ -327,7 +327,7 @@ export class InitiativeOrderRules extends BaseRule {
         roundNumber: 1,
       };
 
-      context.setTemporary('combat:initiative:order', finalOrder);
+      context.setTemporary(ContextKeys.COMBAT_INITIATIVE_ORDER, finalOrder);
 
       const activeCount = activeResults.length;
       const surprisedCount = surprisedResults.length;

@@ -12,6 +12,9 @@ export const ContextKeys = {
   // Saving throws
   SAVING_THROW_PARAMS: 'character:saving-throw:params',
 
+  // Experience
+  CHARACTER_EXPERIENCE_GAIN_PARAMS: 'character:experience:gain-params',
+
   // Thief skills
   THIEF_SKILL_PARAMS: 'character:thief-skill:params',
 
@@ -22,6 +25,19 @@ export const ContextKeys = {
   FORAGING_CONTEXT: 'exploration:foraging:context',
   EXPLORATION_MOVEMENT_ENCUMBRANCE_LEVEL: 'movement:encumbrance-level',
   EXPLORATION_MOVEMENT_BASE_RATE: 'movement:base-rate',
+  EXPLORATION_FALLING_DAMAGE_PARAMS: 'exploration:falling-damage:params',
+  EXPLORATION_MOVEMENT_REQUEST_PARAMS: 'movement-request-params',
+  EXPLORATION_SEARCH_REQUEST_PARAMS: 'search-request-params',
+  EXPLORATION_SEARCH_CONTEXT: 'exploration:search:context',
+
+  // NPC / Monsters
+  NPC_MONSTER_GENERATION_PARAMS: 'npc:monster:generation:params',
+  NPC_MONSTER_BEHAVIOR_PARAMS: 'npc:monster:behavior:params',
+  NPC_TREASURE_CONTEXT: 'npc:treasure:context',
+  NPC_TREASURE_HOARD: 'npc:treasure:hoard',
+  NPC_SPECIAL_ABILITY_CONTEXT: 'npc:special-ability:context',
+  NPC_REACTION_ROLL_PARAMS: 'npc:reaction-roll:params',
+  NPC_LAST_REACTION_RESULT: 'npc:reaction:last-result',
 
   // Combat (attack preparation, two weapon, etc.)
   COMBAT_ATTACK_CONTEXT: 'combat:attack:context',
@@ -41,6 +57,7 @@ export const ContextKeys = {
   // Initiative
   COMBAT_INITIATIVE_CONTEXT: 'combat:initiative:context',
   COMBAT_INITIATIVE_RESULTS: 'combat:initiative:results',
+  COMBAT_INITIATIVE_ORDER: 'combat:initiative:order',
 
   // Aerial combat
   COMBAT_AERIAL_CONTEXT: 'combat:aerial:context',
@@ -50,6 +67,13 @@ export const ContextKeys = {
   COMBAT_AERIAL_MOVEMENT: 'combat:aerial:movement',
   COMBAT_AERIAL_MOVEMENT_DIRECTION: 'combat:aerial:movement:direction',
   COMBAT_AERIAL_MOVEMENT_DISTANCE: 'combat:aerial:movement:distance',
+
+  // Underwater combat/movement
+  COMBAT_UNDERWATER_CONTEXT: 'combat:underwater:context',
+  COMBAT_UNDERWATER_MOVEMENT_EFFECTS: 'underwater-movement-effects',
+  COMBAT_UNDERWATER_SPELL_RESULT: 'underwater-spell-result',
+  COMBAT_UNDERWATER_WEAPON_RESULT: 'underwater-weapon-result',
+  COMBAT_UNDERWATER_COMBAT_PENALTIES: 'underwater-combat-penalties',
 
   // Mounted combat
   COMBAT_MOUNTED_CONTEXT: 'combat:mounted:context',

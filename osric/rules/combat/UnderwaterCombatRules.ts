@@ -17,12 +17,14 @@ interface UnderwaterCombatContext {
   isCastingSpell?: boolean;
 }
 
+import { ContextKeys } from '@osric/core/ContextKeys';
+
 export class UnderwaterCombatRules extends BaseRule {
   name = 'underwater-combat';
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
     const underwaterContext = context.getTemporary(
-      'combat:underwater:context'
+      ContextKeys.COMBAT_UNDERWATER_CONTEXT
     ) as UnderwaterCombatContext;
 
     if (!underwaterContext) {
@@ -43,7 +45,7 @@ export class UnderwaterCombatRules extends BaseRule {
 
     if (isCastingSpell && spell) {
       const spellResult = this.handleUnderwaterSpell(spell, combatant);
-      context.setTemporary('underwater-spell-result', spellResult);
+      context.setTemporary(ContextKeys.COMBAT_UNDERWATER_SPELL_RESULT, spellResult);
 
       if (!spellResult.canCast) {
         return this.createFailureResult(
@@ -56,7 +58,7 @@ export class UnderwaterCombatRules extends BaseRule {
 
     if (weapon) {
       const weaponResult = this.handleUnderwaterWeapon(weapon, combatant);
-      context.setTemporary('underwater-weapon-result', weaponResult);
+      context.setTemporary(ContextKeys.COMBAT_UNDERWATER_WEAPON_RESULT, weaponResult);
 
       if (!weaponResult.isEffective) {
         return this.createFailureResult(
@@ -65,7 +67,7 @@ export class UnderwaterCombatRules extends BaseRule {
       }
 
       const penalties = this.getUnderwaterCombatPenalties(weapon, waterDepth);
-      context.setTemporary('underwater-combat-penalties', penalties);
+      context.setTemporary(ContextKeys.COMBAT_UNDERWATER_COMBAT_PENALTIES, penalties);
 
       return this.createSuccessResult(
         `Underwater combat with ${weapon.name}: ${penalties.attackPenalty} attack, ${penalties.damagePenalty} damage${
@@ -81,7 +83,7 @@ export class UnderwaterCombatRules extends BaseRule {
     if (!['attack', 'cast-spell', 'underwater-combat'].includes(command.type)) return false;
 
     const underwaterContext = context.getTemporary(
-      'combat:underwater:context'
+      ContextKeys.COMBAT_UNDERWATER_CONTEXT
     ) as UnderwaterCombatContext;
     return underwaterContext !== null && underwaterContext.waterDepth > 0;
   }
@@ -284,7 +286,7 @@ export class UnderwaterMovementRules extends BaseRule {
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
     const underwaterContext = context.getTemporary(
-      'combat:underwater:context'
+      ContextKeys.COMBAT_UNDERWATER_CONTEXT
     ) as UnderwaterCombatContext;
 
     if (!underwaterContext) {
@@ -299,7 +301,7 @@ export class UnderwaterMovementRules extends BaseRule {
       hasWaterBreathing
     );
 
-    context.setTemporary('underwater-movement-effects', movementEffects);
+    context.setTemporary(ContextKeys.COMBAT_UNDERWATER_MOVEMENT_EFFECTS, movementEffects);
 
     return this.createSuccessResult(
       `Underwater movement: ${movementEffects.speedMultiplier}x speed, ` +
@@ -312,7 +314,7 @@ export class UnderwaterMovementRules extends BaseRule {
       return false;
 
     const underwaterContext = context.getTemporary(
-      'combat:underwater:context'
+      ContextKeys.COMBAT_UNDERWATER_CONTEXT
     ) as UnderwaterCombatContext;
     return underwaterContext !== null && underwaterContext.waterDepth > 0;
   }

@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import { GameContext } from '@osric/core/GameContext';
 import type { Character, Monster } from '@osric/types';
 import { createCharacterId, createMonsterId } from '@osric/types';
@@ -157,7 +158,7 @@ describe('Rules accept branded IDs', () => {
     ctx.setEntity(cid, character);
     ctx.setEntity(mid, monster);
 
-    ctx.setTemporary('character:experience:gain-params', {
+    ctx.setTemporary(ContextKeys.CHARACTER_EXPERIENCE_GAIN_PARAMS, {
       characterId: cid,
       experienceSource: {
         type: 'combat',
@@ -181,7 +182,7 @@ describe('Rules accept branded IDs', () => {
     const character = createMockCharacter({ id: 'c-1', armorClass: 10, movementRate: 120 });
     ctx.setEntity(cid, character);
 
-    ctx.setTemporary('movement-request-params', {
+    ctx.setTemporary(ContextKeys.EXPLORATION_MOVEMENT_REQUEST_PARAMS, {
       characterId: cid,
       fromPosition: '0,0',
       toPosition: '0,30',
@@ -219,7 +220,7 @@ describe('Rules accept branded IDs', () => {
     ctx.setEntity(cid, c1);
     ctx.setEntity(targetCid, c2);
 
-    ctx.setTemporary('reaction-roll-params', {
+    ctx.setTemporary(ContextKeys.NPC_REACTION_ROLL_PARAMS, {
       characterId: cid,
       targetId: targetCid,
       interactionType: 'first_meeting',

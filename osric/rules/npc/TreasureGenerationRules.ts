@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule } from '@osric/core/Rule';
@@ -63,7 +64,7 @@ export class TreasureGenerationRules extends BaseRule {
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const treasureContext = this.getOptionalContext<TreasureContext>(context, 'treasureContext');
+    const treasureContext = context.getTemporary<TreasureContext>(ContextKeys.NPC_TREASURE_CONTEXT);
 
     if (!treasureContext) {
       return this.createFailureResult('No treasure context provided');
@@ -72,7 +73,7 @@ export class TreasureGenerationRules extends BaseRule {
     try {
       const treasure = this.generateTreasure(treasureContext);
 
-      this.setContext(context, 'treasureHoard', treasure);
+      context.setTemporary(ContextKeys.NPC_TREASURE_HOARD, treasure);
 
       return this.createSuccessResult(`Generated treasure hoard worth ${treasure.totalValue} gp`, {
         treasure,
