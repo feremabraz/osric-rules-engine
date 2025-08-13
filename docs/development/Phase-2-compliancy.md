@@ -45,7 +45,7 @@ Follow-ups
 Legend: [x] compliant (single exported rule class) • [!] multi-export (split needed) • [dup] potential duplicate classes across files
 
 - Character
-  - [!] character/AbilityScoreGenerationRules.ts — multiple classes (includes ExceptionalStrengthRules, RacialAbilityAdjustmentRules) [dup: also in character/RacialAbilityAdjustmentRules.ts]
+  - [x] character/AbilityScoreGenerationRules.ts — now single class; ExceptionalStrengthRules and RacialAbilityAdjustmentRules moved to dedicated files [dup resolved]
   - [x] character/SavingThrowRules.ts
   - [x] character/RacialRestrictionsRules.ts
   - [x] character/ClassRequirementRules.ts
@@ -74,29 +74,52 @@ Legend: [x] compliant (single exported rule class) • [!] multi-export (split n
   - [x] exploration/DrowningRules.ts
 
 - Combat
-  - [!] combat/InitiativeRules.ts — multiple classes (InitiativeRoll, SurpriseCheck, InitiativeOrder) [dup: SurpriseCheckRules.ts, InitiativeOrderRules.ts exist]
+  - [x] combat/InitiativeRules.ts — now single class (InitiativeRoll); SurpriseCheck and InitiativeOrder are in dedicated files
   - [x] combat/InitiativeOrderRules.ts
   - [x] combat/SurpriseCheckRules.ts
   - [x] combat/AttackRollRules.ts
   - [x] combat/DamageCalculationRules.ts
   - [x] combat/ApplyDamageRules.ts
   - [x] combat/PostDamageStatusRules.ts
-  - [!] combat/MultipleAttackRules.ts — multiple classes (MultipleAttack, AttackPrecedence)
-  - [!] combat/WeaponSpecializationRules.ts — multiple classes (Specialization + Requirements)
-  - [!] combat/GrapplingRules.ts — multiple classes (Attack, StrengthComparison, Effect)
-  - [!] combat/WeaponVsArmorRules.ts — multiple classes (WeaponVsArmor, WeaponType, ArmorCategory)
-  - [!] combat/MountedCombatRules.ts — multiple classes (Charge, MountedCombat, Dismount, Eligibility)
-  - [!] combat/AerialCombatRules.ts — multiple classes (AerialCombat, DiveAttack, AerialMovement)
+  - [x] combat/MultipleAttackRules.ts — now single class; AttackPrecedence moved to dedicated file
+  - [x] combat/AttackPrecedenceRules.ts — dedicated file created
+  - [x] combat/WeaponSpecializationRules.ts — single class; SpecializationRequirementRules in its own file
+  - [x] combat/GrapplingRules.ts — split into GrappleAttackRules.ts, StrengthComparisonRules.ts, GrappleEffectRules.ts
+  - [x] combat/WeaponVsArmorRules.ts — core kept; WeaponTypeRules.ts and ArmorCategoryRules.ts in dedicated files
+  - [x] combat/WeaponTypeRules.ts — dedicated file created
+  - [x] combat/ArmorCategoryRules.ts — dedicated file created
+  - [x] combat/MountedCombatRules.ts — now shared types only; rules split into MountedChargeRules.ts, MountedCombatCoreRules.ts, DismountRules.ts, MountedCombatEligibilityRules.ts
+  - [x] combat/AerialCombatRules.ts — now single class (AerialCombat); shared utilities in AerialCombatShared.ts; DiveAttackRules.ts and AerialMovementRules.ts created
   - [x] combat/UnderwaterCombatRules.ts — compliant (movement split out)
   - [x] combat/UnderwaterMovementRules.ts
   - [x] combat/InitiativeOrderRules.ts
   - [x] combat/SurpriseCheckRules.ts
 
 - Spells
-  - [!] spells/AdvancedSpellRules.ts — multiple classes (components, failure, concentration, interaction, advanced research)
-  - [!] spells/MagicItemRules.ts — multiple classes (charge calc/usage, save, identification)
-  - [!] spells/ScrollCreationRules.ts — multiple classes (requirements, start, progress, usage validation, failure, casting)
-  - [!] spells/SpellResearchRules.ts — multiple classes (requirements, start, progress, success, learning)
+  - [x] spells/AdvancedSpellRules.ts — deprecated placeholder; split into:
+    - SpellComponentManagementRules.ts
+    - SpellFailureRules.ts
+    - SpellConcentrationRules.ts
+    - SpellInteractionRules.ts
+    - AdvancedSpellResearchRules.ts
+  - [x] spells/MagicItemRules.ts — deprecated placeholder; split into:
+    - MagicItemChargeCalculationRules.ts
+    - MagicItemChargeUsageRules.ts
+    - MagicItemSavingThrowRules.ts
+    - MagicItemIdentificationRules.ts
+  - [x] spells/ScrollCreationRules.ts — deprecated placeholder; split into:
+    - ScrollCreationRequirementsRules.ts
+    - ScrollCreationStartRules.ts
+    - ScrollCreationProgressRules.ts
+    - ScrollUsageValidationRules.ts
+    - ScrollCastingFailureRules.ts
+    - ScrollSpellCastingRules.ts
+  - [x] spells/SpellResearchRules.ts — deprecated placeholder; split into:
+    - SpellResearchRequirementsRules.ts
+    - SpellResearchStartRules.ts
+    - SpellResearchProgressRules.ts
+    - SpellResearchSuccessRules.ts
+    - SpellLearningRules.ts
   - [x] spells/MagicItemCreationRules.ts — compliant (creation mechanics split from command)
   - [x] spells/SpellCastingRules.ts
   - [x] spells/SpellEffectsRules.ts
@@ -116,7 +139,17 @@ Legend: [x] compliant (single exported rule class) • [!] multi-export (split n
   - [x] system/BleedingTickRules.ts
 
 Follow-ups
-- Split [!] files into one rule per file, update imports and chains accordingly.
+- Split [!] files into one rule per file, update imports and chains accordingly. (None pending in Spells.)
 - Resolve [dup] duplicates: remove duplicates and keep the canonical file; update RULE_NAMES/chain wiring.
 - After splits, re-run chain audit to ensure all required rule names are provided by exactly one file.
+
+Next actions (Phase-2 ongoing)
+- Finish Weapon vs Armor wiring: confirm chains/imports reference WeaponTypeRules and ArmorCategoryRules where needed; validate adjustments.
+- Split remaining multi-export files:
+  - combat/AerialCombatRules.ts (done)
+  - spells/AdvancedSpellRules.ts (done)
+  - spells/MagicItemRules.ts (done)
+  - spells/ScrollCreationRules.ts (done)
+  - spells/SpellResearchRules.ts (done)
+- Run project checks once the above are in place. Then run `pnpm check`.
 

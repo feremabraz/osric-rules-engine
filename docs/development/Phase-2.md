@@ -26,8 +26,15 @@ Comprehensive task list to complete Phase 2.
 
 ## Rules (Single Responsibility, Naming, Layout)
 
-- [ ] One file → one rule; split any multi-export files
+- [x] One file → one rule; split any multi-export files
   - [x] ↳ Split UnderwaterCombatRules: movement rule extracted to `UnderwaterMovementRules.ts`
+  - [x] ↳ Split AdvancedSpellRules into dedicated files (`SpellComponentManagementRules.ts`, `SpellFailureRules.ts`, `SpellConcentrationRules.ts`, `SpellInteractionRules.ts`, `AdvancedSpellResearchRules.ts`)
+  - [x] ↳ Split MagicItemRules into dedicated files (`MagicItemChargeCalculationRules.ts`, `MagicItemChargeUsageRules.ts`, `MagicItemSavingThrowRules.ts`, `MagicItemIdentificationRules.ts`)
+  - [x] ↳ Split ScrollCreationRules into dedicated files (`ScrollCreationRequirementsRules.ts`, `ScrollCreationStartRules.ts`, `ScrollCreationProgressRules.ts`, `ScrollUsageValidationRules.ts`, `ScrollCastingFailureRules.ts`, `ScrollSpellCastingRules.ts`)
+  - [x] ↳ Split SpellResearchRules into dedicated files (`SpellResearchRequirementsRules.ts`, `SpellResearchStartRules.ts`, `SpellResearchProgressRules.ts`, `SpellResearchSuccessRules.ts`, `SpellLearningRules.ts`)
+  - [x] ↳ Split GrapplingRules into `GrappleAttackRules.ts`, `StrengthComparisonRules.ts`, `GrappleEffectRules.ts`
+  - [x] ↳ Split MountedCombatRules into `MountedChargeRules.ts`, `MountedCombatCoreRules.ts`, `DismountRules.ts`, `MountedCombatEligibilityRules.ts`; keep shared types in `MountedCombatRules.ts`
+  - [x] ↳ Trim AerialCombatRules to single class and move shared/util rules to `AerialCombatShared.ts`; add `AerialMovementRules.ts` and `DiveAttackRules.ts`
 - [ ] Use `RULE_NAMES` only; no ad-hoc strings
 - [ ] Remove “adapter” rules by aligning real rule names to contract names
 - [ ] Centralize shared helpers (dice done); add modifiers/util calcs if duplicated
@@ -47,54 +54,54 @@ Comprehensive task list to complete Phase 2.
 ## Randomness and Dice
 
 - [ ] Enforce `DiceEngine.roll(notation)` everywhere
-  - [ ] ↳ No `rollD20`/`rollExpression`/percentile wrappers
-  - [ ] ↳ No `Math.random`
-- [ ] Remove deprecated dice wrappers if no longer referenced
+  - [x] ↳ No `rollD20`/`rollExpression`/percentile wrappers
+  - [x] ↳ No `Math.random`
+- [x] Remove deprecated dice wrappers if no longer referenced
 
 ## Combat Pipeline Polish
 
-- [ ] Confirm ATTACK chain
-  - [ ] ↳ `AttackRoll` → `DamageCalculation` (pure) → `ApplyDamage` (mutating) → `PostDamageStatus` → `MultipleAttack`
-- [ ] Complete Grapple chain
-  - [ ] ↳ Attack/compare/effect using `DiceEngine` + `ContextKeys`
-- [ ] Complete Initiative chain
-  - [ ] ↳ `InitiativeRoll` → `SurpriseCheck` → `InitiativeOrder` using `ContextKeys`
+- [x] Confirm ATTACK chain
+  - [x] ↳ `AttackRoll` → `DamageCalculation` (pure) → `ApplyDamage` (mutating) → `PostDamageStatus` → `MultipleAttack`
+- [x] Complete Grapple chain
+  - [x] ↳ Attack/compare/effect using `DiceEngine` + `ContextKeys`
+- [x] Complete Initiative chain
+  - [x] ↳ `InitiativeRoll` → `SurpriseCheck` → `InitiativeOrder` using `ContextKeys`
 
 ## Character Creation Pipeline
 
-- [ ] CREATE_CHARACTER chain
-  - [ ] ↳ `AbilityScoreGeneration` → `RacialAbilityAdjustment` → `ClassRequirement` → `CharacterInitialization`
+- [x] CREATE_CHARACTER chain
+  - [x] ↳ `AbilityScoreGeneration` → `RacialAbilityAdjustment` → `ClassRequirement` → `CharacterInitialization`
 - [ ] Ensure `CHARACTER_CREATION_DATA`/`CHARACTER_CREATION_PARAMS` usage across rules
 - [ ] Remove creation-time mechanics from commands
 
 ## Spells Pipeline
 
-- [ ] CAST_SPELL chain
-  - [ ] ↳ Component check → Casting → Interruption → Effects (align names to contract; no adapters)
-- [ ] MEMORIZE_SPELL chain
-  - [ ] ↳ Memorization → Progression/slots update
-- [ ] READ_SCROLL chain
-  - [ ] ↳ Validate reading/usage → resolve success/failure → cast spell effect if applicable
-- [ ] IDENTIFY_MAGIC_ITEM chain
-  - [ ] ↳ Identification mechanics → result publishing; use `SPELL_MAGIC_ITEM_USER` when needed
+- [x] CAST_SPELL chain
+  - [x] ↳ Component check → Casting → Interruption → Effects (align names to contract; no adapters)
+- [x] MEMORIZE_SPELL chain
+  - [x] ↳ Memorization → Progression/slots update
+- [x] READ_SCROLL chain
+  - [x] ↳ Validate reading/usage → resolve success/failure → cast spell effect if applicable (imports updated to dedicated scroll rule files)
+- [x] IDENTIFY_MAGIC_ITEM chain
+  - [x] ↳ Identification mechanics → result publishing; use `SPELL_MAGIC_ITEM_USER` when needed (imports updated to dedicated identification rule file)
 - [ ] Ensure all spell rules use `DiceEngine.roll` and `ContextKeys`
 
 ## Exploration/Environment Pipelines
 
 - [x] MOVE chain
-  - [ ] ↳ `MovementRates` → `Encumbrance` → `Movement` (consuming movement params)
+  - [x] ↳ `MovementRates` → `Encumbrance` → `Movement` (consuming movement params)
 - [x] SEARCH chain wired and command normalized
-- [ ] FALLING_DAMAGE chain is pure calculation; apply HP only when appropriate
-- [ ] TERRAIN_NAVIGATION chain
-  - [ ] ↳ Navigation → `SurvivalChecks` → publish outcomes
-- [ ] WEATHER_CHECK chain
-  - [ ] ↳ Weather effects/visibility; align with exploration visibility rules
-- [ ] FORAGING chain
-  - [ ] ↳ Foraging → `SurvivalChecks`; consume time/terrain inputs
+- [x] FALLING_DAMAGE chain is pure calculation; apply HP only when appropriate
+- [x] TERRAIN_NAVIGATION chain
+  - [x] ↳ Navigation → `SurvivalChecks` → publish outcomes
+- [x] WEATHER_CHECK chain
+  - [x] ↳ Weather effects/visibility; align with exploration visibility rules
+- [x] FORAGING chain
+  - [x] ↳ Foraging → `SurvivalChecks`; consume time/terrain inputs
 
 ## NPC/Treasure Pipelines
 
-- [ ] REACTION_ROLL chain wired; ensure `DiceEngine` usage
+- [x] REACTION_ROLL chain wired; ensure `DiceEngine` usage
 - [ ] Treasure generation rules
   - [ ] ↳ Ensure `DiceEngine` and `ContextKeys`
   - [ ] ↳ Add a chain if a command exists (else defer to Phase 3 API pruning)
@@ -123,7 +130,7 @@ Comprehensive task list to complete Phase 2.
 
 ## Contracts and Validation
 
-- [ ] Update `RuleContractValidator` for newly added/renamed rules
+- [x] Update `RuleContractValidator` for newly added/renamed rules
 - [ ] Ensure each command’s `getRequiredRules` aligns with its chain
 - [ ] Run a chain audit
   - [ ] ↳ No missing-required rules

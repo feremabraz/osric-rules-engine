@@ -1,7 +1,7 @@
 import { RuleChain } from '@osric/core/RuleChain';
-import { SpellConcentrationRules } from '@osric/rules/spells/AdvancedSpellRules';
 import { ComponentTrackingRules } from '@osric/rules/spells/ComponentTrackingRules';
 import { SpellCastingRules } from '@osric/rules/spells/SpellCastingRules';
+import { SpellConcentrationRules } from '@osric/rules/spells/SpellConcentrationRules';
 import { SpellEffectsRules } from '@osric/rules/spells/SpellEffectsRules';
 
 export function buildCastSpellChain(): RuleChain {

@@ -109,6 +109,7 @@ export const RULE_NAMES = {
   SPELL_DURATION: 'spell-duration',
   SPELL_RANGE: 'spell-range',
   MAGIC_ITEM_RULES: 'magic-item-rules',
+  MAGIC_ITEM_IDENTIFICATION: 'magic-item-identification',
   SCROLL_CREATION: 'scroll-creation',
   SPELL_RESEARCH: 'spell-research',
   ADVANCED_SPELL_RULES: 'advanced-spell-rules',

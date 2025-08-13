@@ -1,5 +1,5 @@
 import { RuleChain } from '@osric/core/RuleChain';
-import { MagicItemIdentificationRules } from '@osric/rules/spells/MagicItemRules';
+import { MagicItemIdentificationRules } from '@osric/rules/spells/MagicItemIdentificationRules';
 
 export function buildIdentifyMagicItemChain(): RuleChain {
   const chain = new RuleChain();
