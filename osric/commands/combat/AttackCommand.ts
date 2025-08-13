@@ -65,6 +65,15 @@ export class AttackCommand extends BaseCommand<AttackParameters> {
 
       context.setTemporary(ContextKeys.COMBAT_ATTACK_CONTEXT, attackContext);
 
+      // Provide weapon vs armor context when a weapon is used so related rules can compute adjustments
+      if (weapon) {
+        context.setTemporary(ContextKeys.COMBAT_WEAPON_ARMOR_CONTEXT, {
+          attacker,
+          defender: target,
+          weapon,
+        });
+      }
+
       // Delegate actual mechanics to the RuleEngine
       return await this.executeWithRuleEngine(context);
     } catch (error) {

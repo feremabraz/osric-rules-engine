@@ -17,7 +17,7 @@ export class BleedingTickRules extends BaseRule {
     return command.type === COMMAND_TYPES.ROUND_TICK;
   }
 
-  async execute(context: GameContext, _command: Command): Promise<RuleResult> {
+  async apply(context: GameContext, _command: Command): Promise<RuleResult> {
     // Iterate all entities, find Bleeding, decrement HP until -10
     const affected: string[] = [];
 

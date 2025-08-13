@@ -9,6 +9,7 @@ import { BaseRule } from '@osric/core/Rule';
 import type { RuleResult } from '@osric/core/Rule';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { AbilityScores, CharacterRace } from '@osric/types/character';
 
 interface RacialModifiers {
@@ -70,13 +71,13 @@ export class RacialAbilityAdjustmentRules extends BaseRule {
       // Get the base ability scores from previous rule
       const baseScores = this.getRequiredContext<AbilityScores>(
         context,
-        'character:creation:ability-scores'
+        ContextKeys.CHARACTER_CREATION_ABILITY_SCORES
       );
 
       // Get character creation parameters
       const creationParams = this.getRequiredContext<CreateCharacterParams>(
         context,
-        'character:creation:params'
+        ContextKeys.CHARACTER_CREATION_PARAMS
       );
 
       const race = creationParams.race;
@@ -96,7 +97,7 @@ export class RacialAbilityAdjustmentRules extends BaseRule {
       const finalScores = this.enforceAbilityLimits(adjustedScores);
 
       // Store the racially-adjusted scores (use existing key for now)
-      this.setContext(context, 'character:creation:ability-scores', finalScores);
+      this.setContext(context, ContextKeys.CHARACTER_CREATION_ABILITY_SCORES, finalScores);
 
       const modifierSummary = this.createModifierSummary(race, racialMods);
 
@@ -124,7 +125,7 @@ export class RacialAbilityAdjustmentRules extends BaseRule {
     // Must have base ability scores from previous rule
     const baseScores = this.getOptionalContext<AbilityScores>(
       context,
-      'character:creation:ability-scores'
+      ContextKeys.CHARACTER_CREATION_ABILITY_SCORES
     );
 
     return baseScores !== null;

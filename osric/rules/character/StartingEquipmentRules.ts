@@ -31,8 +31,8 @@ export class StartingEquipmentRules extends BaseRule {
     const gold = this.rollStartingGold(params.characterClass);
     const kit = this.chooseStarterKit(params.characterClass, gold);
 
-    this.setContext(context, 'character:creation:starting-gold', gold);
-    this.setContext(context, 'character:creation:starting-equipment', kit.items);
+    this.setContext(context, ContextKeys.CHARACTER_CREATION_STARTING_GOLD, gold);
+    this.setContext(context, ContextKeys.CHARACTER_CREATION_STARTING_EQUIPMENT, kit.items);
 
     return this.createSuccessResult('Allocated starting equipment and gold', {
       gold,

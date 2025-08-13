@@ -11,8 +11,8 @@ export class SpellCastingRules extends BaseRule {
   public readonly description = 'Handles OSRIC spell casting mechanics and effects';
 
   public canApply(context: GameContext): boolean {
-    const caster = this.getOptionalContext<Character>(context, 'spell:cast:caster');
-    const spell = this.getOptionalContext<Spell>(context, 'spell:cast:spell');
+    const caster = this.getOptionalContext<Character>(context, ContextKeys.SPELL_CAST_CASTER);
+    const spell = this.getOptionalContext<Spell>(context, ContextKeys.SPELL_CAST_SPELL);
     return !!(caster && spell);
   }
 
@@ -21,9 +21,10 @@ export class SpellCastingRules extends BaseRule {
       const caster = this.getRequiredContext<Character>(context, ContextKeys.SPELL_CAST_CASTER);
       const spell = this.getRequiredContext<Spell>(context, ContextKeys.SPELL_CAST_SPELL);
       const targets =
-        this.getOptionalContext<(Character | Monster)[]>(context, 'spell:cast:targets') || [];
+        this.getOptionalContext<(Character | Monster)[]>(context, ContextKeys.SPELL_CAST_TARGETS) ||
+        [];
       const _overrideComponents =
-        this.getOptionalContext<boolean>(context, 'spell:cast:components') || false;
+        this.getOptionalContext<boolean>(context, ContextKeys.SPELL_CAST_COMPONENTS) || false;
 
       const validationResult = this.validateSpellCasting(caster, spell, targets);
       if (isFailure(validationResult)) {
@@ -43,8 +44,8 @@ export class SpellCastingRules extends BaseRule {
         context.setEntity(caster.id, slotResult.updatedCaster);
       }
 
-      this.setContext(context, 'spell:cast:validation', spellResult);
-      this.setContext(context, 'castSpell_effectResults', effectResults);
+      this.setContext(context, ContextKeys.SPELL_CAST_VALIDATION, spellResult);
+      this.setContext(context, ContextKeys.SPELL_CAST_EFFECT_RESULTS, effectResults);
 
       return this.createSuccessResult(`${caster.name} successfully casts ${spell.name}`, {
         spellCast: spell.name,

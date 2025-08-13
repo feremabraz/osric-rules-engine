@@ -4,10 +4,13 @@
  */
 
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule } from '@osric/core/Rule';
 import type { RuleResult } from '@osric/core/Rule';
+import type { Character as CharacterData } from '@osric/types/character';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
+import type { Monster as MonsterData } from '@osric/types/monster';
 
 import { DiceEngine } from '@osric/core/Dice';
 
@@ -41,11 +44,29 @@ export class SurpriseCheckRules extends BaseRule {
 
   async apply(context: GameContext, _command: Command): Promise<RuleResult> {
     try {
-      // Get participants for surprise check
-      const participants = this.getRequiredContext<SurpriseParticipant[]>(
-        context,
-        'combat:initiative:participants'
-      );
+      // Derive participants from initiative context
+      const initCtx = this.getRequiredContext<{
+        entities: string[];
+        initiativeType: 'individual' | 'group';
+        weapons?: Record<string, string>;
+        spells?: Record<string, string>;
+        circumstanceModifiers?: Record<string, number>;
+        isFirstRound?: boolean;
+      }>(context, ContextKeys.COMBAT_INITIATIVE_CONTEXT);
+
+      const participants: SurpriseParticipant[] = [];
+      for (const entityId of initCtx.entities) {
+        const entity = context.getEntity<CharacterData | MonsterData>(entityId);
+        if (!entity) continue;
+        participants.push({
+          entityId: entity.id,
+          name: entity.name,
+          isPlayer: 'race' in entity,
+          groupId: 'race' in entity ? 'party' : 'monsters',
+          surpriseChance: 2, // base; detailed modifiers handled below
+          modifiers: {},
+        });
+      }
 
       if (participants.length === 0) {
         return this.createFailureResult('No participants found for surprise check');
@@ -58,7 +79,7 @@ export class SurpriseCheckRules extends BaseRule {
       const surpriseResult = this.performSurpriseChecks(groups);
 
       // Store surprise results
-      this.setContext(context, 'combat:surprise:results', surpriseResult);
+      this.setContext(context, ContextKeys.COMBAT_SURPRISE_RESULTS, surpriseResult);
 
       const surpriseSummary = this.createSurpriseSummary(surpriseResult);
 
@@ -80,13 +101,12 @@ export class SurpriseCheckRules extends BaseRule {
       return false;
     }
 
-    // Must have participants
-    const participants = this.getOptionalContext<SurpriseParticipant[]>(
+    // Requires initiative context
+    const initCtx = this.getOptionalContext<unknown>(
       context,
-      'combat:initiative:participants'
+      ContextKeys.COMBAT_INITIATIVE_CONTEXT
     );
-
-    return participants !== null && participants.length > 0;
+    return initCtx !== null;
   }
 
   getPrerequisites(): string[] {

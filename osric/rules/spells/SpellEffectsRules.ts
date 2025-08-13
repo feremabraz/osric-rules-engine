@@ -1,7 +1,7 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
-import { ContextKeys } from '@osric/core/ContextKeys';
 import { RULE_NAMES } from '@osric/types/constants';
 
 // Adapter to expose SPELL_EFFECTS phase based on data produced by SpellCastingRules
@@ -14,7 +14,7 @@ export class SpellEffectsRules extends BaseRule {
   }
 
   async apply(context: GameContext, _command: Command): Promise<RuleResult> {
-    const effects = context.getTemporary('castSpell_effectResults');
+    const effects = context.getTemporary(ContextKeys.SPELL_CAST_EFFECT_RESULTS);
     const resolution = context.getTemporary(ContextKeys.SPELL_CAST_VALIDATION);
     return this.createSuccessResult('Spell effects resolved', {
       effects,

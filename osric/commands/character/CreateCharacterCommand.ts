@@ -56,6 +56,8 @@ export class CreateCharacterCommand extends BaseCommand<CreateCharacterParameter
 
       context.setTemporary(ContextKeys.CHARACTER_CREATION_CONTEXT, { characterId });
       context.setTemporary(ContextKeys.CHARACTER_CREATION_PARAMS, { ...this.parameters });
+      context.setTemporary(ContextKeys.CHARACTER_CREATION_RACE, this.parameters.race);
+      context.setTemporary(ContextKeys.CHARACTER_CREATION_ALIGNMENT, this.parameters.alignment);
 
       return this.createSuccessResult(`Character creation initiated for ${this.parameters.name}`, {
         characterId,

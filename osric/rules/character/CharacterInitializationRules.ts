@@ -1,4 +1,5 @@
 import type { BaseCommand } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import { CharacterFactory } from '@osric/entities/Character';
@@ -26,13 +27,19 @@ export class CharacterInitializationRules extends BaseRule {
       // Get validated data from previous rules
       const characterClass = this.getRequiredContext<CharacterClass>(
         context,
-        'character:creation:class-validation'
+        ContextKeys.CHARACTER_CREATION_CLASS_VALIDATION
       );
-      const race = this.getRequiredContext<CharacterRace>(context, 'character:creation:race');
-      const alignment = this.getRequiredContext<Alignment>(context, 'character:creation:alignment');
+      const race = this.getRequiredContext<CharacterRace>(
+        context,
+        ContextKeys.CHARACTER_CREATION_RACE
+      );
+      const alignment = this.getRequiredContext<Alignment>(
+        context,
+        ContextKeys.CHARACTER_CREATION_ALIGNMENT
+      );
       const baseAbilities = this.getRequiredContext<AbilityScores>(
         context,
-        'character:creation:ability-scores'
+        ContextKeys.CHARACTER_CREATION_ABILITY_SCORES
       );
 
       // Apply racial adjustments to abilities
@@ -128,7 +135,7 @@ export class CharacterInitializationRules extends BaseRule {
       context.setEntity(character.id, characterData);
 
       // Store result in temporary data
-      this.setContext(context, 'character:creation:complete', character);
+      this.setContext(context, ContextKeys.CHARACTER_CREATION_DATA, character);
 
       return this.createSuccessResult('Character created successfully', {
         characterId: character.id,

@@ -8,6 +8,11 @@ export const ContextKeys = {
   CHARACTER_CREATION_ABILITY_SCORES: 'character:creation:ability-scores',
   CHARACTER_CREATION_ADJUSTED_SCORES: 'character:creation:adjusted-scores',
   CHARACTER_CREATION_DATA: 'character:creation:data',
+  CHARACTER_CREATION_RACE: 'character:creation:race',
+  CHARACTER_CREATION_ALIGNMENT: 'character:creation:alignment',
+  CHARACTER_CREATION_CLASS_VALIDATION: 'character:creation:class-validation',
+  CHARACTER_CREATION_STARTING_GOLD: 'character:creation:starting-gold',
+  CHARACTER_CREATION_STARTING_EQUIPMENT: 'character:creation:starting-equipment',
 
   // Saving throws
   SAVING_THROW_PARAMS: 'character:saving-throw:params',
@@ -29,6 +34,8 @@ export const ContextKeys = {
   EXPLORATION_MOVEMENT_REQUEST_PARAMS: 'movement-request-params',
   EXPLORATION_SEARCH_REQUEST_PARAMS: 'search-request-params',
   EXPLORATION_SEARCH_CONTEXT: 'exploration:search:context',
+  EXPLORATION_VISIBILITY_PARAMS: 'exploration:visibility:params',
+  EXPLORATION_VISIBILITY_RESULT: 'exploration:visibility:result',
 
   // NPC / Monsters
   NPC_MONSTER_GENERATION_PARAMS: 'npc:monster:generation:params',
@@ -36,6 +43,7 @@ export const ContextKeys = {
   NPC_TREASURE_CONTEXT: 'npc:treasure:context',
   NPC_TREASURE_HOARD: 'npc:treasure:hoard',
   NPC_SPECIAL_ABILITY_CONTEXT: 'npc:special-ability:context',
+  NPC_SPECIAL_ABILITIES: 'npc:special-ability:abilities',
   NPC_REACTION_ROLL_PARAMS: 'npc:reaction-roll:params',
   NPC_LAST_REACTION_RESULT: 'npc:reaction:last-result',
 
@@ -58,6 +66,7 @@ export const ContextKeys = {
   COMBAT_INITIATIVE_CONTEXT: 'combat:initiative:context',
   COMBAT_INITIATIVE_RESULTS: 'combat:initiative:results',
   COMBAT_INITIATIVE_ORDER: 'combat:initiative:order',
+  COMBAT_SURPRISE_RESULTS: 'combat:surprise:results',
 
   // Aerial combat
   COMBAT_AERIAL_CONTEXT: 'combat:aerial:context',
@@ -101,6 +110,7 @@ export const ContextKeys = {
   COMBAT_ARMOR_EFFECTIVENESS: 'combat:armor:effectiveness',
   COMBAT_DAMAGE_RESULT: 'combat:damage:result',
   COMBAT_DAMAGE_VALUES: 'combat:damage:values',
+  COMBAT_DAMAGE_APPLIED: 'combat:damage:applied',
 
   // Attack weapon/target (frequently accessed)
   COMBAT_ATTACK_WEAPON: 'combat:attack:weapon',
@@ -132,6 +142,7 @@ export const ContextKeys = {
   SPELL_CAST_COMPONENTS: 'spell:cast:components',
   SPELL_CAST_VALIDATION: 'spell:cast:validation',
   SPELL_CAST_RESULT: 'spell:cast-spell:result',
+  SPELL_CAST_EFFECT_RESULTS: 'spell:cast:effect-results',
   SPELL_ATTEMPT: 'spell:attempt',
   SPELL_CONCENTRATION_CHECK: 'spell:concentration:check',
   SPELL_INTERACTION: 'spell:interaction',

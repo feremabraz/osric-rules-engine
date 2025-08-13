@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import { RULE_NAMES } from '@osric/types/constants';
@@ -12,8 +13,8 @@ export class SpellInterruptionRules extends BaseRule {
 
   canApply(context: GameContext, _command: Command): boolean {
     // Apply when there is any ongoing spell attempt or concentration check in context
-    const hasAttempt = context.getTemporary('spell:attempt') != null;
-    const hasConcentration = context.getTemporary('spell:concentration:check') != null;
+    const hasAttempt = context.getTemporary(ContextKeys.SPELL_ATTEMPT) != null;
+    const hasConcentration = context.getTemporary(ContextKeys.SPELL_CONCENTRATION_CHECK) != null;
     return hasAttempt || hasConcentration;
   }
 

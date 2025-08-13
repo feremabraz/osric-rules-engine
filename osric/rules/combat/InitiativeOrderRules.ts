@@ -4,10 +4,13 @@
  */
 
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule } from '@osric/core/Rule';
 import type { RuleResult } from '@osric/core/Rule';
+import type { Character as CharacterData } from '@osric/types/character';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
+import type { Monster as MonsterData } from '@osric/types/monster';
 
 interface InitiativeParticipant {
   entityId: string;
@@ -30,11 +33,36 @@ export class InitiativeOrderRules extends BaseRule {
 
   async apply(context: GameContext, _command: Command): Promise<RuleResult> {
     try {
-      // Get the initiative participants from previous rule
-      const participants = this.getRequiredContext<InitiativeParticipant[]>(
+      // Get the initiative roll results from previous rule
+      type InitiativeResultEntry = {
+        entity: CharacterData | MonsterData;
+        initiative: number;
+        modifiers: number;
+        weaponSpeedFactor: number;
+        naturalRoll: number;
+        surprised: boolean;
+      };
+      const results = this.getRequiredContext<InitiativeResultEntry[]>(
         context,
-        'combat:initiative:participants'
+        ContextKeys.COMBAT_INITIATIVE_RESULTS
       );
+
+      // Map into participants structure
+      const participants: InitiativeParticipant[] = results.map((r) => {
+        const e = r.entity;
+        const isCharacter = 'race' in e;
+        const dexterityModifier = isCharacter
+          ? -((e as CharacterData).abilityModifiers.dexterityReaction || 0)
+          : 0;
+        return {
+          entityId: e.id,
+          name: e.name,
+          initiative: r.initiative,
+          dexterityModifier,
+          isPlayer: isCharacter,
+          actedThisRound: false,
+        };
+      });
 
       if (participants.length === 0) {
         return this.createFailureResult('No initiative participants found');
@@ -72,7 +100,7 @@ export class InitiativeOrderRules extends BaseRule {
       };
 
       // Store the initiative order
-      this.setContext(context, 'combat:initiative:order', initiativeOrder);
+      this.setContext(context, ContextKeys.COMBAT_INITIATIVE_ORDER, initiativeOrder);
 
       const orderSummary = this.createOrderSummary(orderedParticipants);
 
@@ -99,13 +127,21 @@ export class InitiativeOrderRules extends BaseRule {
       return false;
     }
 
-    // Must have initiative participants from previous rule
-    const participants = this.getOptionalContext<InitiativeParticipant[]>(
+    // Must have initiative roll results from previous rule
+    type InitiativeResultEntry = {
+      entity: CharacterData | MonsterData;
+      initiative: number;
+      modifiers: number;
+      weaponSpeedFactor: number;
+      naturalRoll: number;
+      surprised: boolean;
+    };
+    const results = this.getOptionalContext<InitiativeResultEntry[]>(
       context,
-      'combat:initiative:participants'
+      ContextKeys.COMBAT_INITIATIVE_RESULTS
     );
 
-    return participants !== null && participants.length > 0;
+    return results !== null && results.length > 0;
   }
 
   getPrerequisites(): string[] {

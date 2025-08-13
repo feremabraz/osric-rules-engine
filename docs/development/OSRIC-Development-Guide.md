@@ -129,48 +129,6 @@ All configs are green today.
 
 The focus remains internal clarity and consistency. No new gameplay features are in scope unless needed to eliminate duplication or ambiguity.
 
-### Phase 1: API and Context Consistency (Done)
-
-Objective: Make the core APIs consistent, strongly typed, and ergonomic.
-
-Deliverables / Checklist
-1. Context keys
-  - [x] Consolidate all temporary keys under `ContextKeys`
-  - [x] Introduce `ContextKey<T>` and typed accessors: `getTemporary<T>(key)`, `setTemporary<T>(key, value)`
-2. Results
-  - [x] Common `kind` discriminant everywhere
-  - [x] `BaseRuleResult<T>` generic with typed `data?: T`
-  - [x] `createSuccessResult<T>(msg, data?: T)` propagates types
-3. Helpers
-  - [x] `isSuccess` / `isFailure`
-  - [x] Optional: `matchResult`, `unwrapSuccess` (helpers added; adopt where they clearly improve readability)
-
-Exit Criteria
-- Temp context accesses no longer use ad‑hoc string keys
-- Rule results are generically typed where a stable data shape exists
-- All quality gates green
-
-### Phase 2: Behavior and Structure Normalization (In Progress)
-
-Objective: Ensure single responsibility and remove duplication.
-
-Deliverables / Checklist
-1. Commands vs Rules
-  - [ ] Commands validate and set context; mechanics live in rules
-2. Files and naming
-  - [ ] One file → one rule class; consistent naming via `RULE_NAMES`
-3. Duplicate logic
-  - [x] Extract shared dice/modifier routines used 2+ times (DiceEngine; wrappers deprecated)
-4. Error model
-  - [ ] Introduce simple `DomainError` (code/message/details) and use where it helps clarity
-
-Exit Criteria
-- Thin commands, focused rules
-- Reused helpers for common calculations
-- Minimal, consistent error surface
- - ATTACK chain includes PostDamageStatus after ApplyDamage
- - Optional: ongoing effects handled via RoundTick + BleedingTick
-
 ### Phase 3: Public Surface Pruning (Planned)
 
 Objective: Keep the public API as small and coherent as possible.

@@ -58,7 +58,11 @@ export class AttackRollRules extends BaseRule {
         isChargedAttack
       );
 
-      const totalAttackRoll = naturalRoll + modifiers;
+      // Apply any weapon-vs-armor adjustment computed earlier in the chain
+      const wva = context.getTemporary<number>(ContextKeys.COMBAT_WEAPON_VS_ARMOR_ADJUSTMENT) || 0;
+      const totalModifiers = modifiers + wva;
+
+      const totalAttackRoll = naturalRoll + totalModifiers;
 
       const targetNumber = calculateTargetNumber(attacker, target);
 
@@ -70,7 +74,7 @@ export class AttackRollRules extends BaseRule {
 
       const attackRollResult: AttackRollResult = {
         naturalRoll,
-        modifiers,
+        modifiers: totalModifiers,
         totalAttackRoll,
         targetNumber,
         hit: hit || critical,

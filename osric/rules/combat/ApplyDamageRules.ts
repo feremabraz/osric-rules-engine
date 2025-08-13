@@ -46,6 +46,7 @@ export class ApplyDamageRules extends BaseRule {
     // Persist target update in the GameContext
     context.setEntity(updatedTarget.id, updatedTarget);
     context.setTemporary(ContextKeys.COMBAT_ATTACK_TARGET, updatedTarget);
+    context.setTemporary(ContextKeys.COMBAT_DAMAGE_APPLIED, totalDamage);
 
     const msg =
       totalDamage > 0

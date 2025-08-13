@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule } from '@osric/core/Rule';
 import type { RuleResult } from '@osric/core/Rule';
@@ -45,7 +46,7 @@ export class SpecialAbilityRules extends BaseRule {
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
     const abilityContext = this.getOptionalContext<SpecialAbilityContext>(
       context,
-      'specialAbilityContext'
+      ContextKeys.NPC_SPECIAL_ABILITY_CONTEXT
     );
 
     if (!abilityContext) {
@@ -55,7 +56,7 @@ export class SpecialAbilityRules extends BaseRule {
     try {
       const abilities = this.generateSpecialAbilities(abilityContext);
 
-      this.setContext(context, 'specialAbilities', abilities);
+      this.setContext(context, ContextKeys.NPC_SPECIAL_ABILITIES, abilities);
 
       return this.createSuccessResult(
         `Generated ${abilities.length} special abilities for ${abilityContext.monsterType}`,

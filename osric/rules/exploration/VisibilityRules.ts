@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule } from '@osric/core/Rule';
 import type { RuleResult } from '@osric/core/Rule';
@@ -51,7 +52,10 @@ export class VisibilityRules extends BaseRule {
 
   canApply(context: GameContext, _command: Command): boolean {
     return (
-      this.getOptionalContext<VisibilityParameters>(context, 'visibility-check-params') !== null
+      this.getOptionalContext<VisibilityParameters>(
+        context,
+        ContextKeys.EXPLORATION_VISIBILITY_PARAMS
+      ) !== null
     );
   }
 
@@ -59,7 +63,7 @@ export class VisibilityRules extends BaseRule {
     try {
       const parameters = this.getRequiredContext<VisibilityParameters>(
         context,
-        'visibility-check-params'
+        ContextKeys.EXPLORATION_VISIBILITY_PARAMS
       );
 
       const { observerId, targetId, activityType, conditions, distance } = parameters;
@@ -82,7 +86,7 @@ export class VisibilityRules extends BaseRule {
         distance
       );
 
-      this.setContext(context, 'visibility-result', visibilityResult);
+      this.setContext(context, ContextKeys.EXPLORATION_VISIBILITY_RESULT, visibilityResult);
 
       const message = this.createVisibilityMessage(
         observer,

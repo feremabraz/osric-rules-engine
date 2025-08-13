@@ -38,7 +38,11 @@ export class RacialRestrictionsRules extends BaseRule {
     }
 
     // Persist validation marker for downstream rules if needed
-    this.setContext(context, 'character:creation:class-validation', params.characterClass);
+    this.setContext(
+      context,
+      ContextKeys.CHARACTER_CREATION_CLASS_VALIDATION,
+      params.characterClass
+    );
 
     return this.createSuccessResult(`${params.race} is allowed to be ${params.characterClass}`, {
       race: params.race,
