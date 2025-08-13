@@ -40,25 +40,8 @@ export class ReactionRollCommand extends BaseCommand<ReactionRollParameters> {
 
     this.setupContextData(context);
 
-    const { ReactionRules } = await import('../../rules/npc/ReactionRules');
-    const reactionRule = new ReactionRules();
-
-    if (!reactionRule.canApply(context, this)) {
-      return this.createFailureResult('Reaction rule cannot be applied in current context');
-    }
-
-    const ruleResult = await reactionRule.execute(context, this);
-
-    if (isFailure(ruleResult)) {
-      return this.createFailureResult(ruleResult.message, undefined, ruleResult.data);
-    }
-
-    return this.createSuccessResult(
-      ruleResult.message,
-      ruleResult.data,
-      ruleResult.effects,
-      ruleResult.damage
-    );
+    // Delegate actual mechanics to the RuleEngine
+    return await this.executeWithRuleEngine(context);
   }
 
   canExecute(context: GameContext): boolean {

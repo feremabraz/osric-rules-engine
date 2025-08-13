@@ -176,6 +176,7 @@ export const ContextKeys = {
   SPELL_NEW_MAGIC_ITEM: 'spell:magic-item:new',
   SPELL_MAGIC_ITEM_TO_USE: 'spell:magic-item:to-use',
   SPELL_MAGIC_ITEM_SAVING_THROW: 'spell:magic-item:saving-throw',
+  SPELL_MAGIC_ITEM_CREATION_PARAMS: 'spell:magic-item:creation:params',
   SPELL_IDENTIFICATION_ATTEMPT: 'spell:magic-item:identification-attempt',
   IDENTIFY_ITEM_IDENTIFIER: 'identifyItem_identifier',
   IDENTIFY_ITEM_ITEM: 'identifyItem_item',

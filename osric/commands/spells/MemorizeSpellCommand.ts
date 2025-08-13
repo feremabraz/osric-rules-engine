@@ -63,11 +63,8 @@ export class MemorizeSpellCommand extends BaseCommand<MemorizeSpellParameters> {
       context.setTemporary(ContextKeys.SPELL_TO_CAST, spell);
       context.setTemporary(ContextKeys.SPELL_CALC_CHARACTER, this.parameters);
 
-      return this.createSuccessResult(`${caster.name} memorizes ${spell.name}`, {
-        spell: spell.name,
-        level: this.parameters.spellLevel,
-        caster: caster.name,
-      });
+      // Delegate actual mechanics to the RuleEngine
+      return await this.executeWithRuleEngine(context);
     } catch (error) {
       return this.createFailureResult(
         `Error memorizing spell: ${error instanceof Error ? error.message : 'Unknown error'}`

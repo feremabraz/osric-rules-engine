@@ -5,7 +5,7 @@ import type { GameContext } from '@osric/core/GameContext';
 import { ScrollReadValidator } from '@osric/commands/spells/validators/ScrollReadValidator';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { Character, CharacterId, Item, ItemId, MonsterId } from '@osric/types';
-import { COMMAND_TYPES } from '@osric/types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 
 export interface ScrollReadParameters {
   readerId: string | CharacterId;
@@ -52,11 +52,8 @@ export class ScrollReadCommand extends BaseCommand<ScrollReadParameters> {
 
       context.setTemporary(ContextKeys.SPELL_SCROLL_CONTEXT, null);
 
-      return this.createSuccessResult(`${reader.name} attempts to read ${scroll.name}`, {
-        scroll: scroll.name,
-        reader: reader.name,
-        targets: this.targetIds,
-      });
+      // Delegate actual mechanics to the RuleEngine
+      return await this.executeWithRuleEngine(context);
     } catch (error) {
       return this.createFailureResult(
         `Error reading scroll: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -87,7 +84,12 @@ export class ScrollReadCommand extends BaseCommand<ScrollReadParameters> {
   }
 
   public getRequiredRules(): string[] {
-    return ['ScrollValidation', 'ScrollReadingChance', 'ScrollSpellCasting', 'ScrollDestruction'];
+    return [
+      RULE_NAMES.SCROLL_VALIDATION,
+      RULE_NAMES.SCROLL_READING_CHANCE,
+      RULE_NAMES.SCROLL_SPELL_CASTING,
+      RULE_NAMES.SCROLL_CASTING_FAILURE,
+    ];
   }
 
   private getTargets(context: GameContext): Character[] {

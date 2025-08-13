@@ -4,7 +4,7 @@ import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import type { Character, Item } from '@osric/types';
-import { COMMAND_TYPES } from '@osric/types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 
 import type { CharacterId, ItemId } from '@osric/types';
 
@@ -57,14 +57,8 @@ export class IdentifyMagicItemCommand extends BaseCommand<IdentifyMagicItemParam
 
       context.setTemporary(ContextKeys.IDENTIFY_ITEM_RESULT, null);
 
-      return this.createSuccessResult(
-        `${identifier.name} attempts to identify ${item.name} using ${this.parameters.method}`,
-        {
-          item: item.name,
-          identifier: identifier.name,
-          method: this.parameters.method,
-        }
-      );
+      // Delegate actual mechanics to the RuleEngine
+      return await this.executeWithRuleEngine(context);
     } catch (error) {
       return this.createFailureResult(
         `Error identifying item: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -95,7 +89,11 @@ export class IdentifyMagicItemCommand extends BaseCommand<IdentifyMagicItemParam
   }
 
   public getRequiredRules(): string[] {
-    return ['IdentificationValidation', 'IdentificationMethod', 'IdentificationResults'];
+    return [
+      RULE_NAMES.IDENTIFICATION_VALIDATION,
+      RULE_NAMES.IDENTIFICATION_METHOD,
+      RULE_NAMES.IDENTIFICATION_RESULTS,
+    ];
   }
 
   private hasAccessToItem(identifier: Character, item: Item): boolean {

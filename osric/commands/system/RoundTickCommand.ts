@@ -11,9 +11,9 @@ export class RoundTickCommand extends BaseCommand<RoundTickParameters> {
     // No parameters required for now
   }
 
-  async execute(_context: GameContext): Promise<CommandResult> {
-    // No-op; rules perform ticking
-    return this.createSuccessResult('Round tick started');
+  async execute(context: GameContext): Promise<CommandResult> {
+    // Delegate to rules; rules perform ticking and publish outcomes
+    return this.executeWithRuleEngine(context);
   }
 
   canExecute(_context: GameContext): boolean {

@@ -65,7 +65,8 @@ export class AttackCommand extends BaseCommand<AttackParameters> {
 
       context.setTemporary(ContextKeys.COMBAT_ATTACK_CONTEXT, attackContext);
 
-      return this.createSuccessResult('Attack command prepared for rule processing');
+      // Delegate actual mechanics to the RuleEngine
+      return await this.executeWithRuleEngine(context);
     } catch (error) {
       return this.createFailureResult(
         `Attack command failed: ${error instanceof Error ? error.message : 'Unknown error'}`

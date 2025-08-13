@@ -67,7 +67,8 @@ export class InitiativeCommand extends BaseCommand<InitiativeParameters> {
 
       context.setTemporary(ContextKeys.COMBAT_INITIATIVE_CONTEXT, initiativeContext);
 
-      return this.createSuccessResult('Initiative command prepared for rule processing');
+      // Delegate actual mechanics to the RuleEngine
+      return await this.executeWithRuleEngine(context);
     } catch (error) {
       return this.createFailureResult(
         `Initiative command failed: ${error instanceof Error ? error.message : 'Unknown error'}`

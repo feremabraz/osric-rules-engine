@@ -59,11 +59,8 @@ export class CastSpellCommand extends BaseCommand<CastSpellParameters> {
       context.setTemporary(ContextKeys.SPELL_CAST_VALIDATION, null);
       context.setTemporary(ContextKeys.SPELL_CAST_RESULT, null);
 
-      return this.createSuccessResult(`${caster.name} casts ${spell.name}`, {
-        spell: spell.name,
-        caster: caster.name,
-        targets: targets.map((t) => t.name),
-      });
+      // Delegate actual mechanics to the RuleEngine
+      return await this.executeWithRuleEngine(context);
     } catch (error) {
       return this.createFailureResult(
         `Error casting spell: ${error instanceof Error ? error.message : 'Unknown error'}`

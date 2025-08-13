@@ -15,14 +15,16 @@ export class EncumbranceRules extends BaseRule {
 
   canApply(context: GameContext, command: Command): boolean {
     if (command.type !== COMMAND_TYPES.MOVE) return false;
-    const req = context.getTemporary<{ characterId: string }>('movement-request-params');
+    const req = context.getTemporary<{ characterId: string }>(
+      ContextKeys.EXPLORATION_MOVEMENT_REQUEST_PARAMS
+    );
     return !!req?.characterId;
   }
 
   async apply(context: GameContext): Promise<RuleResult> {
     const req = this.getRequiredContext<{ characterId: string }>(
       context,
-      'movement-request-params'
+      ContextKeys.EXPLORATION_MOVEMENT_REQUEST_PARAMS
     );
     const character = context.getEntity<Character>(req.characterId);
 

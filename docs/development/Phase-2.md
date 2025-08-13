@@ -21,24 +21,27 @@ Comprehensive task list to complete Phase 2.
   - [ ] ↳ Delegate execution to the `RuleEngine`
   - [ ] ↳ No dice, no direct HP mutation, no internal resolution
 - [ ] Normalize temporary inputs into `ContextKeys` before delegation
+  - [x] ↳ MoveCommand normalized to `EXPLORATION_MOVEMENT_REQUEST_PARAMS`
+  - [x] ↳ SearchCommand normalized to `EXPLORATION_SEARCH_REQUEST_PARAMS` (+ context)
 
 ## Rules (Single Responsibility, Naming, Layout)
 
 - [ ] One file → one rule; split any multi-export files
+  - [x] ↳ Split UnderwaterCombatRules: movement rule extracted to `UnderwaterMovementRules.ts`
 - [ ] Use `RULE_NAMES` only; no ad-hoc strings
 - [ ] Remove “adapter” rules by aligning real rule names to contract names
 - [ ] Centralize shared helpers (dice done); add modifiers/util calcs if duplicated
 
 ## Context Keys and Flow
 
-- [ ] Replace remaining raw string context keys with `ContextKeys`
+- [x] Replace remaining raw string context keys with `ContextKeys`
 - [ ] Standardize per-flow context shapes and usage
   - [ ] ↳ Combat: `COMBAT_ATTACK_CONTEXT`, `COMBAT_ATTACK_ROLL_RESULT`, `COMBAT_DAMAGE_RESULT`, `COMBAT_DAMAGE_APPLIED`
   - [ ] ↳ Aerial: all `COMBAT_AERIAL_*` keys
   - [ ] ↳ Two-weapon: `COMBAT_MAIN_HAND_WEAPON`, `COMBAT_OFF_HAND_WEAPON`
   - [ ] ↳ Character creation: `CHARACTER_CREATION_DATA`, `CHARACTER_CREATION_PARAMS`
   - [ ] ↳ Initiative: `COMBAT_INITIATIVE_CONTEXT`, `COMBAT_INITIATIVE_RESULTS`, `COMBAT_INITIATIVE_ORDER`
-  - [ ] ↳ Exploration: movement/search/terrain/foraging parameter keys
+  - [x] ↳ Exploration: movement/search parameter keys standardized
 - [ ] Ensure rules publish/consume context consistently; remove orphan keys
 
 ## Randomness and Dice
@@ -78,9 +81,9 @@ Comprehensive task list to complete Phase 2.
 
 ## Exploration/Environment Pipelines
 
-- [ ] MOVE chain
+- [x] MOVE chain
   - [ ] ↳ `MovementRates` → `Encumbrance` → `Movement` (consuming movement params)
-- [ ] SEARCH chain wired and command normalized
+- [x] SEARCH chain wired and command normalized
 - [ ] FALLING_DAMAGE chain is pure calculation; apply HP only when appropriate
 - [ ] TERRAIN_NAVIGATION chain
   - [ ] ↳ Navigation → `SurvivalChecks` → publish outcomes
@@ -113,6 +116,10 @@ Comprehensive task list to complete Phase 2.
 - [ ] Normalize imports to `@osric/*`; remove legacy barrels if present
 - [ ] Ensure file and class names match intent
   - [ ] ↳ Rule filename mirrors `RULE_NAMES` purpose
+
+## Additional wiring done
+
+- [x] Registered `UNDERWATER_MOVE` chain (`buildUnderwaterMoveChain`) with `UnderwaterMovementRules`
 
 ## Contracts and Validation
 

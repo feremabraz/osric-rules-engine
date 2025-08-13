@@ -57,7 +57,8 @@ export class GrappleCommand extends BaseCommand<GrappleParameters> {
 
       context.setTemporary(ContextKeys.COMBAT_GRAPPLE_CONTEXT, grappleContext);
 
-      return this.createSuccessResult('Grapple command prepared for rule processing');
+      // Delegate actual mechanics to the RuleEngine
+      return await this.executeWithRuleEngine(context);
     } catch (error) {
       return this.createFailureResult(
         `Grapple command failed: ${error instanceof Error ? error.message : 'Unknown error'}`

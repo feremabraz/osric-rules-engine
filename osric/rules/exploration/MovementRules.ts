@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, isFailure, isSuccess } from '@osric/core/Rule';
 import type { RuleResult } from '@osric/core/Rule';
@@ -33,7 +34,9 @@ export class MovementRules extends BaseRule {
       return false;
     }
 
-    const data = context.getTemporary<MovementRequest>('movement-request-params');
+    const data = context.getTemporary<MovementRequest>(
+      ContextKeys.EXPLORATION_MOVEMENT_REQUEST_PARAMS
+    );
     if (!data?.characterId || !data?.fromPosition || !data?.toPosition) {
       return false;
     }
@@ -43,7 +46,9 @@ export class MovementRules extends BaseRule {
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const data = context.getTemporary<MovementRequest>('movement-request-params');
+    const data = context.getTemporary<MovementRequest>(
+      ContextKeys.EXPLORATION_MOVEMENT_REQUEST_PARAMS
+    );
 
     if (!data) {
       return this.createFailureResult('No movement request data provided', {
@@ -110,12 +115,15 @@ export class MovementRules extends BaseRule {
     character: Character,
     data: MovementRequest
   ): MovementResult {
-    const baseFromContext = this.getOptionalContext<number>(context, 'movement:base-rate');
+    const baseFromContext = this.getOptionalContext<number>(
+      context,
+      ContextKeys.EXPLORATION_MOVEMENT_BASE_RATE
+    );
     const baseMovement = baseFromContext ?? this.getBaseMovementRate(character);
     const encumbranceLevel =
       this.getOptionalContext<'light' | 'moderate' | 'heavy' | 'severe'>(
         context,
-        'movement:encumbrance-level'
+        ContextKeys.EXPLORATION_MOVEMENT_ENCUMBRANCE_LEVEL
       ) ?? data.encumbrance;
     const encumbranceModifier = this.getEncumbranceModifier(character, encumbranceLevel);
     const terrainModifier = this.getTerrainModifier(data.terrainType);

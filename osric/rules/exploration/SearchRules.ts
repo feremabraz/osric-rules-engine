@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, isFailure, isSuccess } from '@osric/core/Rule';
@@ -33,7 +34,7 @@ export class SearchRules extends BaseRule {
       return false;
     }
 
-    const data = context.getTemporary<SearchRequest>('search-request-params');
+    const data = context.getTemporary<SearchRequest>(ContextKeys.EXPLORATION_SEARCH_REQUEST_PARAMS);
     if (!data?.characterId || !data?.searchType) {
       return false;
     }
@@ -43,7 +44,7 @@ export class SearchRules extends BaseRule {
   }
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
-    const data = context.getTemporary<SearchRequest>('search-request-params');
+    const data = context.getTemporary<SearchRequest>(ContextKeys.EXPLORATION_SEARCH_REQUEST_PARAMS);
 
     if (!data) {
       return this.createFailureResult('No search request data provided');

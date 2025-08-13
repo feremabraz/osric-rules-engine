@@ -1,4 +1,5 @@
 import type { Command } from '@osric/core/Command';
+import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { calculateMonsterXP } from '@osric/core/MonsterXP';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
@@ -33,7 +34,7 @@ export class ExperienceGainRules extends BaseRule {
 
   async apply(context: GameContext, _command: Command): Promise<RuleResult> {
     const gainData = context.getTemporary<ExperienceGainParameters>(
-      'character:experience:gain-params'
+      ContextKeys.CHARACTER_EXPERIENCE_GAIN_PARAMS
     );
 
     if (!gainData) {

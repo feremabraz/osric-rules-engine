@@ -23,6 +23,7 @@ import { buildTemperatureCheckChain } from '@osric/chains/exploration/temperatur
 import { buildTerrainNavigationChain } from '@osric/chains/exploration/terrainNavigation';
 import { buildWeatherCheckChain } from '@osric/chains/exploration/weatherCheck';
 
+import { buildUnderwaterMoveChain } from '@osric/chains/combat/underwater';
 import { buildLoyaltyCheckChain } from '@osric/chains/npc/loyaltyCheck';
 import { buildMonsterGenerationChain } from '@osric/chains/npc/monsterGeneration';
 import { buildMoraleCheckChain } from '@osric/chains/npc/moraleCheck';
@@ -32,6 +33,7 @@ import { buildReactionRollChain } from '@osric/chains/npc/reactionRoll';
 // Spells
 import { buildCastSpellChain } from '@osric/chains/spells/castSpell';
 import { buildIdentifyMagicItemChain } from '@osric/chains/spells/identifyMagicItem';
+import { buildMagicItemCreationChain } from '@osric/chains/spells/magicItemCreation';
 import { buildMemorizeSpellChain } from '@osric/chains/spells/memorizeSpell';
 import { buildReadScrollChain } from '@osric/chains/spells/readScroll';
 
@@ -47,6 +49,7 @@ export function registerRuleChains(engine: RuleEngine): void {
   engine.registerRuleChain(COMMAND_TYPES.MORALE_CHECK, buildMoraleCheckChain());
   engine.registerRuleChain(COMMAND_TYPES.LOYALTY_CHECK, buildLoyaltyCheckChain());
   engine.registerRuleChain(COMMAND_TYPES.MOVE, buildMoveChain());
+  engine.registerRuleChain(COMMAND_TYPES.UNDERWATER_MOVE, buildUnderwaterMoveChain());
   engine.registerRuleChain(COMMAND_TYPES.INITIATIVE, buildInitiativeChain());
   engine.registerRuleChain(COMMAND_TYPES.SAVING_THROW, buildSavingThrowChain());
   engine.registerRuleChain(COMMAND_TYPES.GRAPPLE, buildGrappleChain());
@@ -59,6 +62,7 @@ export function registerRuleChains(engine: RuleEngine): void {
   engine.registerRuleChain(COMMAND_TYPES.MEMORIZE_SPELL, buildMemorizeSpellChain());
   engine.registerRuleChain(COMMAND_TYPES.READ_SCROLL, buildReadScrollChain());
   engine.registerRuleChain(COMMAND_TYPES.IDENTIFY_MAGIC_ITEM, buildIdentifyMagicItemChain());
+  engine.registerRuleChain(COMMAND_TYPES.MAGIC_ITEM_CREATION, buildMagicItemCreationChain());
   engine.registerRuleChain(COMMAND_TYPES.WEATHER_CHECK, buildWeatherCheckChain());
   engine.registerRuleChain(COMMAND_TYPES.TEMPERATURE_CHECK, buildTemperatureCheckChain());
   engine.registerRuleChain(COMMAND_TYPES.DROWNING_CHECK, buildDrowningCheckChain());
