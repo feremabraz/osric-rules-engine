@@ -55,11 +55,7 @@ export class RuleEngine {
     }
   }
 
-  registerRuleChains(chains: Record<string, RuleChain>): void {
-    for (const [commandType, chain] of Object.entries(chains)) {
-      this.registerRuleChain(commandType, chain);
-    }
-  }
+  // Note: bulk registration removed to encourage centralized chain wiring via buildRuleEngine
 
   getRuleChain(commandType: string): RuleChain | null {
     return this.ruleChains.get(commandType) || null;

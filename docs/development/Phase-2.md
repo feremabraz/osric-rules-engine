@@ -4,9 +4,9 @@ Comprehensive task list to complete Phase 2.
 
 ## Architecture and Wiring (Chains)
 
-- [ ] Make chains mandatory
-  - [ ] ↳ Remove legacy builders and aliases
-  - [ ] ↳ Use `buildRuleEngine` as the only entry point
+- [x] Make chains mandatory
+  - [x] ↳ Remove legacy builders and aliases
+  - [x] ↳ Use `buildRuleEngine` as the only entry point
 - [x] Ensure every command type has a registered chain under `osric/chains` by domain
   - [x] ↳ Domains: combat, character, exploration, npc, spells, system
 - [x] Align `RuleContractValidator` with actual chains
@@ -16,11 +16,11 @@ Comprehensive task list to complete Phase 2.
 
 ## Commands (Thinness and Delegation)
 
-- [ ] Ensure all commands validate/delegate and contain no mechanics
-  - [ ] ↳ Validate params via co-located validators
-  - [ ] ↳ Delegate execution to the `RuleEngine`
-  - [ ] ↳ No dice, no direct HP mutation, no internal resolution
-- [ ] Normalize temporary inputs into `ContextKeys` before delegation
+- [x] Ensure all commands validate/delegate and contain no mechanics
+  - [x] ↳ Validate params via co-located validators
+  - [x] ↳ Delegate execution to the `RuleEngine`
+  - [x] ↳ No dice, no direct HP mutation, no internal resolution
+- [x] Normalize temporary inputs into `ContextKeys` before delegation
   - [x] ↳ MoveCommand normalized to `EXPLORATION_MOVEMENT_REQUEST_PARAMS`
   - [x] ↳ SearchCommand normalized to `EXPLORATION_SEARCH_REQUEST_PARAMS` (+ context)
 
@@ -37,7 +37,7 @@ Comprehensive task list to complete Phase 2.
   - [x] ↳ Trim AerialCombatRules to single class and move shared/util rules to `AerialCombatShared.ts`; add `AerialMovementRules.ts` and `DiveAttackRules.ts`
 - [x] Use `RULE_NAMES` only; no ad-hoc strings
 - [x] Remove “adapter” rules by aligning real rule names to contract names
-- [ ] Centralize shared helpers (dice done); add modifiers/util calcs if duplicated
+- [x] Centralize shared helpers (dice done); add modifiers/util calcs if duplicated
 
 ## Context Keys and Flow
 
@@ -72,7 +72,7 @@ Comprehensive task list to complete Phase 2.
 - [x] CREATE_CHARACTER chain
   - [x] ↳ `AbilityScoreGeneration` → `RacialAbilityAdjustment` → `ClassRequirement` → `CharacterInitialization`
 - [ ] Ensure `CHARACTER_CREATION_DATA`/`CHARACTER_CREATION_PARAMS` usage across rules
-- [ ] Remove creation-time mechanics from commands
+- [x] Remove creation-time mechanics from commands
 
 ## Spells Pipeline
 
@@ -131,7 +131,7 @@ Comprehensive task list to complete Phase 2.
 ## Contracts and Validation
 
 - [x] Update `RuleContractValidator` for newly added/renamed rules
-- [ ] Ensure each command’s `getRequiredRules` aligns with its chain
+- [x] Ensure each command’s `getRequiredRules` aligns with its chain
 - [ ] Run a chain audit
   - [ ] ↳ No missing-required rules
   - [ ] ↳ No unused rules in chains

@@ -1,7 +1,6 @@
 import { CreateCharacterValidator } from '@osric/commands/character/validators/CreateCharacterValidator';
 import { BaseCommand, type CommandResult } from '@osric/core/Command';
 import { ContextKeys } from '@osric/core/ContextKeys';
-import { DiceEngine } from '@osric/core/Dice';
 import type { GameContext } from '@osric/core/GameContext';
 import { formatValidationErrors } from '@osric/core/ValidationPrimitives';
 import { createCharacterId } from '@osric/types';
@@ -13,6 +12,7 @@ import type {
   CharacterRace,
 } from '@osric/types/character';
 import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
+import { nanoid } from 'nanoid';
 
 export interface CreateCharacterParameters {
   name: string;
@@ -86,10 +86,8 @@ export class CreateCharacterCommand extends BaseCommand<CreateCharacterParameter
   }
 
   private generateCharacterId(): string {
-    const timestamp = Date.now();
-    // Use dice engine for deterministic RNG path
-    const random = DiceEngine.roll('1d1000').total - 1;
-    return `char_${timestamp}_${random}`;
+    const suffix = nanoid(8);
+    return `char_${suffix}`;
   }
 
   get creationParameters(): CreateCharacterParameters {

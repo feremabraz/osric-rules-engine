@@ -1,7 +1,7 @@
+import buildRuleEngine from '@osric/chains/buildRuleEngine';
 import { BaseCommand, type Command } from '@osric/core/Command';
 import { GameContext } from '@osric/core/GameContext';
 import { RuleChain } from '@osric/core/RuleChain';
-import { RuleEngine } from '@osric/core/RuleEngine';
 import { createStore } from 'jotai';
 import { describe, expect, it } from 'vitest';
 
@@ -64,7 +64,7 @@ describe('Discriminated results', () => {
   it('RuleEngine.process carries kind into CommandResult', async () => {
     const store = createStore();
     const ctx = new GameContext(store);
-    const engine = new RuleEngine();
+    const engine = buildRuleEngine();
     const chain = new RuleChain();
     chain.addRule(new SimpleSuccessRules());
     engine.registerRuleChain('noop', chain);

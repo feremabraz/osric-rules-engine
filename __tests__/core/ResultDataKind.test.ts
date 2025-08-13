@@ -1,8 +1,8 @@
+import buildRuleEngine from '@osric/chains/buildRuleEngine';
 import { SavingThrowCommand } from '@osric/commands/character/SavingThrowCommand';
 import { ThiefSkillCheckCommand } from '@osric/commands/character/ThiefSkillCheckCommand';
 import { GameContext } from '@osric/core/GameContext';
 import { RuleChain } from '@osric/core/RuleChain';
-import { RuleEngine } from '@osric/core/RuleEngine';
 import { SavingThrowRules } from '@osric/rules/character/SavingThrowRules';
 import { ThiefSkillRules } from '@osric/rules/character/ThiefSkillRules';
 import type { Character as CharacterType, ThiefSkills } from '@osric/types/character';
@@ -95,7 +95,7 @@ describe('RuleResult structure without dataKind', () => {
     const chain = new RuleChain();
     chain.addRule(new SavingThrowRules());
 
-    const engine = new RuleEngine();
+    const engine = buildRuleEngine();
     engine.registerRuleChain('saving-throw', chain);
 
     const character = makeCharacter();
@@ -117,7 +117,7 @@ describe('RuleResult structure without dataKind', () => {
     const chain = new RuleChain();
     chain.addRule(new ThiefSkillRules());
 
-    const engine = new RuleEngine();
+    const engine = buildRuleEngine();
     engine.registerRuleChain('use-thief-skill', chain);
 
     const character: CharacterType = {
