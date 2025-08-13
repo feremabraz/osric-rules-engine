@@ -1,4 +1,5 @@
 import type { Character } from '@osric/types/character';
+import { RULE_NAMES } from '@osric/types/constants';
 import type { Item } from '@osric/types/item';
 import type { Spell } from '@osric/types/spell';
 import type { MaterialComponent, SpellWithComponents } from '@osric/types/spell-types';
@@ -7,7 +8,7 @@ import type { GameContext } from '../../core/GameContext';
 import { BaseRule, type RuleResult } from '../../core/Rule';
 
 export class SpellComponentManagementRules extends BaseRule {
-  name = 'spell-component-management';
+  name = RULE_NAMES.SPELL_COMPONENT_MANAGEMENT;
   description = 'Manage detailed spell components and their availability';
 
   canApply(context: GameContext): boolean {

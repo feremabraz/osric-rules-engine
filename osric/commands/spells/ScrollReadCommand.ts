@@ -85,10 +85,9 @@ export class ScrollReadCommand extends BaseCommand<ScrollReadParameters> {
 
   public getRequiredRules(): string[] {
     return [
-      RULE_NAMES.SCROLL_VALIDATION,
-      RULE_NAMES.SCROLL_READING_CHANCE,
-      RULE_NAMES.SCROLL_SPELL_CASTING,
+      RULE_NAMES.SCROLL_USAGE_VALIDATION,
       RULE_NAMES.SCROLL_CASTING_FAILURE,
+      RULE_NAMES.SCROLL_SPELL_CASTING,
     ];
   }
 

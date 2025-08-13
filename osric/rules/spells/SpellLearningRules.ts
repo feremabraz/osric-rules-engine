@@ -1,11 +1,12 @@
 import type { Character } from '@osric/types/character';
+import { RULE_NAMES } from '@osric/types/constants';
 import { ContextKeys } from '../../core/ContextKeys';
 import { DiceEngine } from '../../core/Dice';
 import type { GameContext } from '../../core/GameContext';
 import { BaseRule, type RuleResult } from '../../core/Rule';
 
 export class SpellLearningRules extends BaseRule {
-  name = 'spell-learning';
+  name = RULE_NAMES.SPELL_LEARNING;
   description = 'Learn spells from external sources';
 
   canApply(context: GameContext): boolean {

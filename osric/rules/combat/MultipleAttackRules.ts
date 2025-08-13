@@ -4,7 +4,7 @@ import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { Character as CharacterData } from '@osric/types/character';
-import { COMMAND_TYPES } from '@osric/types/constants';
+import { COMMAND_TYPES, RULE_NAMES } from '@osric/types/constants';
 import type { Weapon } from '@osric/types/item';
 import type { Monster as MonsterData } from '@osric/types/monster';
 import type { CombatResult } from '@osric/types/shared';
@@ -18,7 +18,7 @@ export enum AttackSequence {
 }
 
 export class MultipleAttackRules extends BaseRule {
-  name = 'multiple-attack';
+  name = RULE_NAMES.MULTIPLE_ATTACKS;
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
     const attackContext = context.getTemporary(ContextKeys.COMBAT_ATTACK_CONTEXT) as AttackContext;

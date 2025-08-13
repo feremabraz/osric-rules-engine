@@ -1,4 +1,5 @@
 import type { Character } from '@osric/types/character';
+import { RULE_NAMES } from '@osric/types/constants';
 import type { Spell } from '@osric/types/spell';
 import { ContextKeys } from '../../core/ContextKeys';
 import { DiceEngine } from '../../core/Dice';
@@ -6,7 +7,7 @@ import type { GameContext } from '../../core/GameContext';
 import { BaseRule, type RuleResult } from '../../core/Rule';
 
 export class SpellInteractionRules extends BaseRule {
-  name = 'spell-interaction';
+  name = RULE_NAMES.SPELL_INTERACTION;
   description = 'Handle spell interactions and counterspells';
 
   canApply(context: GameContext): boolean {

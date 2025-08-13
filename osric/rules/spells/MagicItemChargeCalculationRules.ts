@@ -1,11 +1,12 @@
 import { ContextKeys } from '@osric/core/ContextKeys';
+import { RULE_NAMES } from '@osric/types/constants';
 import type { Item } from '@osric/types/item';
 import { DiceEngine } from '../../core/Dice';
 import type { GameContext } from '../../core/GameContext';
 import { BaseRule, type RuleResult } from '../../core/Rule';
 
 export class MagicItemChargeCalculationRules extends BaseRule {
-  name = 'magic-item-charge-calculation';
+  name = RULE_NAMES.MAGIC_ITEM_CHARGE_CALCULATION;
   description = 'Calculate initial charges for newly found magic items';
 
   canApply(context: GameContext): boolean {

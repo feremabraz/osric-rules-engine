@@ -89,11 +89,7 @@ export class IdentifyMagicItemCommand extends BaseCommand<IdentifyMagicItemParam
   }
 
   public getRequiredRules(): string[] {
-    return [
-      RULE_NAMES.IDENTIFICATION_VALIDATION,
-      RULE_NAMES.IDENTIFICATION_METHOD,
-      RULE_NAMES.IDENTIFICATION_RESULTS,
-    ];
+    return [RULE_NAMES.MAGIC_ITEM_IDENTIFICATION];
   }
 
   private hasAccessToItem(identifier: Character, item: Item): boolean {

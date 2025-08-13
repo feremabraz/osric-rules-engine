@@ -3,6 +3,7 @@ import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { Character as CharacterData } from '@osric/types/character';
+import { RULE_NAMES } from '@osric/types/constants';
 import { COMMAND_TYPES } from '@osric/types/constants';
 import type { Weapon } from '@osric/types/item';
 import type { Monster as MonsterData } from '@osric/types/monster';
@@ -17,7 +18,7 @@ interface TwoWeaponContext {
 }
 
 export class TwoWeaponFightingRules extends BaseRule {
-  name = 'two-weapon-fighting';
+  name = RULE_NAMES.TWO_WEAPON_FIGHTING;
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
     const twoWeaponContext = context.getTemporary(
@@ -166,7 +167,7 @@ export class TwoWeaponFightingRules extends BaseRule {
 }
 
 export class TwoWeaponEligibilityRules extends BaseRule {
-  name = 'two-weapon-eligibility';
+  name = RULE_NAMES.TWO_WEAPON_ELIGIBILITY;
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
     const character = context.getTemporary(ContextKeys.CHARACTER_CREATION_DATA) as CharacterData;

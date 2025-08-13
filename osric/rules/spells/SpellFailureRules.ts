@@ -1,4 +1,5 @@
 import type { Character } from '@osric/types/character';
+import { RULE_NAMES } from '@osric/types/constants';
 import type { Spell } from '@osric/types/spell';
 import { ContextKeys } from '../../core/ContextKeys';
 import { DiceEngine } from '../../core/Dice';
@@ -6,7 +7,7 @@ import type { GameContext } from '../../core/GameContext';
 import { BaseRule, type RuleResult } from '../../core/Rule';
 
 export class SpellFailureRules extends BaseRule {
-  name = 'spell-failure';
+  name = RULE_NAMES.SPELL_FAILURE;
   description = 'Handle spell failure and backfire effects';
 
   canApply(context: GameContext): boolean {

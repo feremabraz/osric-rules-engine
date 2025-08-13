@@ -3,6 +3,7 @@ import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { Character as CharacterData } from '@osric/types/character';
+import { RULE_NAMES } from '@osric/types/constants';
 import { COMMAND_TYPES } from '@osric/types/constants';
 import type { Monster as MonsterData } from '@osric/types/monster';
 
@@ -13,7 +14,7 @@ interface UnderwaterCombatContext {
 }
 
 export class UnderwaterMovementRules extends BaseRule {
-  name = 'underwater-movement';
+  name = RULE_NAMES.UNDERWATER_MOVEMENT;
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
     const underwaterContext = context.getTemporary(

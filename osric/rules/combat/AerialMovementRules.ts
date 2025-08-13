@@ -2,6 +2,7 @@ import type { Command } from '@osric/core/Command';
 import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import { RULE_NAMES } from '@osric/types/constants';
 import { COMMAND_TYPES } from '@osric/types/constants';
 import type { AerialMovement } from './AerialCombatShared';
 import { handleAerialMovement } from './AerialCombatShared';
@@ -11,7 +12,7 @@ interface AerialCombatContext {
 }
 
 export class AerialMovementRules extends BaseRule {
-  name = 'aerial-movement';
+  name = RULE_NAMES.AERIAL_MOVEMENT;
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
     const aerialContext = context.getTemporary(

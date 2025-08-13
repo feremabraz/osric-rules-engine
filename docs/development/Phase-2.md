@@ -35,8 +35,8 @@ Comprehensive task list to complete Phase 2.
   - [x] ↳ Split GrapplingRules into `GrappleAttackRules.ts`, `StrengthComparisonRules.ts`, `GrappleEffectRules.ts`
   - [x] ↳ Split MountedCombatRules into `MountedChargeRules.ts`, `MountedCombatCoreRules.ts`, `DismountRules.ts`, `MountedCombatEligibilityRules.ts`; keep shared types in `MountedCombatRules.ts`
   - [x] ↳ Trim AerialCombatRules to single class and move shared/util rules to `AerialCombatShared.ts`; add `AerialMovementRules.ts` and `DiveAttackRules.ts`
-- [ ] Use `RULE_NAMES` only; no ad-hoc strings
-- [ ] Remove “adapter” rules by aligning real rule names to contract names
+- [x] Use `RULE_NAMES` only; no ad-hoc strings
+- [x] Remove “adapter” rules by aligning real rule names to contract names
 - [ ] Centralize shared helpers (dice done); add modifiers/util calcs if duplicated
 
 ## Context Keys and Flow

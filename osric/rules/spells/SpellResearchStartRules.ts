@@ -1,11 +1,12 @@
 import type { Character } from '@osric/types/character';
+import { RULE_NAMES } from '@osric/types/constants';
 import { ContextKeys } from '../../core/ContextKeys';
 import type { GameContext } from '../../core/GameContext';
 import { BaseRule, type RuleResult } from '../../core/Rule';
 import type { ResearchDifficultyFactors, SpellResearch } from '../../types/spell-types';
 
 export class SpellResearchStartRules extends BaseRule {
-  name = 'spell-research-start';
+  name = RULE_NAMES.SPELL_RESEARCH_START;
   description = 'Begin a new spell research project';
 
   canApply(context: GameContext): boolean {

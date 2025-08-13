@@ -3,10 +3,11 @@ import type { Command } from '@osric/core/Command';
 import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import { RULE_NAMES } from '@osric/types/constants';
 import { COMMAND_TYPES } from '@osric/types/constants';
 
 export class AttackPrecedenceRules extends BaseRule {
-  name = 'attack-precedence';
+  name = RULE_NAMES.ATTACK_PRECEDENCE;
 
   async apply(context: GameContext, _command: Command): Promise<RuleResult> {
     const attackContext = context.getTemporary(ContextKeys.COMBAT_ATTACK_CONTEXT) as AttackContext;

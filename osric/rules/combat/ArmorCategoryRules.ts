@@ -3,13 +3,14 @@ import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { Character as CharacterData } from '@osric/types/character';
+import { RULE_NAMES } from '@osric/types/constants';
 import { COMMAND_TYPES } from '@osric/types/constants';
 import type { Monster as MonsterData } from '@osric/types/monster';
 
 export type ArmorCategory = 'Light' | 'Medium' | 'Heavy' | 'Shield Only' | 'Unarmored';
 
 export class ArmorCategoryRules extends BaseRule {
-  name = 'armor-category';
+  name = RULE_NAMES.ARMOR_CATEGORY;
 
   async apply(context: GameContext, _command: Command): Promise<RuleResult> {
     const weaponArmorContext = context.getTemporary(ContextKeys.COMBAT_WEAPON_ARMOR_CONTEXT) as {

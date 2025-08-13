@@ -1,4 +1,5 @@
 import type { Character } from '@osric/types/character';
+import { RULE_NAMES } from '@osric/types/constants';
 import { ContextKeys } from '../../core/ContextKeys';
 import { DiceEngine } from '../../core/Dice';
 import type { GameContext } from '../../core/GameContext';
@@ -6,7 +7,7 @@ import { BaseRule, type RuleResult } from '../../core/Rule';
 import type { SpellResearch } from '../../types/spell-types';
 
 export class SpellResearchProgressRules extends BaseRule {
-  name = 'spell-research-progress';
+  name = RULE_NAMES.SPELL_RESEARCH_PROGRESS;
   description = 'Continue work on spell research project';
 
   canApply(context: GameContext): boolean {

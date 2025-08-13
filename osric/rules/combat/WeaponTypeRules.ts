@@ -2,13 +2,14 @@ import type { Command } from '@osric/core/Command';
 import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
+import { RULE_NAMES } from '@osric/types/constants';
 import { COMMAND_TYPES } from '@osric/types/constants';
 import type { Weapon } from '@osric/types/item';
 
 export type WeaponType = 'Slashing' | 'Piercing' | 'Bludgeoning';
 
 export class WeaponTypeRules extends BaseRule {
-  name = 'weapon-type';
+  name = RULE_NAMES.WEAPON_TYPE;
 
   async apply(context: GameContext, _command: Command): Promise<RuleResult> {
     const weapon = context.getTemporary(ContextKeys.COMBAT_ATTACK_WEAPON) as Weapon;

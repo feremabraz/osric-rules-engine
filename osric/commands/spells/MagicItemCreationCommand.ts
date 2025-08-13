@@ -65,6 +65,6 @@ export class MagicItemCreationCommand extends BaseCommand<MagicItemCreationParam
   }
 
   getRequiredRules(): string[] {
-    return [RULE_NAMES.MAGIC_ITEM_RULES];
+    return [RULE_NAMES.ENCHANTMENT_RULES];
   }
 }

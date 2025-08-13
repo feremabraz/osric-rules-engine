@@ -1,11 +1,12 @@
 import { ContextKeys } from '@osric/core/ContextKeys';
 import type { Character } from '@osric/types/character';
+import { RULE_NAMES } from '@osric/types/constants';
 import type { Item } from '@osric/types/item';
 import type { GameContext } from '../../core/GameContext';
 import { BaseRule, type RuleResult } from '../../core/Rule';
 
 export class MagicItemChargeUsageRules extends BaseRule {
-  name = 'magic-item-charge-usage';
+  name = RULE_NAMES.MAGIC_ITEM_CHARGE_USAGE;
   description = 'Handle using charges from magic items';
 
   canApply(context: GameContext): boolean {

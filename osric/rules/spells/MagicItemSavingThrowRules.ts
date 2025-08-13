@@ -1,11 +1,12 @@
 import { ContextKeys } from '@osric/core/ContextKeys';
+import { RULE_NAMES } from '@osric/types/constants';
 import type { Item } from '@osric/types/item';
 import { DiceEngine } from '../../core/Dice';
 import type { GameContext } from '../../core/GameContext';
 import { BaseRule, type RuleResult } from '../../core/Rule';
 
 export class MagicItemSavingThrowRules extends BaseRule {
-  name = 'magic-item-saving-throw';
+  name = RULE_NAMES.MAGIC_ITEM_SAVING_THROW;
   description = 'Handle magic item saving throws against destructive effects';
 
   private readonly ITEM_SAVING_THROWS = {

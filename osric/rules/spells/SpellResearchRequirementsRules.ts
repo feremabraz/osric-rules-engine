@@ -1,11 +1,12 @@
 import type { Character } from '@osric/types/character';
+import { RULE_NAMES } from '@osric/types/constants';
 import { ContextKeys } from '../../core/ContextKeys';
 import type { GameContext } from '../../core/GameContext';
 import { BaseRule, type RuleResult } from '../../core/Rule';
 import type { ResearchDifficultyFactors } from '../../types/spell-types';
 
 export class SpellResearchRequirementsRules extends BaseRule {
-  name = 'spell-research-requirements';
+  name = RULE_NAMES.SPELL_RESEARCH_REQUIREMENTS;
   description = 'Validate requirements for beginning spell research';
 
   canApply(context: GameContext): boolean {

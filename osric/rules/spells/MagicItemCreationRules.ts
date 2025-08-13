@@ -33,7 +33,7 @@ interface MagicItemCreationParameters {
 }
 
 export class MagicItemCreationRules extends BaseRule {
-  readonly name = RULE_NAMES.MAGIC_ITEM_RULES;
+  readonly name = RULE_NAMES.ENCHANTMENT_RULES;
   readonly description = 'Handle magic item creation mechanics';
 
   canApply(context: GameContext): boolean {

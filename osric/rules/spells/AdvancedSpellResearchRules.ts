@@ -1,4 +1,5 @@
 import type { Character } from '@osric/types/character';
+import { RULE_NAMES } from '@osric/types/constants';
 import type { Item } from '@osric/types/item';
 import { ContextKeys } from '../../core/ContextKeys';
 import { DiceEngine } from '../../core/Dice';
@@ -6,7 +7,7 @@ import type { GameContext } from '../../core/GameContext';
 import { BaseRule, type RuleResult } from '../../core/Rule';
 
 export class AdvancedSpellResearchRules extends BaseRule {
-  name = 'advanced-spell-research';
+  name = RULE_NAMES.ADVANCED_SPELL_RESEARCH;
   description = 'Handle complex spell research requirements';
 
   canApply(context: GameContext): boolean {

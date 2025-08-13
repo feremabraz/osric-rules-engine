@@ -3,6 +3,7 @@ import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { Character as CharacterData } from '@osric/types/character';
+import { RULE_NAMES } from '@osric/types/constants';
 import { COMMAND_TYPES } from '@osric/types/constants';
 import type { Mount } from './MountedCombatRules';
 
@@ -14,7 +15,7 @@ interface MountedCombatContext {
 }
 
 export class MountedCombatRules extends BaseRule {
-  name = 'mounted-combat';
+  name = RULE_NAMES.MOUNTED_COMBAT;
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
     const mountedContext = context.getTemporary(

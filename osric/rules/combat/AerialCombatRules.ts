@@ -3,6 +3,7 @@ import { ContextKeys } from '@osric/core/ContextKeys';
 import type { GameContext } from '@osric/core/GameContext';
 import { BaseRule, type RuleResult } from '@osric/core/Rule';
 import type { Character as CharacterData } from '@osric/types/character';
+import { RULE_NAMES } from '@osric/types/constants';
 import { COMMAND_TYPES } from '@osric/types/constants';
 import type { Monster as MonsterData } from '@osric/types/monster';
 import {
@@ -22,7 +23,7 @@ interface AerialCombatContext {
 }
 
 export class AerialCombatRules extends BaseRule {
-  name = 'aerial-combat';
+  name = RULE_NAMES.AERIAL_COMBAT;
 
   async execute(context: GameContext, _command: Command): Promise<RuleResult> {
     const aerialContext = context.getTemporary(
