@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { type MoraleContext, performMoraleCheck } from '../combat/morale';
-import { Command } from '../command/Command';
+import type { Command } from '../command/Command';
 import { Rule } from '../command/Rule';
+import { defineCommand } from '../command/define';
 import { registerCommand } from '../command/register';
 import { abilityMod } from '../entities/ability';
 import { item } from '../entities/item';
@@ -275,10 +276,22 @@ class ComputeDamageRule extends Rule<{
             : undefined;
         if (trigger) {
           const moraleCtx: MoraleContext = { trigger } as MoraleContext;
+          const rngAdapter = {
+            int: (a: number, b: number) => c.rng.int(a, b),
+            float: () => {
+              const maybeFloat = (c.rng as unknown as { float?: () => number }).float;
+              return maybeFloat ? maybeFloat() : c.rng.int(0, 1000000) / 1000000;
+            },
+            clone: () => rngAdapter,
+            getState: () => c.rng.getState(),
+            setState: (_n: number) => {
+              /* noop */
+            },
+          } as import('../rng/random').Rng;
           const moraleRes = performMoraleCheck(
             fullTarget as unknown as import('../entities/character').Character,
             moraleCtx,
-            { int: (a: number, b: number) => c.rng.int(a, b) }
+            rngAdapter
           );
           if (moraleRes) {
             c.effects.add('moraleCheck', target.id, moraleRes);
@@ -381,7 +394,20 @@ class ComputeDamageRule extends Rule<{
                 const moraleRes = performMoraleCheck(
                   ally as unknown as import('../entities/character').Character,
                   moraleCtx,
-                  { int: (a: number, b: number) => c.rng.int(a, b) }
+                  {
+                    int: (a: number, b: number) => c.rng.int(a, b),
+                    float: () => {
+                      const maybeFloat = (c.rng as unknown as { float?: () => number }).float;
+                      return maybeFloat ? maybeFloat() : c.rng.int(0, 1000000) / 1000000;
+                    },
+                    clone: function () {
+                      return this as unknown as import('../rng/random').Rng;
+                    },
+                    getState: () => c.rng.getState(),
+                    setState: (_n: number) => {
+                      /* noop */
+                    },
+                  } as import('../rng/random').Rng
                 );
                 c.effects.add('moraleCheck', ally.id, moraleRes);
                 if (battleId && c.store.getBattle && c.store.updateBattle) {
@@ -488,9 +514,9 @@ class ComputeDamageRule extends Rule<{
   }
 }
 
-export class DealDamageCommand extends Command {
-  static key = 'dealDamage';
-  static params = params;
-  static rules = [ValidateEntitiesRule, ComputeDamageRule];
-}
-registerCommand(DealDamageCommand);
+export const DealDamageCommand = defineCommand({
+  key: 'dealDamage',
+  params,
+  rules: [ValidateEntitiesRule, ComputeDamageRule],
+});
+registerCommand(DealDamageCommand as unknown as typeof Command);

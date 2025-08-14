@@ -1,6 +1,7 @@
 import { z } from 'zod';
-import { Command } from '../command/Command';
+import type { Command } from '../command/Command';
 import { Rule } from '../command/Rule';
+import { defineCommand } from '../command/define';
 import { registerCommand } from '../command/register';
 import { abilityMod } from '../entities/ability';
 import { item } from '../entities/item';
@@ -280,9 +281,9 @@ class ComputeAttackRule extends Rule<{
   }
 }
 
-export class AttackRollCommand extends Command {
-  static key = 'attackRoll';
-  static params = params;
-  static rules = [ValidateEntitiesRule, ComputeAttackRule];
-}
-registerCommand(AttackRollCommand);
+export const AttackRollCommand = defineCommand({
+  key: 'attackRoll',
+  params,
+  rules: [ValidateEntitiesRule, ComputeAttackRule],
+});
+registerCommand(AttackRollCommand as unknown as typeof Command);

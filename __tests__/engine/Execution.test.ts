@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { Command, Engine, registerCommand, resetRegisteredCommands } from '../../osric';
+import {
+  Command,
+  Engine,
+  assertOk,
+  isFail,
+  isOk,
+  registerCommand,
+  resetRegisteredCommands,
+} from '../../osric';
 
 class R1 extends class {} {
   static ruleName = 'Validate';
@@ -31,8 +39,8 @@ describe('Engine execution & proxy', () => {
     const engine = new Engine();
     await engine.start();
     const res = await engine.execute('sample', { a: 1 });
-    expect(res.ok).toBe(true);
-    if (res.ok) expect(res.data).toEqual({ valid: true, total: 1 });
+    expect(isOk(res)).toBe(true);
+    expect(assertOk(res)).toEqual({ valid: true, total: 1 });
   });
   it('param invalid returns failure result', async () => {
     resetRegisteredCommands();
@@ -40,8 +48,8 @@ describe('Engine execution & proxy', () => {
     const engine = new Engine();
     await engine.start();
     const res = await engine.execute('sample', { a: 'x' });
-    expect(res.ok).toBe(false);
-    if (!res.ok) expect(res.error.code).toBe('PARAM_INVALID');
+    expect(isFail(res)).toBe(true);
+    if (isFail(res)) expect(res.error.code).toBe('PARAM_INVALID');
   });
   it('command proxy invokes execute', async () => {
     resetRegisteredCommands();
@@ -49,9 +57,12 @@ describe('Engine execution & proxy', () => {
     const engine = new Engine();
     await engine.start();
     // @ts-ignore dynamic command injected
-    const res = await engine.command.sample({ a: 5 });
-    expect(res.ok).toBe(true);
-    if (res.ok) expect((res.data as { valid: boolean; total: number }).total).toBe(1);
+    const res = (await engine.command.sample({ a: 5 })) as import('../../osric').Result<{
+      valid: boolean;
+      total: number;
+    }>;
+    expect(isOk(res)).toBe(true);
+    if (isOk(res)) expect(res.data.total).toBe(1);
   });
   it('rejects commands whose rules duplicate a result key (strict mode)', async () => {
     resetRegisteredCommands();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Engine, type Result } from '../../osric';
+import { Engine, type Result, effectStats, getEffects } from '../../osric';
 import type { CharacterId } from '../../osric/store/ids';
 import '../../osric/commands/createCharacter';
 import '../../osric/commands/startBattle';
@@ -57,10 +57,8 @@ describe('Morale Triggers', () => {
       attackContext: { hit: true },
     });
     expect(dmg.ok).toBe(true);
-    const battle = engine.store.getBattle(battleId);
-    expect(battle).not.toBeNull();
-    const moraleEntries = battle?.effectsLog?.filter((e) => e.type === 'moraleCheck');
-    expect((moraleEntries?.length || 0) >= 1).toBe(true);
+    const moraleEntries = getEffects(engine, { battleId, type: 'moraleCheck' });
+    expect(moraleEntries.length >= 1).toBe(true);
   });
   it('allyDeath triggers moraleCheck on ally', async () => {
     const engine = new Engine({ seed: 11 });
@@ -101,12 +99,8 @@ describe('Morale Triggers', () => {
     });
     const deadChar = engine.store.getEntity('character', a1 as CharacterId);
     expect(!!deadChar && (deadChar.status?.dead === true || deadChar.hp < 0)).toBe(true);
-    const battle = engine.store.getBattle(battleId);
-    expect(battle).not.toBeNull();
-    const moraleEntries = battle?.effectsLog?.filter(
-      (e) => e.type === 'moraleCheck' && e.target === a2
-    );
-    expect((moraleEntries?.length || 0) >= 1).toBe(true);
+    const moraleEntries = getEffects(engine, { battleId, type: 'moraleCheck', target: a2 });
+    expect(moraleEntries.length >= 1).toBe(true);
   });
   it('scheduled morale re-check occurs after round advance', async () => {
     const engine = new Engine({ seed: 12 });
@@ -133,8 +127,7 @@ describe('Morale Triggers', () => {
     await invoke.nextTurn({ battleId }); // wrap -> round 2, scheduled morale should fire
     const battleAfter = engine.store.getBattle(battleId);
     expect(battleAfter?.round).toBe(2);
-    const moraleChecks =
-      battleAfter?.effectsLog?.filter((e) => e.type === 'moraleCheck' && e.target === c2) ?? [];
+    const moraleChecks = getEffects(engine, { battleId, type: 'moraleCheck', target: c2 });
     expect(moraleChecks.length).toBeGreaterThan(initialChecks);
   });
   it('surrender outcome possible with large failure margin', async () => {
@@ -151,17 +144,13 @@ describe('Morale Triggers', () => {
     for (let i = 0; i < 8; i++) {
       await invoke.attackRoll({ battleId, target: low });
       await invoke.dealDamage({ source: foe, target: low, battleId, attackContext: { hit: true } });
-      const battle = engine.store.getBattle(battleId);
-      const surrenderEvent = battle?.effectsLog?.find(
-        (e) =>
-          e.type === 'moraleCheck' && (e.payload as { outcome?: string })?.outcome === 'surrender'
+      const surrenderEvent = getEffects(engine, { battleId, type: 'moraleCheck' }).find(
+        (e) => (e.payload as { outcome?: string })?.outcome === 'surrender'
       );
       if (surrenderEvent) break;
     }
-    const battle = engine.store.getBattle(battleId);
-    const surrenderEvent = battle?.effectsLog?.find(
-      (e) =>
-        e.type === 'moraleCheck' && (e.payload as { outcome?: string })?.outcome === 'surrender'
+    const surrenderEvent = getEffects(engine, { battleId, type: 'moraleCheck' }).find(
+      (e) => (e.payload as { outcome?: string })?.outcome === 'surrender'
     );
     expect(surrenderEvent).toBeTruthy();
   });
@@ -175,11 +164,11 @@ describe('Morale Triggers', () => {
     expect(start.ok).toBe(true);
     if (!start.ok) return;
     const battleId = start.data.battleId as string;
-    const initial = engine.store.getBattle(battleId)?.effectsLog?.length ?? 0;
+    const initial = effectStats(engine, battleId).total;
     await invoke.attackRoll({ battleId, target: b }); // attack event
     await invoke.dealDamage({ source: a, target: b, battleId, attackContext: { hit: true } }); // damage + possible morale
     await invoke.nextTurn({ battleId }); // may schedule or fire morale
-    const finalLen = engine.store.getBattle(battleId)?.effectsLog?.length ?? 0;
+    const finalLen = effectStats(engine, battleId).total;
     expect(finalLen).toBeGreaterThan(initial);
   });
 });

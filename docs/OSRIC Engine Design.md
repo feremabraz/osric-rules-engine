@@ -12,7 +12,7 @@
 | Implicit shared store | Jotai store embedded; exposed via `engine.store` convenience facade |
 | Ergonomic entity creation | `engine.command.createCharacter({...})` returns a persisted character |
 | Zod validation | Params, entities, config all validated; failures throw typed errors |
-| Co-located authoring | One file per feature: Command subclass + one or more Rule subclasses auto‑registered |
+| Co-located authoring | One file per feature: `defineCommand` factory + Rule classes auto‑registered |
 | Command invocation | `engine.command.attackRoll({ attacker, target })` etc.; returns typed result |
 | Clarity over abbreviation | Prefer explicit names (e.g. `InspirePartyResult`, `ResultData`) over terse forms |
 | Mandatory rule outputs | Every Rule declares a concrete `output` schema (no omitted / no plain `z.any`) |
@@ -128,75 +128,54 @@ Internally wraps Jotai atoms (`entitiesAtom`, etc.). Exposed façade prevents ar
 
 ---
 ## 7. Command Authoring Model
-### 7.1 Base Classes (Simplified)
+### 7.1 Factory First
+Author commands with `defineCommand({ key, params, rules })`; it creates the concrete subclass internally, preserving previous behaviors while eliminating boilerplate.
 ```ts
-abstract class Command<P extends z.ZodTypeAny, ResultData, EffectData = unknown> {
-  static key: string;                 // e.g. 'move'
-  static params: z.ZodTypeAny;        // zod schema
-  static rules: (typeof Rule)[];      // classes
-  readonly params: z.infer<P>;
-  protected constructor(raw: unknown) { this.params = (this.constructor as any).params.parse(raw); }
-}
-
-abstract class Rule<P, Acc, Delta> {
-  static name: string;
-  static after?: string[];
-  static output: z.ZodTypeAny; // REQUIRED (legacy omission removed)
-  apply(ctx: ExecutionContext<P, Acc>): Promise<RuleResult<Delta>> | RuleResult<Delta>;
-}
+export const MoveCommand = defineCommand({
+  key: 'move',
+  params: z.object({ characterId: characterIdSchema, distance: z.number().int().min(1) }),
+  rules: [ValidateCharacter, ApplyMovement],
+});
+registerCommand(MoveCommand as any);
 ```
-(Every rule defines `output`; empty = `z.object({})`.)
-
-### 7.2 Co-located Author File Pattern
+### 7.2 Rules
+`Rule` classes still declare `static ruleName` (or `name` legacy), optional `static after`, and mandatory `static output` schemas. Empty outputs use `z.object({})` (conceptually the same shape as the shared `emptyOutput`).
+### 7.3 Co‑located File Pattern (Updated Example)
 ```ts
-// inspireParty.command.ts
-import { Command, Rule } from '@osric';
+import { defineCommand, Rule, registerCommand, getCharacter } from '@osric';
 import { z } from 'zod';
 
-export class InspirePartyCommand extends Command<typeof InspirePartyCommand.params, InspirePartyResult> {
-  static key = 'inspireParty';
-  static params = z.object({
-  leader: characterIdSchema, // CharacterId enforced (branding mandatory)
-    bonus: z.number().int().min(1).max(5).default(1),
-    message: z.string().min(1).max(120),
-  });
-  static rules = [ValidateLeaderRule, CalculateDurationRule, ApplyInspirationRule];
+const params = z.object({
+  leader: characterIdSchema,
+  bonus: z.number().int().min(1).max(5).default(1),
+  message: z.string().min(1).max(120),
+});
+
+class ValidateLeader extends Rule<any, {}, {}> {
+  static ruleName = 'ValidateLeader';
+  static output = z.object({});
+  apply(ctx) { if (!getCharacter(ctx.store, ctx.params.leader)) return ctx.fail('NO_LEADER','Leader not found'); return {}; }
 }
-
-interface InspirePartyResult { durationRounds: number; affected: string[]; }
-
-export class ValidateLeaderRule extends Rule<InspirePartyCommand['params'], {}, {}> {
-  static name = 'ValidateLeader';
-  async apply(ctx) {
-    const { leader } = ctx.command.params;
-    if (!ctx.store.getEntity(leader)) return ctx.fail('NO_LEADER','Leader not found');
-    return ctx.ok();
-  }
-}
-
-export class CalculateDurationRule extends Rule<any, {}, { durationRounds: number }> {
-  static name = 'CalcDuration';
+class CalcDuration extends Rule<any, {}, { durationRounds: number }> {
+  static ruleName = 'CalcDuration';
   static after = ['ValidateLeader'];
-  apply(ctx) {
-    const durationRounds = 3 + ctx.rng.int(0, 3); // random extra 0–3
-    return ctx.ok({ durationRounds });
-  }
+  static output = z.object({ durationRounds: z.number().int().min(3).max(6) });
+  apply(ctx) { return { durationRounds: 3 + ctx.rng.int(0,3) }; }
 }
-
-export class ApplyInspirationRule extends Rule<any, { durationRounds: number }, { affected: string[] }> {
-  static name = 'ApplyInspiration';
+class ApplyInspiration extends Rule<any, { durationRounds: number }, { affected: string[] }> {
+  static ruleName = 'ApplyInspiration';
   static after = ['CalcDuration'];
+  static output = z.object({ affected: z.array(characterIdSchema) });
   apply(ctx) {
-    const allies = ctx.query.partyOf(ctx.command.params.leader); // helper
-    allies.forEach(id => ctx.effects.add('inspired', id, ctx.acc.durationRounds));
-    return ctx.ok({ affected: allies });
+    const allies = [ctx.params.leader];
+    ctx.effects.add('inspired', ctx.params.leader, { bonus: ctx.params.bonus, durationRounds: ctx.acc.durationRounds });
+    return { affected: allies };
   }
 }
-
-// Auto-registration: side-effect at module evaluate time
-registerCommand(InspirePartyCommand);
+export const InspirePartyCommand = defineCommand({ key: 'inspireParty', params, rules: [ValidateLeader, CalcDuration, ApplyInspiration] });
+registerCommand(InspirePartyCommand as any);
 ```
-**Auto‑Registration**: `registerCommand()` pushes metadata into a global registry (guarded so multiple imports are idempotent). Engine `start()` finalizes all registered commands (builds DAGs, validates schemas & dependencies).
+**Auto‑Registration**: unchanged – `registerCommand()` collects definitions; `engine.start()` validates DAGs & schemas.
 
 ### 7.3 Type Inference for Results
 At finalization the engine computes union of all rule success payload keys and creates a mapped type:
@@ -209,13 +188,18 @@ Promise<{ ok: true; data: CommandResultData<'inspireParty'> } | { ok: false; err
 ```
 
 ---
-## 8. Command Invocation Façade
+## 8. Command Invocation Façade & Helper Layer
 Engine dynamically creates a proxy:
 ```ts
 engine.command.move(entityId, { distance: 30, destination: '0,30' });
 engine.command.inspireParty(leaderId, { bonus: 2, message: 'Heroic surge!' });
 ```
-Method signature rule: first positional argument(s) pre-bound “core” IDs if schema fields named `characterId`, `leader`, etc. Implementation inspects zod schema to map positional args → structured params (ergonomic sugar), falling back to object parameter form.
+Positional mapping applies (leading entity IDs inferred from schema field order / names). Additional ergonomic helpers now exist:
+* Entity: `getCharacter`, `requireCharacter`, `updateCharacter`
+* Battle: `activeCombatant`, `listBattleOrder`
+* Composite action: `applyAttackAndDamage`
+* Orchestration: `batch(steps)` (continues through failures on optional steps), `batchAtomic(steps)` (rollback best effort on first hard failure)
+* Introspection: `explainRuleGraph(commandKey)` (stable dependency + topo ordering output for tooling / tests)
 
 ---
 ## 9. Execution Lifecycle (Per Command)
@@ -226,7 +210,8 @@ Method signature rule: first positional argument(s) pre-bound “core” IDs if 
    * Each rule returns `ok(data?)` / `fail(code,message)`.
    * Accumulator merges rule `data` (keys cannot clash unless identical types; conflict triggers validation error at startup).
 5. Aggregate final result and apply collected world mutations & effects in a *single commit phase*.
-6. Emit events: `command:start`, per rule events, `command:complete`; battle effects recorded only in `effectsLog` (legacy `log` alias removed).
+6. Emit events: `command:start`, per rule events, `command:complete`.
+7. (If invoked via `batchAtomic`) earlier mutations may be rolled back (entity creations removed, updates shallowly reverted) upon first failure.
 ...
 
 ---
@@ -256,64 +241,41 @@ Method signature rule: first positional argument(s) pre-bound “core” IDs if 
 A plugin system is intentionally excluded to keep the core uncomplicated. If future needs arise (telemetry, persistence hooks) they can be addressed with explicit adapter APIs instead of a generic plugin layer.
 
 ---
-## 13. Testing Ergonomics
+## 13. Testing Ergonomics & Shortcuts
 ```ts
 const engine = new Engine({ seed: 42 });
-const c1 = (await engine.command.createCharacter({ name: 'A', level: 1, hp: 8 })).data;
-const c2 = (await engine.command.createCharacter({ name: 'B', level: 1, hp: 8 })).data;
-const roll = await engine.command.attackRoll({ attacker: c1.characterId, target: c2.characterId });
+const c1 = await fastCharacter(engine, { name: 'A' });
+const c2 = await fastCharacter(engine, { name: 'B' });
+const roll = await engine.command.attackRoll({ attacker: c1, target: c2 });
 expect(roll.ok).toBe(true);
+// Composite helper
+const full = await applyAttackAndDamage(engine, { attacker: c1, target: c2 });
 ```
-(Snapshot / digest test guards deterministic end‑to‑end state.)
+(Use digest snapshot + rule graph snapshot (`explainRuleGraph`) for structural + behavioral drift detection.)
 
 ---
-## 14. Performance Strategy (Deliberate Simplicity)
-Early versions emphasize clarity over micro-optimizations. No cached DAG, batching, or memoization is implemented; straightforward sequential execution keeps reasoning simple. Only lightweight proxy generation (command façade) occurs once at finalization.
+## 14. Performance Strategy (Deliberate Simplicity + Targeted Aids)
+Clarity remains priority. Optimizations added only where they reduced author friction:
+* Rule DAGs cached per command after first construction.
+* Batch orchestration lives at library level (no required user re-implementation).
+* Introspection output (rule graph) is deterministic enabling cheap snapshot tests (catches accidental dependency shifts early).
 
 ---
-## 15. Inspire Party Example (Full Co-located File, Condensed)
+## 15. Inspire Party Example (Updated Factory Form)
 ```ts
-// commands/inspireParty.ts
-import { Command, Rule, registerCommand, helpers } from '@osric';
+import { defineCommand, Rule, registerCommand, getCharacter } from '@osric';
 import { z } from 'zod';
 
-export class InspirePartyCommand extends Command<typeof InspirePartyCommand.params, InspirePartyResult> {
-  static key = 'inspireParty';
-  static params = z.object({
-    leader: helpers.id('character'),
-    bonus: z.number().int().min(1).max(5).default(1),
-    message: z.string().min(1).max(120),
-  });
-  static rules = [ValidateLeader, CalcDuration, ApplyBuff];
-}
-
-export interface InspirePartyResult { durationRounds: number; affected: string[]; }
-
-class ValidateLeader extends Rule<any, {}, {}> {
-  static name = 'ValidateLeader';
-  apply(ctx) {
-    if (!ctx.store.getEntity(ctx.command.params.leader)) return ctx.fail('NO_LEADER','Leader missing');
-    return ctx.ok();
-  }
-}
-
-class CalcDuration extends Rule<any, {}, { durationRounds: number }> {
-  static name = 'CalcDuration';
-  static after = ['ValidateLeader'];
-  apply(ctx) { return ctx.ok({ durationRounds: 3 + ctx.rng.int(0,3) }); }
-}
-
-class ApplyBuff extends Rule<any, { durationRounds: number }, { affected: string[] }> {
-  static name = 'ApplyBuff';
-  static after = ['CalcDuration'];
-  apply(ctx) {
-    const allies = ctx.query.party(ctx.command.params.leader);
-    for (const id of allies) ctx.effects.add('inspired', id, ctx.acc.durationRounds);
-    return ctx.ok({ affected: allies });
-  }
-}
-
-registerCommand(InspirePartyCommand);
+const params = z.object({
+  leader: characterIdSchema,
+  bonus: z.number().int().min(1).max(5).default(1),
+  message: z.string().min(1).max(120),
+});
+class ValidateLeader extends Rule<any, {}, {}> { static ruleName='ValidateLeader'; static output = z.object({}); apply(ctx){ if(!getCharacter(ctx.store, ctx.params.leader)) return ctx.fail('NO_LEADER','Leader missing'); return {}; } }
+class CalcDuration extends Rule<any, {}, { durationRounds: number }> { static ruleName='CalcDuration'; static after=['ValidateLeader']; static output = z.object({ durationRounds: z.number().int().min(3).max(6) }); apply(ctx){ return { durationRounds: 3 + ctx.rng.int(0,3) }; } }
+class ApplyBuff extends Rule<any, { durationRounds: number }, { affected: string[] }> { static ruleName='ApplyBuff'; static after=['CalcDuration']; static output = z.object({ affected: z.array(characterIdSchema) }); apply(ctx){ const allies=[ctx.params.leader]; ctx.effects.add('inspired', ctx.params.leader, { bonus: ctx.params.bonus, durationRounds: ctx.acc.durationRounds }); return { affected: allies }; } }
+export const InspirePartyCommand = defineCommand({ key:'inspireParty', params, rules:[ValidateLeader, CalcDuration, ApplyBuff] });
+registerCommand(InspirePartyCommand as any);
 ```
 
 ---

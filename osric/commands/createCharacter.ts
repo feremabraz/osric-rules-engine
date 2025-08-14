@@ -1,6 +1,7 @@
 import { z } from 'zod';
-import { Command } from '../command/Command';
+import type { Command } from '../command/Command';
 import { Rule } from '../command/Rule';
+import { defineCommand } from '../command/define';
 import { registerCommand } from '../command/register';
 import { type AbilityScoreMethod, abilityMod, rollAbilityScores } from '../entities/ability';
 import {
@@ -308,10 +309,10 @@ class FinalValidationRule extends Rule<Record<string, never>> {
   }
 }
 
-export class CreateCharacterCommand extends Command {
-  static key = 'createCharacter';
-  static params = params;
-  static rules = [
+export const CreateCharacterCommand = defineCommand({
+  key: 'createCharacter',
+  params,
+  rules: [
     PrepareRule,
     RaceClassValidationRule,
     ClassBaseDerivationRule,
@@ -319,6 +320,6 @@ export class CreateCharacterCommand extends Command {
     EquipmentAllocationRule,
     FinalValidationRule,
     PersistRule,
-  ];
-}
-registerCommand(CreateCharacterCommand);
+  ],
+});
+registerCommand(CreateCharacterCommand as unknown as typeof Command);

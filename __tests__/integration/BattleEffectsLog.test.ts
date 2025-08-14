@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Engine, type Result } from '../../osric';
+import { Engine, type Result, getEffects } from '../../osric';
 import '../../osric/commands/createCharacter';
 import '../../osric/commands/startBattle';
 import '../../osric/commands/attackRoll';
@@ -42,8 +42,8 @@ describe('Battle effectsLog integration', () => {
       attackContext: { hit: true },
     });
     expect(dmg.ok).toBe(true);
-    const battle = engine.store.getBattle(battleId as string);
-    expect(battle?.effectsLog?.some((e) => e.type === 'attackRoll')).toBe(true);
-    expect(battle?.effectsLog?.some((e) => e.type === 'damageApplied')).toBe(true);
+    const effects = getEffects(engine, { battleId: battleId as string });
+    expect(effects.some((e) => e.type === 'attackRoll')).toBe(true);
+    expect(effects.some((e) => e.type === 'damageApplied')).toBe(true);
   });
 });

@@ -60,3 +60,69 @@ export const ids = {
   item: itemIdSchema,
   battle: battleIdSchema,
 };
+
+// Phase 06 Item 2: Runtime guard & parsing helpers
+// Lightweight regex patterns (duplicated literal to avoid depending on schema parse cost on hot paths)
+const CHAR_RE = /^char_[a-z0-9]+$/i;
+const MON_RE = /^mon_[a-z0-9]+$/i;
+const ITM_RE = /^itm_[a-z0-9]+$/i;
+const BATTLE_RE = /^battle_[a-z0-9]+$/i;
+
+export function isCharacterId(v: unknown): v is CharacterId {
+  return typeof v === 'string' && CHAR_RE.test(v);
+}
+export function isMonsterId(v: unknown): v is MonsterId {
+  return typeof v === 'string' && MON_RE.test(v);
+}
+export function isItemId(v: unknown): v is ItemId {
+  return typeof v === 'string' && ITM_RE.test(v);
+}
+export function isBattleId(v: unknown): v is BattleId {
+  return typeof v === 'string' && BATTLE_RE.test(v);
+}
+
+// parse* throw on invalid, tryParse* return undefined (authoring ergonomics)
+export function parseCharacterId(v: unknown): CharacterId {
+  if (isCharacterId(v)) return v;
+  throw new Error('Invalid CharacterId');
+}
+export function parseMonsterId(v: unknown): MonsterId {
+  if (isMonsterId(v)) return v;
+  throw new Error('Invalid MonsterId');
+}
+export function parseItemId(v: unknown): ItemId {
+  if (isItemId(v)) return v;
+  throw new Error('Invalid ItemId');
+}
+export function parseBattleId(v: unknown): BattleId {
+  if (isBattleId(v)) return v;
+  throw new Error('Invalid BattleId');
+}
+
+export function tryParseCharacterId(v: unknown): CharacterId | undefined {
+  return isCharacterId(v) ? v : undefined;
+}
+export function tryParseMonsterId(v: unknown): MonsterId | undefined {
+  return isMonsterId(v) ? v : undefined;
+}
+export function tryParseItemId(v: unknown): ItemId | undefined {
+  return isItemId(v) ? v : undefined;
+}
+export function tryParseBattleId(v: unknown): BattleId | undefined {
+  return isBattleId(v) ? v : undefined;
+}
+
+// Phase 06 Item 3: Generic ID utilities & discriminator
+export type IdKind = 'character' | 'monster' | 'item' | 'battle' | 'unknown';
+export function idKind(v: unknown): IdKind {
+  if (isCharacterId(v)) return 'character';
+  if (isMonsterId(v)) return 'monster';
+  if (isItemId(v)) return 'item';
+  if (isBattleId(v)) return 'battle';
+  return 'unknown';
+}
+
+export function ensureCharacterId(v: unknown): CharacterId {
+  if (isCharacterId(v)) return v;
+  throw new Error('Expected CharacterId');
+}

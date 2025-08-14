@@ -1,5 +1,6 @@
 import type { Engine } from '../engine/Engine';
 import { abilityMod } from '../entities/ability';
+import { requireCharacter } from '../store/entityHelpers';
 import type { CharacterId } from '../store/ids';
 
 export type SavingThrowType = 'death' | 'wands' | 'petrification' | 'breath' | 'spells';
@@ -30,8 +31,7 @@ export function performSavingThrow(
   type: SavingThrowType,
   modifiers: number[] = []
 ): SavingThrowResult {
-  const ch = engine.store.getEntity('character', characterId as CharacterId);
-  if (!ch) throw new Error(`Character ${characterId} not found`);
+  const ch = requireCharacter(engine.store, characterId as CharacterId);
   const abilityKey = SAVE_ABILITY[type];
   const abil = ch.ability[abilityKey];
   const aMod = abilityMod(abil);

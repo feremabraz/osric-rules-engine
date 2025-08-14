@@ -18,6 +18,9 @@ export type MergeRuleOutputs<Rules extends readonly unknown[]> = UnionToIntersec
 >;
 
 // Derive command result object type from the static rules array
-export type CommandResultFrom<C> = C extends { rules: readonly (infer Rs)[] }
+// Accept either mutable or readonly rules arrays for inference.
+export type CommandResultFrom<C> = C extends { rules: (infer Rs)[] }
   ? MergeRuleOutputs<readonly Rs[]>
-  : Record<string, never>;
+  : C extends { rules: readonly (infer Rs2)[] }
+    ? MergeRuleOutputs<readonly Rs2[]>
+    : Record<string, never>;

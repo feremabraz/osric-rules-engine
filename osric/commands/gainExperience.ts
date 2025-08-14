@@ -1,7 +1,9 @@
 import { z } from 'zod';
-import { Command } from '../command/Command';
+import type { Command } from '../command/Command';
 import { Rule } from '../command/Rule';
+import { defineCommand } from '../command/define';
 import { registerCommand } from '../command/register';
+import { getCharacter } from '../store/entityHelpers';
 // Manual CommandResultShape augmentation removed; inferred from rule schemas.
 
 const params = z.object({ characterId: z.string(), amount: z.number().int().positive() });
@@ -22,14 +24,18 @@ class ValidateCharacterRule extends Rule<{ character: Record<string, unknown> }>
       fail: (code: 'CHARACTER_NOT_FOUND', message: string) => Record<string, unknown>;
     }
     const c = ctx as LocalCtx;
-    const ch = c.store.getEntity('character', c.params.characterId);
+    const ch = getCharacter(
+      c.store as unknown as import('../store/storeFacade').StoreFacade,
+      c.params.characterId as unknown as import('../store/ids').CharacterId
+    );
     if (!ch) {
       return c.fail('CHARACTER_NOT_FOUND', 'Character not found') as unknown as {
         character: Record<string, unknown>;
       };
     }
-    c.ok({ character: ch });
-    return { character: ch };
+    const recordLike = ch as unknown as Record<string, unknown>;
+    c.ok({ character: recordLike });
+    return { character: recordLike };
   }
 }
 
@@ -117,9 +123,9 @@ class ApplyExperienceRule extends Rule<{
   }
 }
 
-export class GainExperienceCommand extends Command {
-  static key = 'gainExperience';
-  static params = params;
-  static rules = [ValidateCharacterRule, ApplyExperienceRule];
-}
-registerCommand(GainExperienceCommand);
+export const GainExperienceCommand = defineCommand({
+  key: 'gainExperience',
+  params,
+  rules: [ValidateCharacterRule, ApplyExperienceRule],
+});
+registerCommand(GainExperienceCommand as unknown as typeof Command);

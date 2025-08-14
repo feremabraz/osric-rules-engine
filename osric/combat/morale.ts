@@ -3,6 +3,8 @@
 
 import { z } from 'zod';
 import type { Character } from '../entities/character';
+import { rollDie } from '../rng/dice';
+import type { Rng } from '../rng/random';
 
 export type MoraleOutcome = 'hold' | 'fallBack' | 'flee' | 'surrender';
 
@@ -43,14 +45,14 @@ export const MoraleContextSchema = z.object({
 export function performMoraleCheck(
   entity: Character,
   ctx: MoraleContext,
-  rng: { int: (a: number, b: number) => number }
+  rng: Rng
 ): MoraleCheckResult {
   // Immunities
   // (Future: immunity checks could short-circuit here.)
   const rating = entity.moraleRating ?? 10;
   // Roll 2d6
-  const d1 = rng.int(1, 6);
-  const d2 = rng.int(1, 6);
+  const d1 = rollDie(rng, 6);
+  const d2 = rollDie(rng, 6);
   const raw = d1 + d2;
   let modifiers = 0;
   const modifiersApplied: { key: string; value: number }[] = [];

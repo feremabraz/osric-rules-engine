@@ -1,7 +1,9 @@
 import { z } from 'zod';
-import { Command } from '../command/Command';
+import type { Command } from '../command/Command';
 import { Rule } from '../command/Rule';
+import { defineCommand } from '../command/define';
 import { registerCommand } from '../command/register';
+import { getCharacter } from '../store/entityHelpers';
 import type { CharacterId } from '../store/ids';
 import { characterIdSchema } from '../store/ids';
 
@@ -28,7 +30,10 @@ class ValidateLeaderRule extends Rule<Record<string, never>> {
       ok: (d: Record<string, unknown>) => Record<string, unknown>;
     }
     const c = ctx as LocalCtx;
-    const exists = c.store.getEntity('character', c.params.leader as CharacterId);
+    const exists = getCharacter(
+      c.store as unknown as import('../store/storeFacade').StoreFacade,
+      c.params.leader as CharacterId
+    );
     if (!exists) {
       return c.fail('NO_LEADER', 'Leader character not found') as unknown as Record<string, never>;
     }
@@ -83,9 +88,10 @@ class ApplyInspirationRule extends Rule<{ affected: CharacterId[] }> {
   }
 }
 
-export class InspirePartyCommand extends Command {
-  static key = 'inspireParty';
-  static params = params;
-  static rules = [ValidateLeaderRule, CalcDurationRule, ApplyInspirationRule];
-}
-registerCommand(InspirePartyCommand);
+// Refactored to use defineCommand sugar (Phase 06 Item 12 exemplar migration)
+export const InspirePartyCommand = defineCommand({
+  key: 'inspireParty',
+  params,
+  rules: [ValidateLeaderRule, CalcDurationRule, ApplyInspirationRule],
+});
+registerCommand(InspirePartyCommand as unknown as typeof Command);

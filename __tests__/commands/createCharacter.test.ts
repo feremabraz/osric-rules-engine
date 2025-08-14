@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Engine } from '../../osric';
 import type { Result } from '../../osric';
+import { assertOk, isOk } from '../../osric';
 import '../../osric/commands/createCharacter';
 
 describe('createCharacter command', () => {
@@ -16,12 +17,11 @@ describe('createCharacter command', () => {
       class: fighter,
       name: 'Aela',
     })) as Result<Record<string, unknown>>;
-    expect(res.ok).toBe(true);
-    if (res.ok) {
-      expect(res.data.name).toBe('Aela');
-      expect(res.data.level).toBe(1);
-      expect(res.data.hp).toBe(10);
-      expect(res.data.xp).toBe(0);
-    }
+    expect(isOk(res)).toBe(true);
+    const data = assertOk(res);
+    expect(data.name).toBe('Aela');
+    expect(data.level).toBe(1);
+    expect(data.hp).toBe(10);
+    expect(data.xp).toBe(0);
   });
 });

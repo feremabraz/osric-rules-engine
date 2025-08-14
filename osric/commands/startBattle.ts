@@ -1,9 +1,11 @@
 import { z } from 'zod';
 import { computeInitiativeBase } from '../combat/initiative';
-import { Command } from '../command/Command';
+import type { Command } from '../command/Command';
 import { Rule } from '../command/Rule';
+import { defineCommand } from '../command/define';
 import { registerCommand } from '../command/register';
 import type { Character } from '../entities/character';
+import { getCharacter, requireCharacter } from '../store/entityHelpers';
 import type { CharacterId } from '../store/ids';
 import { createBattleId } from '../store/ids';
 import { battleIdSchema, characterIdSchema } from '../store/ids';
@@ -28,15 +30,18 @@ class ValidateParticipantsRule extends Rule<{ participants: CharacterId[] }> {
     const { params, store, fail, ok } = ctx as Ctx;
     const list: CharacterId[] = [];
     for (const pid of params.participants as CharacterId[]) {
-      const ch = store.getEntity('character', pid as CharacterId);
-      if (!ch) {
-        fail('CHARACTER_NOT_FOUND', `Participant ${pid} missing`);
-        return { participants: list };
-      }
-      if (ch.hp <= 0) {
-        fail('RULE_EXCEPTION', `Participant ${pid} not alive`);
-        return { participants: list };
-      }
+      const ch = getCharacter(
+        store as unknown as import('../store/storeFacade').StoreFacade,
+        pid as CharacterId
+      );
+      if (!ch)
+        return fail('CHARACTER_NOT_FOUND', `Participant ${pid} missing`) as unknown as {
+          participants: CharacterId[];
+        };
+      if (ch.hp <= 0)
+        return fail('RULE_EXCEPTION', `Participant ${pid} not alive`) as unknown as {
+          participants: CharacterId[];
+        };
       list.push(pid as CharacterId);
     }
     ok({ participants: list });
@@ -82,7 +87,7 @@ class RollInitiativeRule extends Rule<{
     const { acc, rng, store, ok, params } = ctx as Ctx;
     const initiativeOrder: { id: CharacterId; rolled: number }[] = [];
     for (const id of acc.participants as CharacterId[]) {
-      const ch = store.getEntity('character', id);
+      const ch = getCharacter(store as unknown as import('../store/storeFacade').StoreFacade, id);
       const base = ch ? computeInitiativeBase(ch as Character) : 0;
       const die = rng.int(1, 6); // d6 variant
       const rolled = die + base;
@@ -187,9 +192,9 @@ class ResultShapeRule extends Rule<{
   }
 }
 
-export class StartBattleCommand extends Command {
-  static key = 'startBattle';
-  static params = params;
-  static rules = [ValidateParticipantsRule, RollInitiativeRule, PersistBattleRule, ResultShapeRule];
-}
-registerCommand(StartBattleCommand);
+export const StartBattleCommand = defineCommand({
+  key: 'startBattle',
+  params,
+  rules: [ValidateParticipantsRule, RollInitiativeRule, PersistBattleRule, ResultShapeRule],
+});
+registerCommand(StartBattleCommand as unknown as typeof Command);

@@ -1,5 +1,6 @@
 import { abilityMod } from '../entities/ability';
 import { item } from '../entities/item';
+import { getCharacter } from '../store/entityHelpers';
 import type { CharacterId } from '../store/ids';
 import type { StoreFacade } from '../store/storeFacade';
 
@@ -13,7 +14,7 @@ export interface CombatSnapshot {
 }
 
 export function getCombatSnapshot(store: StoreFacade, id: CharacterId): CombatSnapshot | null {
-  const ch = store.getEntity('character', id as CharacterId);
+  const ch = getCharacter(store, id as CharacterId);
   if (!ch) return null;
   const strMod = abilityMod(ch.ability.str);
   const dexMod = abilityMod(ch.ability.dex);

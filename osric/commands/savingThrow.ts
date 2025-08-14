@@ -4,9 +4,11 @@ import {
   type SavingThrowType,
   performSavingThrow,
 } from '../combat/savingThrows';
-import { Command } from '../command/Command';
+import type { Command } from '../command/Command';
 import { Rule } from '../command/Rule';
+import { defineCommand } from '../command/define';
 import { registerCommand } from '../command/register';
+import { getCharacter } from '../store/entityHelpers';
 import type { CharacterId } from '../store/ids';
 import { characterIdSchema } from '../store/ids';
 
@@ -39,7 +41,10 @@ class ExecuteSavingThrowRule extends Rule<{ result: SavingThrowResult }> {
       fail: (c: 'CHARACTER_NOT_FOUND', m: string) => unknown;
     }
     const { params, ok, store, fail } = ctx as Ctx;
-    const ch = store.getEntity('character', params.characterId);
+    const ch = getCharacter(
+      store as unknown as import('../store/storeFacade').StoreFacade,
+      params.characterId
+    );
     if (!ch)
       return fail('CHARACTER_NOT_FOUND', 'Character not found') as unknown as {
         result: SavingThrowResult;
@@ -61,9 +66,9 @@ class ExecuteSavingThrowRule extends Rule<{ result: SavingThrowResult }> {
   }
 }
 
-export class SavingThrowCommand extends Command {
-  static key = 'savingThrow';
-  static params = params;
-  static rules = [ExecuteSavingThrowRule];
-}
-registerCommand(SavingThrowCommand);
+export const SavingThrowCommand = defineCommand({
+  key: 'savingThrow',
+  params,
+  rules: [ExecuteSavingThrowRule],
+});
+registerCommand(SavingThrowCommand as unknown as typeof Command);
