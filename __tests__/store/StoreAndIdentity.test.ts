@@ -23,7 +23,7 @@ describe('Store & Identity', () => {
     const id = engine.store.setEntity('character', makeDraft(engine));
     const updated = engine.store.updateEntity('character', id, { hp: 5 });
     expect(updated.hp).toBe(5);
-    expect(() => engine.store.updateEntity('character', id, { hp: -1 })).toThrow();
+    expect(() => engine.store.updateEntity('character', id, { hp: -11 })).toThrow();
   });
 
   it('removes character and snapshot reflects change', () => {

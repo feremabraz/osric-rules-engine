@@ -26,3 +26,8 @@ export type { CharacterId, MonsterId, ItemId } from './store/ids';
 export { createRng } from './rng/random';
 /** Test harness utilities (non-production helpers). */
 export { testEngine, normalizeSnapshot, TestEngineBuilder } from './testing/testEngine';
+// Combat helpers
+export { getCombatSnapshot } from './combat/snapshot';
+export { getBattleSnapshot } from './combat/battleSnapshot';
+/** Metrics snapshot (Phase 05 Item 3). */
+// Usage: engine.metricsSnapshot()

@@ -15,12 +15,25 @@ interface CharacterRecord extends Character {}
 interface MonsterRecord extends Monster {}
 interface ItemRecord extends Item {}
 
+export interface BattleState {
+  id: string;
+  round: number;
+  timeSeconds: number;
+  order: { id: CharacterId; rolled: number }[];
+  activeIndex: number;
+  recordRolls?: boolean;
+  rollsLog?: { type: 'init' | 'attack' | 'damage' | 'morale'; value: number; state: number }[];
+  effectsLog?: { round: number; type: string; target: string; payload?: unknown }[];
+  log?: { round: number; type: string; target: string; payload?: unknown }[]; // alias of effectsLog for spec naming alignment
+}
+
 export type EntityType = 'character' | 'monster' | 'item';
 
 export interface StoreFacadeSnapshot {
   characters: Character[];
   monsters: Monster[];
   items: Item[];
+  battles: BattleState[];
 }
 
 export interface StoreFacade {
@@ -41,12 +54,18 @@ export interface StoreFacade {
   removeEntity(type: 'monster', id: MonsterId): boolean;
   removeEntity(type: 'item', id: ItemId): boolean;
   snapshot(): StoreFacadeSnapshot;
+  // Battle state helpers (Phase 03)
+  setBattle(state: BattleState): string;
+  getBattle(id: string): BattleState | null;
+  updateBattle(id: string, patch: Partial<Omit<BattleState, 'id'>>): BattleState;
+  removeBattle(id: string): boolean;
 }
 
 export function createStoreFacade(): StoreFacade {
   const characters = new Map<CharacterId, CharacterRecord>();
   const monsters = new Map<MonsterId, MonsterRecord>();
   const items = new Map<ItemId, ItemRecord>();
+  const battles = new Map<string, BattleState>();
 
   function freeze<T extends object>(obj: T): T {
     return Object.freeze(obj);
@@ -103,7 +122,8 @@ export function createStoreFacade(): StoreFacade {
     _current: CharacterRecord,
     patch: Partial<Omit<Character, 'id'>>
   ): void {
-    if (patch.hp !== undefined && patch.hp < 0) throw new Error('hp must be >= 0');
+    // Runtime can drive hp below 0 (down to -10) for death tracking (Phase 05 unconscious/death thresholds)
+    if (patch.hp !== undefined && patch.hp < -10) throw new Error('hp must be >= -10');
   }
 
   function updateEntity(
@@ -177,8 +197,40 @@ export function createStoreFacade(): StoreFacade {
       characters: Array.from(characters.values()),
       monsters: Array.from(monsters.values()),
       items: Array.from(items.values()),
+      battles: Array.from(battles.values()),
     };
   }
 
-  return { setEntity, getEntity, updateEntity, removeEntity, snapshot };
+  function setBattle(state: BattleState): string {
+    battles.set(state.id, Object.freeze({ ...state }));
+    return state.id;
+  }
+  function getBattle(id: string): BattleState | null {
+    return battles.get(id) ?? null;
+  }
+  function updateBattle(id: string, patch: Partial<Omit<BattleState, 'id'>>): BattleState {
+    const existing = battles.get(id);
+    if (!existing) throw new Error(`Battle ${id} not found`);
+    const merged = { ...existing, ...patch } as BattleState;
+    if (patch.effectsLog && !patch.log) merged.log = patch.effectsLog;
+    if (patch.log && !patch.effectsLog) merged.effectsLog = patch.log;
+    const updated = Object.freeze(merged);
+    battles.set(id, updated);
+    return updated;
+  }
+  function removeBattle(id: string): boolean {
+    return battles.delete(id);
+  }
+
+  return {
+    setEntity,
+    getEntity,
+    updateEntity,
+    removeEntity,
+    snapshot,
+    setBattle,
+    getBattle,
+    updateBattle,
+    removeBattle,
+  };
 }

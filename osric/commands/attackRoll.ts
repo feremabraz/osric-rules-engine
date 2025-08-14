@@ -1,0 +1,269 @@
+import { z } from 'zod';
+import { Command } from '../command/Command';
+import { Rule } from '../command/Rule';
+import { registerCommand } from '../command/register';
+import { abilityMod } from '../entities/ability';
+import { item } from '../entities/item';
+import type { CharacterId, ItemId } from '../store/ids';
+
+const params = z.object({
+  attacker: z
+    .string()
+    .regex(/^char_/)
+    .optional(),
+  target: z.string().regex(/^char_/),
+  battleId: z.string().optional(),
+  weaponId: z.string().optional(), // placeholder until item entity linking
+});
+
+interface AttackContextAccum {
+  attacker: {
+    id: CharacterId;
+    str: number;
+    dex: number;
+    baseAttack: number;
+    weapon: {
+      key: string;
+      damage: { dice: string; bonus: number };
+      finesse?: boolean;
+      attackBonus?: number;
+      weaponVsArmor?: Record<string, number>;
+    };
+  };
+  target: {
+    id: CharacterId;
+    dex: number;
+    armor: { armorClassBase: number; key: string; armorTypeKey?: string };
+  };
+  d20: number;
+  natural: number;
+  attackTotal: number;
+  targetAC: number;
+  hit: boolean;
+  armorAdjustmentApplied?: number;
+  critical?: boolean;
+  fumble?: boolean;
+}
+
+class ValidateEntitiesRule extends Rule<{
+  attacker: AttackContextAccum['attacker'];
+  target: AttackContextAccum['target'];
+}> {
+  static ruleName = 'ValidateEntities';
+  static output = z.object({
+    attacker: z.any(),
+    target: z.any(),
+  });
+  apply(ctx: unknown) {
+    interface LocalCtx {
+      params: { attacker?: CharacterId; target: CharacterId; weaponId?: ItemId; battleId?: string };
+      store: {
+        getEntity: (
+          type: 'character',
+          id: CharacterId
+        ) => {
+          id: CharacterId;
+          ability: { str: number; dex: number };
+          stats: {
+            baseAttack: number;
+            initiative: { base: number };
+            movement: { speedMps: number };
+          };
+          equipped: { weapon?: string; armor?: string };
+        } | null;
+        getBattle: (id: string) => {
+          order: { id: CharacterId }[];
+          activeIndex: number;
+          recordRolls?: boolean;
+          rollsLog?: { type: 'init' | 'attack' | 'damage'; value: number; state: number }[];
+        } | null;
+        updateBattle: (id: string, patch: Record<string, unknown>) => unknown;
+      };
+      rng: { getState: () => number };
+      fail: (
+        code: 'CHARACTER_NOT_FOUND' | 'TARGET_NOT_FOUND' | 'BATTLE_NOT_FOUND',
+        msg: string
+      ) => Record<string, unknown>;
+      ok: (d: Record<string, unknown>) => Record<string, unknown>;
+    }
+    const c = ctx as LocalCtx;
+    let attackerId = c.params.attacker as CharacterId | undefined;
+    if (!attackerId && c.params.battleId) {
+      const battle = c.store.getBattle(c.params.battleId);
+      if (!battle)
+        return c.fail('BATTLE_NOT_FOUND', 'Battle not found') as unknown as {
+          attacker: AttackContextAccum['attacker'];
+          target: AttackContextAccum['target'];
+        };
+      attackerId = battle.order[battle.activeIndex].id;
+    }
+    const attacker = attackerId ? c.store.getEntity('character', attackerId) : null;
+    if (!attacker)
+      return c.fail('CHARACTER_NOT_FOUND', 'Attacker not found') as unknown as {
+        attacker: AttackContextAccum['attacker'];
+        target: AttackContextAccum['target'];
+      };
+    const target = c.store.getEntity('character', c.params.target as CharacterId);
+    if (!target)
+      return c.fail('TARGET_NOT_FOUND', 'Target not found') as unknown as {
+        attacker: AttackContextAccum['attacker'];
+        target: AttackContextAccum['target'];
+      };
+    // Resolve weapon meta (simplified by equipped weapon string key -> catalog key subset)
+    let weaponMeta = item.weapons.unarmed;
+    if (attacker.equipped.weapon) {
+      const wKey = attacker.equipped.weapon as keyof typeof item.weapons;
+      weaponMeta = item.weapons[wKey] ?? weaponMeta;
+    }
+    const targetArmorKey = (target.equipped.armor ?? 'none') as keyof typeof item.armors;
+    const data = {
+      attacker: {
+        id: attacker.id,
+        str: attacker.ability.str,
+        dex: attacker.ability.dex,
+        baseAttack: attacker.stats.baseAttack,
+        weapon: weaponMeta,
+      },
+      target: {
+        id: target.id,
+        dex: target.ability.dex,
+        armor: {
+          key: targetArmorKey,
+          armorClassBase: item.armors[targetArmorKey]?.armorClassBase ?? 0,
+          armorTypeKey: item.armors[targetArmorKey]?.armorTypeKey,
+        },
+      },
+    };
+    c.ok(data as unknown as Record<string, unknown>);
+    return data as {
+      attacker: AttackContextAccum['attacker'];
+      target: AttackContextAccum['target'];
+    };
+  }
+}
+
+class ComputeAttackRule extends Rule<{
+  d20: number;
+  natural: number;
+  attackTotal: number;
+  targetAC: number;
+  hit: boolean;
+  armorAdjustmentApplied?: number;
+  weapon?: { key: string; damage: { dice: string; bonus: number } };
+  critical?: boolean;
+  fumble?: boolean;
+  criticalMultiplier?: number;
+}> {
+  static ruleName = 'ComputeAttack';
+  static after = ['ValidateEntities'];
+  static output = z.object({
+    d20: z.number().int(),
+    natural: z.number().int(),
+    attackTotal: z.number().int(),
+    targetAC: z.number().int(),
+    hit: z.boolean(),
+    armorAdjustmentApplied: z.number().int().optional(),
+    weapon: z.any().optional(),
+    critical: z.boolean().optional(),
+    fumble: z.boolean().optional(),
+    criticalMultiplier: z.number().int().optional(),
+  });
+  apply(ctx: unknown) {
+    interface LocalCtx {
+      acc: AttackContextAccum;
+      rng: { int: (min: number, max: number) => number; getState: () => number };
+      ok: (d: Record<string, unknown>) => Record<string, unknown>;
+      params: { battleId?: string };
+      store: {
+        getBattle?: (id: string) => {
+          recordRolls?: boolean;
+          rollsLog?: {
+            type: 'init' | 'attack' | 'damage' | 'morale';
+            value: number;
+            state: number;
+          }[];
+          effectsLog?: { round: number; type: string; target: string; payload?: unknown }[];
+          round?: number;
+        } | null;
+        updateBattle?: (id: string, patch: Record<string, unknown>) => unknown;
+      };
+    }
+    const c = ctx as LocalCtx;
+    const { attacker, target } = c.acc;
+    const strMod = abilityMod(attacker.str);
+    const dexMod = abilityMod(attacker.dex);
+    const useDex = attacker.weapon.finesse === true && dexMod > strMod;
+    const abilityBonus = useDex ? dexMod : strMod;
+    const natural = c.rng.int(1, 20);
+    const d20 = natural;
+    // Ascending AC: 10 + armor + dexMod (target)
+    const targetDexMod = abilityMod(target.dex);
+    const targetAC = 10 + target.armor.armorClassBase + targetDexMod;
+    // Weapon vs armor adjustment
+    let armorAdjustmentApplied = 0;
+    const armorType = target.armor.armorTypeKey ?? target.armor.key;
+    if (attacker.weapon.weaponVsArmor && armorType in attacker.weapon.weaponVsArmor) {
+      armorAdjustmentApplied = attacker.weapon.weaponVsArmor[armorType] ?? 0;
+    }
+    const attackTotal =
+      d20 +
+      attacker.baseAttack +
+      abilityBonus +
+      (attacker.weapon.attackBonus ?? 0) +
+      armorAdjustmentApplied;
+    const critical = natural === 20;
+    const fumble = natural === 1;
+    const autoHit = critical;
+    const autoMiss = fumble;
+    const hit = attackTotal >= targetAC;
+    const finalHit = autoHit ? true : autoMiss ? false : hit;
+    const delta = {
+      d20,
+      natural,
+      attackTotal,
+      targetAC,
+      hit: finalHit,
+      armorAdjustmentApplied: armorAdjustmentApplied || undefined,
+      weapon: attacker.weapon,
+      critical: critical || undefined,
+      fumble: fumble || undefined,
+      criticalMultiplier: critical ? 2 : undefined,
+    };
+    c.ok(delta);
+    // Battle logging
+    const battleId = c.params.battleId;
+    if (battleId && c.store.getBattle) {
+      const battle = c.store.getBattle(battleId);
+      if (battle && c.store.updateBattle) {
+        const patch: Record<string, unknown> = {};
+        if (battle.recordRolls) {
+          const stateVal = c.rng.getState();
+          const rollsLog = (battle.rollsLog ?? []).concat({
+            type: 'attack',
+            value: natural,
+            state: stateVal,
+          });
+          patch.rollsLog = rollsLog;
+        }
+        const currentRound = typeof battle.round === 'number' ? battle.round : 0;
+        const effectsLog = (battle.effectsLog ?? []).concat({
+          round: currentRound,
+          type: 'attackRoll',
+          target: target.id,
+          payload: { natural, attackTotal, targetAC, hit: finalHit, critical, fumble },
+        });
+        patch.effectsLog = effectsLog;
+        patch.log = effectsLog;
+        c.store.updateBattle(battleId, patch);
+      }
+    }
+    return delta;
+  }
+}
+
+export class AttackRollCommand extends Command {
+  static key = 'attackRoll';
+  static params = params;
+  static rules = [ValidateEntitiesRule, ComputeAttackRule];
+}
+registerCommand(AttackRollCommand);

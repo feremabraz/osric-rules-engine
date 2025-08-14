@@ -31,7 +31,7 @@ class NegativeHpCommand extends Command {
           fail: (code: 'STORE_CONSTRAINT', m: string) => unknown;
         };
         try {
-          c.store.updateEntity('character', c.params.characterId, { hp: -5 });
+          c.store.updateEntity('character', c.params.characterId, { hp: -20 });
         } catch (e) {
           return c.fail('STORE_CONSTRAINT', (e as Error).message);
         }

@@ -8,6 +8,7 @@ import { monster as monsterEntities } from '../entities/monster';
 import type { DomainFailure } from '../errors/codes';
 import { createExecutionContext, topoSortRules } from '../execution/context';
 import { type Rng, createRng } from '../rng/random';
+import { __setIdRandom } from '../store/ids';
 import { type StoreFacade, createStoreFacade } from '../store/storeFacade';
 import type { CommandResultShape } from '../types/commandResults';
 // Engine (Phase 5: config, entities, registry, execution skeleton & command proxy)
@@ -26,6 +27,13 @@ export class Engine {
     command: string;
     effects: { type: string; target: string; payload?: unknown }[];
   }[] = [];
+  // Metrics (Phase 05 Item 3)
+  private metrics = {
+    commandsExecuted: 0,
+    commandsFailed: 0,
+    recent: [] as { command: string; ok: boolean; durationMs: number; at: number }[],
+    recentLimit: 50,
+  };
   // Command facade (initialized on start). Using index signature for dynamic keys; tests rely on this property.
   public readonly command!: {
     [K in keyof CommandResultShape & string]: (
@@ -54,6 +62,8 @@ export class Engine {
 
   async start(): Promise<void> {
     if (this.started) return; // idempotent
+    // Inject deterministic id generator using engine RNG so IDs become seed-stable
+    __setIdRandom(() => this.rng.float());
     // Build registry
     // Phase 06: Auto discovery – if enabled and no commands registered yet, load known command modules.
     if (this.config.autoDiscover && getRegisteredCommands().length === 0) {
@@ -151,12 +161,13 @@ export class Engine {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       const res = engineFail('PARAM_INVALID', message) as Result<never>;
-      this.eventsTrace.push({
-        command: commandKey,
-        startedAt,
-        durationMs: Date.now() - startedAt,
-        ok: false,
-      });
+      const dur = Date.now() - startedAt;
+      this.eventsTrace.push({ command: commandKey, startedAt, durationMs: dur, ok: false });
+      // Metrics (param parse failure)
+      this.metrics.commandsExecuted += 1;
+      this.metrics.commandsFailed += 1;
+      this.metrics.recent.push({ command: commandKey, ok: false, durationMs: dur, at: startedAt });
+      if (this.metrics.recent.length > this.metrics.recentLimit) this.metrics.recent.shift();
       return res;
     }
     const ctx = createExecutionContext(meta, parsed, this._store, this.rng);
@@ -185,12 +196,17 @@ export class Engine {
         if ((out as unknown as DomainFailure).__fail) {
           const f = out as unknown as DomainFailure;
           const res = domainFailResult(f.code, f.message) as Result<never>;
-          this.eventsTrace.push({
+          const dur = Date.now() - startedAt;
+          this.eventsTrace.push({ command: commandKey, startedAt, durationMs: dur, ok: false });
+          this.metrics.commandsExecuted += 1;
+          this.metrics.commandsFailed += 1;
+          this.metrics.recent.push({
             command: commandKey,
-            startedAt,
-            durationMs: Date.now() - startedAt,
             ok: false,
+            durationMs: dur,
+            at: startedAt,
           });
+          if (this.metrics.recent.length > this.metrics.recentLimit) this.metrics.recent.shift();
           return res;
         }
         // Runtime validation (Phase 2): validate rule delta against its output schema if declared.
@@ -208,12 +224,17 @@ export class Engine {
               'RULE_EXCEPTION',
               `Rule output validation failed: ${message}`
             ) as Result<never>;
-            this.eventsTrace.push({
+            const dur = Date.now() - startedAt;
+            this.eventsTrace.push({ command: commandKey, startedAt, durationMs: dur, ok: false });
+            this.metrics.commandsExecuted += 1;
+            this.metrics.commandsFailed += 1;
+            this.metrics.recent.push({
               command: commandKey,
-              startedAt,
-              durationMs: Date.now() - startedAt,
               ok: false,
+              durationMs: dur,
+              at: startedAt,
             });
+            if (this.metrics.recent.length > this.metrics.recentLimit) this.metrics.recent.shift();
             return res;
           }
         }
@@ -240,31 +261,56 @@ export class Engine {
           'RULE_EXCEPTION',
           `Effect commit failed: ${message}`
         ) as Result<never>;
-        this.eventsTrace.push({
+        const dur = Date.now() - startedAt;
+        this.eventsTrace.push({ command: commandKey, startedAt, durationMs: dur, ok: false });
+        this.metrics.commandsExecuted += 1;
+        this.metrics.commandsFailed += 1;
+        this.metrics.recent.push({
           command: commandKey,
-          startedAt,
-          durationMs: Date.now() - startedAt,
           ok: false,
+          durationMs: dur,
+          at: startedAt,
         });
+        if (this.metrics.recent.length > this.metrics.recentLimit) this.metrics.recent.shift();
         return res;
       }
       const res = { ok: true, data: ctx.acc } as Result<Record<string, unknown>>;
+      const durSuccess = Date.now() - startedAt;
       this.eventsTrace.push({
         command: commandKey,
         startedAt,
-        durationMs: Date.now() - startedAt,
+        durationMs: durSuccess,
         ok: true,
       });
+      // Metrics success record
+      this.metrics.commandsExecuted += 1;
+      this.metrics.recent.push({
+        command: commandKey,
+        ok: true,
+        durationMs: durSuccess,
+        at: startedAt,
+      });
+      if (this.metrics.recent.length > this.metrics.recentLimit) this.metrics.recent.shift();
       return res;
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
       const res = engineFail('RULE_EXCEPTION', message) as Result<never>;
+      const durFail = Date.now() - startedAt;
       this.eventsTrace.push({
         command: commandKey,
         startedAt,
-        durationMs: Date.now() - startedAt,
+        durationMs: durFail,
         ok: false,
       });
+      this.metrics.commandsExecuted += 1;
+      this.metrics.commandsFailed += 1;
+      this.metrics.recent.push({
+        command: commandKey,
+        ok: false,
+        durationMs: durFail,
+        at: startedAt,
+      });
+      if (this.metrics.recent.length > this.metrics.recentLimit) this.metrics.recent.shift();
       return res;
     }
   }
@@ -330,6 +376,16 @@ export class Engine {
       },
     };
     return new Proxy({}, handler);
+  }
+
+  // Metrics snapshot API
+  metricsSnapshot() {
+    const { commandsExecuted, commandsFailed, recent } = this.metrics;
+    return Object.freeze({
+      commandsExecuted,
+      commandsFailed,
+      recent: [...recent],
+    });
   }
 }
 

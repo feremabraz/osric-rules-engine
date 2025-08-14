@@ -8,7 +8,15 @@ export type CommandErrorCode =
   | 'CONFLICTING_RESULT_KEY'
   // Domain specific examples (extend as needed)
   | 'CHARACTER_NOT_FOUND'
-  | 'NO_LEADER';
+  | 'NO_LEADER'
+  | 'RACIAL_ADJUSTMENT_RANGE'
+  | 'CLASS_RESTRICTION'
+  | 'ABILITY_REQUIREMENT'
+  // Phase 02 combat
+  | 'TARGET_NOT_FOUND'
+  | 'ATTACK_NOT_HIT'
+  // Phase 03 battles
+  | 'BATTLE_NOT_FOUND';
 
 // Phase 08: structural vs domain code categorization
 export type EngineStructuralCode =

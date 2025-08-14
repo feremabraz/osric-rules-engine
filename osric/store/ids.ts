@@ -1,13 +1,18 @@
+// Deterministic-friendly ID chunk generator. Allows injection of a PRNG function.
+// Falls back to Math.random when no override provided.
+let customRand: (() => number) | null = null;
+export function __setIdRandom(fn: (() => number) | null) {
+  customRand = fn;
+}
 function randomChunk(): string {
-  if (typeof crypto !== 'undefined' && 'getRandomValues' in crypto) {
-    const arr = new Uint32Array(2);
-    crypto.getRandomValues(arr);
-    return Array.from(arr)
-      .map((n) => n.toString(36))
-      .join('')
-      .slice(0, 8);
+  const r = customRand ? customRand : Math.random;
+  // produce 8 base36 chars via 2 x 24-bit pieces
+  let out = '';
+  for (let i = 0; i < 2; i++) {
+    const n = Math.floor(r() * 0xffffffff);
+    out += n.toString(36);
   }
-  return Math.random().toString(36).slice(2, 10);
+  return out.slice(0, 8);
 }
 
 export type CharacterId = `${'char'}_${string}` & { readonly __tag: 'CharacterId' };
