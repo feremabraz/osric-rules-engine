@@ -23,4 +23,19 @@ Trigger domain failures intentionally (e.g. invalid id) and assert `res.kind ===
 ## Timing Assertions
 Use `expectAllDurationsUnder(engine, 5)` to guard against performance regressions in micro-bench scenarios.
 
+## Digest / Snapshot Tests
+For broader regression coverage, construct a minimized digest:
+```ts
+const digest = {
+  chars: engine.store.snapshot().characters.map(c => ({ id: c.id, lvl: c.level })),
+  trace: engine.events.trace.map(e => ({ c: e.command, ok: e.ok })),
+  metrics: engine.metricsSnapshot().commandsExecuted,
+};
+expect(JSON.stringify(digest, null, 2)).toMatchInlineSnapshot();
+```
+Keep the digest lean: omit HP if damage volatility is not pertinent, and avoid including timestamps.
+
+## Metrics Simplification
+Metrics expose counts + recent list only (no average duration). Use `events.trace` if you need per-command durations for assertions.
+
 Next: Extending Entities (8).

@@ -5,11 +5,13 @@ import { Rule } from '../command/Rule';
 import { registerCommand } from '../command/register';
 import type { Character } from '../entities/character';
 import type { CharacterId } from '../store/ids';
+import { createBattleId } from '../store/ids';
+import { battleIdSchema, characterIdSchema } from '../store/ids';
 import type { BattleState } from '../store/storeFacade';
 import { ROUND_SECONDS } from '../types/temporal';
 
 const params = z.object({
-  participants: z.array(z.string().regex(/^char_/)).min(1),
+  participants: z.array(characterIdSchema).min(1),
   recordRolls: z.boolean().optional(),
 });
 
@@ -50,7 +52,7 @@ class RollInitiativeRule extends Rule<{
   static ruleName = 'RollInitiative';
   static after = ['ValidateParticipants'];
   static output = z.object({
-    initiativeOrder: z.array(z.object({ id: z.string(), rolled: z.number().int() })),
+    initiativeOrder: z.array(z.object({ id: characterIdSchema, rolled: z.number().int() })),
     rollsLog: z
       .array(
         z.object({ type: z.literal('init'), value: z.number().int(), state: z.number().int() })
@@ -104,7 +106,31 @@ class RollInitiativeRule extends Rule<{
 class PersistBattleRule extends Rule<{ battle: BattleState }> {
   static ruleName = 'PersistBattle';
   static after = ['RollInitiative'];
-  static output = z.object({ battle: z.any() });
+  static output = z.object({
+    battle: z.object({
+      id: z.string(),
+      round: z.number().int(),
+      timeSeconds: z.number().int(),
+      order: z.array(z.object({ id: characterIdSchema, rolled: z.number().int() })),
+      activeIndex: z.number().int(),
+      recordRolls: z.boolean().optional(),
+      rollsLog: z
+        .array(
+          z.object({ type: z.literal('init'), value: z.number().int(), state: z.number().int() })
+        )
+        .optional(),
+      effectsLog: z
+        .array(
+          z.object({
+            round: z.number().int(),
+            type: z.string(),
+            target: z.string(),
+            payload: z.any().optional(),
+          })
+        )
+        .optional(),
+    }),
+  });
   apply(ctx: unknown) {
     interface Ctx {
       acc: {
@@ -117,7 +143,7 @@ class PersistBattleRule extends Rule<{ battle: BattleState }> {
       ok: (d: Record<string, unknown>) => unknown;
     }
     const { acc, store, params, ok } = ctx as Ctx;
-    const id = `battle_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const id = createBattleId();
     const battle: BattleState = {
       id,
       round: 1,
@@ -127,12 +153,6 @@ class PersistBattleRule extends Rule<{ battle: BattleState }> {
       recordRolls: params.recordRolls,
       rollsLog: acc.rollsLog,
       effectsLog: acc.initiativeEffects?.map((e) => ({
-        round: 1,
-        type: 'initiative',
-        target: e.id,
-        payload: { rolled: e.rolled },
-      })),
-      log: acc.initiativeEffects?.map((e) => ({
         round: 1,
         type: 'initiative',
         target: e.id,
@@ -152,7 +172,7 @@ class ResultShapeRule extends Rule<{
   static ruleName = 'ResultShape';
   static after = ['PersistBattle'];
   static output = z.object({
-    battleId: z.string(),
+    battleId: battleIdSchema,
     order: z.array(z.object({ id: z.string(), rolled: z.number().int() })),
   });
   apply(ctx: unknown) {

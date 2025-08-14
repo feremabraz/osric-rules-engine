@@ -1,6 +1,6 @@
 # OSRIC Engine Library Design
 
-> This blueprint reimagines the OSRIC library exactly in the style you described: *one import*, *auto‑wired engine*, *implicit shared store*, *simple ergonomic entity access*, *command invocation via `engine.command.*`*, and *co‑located Command + Rules with auto‑registration + zod validation*. It maintains strong type safety while minimizing ceremony.
+> This blueprint designs the OSRIC library exactly in this style: *one import*, *auto‑wired engine*, *implicit shared store*, *simple ergonomic entity access*, *command invocation via `engine.command.*`*, and *co‑located Command + Rules with auto‑registration + zod validation*. It maintains strong type safety while minimizing ceremony.
 
 ---
 ## 1. High‑Level Goals
@@ -8,13 +8,14 @@
 |------|--------------------------------|
 | Single entrypoint | `import { Engine } from '@osric'` returns fully wired façade |
 | Minimal boilerplate | No manual rule chain creation; auto discovery + registration |
-| Type safety | Discriminated command execution results + strongly typed entity schema + branded IDs (optional) |
+| Type safety | Discriminated command execution results + strongly typed entity schema + mandatory branded IDs |
 | Implicit shared store | Jotai store embedded; exposed via `engine.store` convenience facade |
-| Ergonomic entity creation | `engine.entities.character.prepare(race, klass)` returns hydrated entity draft |
+| Ergonomic entity creation | `engine.command.createCharacter({...})` returns a persisted character |
 | Zod validation | Params, entities, config all validated; failures throw typed errors |
 | Co-located authoring | One file per feature: Command subclass + one or more Rule subclasses auto‑registered |
-| Command invocation | `engine.command.move(entityId, entity)` or richer param signature; returns typed result |
+| Command invocation | `engine.command.attackRoll({ attacker, target })` etc.; returns typed result |
 | Clarity over abbreviation | Prefer explicit names (e.g. `InspirePartyResult`, `ResultData`) over terse forms |
+| Mandatory rule outputs | Every Rule declares a concrete `output` schema (no omitted / no plain `z.any`) |
 
 ---
 ## 2. Surface API Overview
@@ -24,30 +25,20 @@ import { Engine } from '@osric';
 const config = {
   seed: 12345,
   logging: { level: 'info' },
-  features: { morale: true, weather: false },
-  adapters: { rng: 'mersenne', persistence: null },
+  features: { morale: true },
+  adapters: { rng: 'default', persistence: null },
 };
 
 const engine = new Engine(config);
-await engine.start(); // async to allow dynamic loading or persistence bootstrapping
 
-// Entity templates / enumerations
-const human = engine.entities.character.human;     // Race meta
-const warrior = engine.entities.character.warrior; // Class meta
+const heroRes = await engine.command.createCharacter({ name: 'Hero', level: 1, hp: 12 });
+const foeRes  = await engine.command.createCharacter({ name: 'Foe', level: 1, hp: 10 });
 
-// Prepared character (validated draft)
-const character = engine.entities.character.prepare(human, warrior, { name: 'Aela' });
-const id = engine.store.setEntity(character); // returns CharacterId
-const retrieved = engine.store.getEntity(id);
-
-// Execute a built-in command via façade
-const moveResult = await engine.command.move(id, { distance: 30, destination: '0,30' });
-if (moveResult.ok) console.log(moveResult.data.newPosition);
-
-// Custom command (user authored file auto-registered)
-const inspirePartyResult = await engine.command.inspireParty(id, { bonus: 1, message: 'Courage!' });
-if (inspirePartyResult.ok) {
-  console.log('Party inspired rounds = ', inspirePartyResult.data.durationRounds);
+if (heroRes.ok && foeRes.ok) {
+  const atk = await engine.command.attackRoll({ attacker: heroRes.data.characterId, target: foeRes.data.characterId });
+  if (atk.ok && atk.data.hit) {
+    await engine.command.dealDamage({ source: heroRes.data.characterId, target: foeRes.data.characterId, attackContext: atk.data });
+  }
 }
 ```
 
@@ -115,11 +106,12 @@ engine.entities.character = {
 3. Returns immutable draft; storing finalizes & brands ID.
 
 ### 5.3 ID Strategy
-Use a single simple *template literal + brand* pattern (no runtime mode toggling):
+All engine-scoped identifiers are *mandatory branded template literal IDs* enforced at parse time via exported zod schemas (e.g. `characterIdSchema`).
 ```ts
-type CharacterId = `${'char'}_${string}` & { readonly __tag: 'CharacterId' };
+export type CharacterId = `${'char'}_${string}` & { readonly __tag: 'CharacterId' };
+export const characterIdSchema = z.string().regex(/^char_[a-z0-9]+$/i).transform(s => s as CharacterId);
 ```
-Creation utilities ensure prefix + uniqueness; brand prevents accidental cross-type assignment. No alternate "loose" mode is provided—clarity and consistency over configurability.
+Equivalent helpers exist for `MonsterId`, `ItemId`, and `BattleId`. Public API exposes `createCharacterId()` etc. plus schema exports (`characterIdSchema`, `battleIdSchema`, `idSchemas`). Param schemas must use these branded schemas (simple `z.string()` with a regex is disallowed in commands).
 
 ---
 ## 6. Store API
@@ -147,11 +139,14 @@ abstract class Command<P extends z.ZodTypeAny, ResultData, EffectData = unknown>
 }
 
 abstract class Rule<P, Acc, Delta> {
-  static name: string;                // unique within command
-  static after?: string[];            // dependencies
+  static name: string;
+  static after?: string[];
+  static output: z.ZodTypeAny; // REQUIRED (legacy omission removed)
   apply(ctx: ExecutionContext<P, Acc>): Promise<RuleResult<Delta>> | RuleResult<Delta>;
 }
 ```
+(Every rule defines `output`; empty = `z.object({})`.)
+
 ### 7.2 Co-located Author File Pattern
 ```ts
 // inspireParty.command.ts
@@ -161,7 +156,7 @@ import { z } from 'zod';
 export class InspirePartyCommand extends Command<typeof InspirePartyCommand.params, InspirePartyResult> {
   static key = 'inspireParty';
   static params = z.object({
-    leader: z.string(), // CharacterId – could wrap with refinement
+  leader: characterIdSchema, // CharacterId enforced (branding mandatory)
     bonus: z.number().int().min(1).max(5).default(1),
     message: z.string().min(1).max(120),
   });
@@ -231,10 +226,13 @@ Method signature rule: first positional argument(s) pre-bound “core” IDs if 
    * Each rule returns `ok(data?)` / `fail(code,message)`.
    * Accumulator merges rule `data` (keys cannot clash unless identical types; conflict triggers validation error at startup).
 5. Aggregate final result and apply collected world mutations & effects in a *single commit phase*.
-6. Emit events: `command:start`, per rule events, `command:complete` with timing + outcome.
+6. Emit events: `command:start`, per rule events, `command:complete`; battle effects recorded only in `effectsLog` (legacy `log` alias removed).
+...
 
 ---
 ## 10. Validation & Safety
+(Addition) Store commit enforces HP bounds (unconscious / death thresholds) and branded ID shape; any violation → `STORE_CONSTRAINT`.
+
 | Layer | Mechanism | Failure Mode |
 |-------|-----------|-------------|
 | Config | `EngineConfigSchema.parse` | Throws `ConfigError` |
@@ -260,20 +258,13 @@ A plugin system is intentionally excluded to keep the core uncomplicated. If fut
 ---
 ## 13. Testing Ergonomics
 ```ts
-const engine = testEngine({ seed: 42 })
-  .withEntities(e => e.character.addFighter('hero', { level: 1 }))
-  .register(InspirePartyCommand)
-  .finalize();
-
-const res = await engine.command.inspireParty('hero', { bonus: 1, message: 'Rise!' });
-expect(res.ok).toBe(true);
-expect(res.data.durationRounds).toBeGreaterThan(0);
-engine.events.trace.forEach(ev => expect(ev.durationMs).toBeLessThan(5));
+const engine = new Engine({ seed: 42 });
+const c1 = (await engine.command.createCharacter({ name: 'A', level: 1, hp: 8 })).data;
+const c2 = (await engine.command.createCharacter({ name: 'B', level: 1, hp: 8 })).data;
+const roll = await engine.command.attackRoll({ attacker: c1.characterId, target: c2.characterId });
+expect(roll.ok).toBe(true);
 ```
-Utilities:
-* `testEngine()` – spins minimal engine.
-* Deterministic RNG injection.
-* `engine.events.trace` – array of structured events for snapshot.
+(Snapshot / digest test guards deterministic end‑to‑end state.)
 
 ---
 ## 14. Performance Strategy (Deliberate Simplicity)
@@ -330,7 +321,7 @@ registerCommand(InspirePartyCommand);
 | Code | Scenario | Notes |
 |------|----------|-------|
 | `PARAM_INVALID` | Zod param parsing failure | Includes formatted issues |
-| `NO_LEADER` | Domain error from a rule | Rule-defined codes |
+| `NO_TARGET` / domain codes | Domain error from a rule | Rule-defined codes |
 | `RULE_EXCEPTION` | Uncaught thrown error | Captures stack in dev |
 | `DEPENDENCY_MISSING` | Startup validation failure (missing rule) | Prevents engine start |
 | `CONFLICTING_RESULT_KEY` | Two rules produce same key diff type | Startup failure |
@@ -344,7 +335,7 @@ Runtime registration APIs for new races/classes are out-of-scope. Initial librar
 
 ---
 ## 18. Migration / Versioning Principles
-This is a ground‑up new library with **no backward compatibility guarantees** prior to an explicit 1.0.0 release. During pre‑1.0 exploration, breaking refinements may occur without deprecation shims. Once 1.0.0 is declared, semantic versioning will then apply.
+(Legacy prepare APIs, weather feature, optional rule outputs removed in current baseline.)
 
 ---
 ## 19. Alternative Options Considered (Skipped Here)

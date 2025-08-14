@@ -262,11 +262,10 @@ export function prepare(
   return Object.freeze(validated);
 }
 
-// Phase 07 – Flattened character catalog access:
-// Expose race & class meta directly at top-level (e.g. engine.entities.character.human)
-// while keeping legacy nested containers for backward compatibility.
+// Phase 07 – Flattened character catalog access finalized: direct top-level meta only.
+// Legacy nested containers fully removed.
 /**
- * Character catalog – flattened. Access meta via top-level keys (preferred) or legacy containers.
+ * Character catalog – flattened meta & helpers.
  */
 export const character = Object.freeze({
   human,

@@ -10,7 +10,7 @@ Each rule should perform one cohesive step: validation, calculation, persistence
 Use `after` to declare prerequisites. Keep chains shallow; avoid large webs of interdependencies. A linear chain is often clearest.
 
 ## Output Schema Discipline
-Every rule needs an `output` schema—even if empty. This enforces explicitness and ensures the registry constructs a composite result shape. Empty object: `z.object({})`.
+Every rule MUST declare an `output` schema—even if empty—to freeze the contract and feed composite result typing. Empty object: `z.object({})`.
 
 ## Accumulator Usage
 - Read prior rule outputs via `ctx.acc`.
@@ -22,6 +22,10 @@ Every rule needs an `output` schema—even if empty. This enforces explicitness 
 - Developer errors (unexpected states) should throw; these surface as structural `RULE_EXCEPTION` failures.
 
 ## Effects
-Only emit effects in the final rule(s) after all validation/calculation rules have run, to avoid partial side effects when upstream rules might fail.
+Emit effects only after validation/calculation steps pass (ideally in terminal rules). Engine buffers them; commit phase applies after success. This preserves atomicity and keeps snapshot digests deterministic.
+
+## Determinism Notes
+- RNG: Engine advances RNG once per command before rules; within rules use `ctx.rng`.
+- IDs: Entity IDs are deterministic per seed (injected generator) so rules producing new entities can safely appear in snapshot tests.
 
 Next: Error Semantics (4).

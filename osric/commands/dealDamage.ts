@@ -6,12 +6,13 @@ import { registerCommand } from '../command/register';
 import { abilityMod } from '../entities/ability';
 import { item } from '../entities/item';
 import type { CharacterId, ItemId } from '../store/ids';
+import { battleIdSchema, characterIdSchema, itemIdSchema } from '../store/ids';
 
 const params = z.object({
-  source: z.string().regex(/^char_/),
-  target: z.string().regex(/^char_/),
-  battleId: z.string().optional(),
-  weaponId: z.string().optional(),
+  source: characterIdSchema,
+  target: characterIdSchema,
+  battleId: battleIdSchema.optional(),
+  weaponId: itemIdSchema.optional(),
   attackContext: z
     .object({
       natural: z.number().int().min(1).max(20).optional(),
@@ -55,14 +56,17 @@ class ValidateEntitiesRule extends Rule<{
   target: DamageAcc['target'];
 }> {
   static ruleName = 'ValidateEntities';
-  static output = z.object({ source: z.any(), target: z.any() });
+  static output = z.object({
+    source: z.object({ id: z.string(), str: z.number().int(), weapon: z.any() }),
+    target: z.object({ id: z.string(), hp: z.number().int() }),
+  });
   apply(ctx: unknown) {
     interface LocalCtx {
       params: {
         source: CharacterId;
         target: CharacterId;
         weaponId?: ItemId;
-        battleId?: string;
+        battleId?: import('../store/ids').BattleId;
         attackContext?: { hit?: boolean };
       };
       store: {
@@ -75,7 +79,7 @@ class ValidateEntitiesRule extends Rule<{
           ability: { str: number };
           equipped: { weapon?: string };
         } | null;
-        getBattle?: (id: string) => {
+        getBattle?: (id: import('../store/ids').BattleId) => {
           recordRolls?: boolean;
           rollsLog?: {
             type: 'init' | 'attack' | 'damage' | 'morale';
@@ -83,7 +87,10 @@ class ValidateEntitiesRule extends Rule<{
             state: number;
           }[];
         } | null;
-        updateBattle?: (id: string, patch: Record<string, unknown>) => unknown;
+        updateBattle?: (
+          id: import('../store/ids').BattleId,
+          patch: Record<string, unknown>
+        ) => unknown;
       };
       fail: (
         code: 'CHARACTER_NOT_FOUND' | 'TARGET_NOT_FOUND' | 'ATTACK_NOT_HIT',
@@ -158,7 +165,7 @@ class ComputeDamageRule extends Rule<{
       };
       effects: { add: (type: string, target: CharacterId, payload?: unknown) => void };
       ok: (d: Record<string, unknown>) => Record<string, unknown>;
-      params: { battleId?: string };
+      params: { battleId?: import('../store/ids').BattleId };
     }
     const c = ctx as LocalCtx;
     const { source, target } = c.acc;
@@ -209,7 +216,7 @@ class ComputeDamageRule extends Rule<{
     // Effects collector is available through ctx but not typed here; we rely on Engine commit pattern; add explicit effect in Finalize rule if needed.
     const delta = { damage, targetRemainingHp: remaining, targetStatus: status };
     c.effects.add('damageApplied', target.id, { amount: damage, remaining, status });
-    const battleIdForEffects = c.params.battleId;
+    const battleIdForEffects = c.params.battleId as import('../store/ids').BattleId | undefined;
     interface BattleLike {
       round?: number;
       effectsLog?: { round: number; type: string; target: string; payload?: unknown }[];
@@ -230,7 +237,7 @@ class ComputeDamageRule extends Rule<{
           payload: { amount: damage, remaining, status },
         },
       ];
-      c.store.updateBattle(battleIdForEffects, { effectsLog, log: effectsLog });
+      c.store.updateBattle(battleIdForEffects, { effectsLog });
     }
     // Morale trigger: firstBlood (simplified) when target first takes damage and survives
     // (Potential future firstBlood trigger hook placeholder retained intentionally.)
@@ -290,7 +297,7 @@ class ComputeDamageRule extends Rule<{
                     payload: moraleRes,
                   },
                 ];
-                c.store.updateBattle(battleId, { effectsLog, log: effectsLog });
+                c.store.updateBattle(battleId, { effectsLog });
               }
             }
             if (moraleRes.outcome !== (fullTarget.status?.moraleState ?? 'hold')) {
@@ -316,7 +323,7 @@ class ComputeDamageRule extends Rule<{
                       },
                     },
                   ];
-                  c.store.updateBattle(battleId, { effectsLog, log: effectsLog });
+                  c.store.updateBattle(battleId, { effectsLog });
                 }
               }
             }
@@ -397,7 +404,7 @@ class ComputeDamageRule extends Rule<{
                         payload: moraleRes,
                       },
                     ];
-                    c.store.updateBattle(battleId, { effectsLog, log: effectsLog });
+                    c.store.updateBattle(battleId, { effectsLog });
                   }
                 }
                 if (moraleRes.outcome !== (ally.status?.moraleState ?? 'hold')) {
@@ -463,7 +470,7 @@ class ComputeDamageRule extends Rule<{
     } catch {
       /* swallow morale errors to not block damage */
     }
-    const battleId = c.params.battleId;
+    const battleId = c.params.battleId as import('../store/ids').BattleId | undefined;
     if (battleId && c.store.getBattle) {
       const battle = c.store.getBattle(battleId);
       if (battle?.recordRolls && c.store.updateBattle) {

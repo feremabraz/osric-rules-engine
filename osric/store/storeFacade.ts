@@ -24,7 +24,6 @@ export interface BattleState {
   recordRolls?: boolean;
   rollsLog?: { type: 'init' | 'attack' | 'damage' | 'morale'; value: number; state: number }[];
   effectsLog?: { round: number; type: string; target: string; payload?: unknown }[];
-  log?: { round: number; type: string; target: string; payload?: unknown }[]; // alias of effectsLog for spec naming alignment
 }
 
 export type EntityType = 'character' | 'monster' | 'item';
@@ -212,8 +211,6 @@ export function createStoreFacade(): StoreFacade {
     const existing = battles.get(id);
     if (!existing) throw new Error(`Battle ${id} not found`);
     const merged = { ...existing, ...patch } as BattleState;
-    if (patch.effectsLog && !patch.log) merged.log = patch.effectsLog;
-    if (patch.log && !patch.effectsLog) merged.effectsLog = patch.log;
     const updated = Object.freeze(merged);
     battles.set(id, updated);
     return updated;

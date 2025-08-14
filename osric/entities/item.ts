@@ -26,9 +26,10 @@ export interface ArmorMeta {
 
 export type ItemMeta = WeaponMeta | ArmorMeta;
 
+export type ItemKind = 'generic' | 'weapon' | 'armor';
 export interface ItemDraft {
   name: string;
-  kind: string; // generic catch-all (legacy)
+  kind: ItemKind;
 }
 export interface Item extends ItemDraft {
   id: string;
@@ -38,7 +39,7 @@ export interface Item extends ItemDraft {
 
 export const ItemDraftSchema: z.ZodType<ItemDraft> = z.object({
   name: z.string().min(1),
-  kind: z.string().min(1),
+  kind: z.enum(['generic', 'weapon', 'armor']),
 });
 
 export function prepare(init: Partial<ItemDraft>): ItemDraft {

@@ -5,15 +5,13 @@ import { registerCommand } from '../command/register';
 import { abilityMod } from '../entities/ability';
 import { item } from '../entities/item';
 import type { CharacterId, ItemId } from '../store/ids';
+import { battleIdSchema, characterIdSchema, itemIdSchema } from '../store/ids';
 
 const params = z.object({
-  attacker: z
-    .string()
-    .regex(/^char_/)
-    .optional(),
-  target: z.string().regex(/^char_/),
-  battleId: z.string().optional(),
-  weaponId: z.string().optional(), // placeholder until item entity linking
+  attacker: characterIdSchema.optional(),
+  target: characterIdSchema,
+  battleId: battleIdSchema.optional(),
+  weaponId: itemIdSchema.optional(), // placeholder until item entity linking
 });
 
 interface AttackContextAccum {
@@ -51,12 +49,31 @@ class ValidateEntitiesRule extends Rule<{
 }> {
   static ruleName = 'ValidateEntities';
   static output = z.object({
-    attacker: z.any(),
-    target: z.any(),
+    attacker: z.object({
+      id: z.string(),
+      str: z.number().int(),
+      dex: z.number().int(),
+      baseAttack: z.number().int(),
+      weapon: z.any(),
+    }),
+    target: z.object({
+      id: z.string(),
+      dex: z.number().int(),
+      armor: z.object({
+        key: z.string(),
+        armorClassBase: z.number().int(),
+        armorTypeKey: z.string().optional(),
+      }),
+    }),
   });
   apply(ctx: unknown) {
     interface LocalCtx {
-      params: { attacker?: CharacterId; target: CharacterId; weaponId?: ItemId; battleId?: string };
+      params: {
+        attacker?: CharacterId;
+        target: CharacterId;
+        weaponId?: ItemId;
+        battleId?: import('../store/ids').BattleId;
+      };
       store: {
         getEntity: (
           type: 'character',
@@ -71,13 +88,16 @@ class ValidateEntitiesRule extends Rule<{
           };
           equipped: { weapon?: string; armor?: string };
         } | null;
-        getBattle: (id: string) => {
+        getBattle: (id: import('../store/ids').BattleId) => {
           order: { id: CharacterId }[];
           activeIndex: number;
           recordRolls?: boolean;
           rollsLog?: { type: 'init' | 'attack' | 'damage'; value: number; state: number }[];
         } | null;
-        updateBattle: (id: string, patch: Record<string, unknown>) => unknown;
+        updateBattle: (
+          id: import('../store/ids').BattleId,
+          patch: Record<string, unknown>
+        ) => unknown;
       };
       rng: { getState: () => number };
       fail: (
@@ -231,7 +251,7 @@ class ComputeAttackRule extends Rule<{
     };
     c.ok(delta);
     // Battle logging
-    const battleId = c.params.battleId;
+    const battleId = c.params.battleId as import('../store/ids').BattleId | undefined;
     if (battleId && c.store.getBattle) {
       const battle = c.store.getBattle(battleId);
       if (battle && c.store.updateBattle) {
@@ -253,7 +273,6 @@ class ComputeAttackRule extends Rule<{
           payload: { natural, attackTotal, targetAC, hit: finalHit, critical, fumble },
         });
         patch.effectsLog = effectsLog;
-        patch.log = effectsLog;
         c.store.updateBattle(battleId, patch);
       }
     }

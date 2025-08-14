@@ -5,17 +5,46 @@ import { Command } from '../command/Command';
 import { Rule } from '../command/Rule';
 import { registerCommand } from '../command/register';
 import type { Character } from '../entities/character';
+import { battleIdSchema } from '../store/ids';
 import type { BattleState } from '../store/storeFacade';
 import { ROUND_SECONDS } from '../types/temporal';
 
-const params = z.object({ battleId: z.string(), rerollAtNewRound: z.boolean().optional() });
+const params = z.object({ battleId: battleIdSchema, rerollAtNewRound: z.boolean().optional() });
 
 class LoadBattleRule extends Rule<{ battle: BattleState }> {
   static ruleName = 'LoadBattle';
-  static output = z.object({ battle: z.any() });
+  static output = z.object({
+    battle: z.object({
+      id: z.string(),
+      round: z.number().int(),
+      timeSeconds: z.number().int(),
+      activeIndex: z.number().int(),
+      order: z.array(z.object({ id: z.string(), rolled: z.number().int() })),
+      recordRolls: z.boolean().optional(),
+      rollsLog: z
+        .array(
+          z.object({
+            type: z.enum(['init', 'attack', 'damage', 'morale']),
+            value: z.number().int(),
+            state: z.number().int(),
+          })
+        )
+        .optional(),
+      effectsLog: z
+        .array(
+          z.object({
+            round: z.number().int(),
+            type: z.string(),
+            target: z.string(),
+            payload: z.any().optional(),
+          })
+        )
+        .optional(),
+    }),
+  });
   apply(ctx: unknown) {
     interface Ctx {
-      params: { battleId: string };
+      params: { battleId: import('../store/ids').BattleId };
       store: { getBattle: (id: string) => BattleState | null };
       fail: (c: 'BATTLE_NOT_FOUND', m: string) => unknown;
       ok: (d: Record<string, unknown>) => unknown;
@@ -113,7 +142,7 @@ class AdvanceRule extends Rule<{ activeCombatant: string; round: number; timeSec
               target: ch.id,
               payload: res,
             });
-            battle = { ...existingBattle, effectsLog: newEffects, log: newEffects } as BattleState;
+            battle = { ...existingBattle, effectsLog: newEffects } as BattleState;
             const prevState = status.moraleState ?? 'hold';
             if (res.outcome !== prevState)
               effects.add('moraleStateChanged', ch.id, { from: prevState, to: res.outcome });
@@ -155,7 +184,6 @@ class AdvanceRule extends Rule<{ activeCombatant: string; round: number; timeSec
       order,
       rollsLog,
       effectsLog: battle.effectsLog,
-      log: battle.log,
     });
     return {
       activeCombatant: battle.order[battle.activeIndex].id,

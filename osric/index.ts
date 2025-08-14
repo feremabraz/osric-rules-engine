@@ -19,9 +19,19 @@ export type { BuiltCommandMeta } from './command/register';
 /** Store facade (advanced usage & tests). */
 export { createStoreFacade } from './store/storeFacade';
 export type { StoreFacade } from './store/storeFacade';
-/** Entity ID helpers (branded). */
-export { createCharacterId, createMonsterId, createItemId } from './store/ids';
-export type { CharacterId, MonsterId, ItemId } from './store/ids';
+/** Entity & battle ID helpers (branded) + zod schemas. */
+export {
+  createCharacterId,
+  createMonsterId,
+  createItemId,
+  createBattleId,
+  characterIdSchema,
+  monsterIdSchema,
+  itemIdSchema,
+  battleIdSchema,
+  ids as idSchemas,
+} from './store/ids';
+export type { CharacterId, MonsterId, ItemId, BattleId } from './store/ids';
 /** Deterministic RNG creation (for tests / extensions). */
 export { createRng } from './rng/random';
 /** Test harness utilities (non-production helpers). */

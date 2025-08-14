@@ -3,6 +3,7 @@ import { Command } from '../command/Command';
 import { Rule } from '../command/Rule';
 import { registerCommand } from '../command/register';
 import type { CharacterId } from '../store/ids';
+import { characterIdSchema } from '../store/ids';
 
 // Phase 04: Full inspireParty command (Blueprint Section 15)
 // Demonstrates: multi‑rule validation + RNG derived duration + effect emission + aggregated result typing.
@@ -10,7 +11,7 @@ import type { CharacterId } from '../store/ids';
 // Params: leader (CharacterId-like string), bonus (1-5, default 1), message (1-120 chars)
 // We refine leader format rather than importing brand validator (runtime only needs prefix check).
 const params = z.object({
-  leader: z.string().regex(/^char_/),
+  leader: characterIdSchema,
   bonus: z.number().int().min(1).max(5).default(1),
   message: z.string().min(1).max(120),
 });
@@ -59,7 +60,7 @@ class ApplyInspirationRule extends Rule<{ affected: CharacterId[] }> {
   static ruleName = 'ApplyInspiration';
   static after = ['CalcDuration'];
   static output = z.object({
-    affected: z.array(z.string().regex(/^char_/)),
+    affected: z.array(characterIdSchema),
   });
   apply(ctx: unknown) {
     interface LocalCtx {

@@ -19,22 +19,27 @@ Specification:
 - Adjust damage application rules and events accordingly.
 Acceptance: Damage bringing HP exactly to 0 sets unconscious not dead.
 
-## Item 3: Logging Hooks
+## Item 3: Logging & Metrics Hooks
 Purpose: Expose lightweight instrumentation reflecting design doc events.
 Dependencies: Execution context events.
-Specification:
-- Build on existing `engine.events.trace` array: wrap with emitter interface and accumulate metrics.
-- Provide `engine.metrics.snapshot()` returning `{ commandsExecuted, commandsFailed, avgDurationMs, last:N }` (N configurable internal constant) without adding heavy deps.
-Acceptance: After running a few commands snapshot reflects counts & mean duration.
+Specification (final):
+- Build on existing `engine.events.trace` array and accumulate minimal metrics.
+- Provide `engine.metricsSnapshot()` returning `{ commandsExecuted, commandsFailed, recent[] }` (average duration removed during scope trim).
+Acceptance: After running a few commands snapshot reflects executed/failed counts and recent list.
 
-## Item 4: Final MVP Validation Script
+## Item 4: Final MVP Digest Test
 Purpose: End-to-end scenario verifying all MVP functional paths.
 Dependencies: All prior.
 Specification:
-- Script (test) that: creates characters, levels one up, starts battle, runs several rounds, performs attacks, damage, saving throws, logs outcomes, ensures metrics increments and deterministic digest stable.
-Acceptance: Single assertion on final digest equality to stored snapshot.
+- End-to-end digest test creating characters, leveling, performing inspire, attack, damage, saving throw; captures minimized JSON digest (IDs, levels, trace, metrics) with snapshot.
+Acceptance: Inline snapshot passes deterministically for fixed seed; excludes volatile HP for reduced churn.
 
-## Out-of-Scope
+## Completion Notes
+- Metrics trimmed (removed avg & cumulative duration fields).
+- Deterministic ID injection added at start for reproducible snapshots.
+- HP 0 => unconscious, <0 (>= -10) => dead, implemented in damage flow & store invariant.
+
+## Out-of-Scope (unchanged)
 - Real persistence adapter.
 - Full spell system.
 - AI / morale resolution.

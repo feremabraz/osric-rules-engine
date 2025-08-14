@@ -11,8 +11,9 @@ Caused by:
 - Parameter validation failures (`PARAM_INVALID`)
 - Thrown exceptions inside rules (`RULE_EXCEPTION`)
 - Startup dependency issues (`DEPENDENCY_MISSING`, `CONFLICTING_RESULT_KEY`)
+- Store invariant violations (`STORE_CONSTRAINT`) like attempting to push HP below the allowed floor (currently -10) or invalid equip references.
 
-Avoid catching and repackaging programmer bugs as domain failures; allow them to surface as structural issues.
+Avoid catching and repackaging programmer bugs as domain failures; allow them to surface as structural issues. For store updates validate early and fail fast.
 
 ## Choosing Codes
 Add new domain codes by extending the union in `errors/codes.ts` (ensure they are not part of the structural subset). Keep codes uppercase with underscores.

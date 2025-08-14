@@ -8,9 +8,10 @@ import { Command } from '../command/Command';
 import { Rule } from '../command/Rule';
 import { registerCommand } from '../command/register';
 import type { CharacterId } from '../store/ids';
+import { characterIdSchema } from '../store/ids';
 
 const params = z.object({
-  characterId: z.string().regex(/^char_/),
+  characterId: characterIdSchema,
   type: z.enum(['death', 'wands', 'petrification', 'breath', 'spells']),
   modifiers: z.array(z.number()).optional(),
 });
