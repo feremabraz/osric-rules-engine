@@ -18,7 +18,7 @@
         "useTemplate": "error"
       }
     },
-    "ignore": ["node_modules/**", "dist/**", "build/**", "legacy_code_osric/**"]
+    "ignore": ["node_modules/**", "dist/**", "build/**"]
   },
   "formatter": {
     "enabled": true,

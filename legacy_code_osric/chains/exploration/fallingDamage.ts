@@ -1,8 +1,0 @@
-import { RuleChain } from '@osric/core/RuleChain';
-import { FallingDamageRules } from '@osric/rules/exploration/FallingDamageRules';
-
-export function buildFallingDamageChain(): RuleChain {
-  const chain = new RuleChain();
-  chain.addRule(new FallingDamageRules());
-  return chain;
-}

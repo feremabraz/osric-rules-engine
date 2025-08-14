@@ -25,5 +25,5 @@
     }
   },
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", "legacy_code_osric/**"]
+  "exclude": ["node_modules"]
 }
