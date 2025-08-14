@@ -25,5 +25,12 @@
     "typecheck": "tsc --noEmit",
     "prepare": "husky"
   },
-  "version": "0.1.0"
+  "version": "0.1.0",
+  "exports": {
+    ".": {
+      "import": "./osric/index.ts",
+      "types": "./osric/index.ts"
+    }
+  },
+  "types": "./osric/index.ts"
 }
