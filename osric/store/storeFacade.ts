@@ -58,6 +58,10 @@ export interface StoreFacade {
   getBattle(id: string): BattleState | null;
   updateBattle(id: string, patch: Partial<Omit<BattleState, 'id'>>): BattleState;
   removeBattle(id: string): boolean;
+  /** @internal Replace all collections from snapshot (transaction rollback). */
+  __replaceAll?(snap: StoreFacadeSnapshot): void;
+  /** @internal Monotonic version increased on each mutation (lazy snapshot heuristic). */
+  __version?(): number;
 }
 
 export function createStoreFacade(): StoreFacade {
@@ -65,6 +69,7 @@ export function createStoreFacade(): StoreFacade {
   const monsters = new Map<MonsterId, MonsterRecord>();
   const items = new Map<ItemId, ItemRecord>();
   const battles = new Map<string, BattleState>();
+  let __ver = 0;
 
   function freeze<T extends object>(obj: T): T {
     return Object.freeze(obj);
@@ -83,6 +88,7 @@ export function createStoreFacade(): StoreFacade {
       const d = draft as CharacterDraft; // narrowed
       const record: CharacterRecord = freeze({ ...d, id, createdAt: now, updatedAt: now });
       characters.set(id, record);
+      __ver++;
       return id;
     }
     if (type === 'monster') {
@@ -91,6 +97,7 @@ export function createStoreFacade(): StoreFacade {
       const d = draft as MonsterDraft;
       const record: MonsterRecord = freeze({ ...d, id, createdAt: now, updatedAt: now });
       monsters.set(id, record);
+      __ver++;
       return id;
     }
     if (type === 'item') {
@@ -99,6 +106,7 @@ export function createStoreFacade(): StoreFacade {
       const d = draft as ItemDraft;
       const record: ItemRecord = freeze({ ...d, id, createdAt: now, updatedAt: now });
       items.set(id, record);
+      __ver++;
       return id;
     }
     throw new Error(`Unsupported entity type '${type}'`);
@@ -151,6 +159,7 @@ export function createStoreFacade(): StoreFacade {
         updatedAt: Date.now(),
       });
       characters.set(id as CharacterId, updated);
+      __ver++;
       return updated;
     }
     if (type === 'monster') {
@@ -162,6 +171,7 @@ export function createStoreFacade(): StoreFacade {
         updatedAt: Date.now(),
       });
       monsters.set(id as MonsterId, updated);
+      __ver++;
       return updated;
     }
     if (type === 'item') {
@@ -173,6 +183,7 @@ export function createStoreFacade(): StoreFacade {
         updatedAt: Date.now(),
       });
       items.set(id as ItemId, updated);
+      __ver++;
       return updated;
     }
     throw new Error(`Unsupported entity type '${type}'`);
@@ -180,12 +191,21 @@ export function createStoreFacade(): StoreFacade {
 
   function removeEntity(type: EntityType, id: CharacterId | MonsterId | ItemId): boolean {
     switch (type) {
-      case 'character':
-        return characters.delete(id as CharacterId);
-      case 'monster':
-        return monsters.delete(id as MonsterId);
-      case 'item':
-        return items.delete(id as ItemId);
+      case 'character': {
+        const ok = characters.delete(id as CharacterId);
+        if (ok) __ver++;
+        return ok;
+      }
+      case 'monster': {
+        const ok = monsters.delete(id as MonsterId);
+        if (ok) __ver++;
+        return ok;
+      }
+      case 'item': {
+        const ok = items.delete(id as ItemId);
+        if (ok) __ver++;
+        return ok;
+      }
       default:
         throw new Error(`Unsupported entity type '${type}'`);
     }
@@ -202,6 +222,7 @@ export function createStoreFacade(): StoreFacade {
 
   function setBattle(state: BattleState): string {
     battles.set(state.id, Object.freeze({ ...state }));
+    __ver++;
     return state.id;
   }
   function getBattle(id: string): BattleState | null {
@@ -213,10 +234,28 @@ export function createStoreFacade(): StoreFacade {
     const merged = { ...existing, ...patch } as BattleState;
     const updated = Object.freeze(merged);
     battles.set(id, updated);
+    __ver++;
     return updated;
   }
   function removeBattle(id: string): boolean {
-    return battles.delete(id);
+    const ok = battles.delete(id);
+    if (ok) __ver++;
+    return ok;
+  }
+
+  function __replaceAll(snap: StoreFacadeSnapshot) {
+    characters.clear();
+    monsters.clear();
+    items.clear();
+    battles.clear();
+    for (const c of snap.characters) characters.set(c.id as CharacterId, c as CharacterRecord);
+    for (const m of snap.monsters) monsters.set(m.id as MonsterId, m as MonsterRecord);
+    for (const i of snap.items) items.set(i.id as ItemId, i as ItemRecord);
+    for (const b of snap.battles) battles.set(b.id, b);
+    __ver++;
+  }
+  function __version() {
+    return __ver;
   }
 
   return {
@@ -229,5 +268,7 @@ export function createStoreFacade(): StoreFacade {
     getBattle,
     updateBattle,
     removeBattle,
+    __replaceAll,
+    __version,
   };
 }

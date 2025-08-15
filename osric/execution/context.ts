@@ -3,6 +3,7 @@ import { type DomainFailure, domainFail } from '../errors/codes';
 import type { Rng } from '../rng/random';
 import type { StoreFacade } from '../store/storeFacade';
 import { type EffectCollector, createEffectCollector } from '../types/effects';
+import type { Logger } from '../types/logger';
 
 export interface ExecutionContext<
   Accumulator extends Record<string, unknown> = Record<string, unknown>,
@@ -13,7 +14,7 @@ export interface ExecutionContext<
   acc: Accumulator;
   effects: EffectCollector;
   rng?: Rng;
-  ok<T extends Record<string, unknown>>(delta?: T): T | undefined;
+  logger: Logger;
   fail(code: DomainFailure['code'], message: string): DomainFailure;
 }
 
@@ -28,6 +29,7 @@ export function createExecutionContext<
   command: BuiltCommandMeta,
   params: unknown,
   store: StoreFacade,
+  logger: Logger,
   rng?: Rng
 ): ExecutionContext<Accumulator> {
   return {
@@ -36,8 +38,8 @@ export function createExecutionContext<
     store,
     acc: {} as Accumulator,
     effects: createEffectCollector(),
+    logger,
     rng,
-    ok: <T extends Record<string, unknown>>(delta?: T) => (delta ? delta : undefined),
     fail: (code: DomainFailure['code'], message: string) => domainFail(code, message),
   };
 }

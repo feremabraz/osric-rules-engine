@@ -40,8 +40,10 @@ class D extends Rule<{ d: number }> {
 
 const Mini = defineCommand({ key: 'miniGraph', params: z.object({}), rules: [A, B, C, D] });
 
-describe('RuleGraphVisualization', () => {
-  it('produces stable graph structure', () => {
+// Regression Guard: Ensures rule dependency graph shape (nodes, edges, topo order) is stable.
+// Failing snapshot indicates structural dependency change (add/remove rule or edge rewire).
+describe('Structural Regression – Rule Graph', () => {
+  it('stable dependency graph snapshot', () => {
     resetRegisteredCommands();
     registerCommand(Mini as unknown as typeof import('../../osric/command/Command').Command);
     const graph = explainRuleGraph('miniGraph');

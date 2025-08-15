@@ -15,7 +15,7 @@ export type { EngineConfig, EngineConfigInput } from './config/schema';
 /** Command base class for authoring custom commands with co-located rules. */
 export { Command } from './command/Command';
 /** Registration utilities (idempotent). */
-export { registerCommand, resetRegisteredCommands } from './command/register';
+export { registerCommand, resetRegisteredCommands, getCommandDigests } from './command/register';
 export type { BuiltCommandMeta } from './command/register';
 /** Store facade (advanced usage & tests). */
 export { createStoreFacade } from './store/storeFacade';

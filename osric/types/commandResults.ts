@@ -40,13 +40,4 @@ export type CreateCharacterResult = CommandResultShape['createCharacter'];
 export type GainExperienceResult = CommandResultShape['gainExperience'];
 export type InspirePartyResult = CommandResultShape['inspireParty'];
 
-// Phase 02: helper types for deriving concrete result types from merged Zod schemas.
-// (Runtime still stores composite schema on BuiltCommandMeta; compile-time derivation happens via declaration merging in command modules.)
-// Legacy helper types retained for potential future reactivation of inference (currently unused).
-// import type { ZodObject, ZodRawShape, ZodTypeAny } from 'zod';
-// export type InferZodObject<T> = T extends ZodObject<infer Shape extends ZodRawShape>
-//   ? { [K in keyof Shape]: Shape[K] extends ZodTypeAny ? import('zod').infer<Shape[K]> : unknown }
-//   : never;
-// export type InferCommandResult<C> = Record<string, unknown>;
-
 export type CommandKey = keyof CommandResultShape & string;

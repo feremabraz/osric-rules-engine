@@ -6,6 +6,10 @@ export type CommandErrorCode =
   | 'STORE_CONSTRAINT'
   | 'DEPENDENCY_MISSING'
   | 'CONFLICTING_RESULT_KEY'
+  | 'COMMAND_NO_RULES'
+  | 'NESTED_TRANSACTION_UNSUPPORTED'
+  | 'INTEGRITY_MUTATION'
+  | 'ORDERING_VIOLATION'
   // Domain specific examples (extend as needed)
   | 'CHARACTER_NOT_FOUND'
   | 'NO_LEADER'
@@ -23,7 +27,11 @@ export type EngineStructuralCode =
   | 'PARAM_INVALID'
   | 'RULE_EXCEPTION'
   | 'DEPENDENCY_MISSING'
-  | 'CONFLICTING_RESULT_KEY';
+  | 'CONFLICTING_RESULT_KEY'
+  | 'COMMAND_NO_RULES'
+  | 'NESTED_TRANSACTION_UNSUPPORTED'
+  | 'INTEGRITY_MUTATION'
+  | 'ORDERING_VIOLATION';
 export type DomainCode = Exclude<CommandErrorCode, EngineStructuralCode>;
 
 export type EngineErrorCode = CommandErrorCode; // alias for public export
@@ -46,6 +54,10 @@ export function isStructuralCode(code: CommandErrorCode): code is EngineStructur
     code === 'PARAM_INVALID' ||
     code === 'RULE_EXCEPTION' ||
     code === 'DEPENDENCY_MISSING' ||
-    code === 'CONFLICTING_RESULT_KEY'
+    code === 'CONFLICTING_RESULT_KEY' ||
+    code === 'COMMAND_NO_RULES' ||
+    code === 'NESTED_TRANSACTION_UNSUPPORTED' ||
+    code === 'INTEGRITY_MUTATION' ||
+    code === 'ORDERING_VIOLATION'
   );
 }

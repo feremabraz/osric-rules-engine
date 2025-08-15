@@ -19,9 +19,19 @@ export type DomainFailureResult = {
   kind: 'domain';
   error: { code: DomainCode; message: string };
 };
-export type Result<Ok> = { ok: true; data: Ok } | EngineFailure | DomainFailureResult;
+export interface Diagnostics {
+  command?: string;
+  rules?: { name: string; durationMs: number }[];
+  entityDiff?: { created: number; mutated: number; deleted: number };
+  effects?: { emitted: number; mirrored?: number };
+  rng?: { draws: number };
+  failedRule?: string;
+}
+export type Result<Ok> =
+  | { ok: true; data: Ok; diagnostics?: Diagnostics }
+  | (EngineFailure & { diagnostics?: Diagnostics })
+  | (DomainFailureResult & { diagnostics?: Diagnostics });
 
-export const ok = <T>(data: T): Result<T> => ({ ok: true, data });
 export const engineFail = (code: EngineStructuralCode, message: string): EngineFailure => ({
   ok: false,
   kind: 'engine',
@@ -61,7 +71,7 @@ export function unwrap<T>(r: Result<T>, fallback?: T): T {
 
 // Phase 06 Item 4: Functional helpers
 export function mapResult<A, B>(r: Result<A>, fn: (a: A) => B): Result<B> {
-  if (isOk(r)) return ok(fn(r.data));
+  if (isOk(r)) return { ok: true, data: fn(r.data) } as Result<B>;
   return r as unknown as Result<B>; // failure branches carry through unchanged
 }
 export function tapResult<A>(r: Result<A>, side: (a: A) => void): Result<A> {

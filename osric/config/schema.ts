@@ -25,7 +25,9 @@ export const EngineConfigSchema = z.object({
   autoDiscover: z.boolean().default(true),
 });
 
-export type EngineConfig = z.infer<typeof EngineConfigSchema>;
+export type EngineConfig = z.infer<typeof EngineConfigSchema> & {
+  logger?: import('../types/logger').Logger | (() => import('../types/logger').Logger);
+};
 
 // Consumers pass partial which we immediately parse/expand.
 export type EngineConfigInput = Partial<EngineConfig> | undefined;

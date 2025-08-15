@@ -19,7 +19,7 @@ Use `apply(ctx: RuleCtx<Params, PrevOut>)` rather than `ctx: unknown`.
 * Treat `ctx.acc` as effectively read‑only; never mutate objects you previously placed there—produce new deltas.
 
 ## Output Schema Discipline
-Every rule MUST declare an `output` schema (even if empty) to freeze the contract and feed composite result typing.
+Every rule MUST declare an `output` schema (even if empty) to freeze the contract and feed composite result typing. The `output` schema is the *only* authoritative source of produced keys; there is no separate `produces` metadata list (removed to avoid drift). Tooling and collision checks derive keys directly from `output.shape`.
 Empty object: `z.object({})`.
 Avoid reusing the same key across rules; each key space is global within the command.
 
@@ -27,6 +27,7 @@ Avoid reusing the same key across rules; each key space is global within the com
 * Read prior rule outputs via `ctx.acc`.
 * Narrow stored entity slices to only required fields to minimize coupling.
 * If you need a fuller shape later, introduce a separate load rule.
+* Immutability: The engine deep‑freezes each rule’s contributed values when merging them. Do **not** mutate previously produced fragments. If you need a multi‑step construction buffer (e.g. character creation), place it under the key `draft` – this key is intentionally left mutable until the final persistence rule. Avoid introducing additional mutable builder keys.
 
 ## Error Emission
 * Domain issues: `return ctx.fail('CODE', 'message')` to stop execution gracefully. This returns a sentinel (currently typed as a value, not `never`).
@@ -71,7 +72,8 @@ Batch expensive lookups into one load rule if later rules all require them.
 - Each rule: unique `ruleName`, `output` schema declared.
 - `apply` typed with `RuleCtx`.
 - No `any` / broad `unknown` casts except the single narrowing at function boundary (if needed).
-- No `ok()` calls.
+// The former `ok()` helper was removed; simply return an object (or `{}`) or a domain failure via `ctx.fail()`.
+// The engine freezes contributed deltas (except `draft`) to prevent temporal coupling between rules.
 - Fail fast before mutation.
 - Effects emitted only after successful validation.
 

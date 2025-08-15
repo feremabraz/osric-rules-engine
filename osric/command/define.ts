@@ -2,8 +2,7 @@ import type { ZodTypeAny } from 'zod';
 import { Command } from './Command';
 import type { RuleSubclass } from './Rule';
 
-// Item 12: Command Definition Sugar
-// Lightweight factory to reduce boilerplate when authoring commands.
+// Factory to reduce boilerplate when authoring commands.
 
 export const emptyOutput = Object.freeze({});
 
@@ -27,7 +26,7 @@ export function defineCommand<P extends ZodTypeAny>(
   if (!params || typeof (params as unknown) !== 'object')
     throw new Error('defineCommand: params schema required');
   if (!Array.isArray(rules) || rules.length === 0)
-    throw new Error('defineCommand: at least one rule required');
+    throw new Error('COMMAND_NO_RULES: defineCommand requires at least one rule');
   class DefinedCommand extends Command<P> {}
   (DefinedCommand as unknown as { key: string }).key = key;
   (DefinedCommand as unknown as { params: P }).params = params;

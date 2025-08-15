@@ -29,6 +29,8 @@ A delta is the object fragment a single rule returns:
 - Immutable: once merged, not mutated by later rules.
 Together all deltas shallow‑merge to form the command’s final data payload.
 
+Exception: some builder pipelines (e.g. character creation) pass a mutable `draft` object across several rules to incrementally assemble a complex aggregate before persistence. The engine deep‑freezes every returned delta value except those keyed `draft`. Treat this as a deliberate escape hatch; avoid introducing additional mutable fragments.
+
 ### Why split logic into multiple rules instead of one function?
 Granularity yields: clearer responsibility boundaries; type‑safe incremental result construction; deterministic introspection (graph snapshots); easier test isolation; and the ability to reorder or extend behavior without rewriting monoliths.
 
@@ -36,7 +38,7 @@ Granularity yields: clearer responsibility boundaries; type‑safe incremental r
 Yes—most real commands do. Ordering is derived from declared dependencies plus default topological ordering.
 
 ### Can a command have zero rules?
-It can, but produces only an empty success shape. This is rarely useful outside scaffolding or placeholder keys.
+No. Commands must declare at least one rule (even if it returns an empty object) so that instrumentation, introspection, and future cross‑cutting concerns (timing, logging) have a concrete execution unit. Zero‑rule commands were removed to eliminate ambiguous “did anything run?” semantics.
 
 ### Is rule order important?
 Yes, but you do not manually number them. The engine builds a dependency graph from `after` declarations and performs a topological sort. When two rules are independent their relative order is stable but not semantically relied upon—avoid hidden coupling through shared mutation.

@@ -5,15 +5,16 @@ import { type EngineConfig, type EngineConfigInput, EngineConfigSchema } from '.
 import { character as characterEntities } from '../entities/character';
 import { item as itemEntities } from '../entities/item';
 import { monster as monsterEntities } from '../entities/monster';
-import type { DomainFailure } from '../errors/codes';
-import { createExecutionContext, topoSortRules } from '../execution/context';
+import { ExecutionCapsule } from '../execution/capsule';
+import { topoSortRules } from '../execution/context';
 import { type Rng, createRng } from '../rng/random';
 import { __setIdRandom } from '../store/ids';
 import { type StoreFacade, createStoreFacade } from '../store/storeFacade';
 import type { CommandResultShape } from '../types/commandResults';
+import { type Logger, NoopLogger } from '../types/logger';
 // Engine (Phase 5: config, entities, registry, execution skeleton & command proxy)
 import type { Result } from '../types/result';
-import { domainFailResult, engineFail } from '../types/result';
+import { engineFail } from '../types/result';
 
 export class Engine {
   private started = false;
@@ -21,12 +22,21 @@ export class Engine {
   private registry: BuiltCommandMeta[] = [];
   private readonly _store: StoreFacade = createStoreFacade();
   private rng: Rng;
+  private logger: Logger = NoopLogger;
   private eventsTrace: { command: string; startedAt: number; durationMs: number; ok: boolean }[] =
     [];
   private appliedEffects: {
     command: string;
     effects: { type: string; target: string; payload?: unknown }[];
   }[] = [];
+  // Simple transaction state (Item 9)
+  private txState: null | {
+    snapshot: ReturnType<StoreFacade['snapshot']>;
+    rngState: number;
+    idRandState: number | null; // not available directly; placeholder for future
+    startedAt: number;
+    dirty: boolean;
+  } = null;
   // Metrics (Phase 05 Item 3)
   private metrics = {
     commandsExecuted: 0,
@@ -54,10 +64,18 @@ export class Engine {
 
   constructor(configInput?: EngineConfigInput) {
     const raw = configInput ?? {};
+    const providedLogger = (raw as { logger?: Logger | (() => Logger) }).logger;
     this.config = EngineConfigSchema.parse(raw); // early parse / normalization
     // RNG adapter selection (currently only default implemented)
     // RNG adapter selection (future: implement other algorithms)
     this.rng = createRng(this.config.seed);
+    if (providedLogger) {
+      try {
+        this.logger = typeof providedLogger === 'function' ? providedLogger() : providedLogger;
+      } catch {
+        this.logger = NoopLogger;
+      }
+    }
   }
 
   async start(): Promise<void> {
@@ -152,6 +170,7 @@ export class Engine {
     const startedAt = Date.now();
     // Advance RNG once per command invocation to ensure divergence even if no rule consumes randomness
     this.rng.float();
+    // Mark transaction dirty lazily (if active) after this point to trigger snapshot only on first mutation.
     const meta = this.registry.find((c) => c.key === commandKey);
     if (!meta) throw new Error(`Unknown command '${commandKey}'`);
     // Parse params via zod schema stored on original command constructor (paramsSchema is zod)
@@ -170,149 +189,104 @@ export class Engine {
       if (this.metrics.recent.length > this.metrics.recentLimit) this.metrics.recent.shift();
       return res;
     }
-    const ctx = createExecutionContext(meta, parsed, this._store, this.rng);
-    const ordered = topoSortRules(meta.rules);
-    try {
-      for (const ruleMeta of ordered) {
-        const RuleCtor = ruleMeta.ruleCtor;
-        let out: unknown;
+    const capsule = new ExecutionCapsule(commandKey, meta, parsed, {
+      store: this._store,
+      rng: this.rng,
+      logger: this.logger,
+      commitEffects: (cmd, effects) => {
+        this.appliedEffects.push({ command: cmd, effects });
+        // Item 12: Effects Mirroring (battle context): For each battle whose participants include effect target, mirror once per (round,type,target,payload JSON) tuple.
         try {
-          const instance = new RuleCtor();
-          out = await instance.apply({
-            params: parsed,
-            store: this._store,
-            acc: ctx.acc,
-            ok: ctx.ok,
-            fail: ctx.fail,
-            rng: this.rng,
-            effects: ctx.effects,
-          });
-        } catch (e) {
-          const message = e instanceof Error ? e.message : String(e);
-          throw new Error(message);
-        }
-        if (!out) continue;
-        // Domain failure takes precedence over validation; fail object shouldn't be validated as rule output
-        if ((out as unknown as DomainFailure).__fail) {
-          const f = out as unknown as DomainFailure;
-          const res = domainFailResult(f.code, f.message) as Result<never>;
-          const dur = Date.now() - startedAt;
-          this.eventsTrace.push({ command: commandKey, startedAt, durationMs: dur, ok: false });
-          this.metrics.commandsExecuted += 1;
-          this.metrics.commandsFailed += 1;
-          this.metrics.recent.push({
-            command: commandKey,
-            ok: false,
-            durationMs: dur,
-            at: startedAt,
-          });
-          if (this.metrics.recent.length > this.metrics.recentLimit) this.metrics.recent.shift();
-          return res;
-        }
-        // Runtime validation (Phase 2): validate rule delta against its output schema if declared.
-        const ruleOutputSchema = (
-          ruleMeta.ruleCtor as unknown as {
-            output?: z.ZodObject<Record<string, z.ZodTypeAny>>;
+          if (effects.length === 0) return;
+          const battles = (
+            this._store as unknown as {
+              getBattle: (id: string) => unknown;
+              snapshot: () => {
+                battles: {
+                  id: string;
+                  round: number;
+                  order: { id: string }[];
+                  effectsLog?: { round: number; type: string; target: string; payload?: unknown }[];
+                }[];
+              };
+            }
+          ).snapshot().battles;
+          for (const battle of battles) {
+            const participantIds = new Set(battle.order.map((o) => o.id));
+            const round = battle.round;
+            const existing = battle.effectsLog ?? [];
+            const existingKey = new Set(
+              existing.map((e) => `${e.round}|${e.type}|${e.target}|${JSON.stringify(e.payload)}`)
+            );
+            const additions: { round: number; type: string; target: string; payload?: unknown }[] =
+              [];
+            for (const eff of effects) {
+              if (!participantIds.has(eff.target)) continue;
+              const key = `${round}|${eff.type}|${eff.target}|${JSON.stringify(eff.payload)}`;
+              if (
+                existingKey.has(key) ||
+                additions.find(
+                  (a) => `${a.round}|${a.type}|${a.target}|${JSON.stringify(a.payload)}` === key
+                )
+              )
+                continue;
+              additions.push({ round, type: eff.type, target: eff.target, payload: eff.payload });
+            }
+            if (additions.length) {
+              this._store.updateBattle(battle.id, { effectsLog: existing.concat(additions) });
+            }
           }
-        ).output;
-        if (ruleOutputSchema) {
-          try {
-            ruleOutputSchema.strict().parse(out);
-          } catch (e) {
-            const message = e instanceof Error ? e.message : String(e);
-            const res = engineFail(
-              'RULE_EXCEPTION',
-              `Rule output validation failed: ${message}`
-            ) as Result<never>;
-            const dur = Date.now() - startedAt;
-            this.eventsTrace.push({ command: commandKey, startedAt, durationMs: dur, ok: false });
-            this.metrics.commandsExecuted += 1;
-            this.metrics.commandsFailed += 1;
-            this.metrics.recent.push({
-              command: commandKey,
-              ok: false,
-              durationMs: dur,
-              at: startedAt,
-            });
-            if (this.metrics.recent.length > this.metrics.recentLimit) this.metrics.recent.shift();
-            return res;
-          }
+        } catch {
+          /* best-effort; swallow errors to avoid impacting command */
         }
-        for (const [k, v] of Object.entries(out as Record<string, unknown>)) {
-          ctx.acc[k] = v;
-        }
-      }
-      // Commit phase (Phase 03): apply collected effects after all rules succeed
-      try {
-        if (ctx.effects.size() > 0) {
-          // Placeholder application: simply record them; future phases may dispatch to effect handlers
-          this.appliedEffects.push({
-            command: commandKey,
-            effects: ctx.effects.all.map((e) => ({
-              type: e.type,
-              target: e.target,
-              payload: e.payload,
-            })),
-          });
-        }
-      } catch (e) {
-        const message = e instanceof Error ? e.message : String(e);
-        const res = engineFail(
-          'RULE_EXCEPTION',
-          `Effect commit failed: ${message}`
-        ) as Result<never>;
-        const dur = Date.now() - startedAt;
-        this.eventsTrace.push({ command: commandKey, startedAt, durationMs: dur, ok: false });
-        this.metrics.commandsExecuted += 1;
-        this.metrics.commandsFailed += 1;
-        this.metrics.recent.push({
-          command: commandKey,
-          ok: false,
-          durationMs: dur,
-          at: startedAt,
-        });
-        if (this.metrics.recent.length > this.metrics.recentLimit) this.metrics.recent.shift();
-        return res;
-      }
-      const res = { ok: true, data: ctx.acc } as Result<Record<string, unknown>>;
-      const durSuccess = Date.now() - startedAt;
-      this.eventsTrace.push({
-        command: commandKey,
-        startedAt,
-        durationMs: durSuccess,
-        ok: true,
-      });
-      // Metrics success record
-      this.metrics.commandsExecuted += 1;
-      this.metrics.recent.push({
-        command: commandKey,
-        ok: true,
-        durationMs: durSuccess,
-        at: startedAt,
-      });
-      if (this.metrics.recent.length > this.metrics.recentLimit) this.metrics.recent.shift();
-      return res;
-    } catch (e) {
-      const message = e instanceof Error ? e.message : String(e);
-      const res = engineFail('RULE_EXCEPTION', message) as Result<never>;
-      const durFail = Date.now() - startedAt;
-      this.eventsTrace.push({
-        command: commandKey,
-        startedAt,
-        durationMs: durFail,
-        ok: false,
-      });
-      this.metrics.commandsExecuted += 1;
-      this.metrics.commandsFailed += 1;
-      this.metrics.recent.push({
-        command: commandKey,
-        ok: false,
-        durationMs: durFail,
-        at: startedAt,
-      });
-      if (this.metrics.recent.length > this.metrics.recentLimit) this.metrics.recent.shift();
-      return res;
-    }
+      },
+    });
+    const outcome = await capsule.run();
+    const duration = Date.now() - startedAt;
+    this.eventsTrace.push({ command: commandKey, startedAt, durationMs: duration, ok: outcome.ok });
+    this.metrics.commandsExecuted += 1;
+    if (!outcome.ok) this.metrics.commandsFailed += 1;
+    this.metrics.recent.push({
+      command: commandKey,
+      ok: outcome.ok,
+      durationMs: duration,
+      at: startedAt,
+    });
+    if (this.metrics.recent.length > this.metrics.recentLimit) this.metrics.recent.shift();
+    return outcome.result as Result<Record<string, unknown>>;
+  }
+
+  // Transaction API (internal for batchAtomic; public helpers later in Item 15)
+  beginTransaction(): void {
+    if (this.txState) throw new Error('NESTED_TRANSACTION_UNSUPPORTED');
+    this.txState = {
+      snapshot: this._store.snapshot(),
+      rngState: this.rng.getState(),
+      idRandState: null, // ids.ts uses injected RNG; restoring rng state covers determinism
+      startedAt: Date.now(),
+      dirty: false,
+    };
+  }
+  commitTransaction(): void {
+    if (!this.txState) return;
+    this.txState = null;
+  }
+  rollbackTransaction(): void {
+    if (!this.txState) return;
+    const currentTx = this.txState;
+    const snap = currentTx.snapshot;
+    // Restore store (using internal replaceAll if present)
+    (this._store as StoreFacade & { __replaceAll?: (s: typeof snap) => void }).__replaceAll?.(snap);
+    // Restore RNG
+    this.rng.setState(this.txState.rngState);
+    // Discard any effects recorded since transaction start
+    // We can filter by startedAt timestamp (eventsTrace contains timing) but simpler: clear effects added after start.
+    // Since appliedEffects accumulates, find first index whose command started after tx started and splice.
+    const startIdx = this.appliedEffects.findIndex((e) =>
+      this.eventsTrace.find((ev) => ev.command === e.command && ev.startedAt >= currentTx.startedAt)
+    );
+    if (startIdx !== -1) this.appliedEffects.splice(startIdx);
+    this.txState = null;
   }
 
   private createCommandProxy() {
@@ -386,6 +360,84 @@ export class Engine {
       commandsFailed,
       recent: [...recent],
     });
+  }
+
+  // Item 15: Preview & Simulation Helpers
+  /**
+   * Run an arbitrary async function against the engine state and ALWAYS rollback afterward.
+   * Provides deterministic sandbox for speculative calculations.
+   */
+  async preview<T>(
+    fn: (engine: this) => Promise<T> | T
+  ): Promise<{ value: T } | { error: unknown }> {
+    this.beginTransaction();
+    try {
+      const value = await fn(this);
+      this.rollbackTransaction();
+      return { value };
+    } catch (e) {
+      this.rollbackTransaction();
+      return { error: e };
+    }
+  }
+
+  /**
+   * Execute a function in a transaction, committing only if it completes without throwing.
+   * Rolls back on exception and rethrows.
+   */
+  async transaction<T>(fn: (engine: this) => Promise<T> | T): Promise<T> {
+    this.beginTransaction();
+    try {
+      const value = await fn(this);
+      this.commitTransaction();
+      return value;
+    } catch (e) {
+      this.rollbackTransaction();
+      throw e;
+    }
+  }
+
+  /**
+   * Simulate a single command execution capturing its result, diagnostics, and store diff without committing changes.
+   */
+  async simulateCommand(
+    command: string,
+    params: unknown
+  ): Promise<{
+    result: Result<Record<string, unknown>>;
+    diagnostics?: unknown;
+    diff: { created: string[]; mutated: string[]; deleted: string[] };
+  }> {
+    const before = this.store.snapshot();
+    const indexBefore = new Map<string, number>();
+    for (const c of before.characters) indexBefore.set(c.id, c.updatedAt);
+    for (const m of before.monsters) indexBefore.set(m.id, m.updatedAt);
+    for (const i of before.items) indexBefore.set(i.id, i.updatedAt);
+    this.beginTransaction();
+    let result: Result<Record<string, unknown>>;
+    try {
+      result = await this.execute(command as string, params);
+    } catch (e) {
+      this.rollbackTransaction();
+      throw e;
+    }
+    // Take after snapshot prior to rollback for diff
+    const after = this.store.snapshot();
+    const indexAfter = new Map<string, number>();
+    for (const c of after.characters) indexAfter.set(c.id, c.updatedAt);
+    for (const m of after.monsters) indexAfter.set(m.id, m.updatedAt);
+    for (const i of after.items) indexAfter.set(i.id, i.updatedAt);
+    const created: string[] = [];
+    const mutated: string[] = [];
+    const deleted: string[] = [];
+    for (const [id, ts] of indexAfter) {
+      if (!indexBefore.has(id)) created.push(id);
+      else if (indexBefore.get(id) !== ts) mutated.push(id);
+    }
+    for (const id of indexBefore.keys()) if (!indexAfter.has(id)) deleted.push(id);
+    this.rollbackTransaction();
+    const diagnostics = (result as unknown as { diagnostics?: unknown }).diagnostics;
+    return { result, diagnostics, diff: { created, mutated, deleted } };
   }
 }
 
