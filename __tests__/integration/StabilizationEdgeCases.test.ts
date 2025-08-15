@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { Command, Engine, registerCommand, resetRegisteredCommands } from '../../osric';
+import type { RuleCtx } from '../../osric';
 
 // Cyclic dependency rules
 class A extends class {} {
@@ -34,11 +35,7 @@ class WeirdRule extends class {} {
   static ruleName = 'Weird';
   static output = z.object({ seen: z.number().int() });
   apply(ctx: unknown) {
-    const c = ctx as {
-      params: { nested: { value: number } };
-      ok: (d: Record<string, unknown>) => unknown;
-    };
-    c.ok({ seen: c.params.nested.value });
+    const c = ctx as RuleCtx<{ nested: { value: number } }, Record<string, never>>;
     return { seen: c.params.nested.value };
   }
 }

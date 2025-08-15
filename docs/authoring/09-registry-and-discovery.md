@@ -8,6 +8,7 @@
    - Assembles rule metadata and output schemas (every rule MUST provide a concrete `output` schema; plain `z.any()` is disallowed and enforced by tests).
    - Validates rule dependency references.
    - Merges rule output schemas (enforces unique keys).
+   - Ensures each rule's `apply` internally casts `ctx` to `RuleCtx<Params, Acc>`; public signature stays `unknown` for structural compatibility.
 
 ## Auto-Discovery & Initialization Hooks
 If `autoDiscover` is true and no commands are registered yet, `start()` dynamically imports built-in command modules. During the same startup phase a deterministic ID generator is wired to the engine RNG ensuring stable entity & battle IDs for a given seed (benefits snapshot tests). This pattern minimizes boilerplate in consumer apps while allowing explicit registration in tests.

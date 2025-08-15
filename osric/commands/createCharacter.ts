@@ -10,7 +10,8 @@ import {
   type CharacterRaceMeta,
   character,
 } from '../entities/character';
-// Manual CommandResultShape augmentation removed; result shape inferred from rule output schemas.
+import type { RuleCtx } from '../execution/context';
+import { type CharacterId, characterIdSchema } from '../store/ids';
 
 const params = z.object({
   race: z.custom<CharacterRaceMeta>(
@@ -28,36 +29,30 @@ const params = z.object({
     .optional(),
 });
 
-// Phase 01 Items 1-5 incremental scaffolding rules (more to be added later):
-class PrepareRule extends Rule<{ draft: CharacterDraft }> {
+interface PrepareOut extends Record<string, unknown> {
+  draft: CharacterDraft;
+}
+class PrepareRule extends Rule<PrepareOut> {
   static ruleName = 'Prepare';
   static output = z.object({ draft: z.any() });
-  apply(ctx: unknown) {
-    const c = ctx as {
-      params: {
-        race: CharacterRaceMeta;
-        class: CharacterClassMeta;
-        name: string;
-        abilityMethod?: AbilityScoreMethod;
-      };
-      ok: (d: Record<string, unknown>) => Record<string, unknown>;
+  apply(ctx: unknown): PrepareOut {
+    const c = ctx as RuleCtx<z.infer<typeof params>, Record<string, never>> & {
       rng: { int: (min: number, max: number) => number };
     };
-    // Start from base draft (placeholders inside)
+    // Start from base draft
     let draft = character.prepare(c.params.race, c.params.class, { name: c.params.name });
-    // Ability score generation (Item 1) – replace placeholder zeros
+    // Ability score generation
     const method: AbilityScoreMethod = c.params.abilityMethod ?? 'STANDARD_3D6';
     const scores = rollAbilityScores(method, c.rng as unknown as import('../rng/random').Rng);
-    // Apply racial adjustments (Item 2)
+    // Apply racial adjustments
     const adjusted = character.applyRacialAdjustments(scores, c.params.race);
     draft = { ...draft, ability: adjusted };
-    c.ok({ draft });
     return { draft };
   }
 }
 
-class PersistRule extends Rule<{
-  characterId: string;
+interface PersistOut extends Record<string, unknown> {
+  characterId: CharacterId;
   name: string;
   race: string;
   class: string;
@@ -66,11 +61,12 @@ class PersistRule extends Rule<{
   hpMax: number;
   xp: number;
   faction?: string;
-}> {
+}
+class PersistRule extends Rule<PersistOut> {
   static ruleName = 'Persist';
   static after = ['FinalValidation'];
   static output = z.object({
-    characterId: z.string(),
+    characterId: characterIdSchema,
     name: z.string(),
     race: z.string(),
     class: z.string(),
@@ -80,21 +76,17 @@ class PersistRule extends Rule<{
     xp: z.number().int(),
     faction: z.string().optional(),
   });
-  apply(ctx: unknown) {
-    interface LocalCtx {
+  apply(ctx: unknown): PersistOut {
+    const c = ctx as RuleCtx<z.infer<typeof params>, Record<string, unknown>> & {
       store: {
-        setEntity: (type: 'character', d: unknown) => string;
-        getEntity: (type: 'character', id: string) => Record<string, unknown> | null;
+        setEntity: (t: 'character', d: unknown) => string;
+        getEntity: (t: 'character', id: CharacterId) => Record<string, unknown> | null;
       };
-      acc: { draft: unknown };
-      ok: (d: Record<string, unknown>) => Record<string, unknown>;
-      fail: (code: 'STORE_CONSTRAINT', message: string) => Record<string, unknown>;
-    }
-    const c = ctx as LocalCtx;
-    const id = c.store.setEntity('character', c.acc.draft);
-    const stored = c.store.getEntity('character', id);
+    };
+    const id = c.store.setEntity('character', (c.acc as PrepareOut).draft);
+    const stored = c.store.getEntity('character', id as CharacterId);
     if (!stored)
-      return c.fail('STORE_CONSTRAINT', 'Character persistence failed') as unknown as undefined;
+      return c.fail('STORE_CONSTRAINT', 'Character persistence failed') as unknown as PersistOut;
     const s = stored as unknown as {
       name: string;
       race: { key: string };
@@ -106,7 +98,7 @@ class PersistRule extends Rule<{
       faction?: string;
     };
     return {
-      characterId: id,
+      characterId: id as CharacterId,
       name: s.name,
       race: s.race.key,
       class: s.class.key,
@@ -119,23 +111,17 @@ class PersistRule extends Rule<{
   }
 }
 
-// --- Additional Rules (Phase 01 Items 3-7) ---
-
 class RaceClassValidationRule extends Rule<Record<string, never>> {
   static ruleName = 'RaceClassValidation';
   static after = ['Prepare'];
   static output = z.object({});
   apply(ctx: unknown) {
-    interface LocalCtx {
-      params: { race: CharacterRaceMeta; class: CharacterClassMeta };
-      acc: { draft: CharacterDraft };
+    const c = ctx as RuleCtx<z.infer<typeof params>, PrepareOut> & {
       fail: (
         code: 'CLASS_RESTRICTION' | 'ABILITY_REQUIREMENT',
         msg: string
       ) => Record<string, unknown>;
-      ok: (d: Record<string, unknown>) => Record<string, unknown>;
-    }
-    const c = ctx as LocalCtx;
+    };
     const { race, class: klass } = c.params;
     if (race.allowedClasses && !race.allowedClasses.includes(klass.key)) {
       return c.fail(
@@ -144,7 +130,7 @@ class RaceClassValidationRule extends Rule<Record<string, never>> {
       ) as unknown as Record<string, never>;
     }
     if (klass.prerequisites && klass.prerequisites.length > 0) {
-      const ability = c.acc.draft.ability;
+      const ability = (c.acc as PrepareOut).draft.ability;
       const failures: string[] = [];
       for (const req of klass.prerequisites) {
         const val = ability[req.ability];
@@ -158,7 +144,6 @@ class RaceClassValidationRule extends Rule<Record<string, never>> {
         >;
       }
     }
-    c.ok({});
     return {} as Record<string, never>;
   }
 }
@@ -168,15 +153,11 @@ class ClassBaseDerivationRule extends Rule<Record<string, never>> {
   static after = ['RaceClassValidation'];
   static output = z.object({});
   apply(ctx: unknown) {
-    interface LocalCtx {
-      acc: { draft: CharacterDraft };
-      params: { class: CharacterClassMeta };
+    const c = ctx as RuleCtx<z.infer<typeof params>, PrepareOut> & {
       rng: { int: (min: number, max: number) => number };
-      ok: (d: Record<string, unknown>) => Record<string, unknown>;
-    }
-    const c = ctx as LocalCtx;
-    const draft = c.acc.draft;
-    // Roll HP based on hit die (Item 4) – will apply CON modifier later
+    };
+    const draft = (c.acc as PrepareOut).draft;
+    // Roll HP based on hit die – will apply CON modifier later
     const maxDie = (() => {
       switch (c.params.class.hitDie) {
         case 'd6':
@@ -188,7 +169,6 @@ class ClassBaseDerivationRule extends Rule<Record<string, never>> {
       }
     })();
     draft.hp = c.rng.int(1, maxDie);
-    c.ok({});
     return {} as Record<string, never>;
   }
 }
@@ -198,13 +178,9 @@ class SecondaryStatsRule extends Rule<Record<string, never>> {
   static after = ['ClassBaseDerivation'];
   static output = z.object({});
   apply(ctx: unknown) {
-    interface LocalCtx {
-      acc: { draft: CharacterDraft };
-      ok: (d: Record<string, unknown>) => Record<string, unknown>;
-    }
-    const c = ctx as LocalCtx;
-    const draft = c.acc.draft;
-    // Apply CON modifier to HP (Item 5 step) ensuring minimum 1
+    const c = ctx as RuleCtx<z.infer<typeof params>, PrepareOut>;
+    const draft = (c.acc as PrepareOut).draft;
+    // Apply CON modifier to HP ensuring minimum 1
     const conMod = abilityMod(draft.ability.con);
     draft.hp = Math.max(1, draft.hp + conMod);
     // Initiative base placeholder = DEX mod
@@ -212,7 +188,6 @@ class SecondaryStatsRule extends Rule<Record<string, never>> {
     // Movement already seeded from race; ensure >0 else fallback
     if (!draft.stats.movement.speedMps || draft.stats.movement.speedMps <= 0)
       draft.stats.movement.speedMps = 9;
-    c.ok({});
     return {} as Record<string, never>;
   }
 }
@@ -222,13 +197,9 @@ class EquipmentAllocationRule extends Rule<Record<string, never>> {
   static after = ['SecondaryStats'];
   static output = z.object({});
   apply(ctx: unknown) {
-    interface LocalCtx {
-      acc: { draft: CharacterDraft };
-      ok: (d: Record<string, unknown>) => Record<string, unknown>;
-    }
-    const c = ctx as LocalCtx;
-    const draft = c.acc.draft;
-    // Minimal placeholder equipment allocation (Item 6) – real item entities not yet fleshed out; use string tokens.
+    const c = ctx as RuleCtx<z.infer<typeof params>, PrepareOut>;
+    const draft = (c.acc as PrepareOut).draft;
+    // Minimal placeholder equipment allocation – real item entities not yet fleshed out (string tokens)
     const classKey = draft.class.key;
     if (classKey === 'fighter') {
       draft.inventory.push('itm_sword', 'itm_chain');
@@ -241,7 +212,6 @@ class EquipmentAllocationRule extends Rule<Record<string, never>> {
     }
     // Encumbrance weight placeholder: assume each token item 2kg (simplification for now)
     draft.encumbrance.totalWeightKg = draft.inventory.length * 2;
-    c.ok({});
     return {} as Record<string, never>;
   }
 }
@@ -251,16 +221,13 @@ class FinalValidationRule extends Rule<Record<string, never>> {
   static after = ['EquipmentAllocation'];
   static output = z.object({});
   apply(ctx: unknown) {
-    interface LocalCtx {
-      acc: { draft: CharacterDraft };
+    const c = ctx as RuleCtx<z.infer<typeof params>, PrepareOut> & {
       fail: (
         code: 'RACIAL_ADJUSTMENT_RANGE' | 'STORE_CONSTRAINT',
         msg: string
       ) => Record<string, unknown>;
-      ok: (d: Record<string, unknown>) => Record<string, unknown>;
-    }
-    const c = ctx as LocalCtx;
-    const d = c.acc.draft as CharacterDraft;
+    };
+    const d = (c.acc as PrepareOut).draft as CharacterDraft;
     // Ability range check
     const ability = d.ability;
     if (ability.str < 3 || ability.str > 18)
@@ -304,7 +271,6 @@ class FinalValidationRule extends Rule<Record<string, never>> {
         string,
         never
       >;
-    c.ok({});
     return {} as Record<string, never>;
   }
 }

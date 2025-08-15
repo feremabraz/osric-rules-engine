@@ -20,6 +20,12 @@ expect(effectStats(engine).total).toBe(1);
 ## Failure Path Assertions
 Trigger domain failures intentionally (e.g. invalid id) and assert `res.kind === 'domain'` and correct code.
 
+When asserting IDs use branded schemas instead of manual string casting:
+```ts
+import { characterIdSchema } from '@osric';
+const heroId = characterIdSchema.parse(res.value.newCharacterId);
+```
+
 ## Timing Assertions
 Use `expectAllDurationsUnder(engine, 5)` to guard against performance regressions in micro-bench scenarios.
 

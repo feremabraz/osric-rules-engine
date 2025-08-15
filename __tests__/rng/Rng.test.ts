@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { Command, Engine, registerCommand, resetRegisteredCommands } from '../../osric';
+import type { RuleCtx } from '../../osric';
 
 class RandCommand extends Command {
   static key = 'rand';
@@ -10,11 +11,9 @@ class RandCommand extends Command {
       static ruleName = 'R1';
       static output = z.object({ roll: z.number().int() });
       apply(ctx: unknown) {
-        const c = ctx as {
-          ok: (d: Record<string, unknown>) => Record<string, unknown>;
+        const c = ctx as RuleCtx<Record<string, never>, Record<string, never>> & {
           rng: { int: (a: number, b: number) => number };
         };
-        c.ok({ roll: c.rng.int(1, 6) });
         return { roll: c.rng.int(1, 6) };
       }
     },

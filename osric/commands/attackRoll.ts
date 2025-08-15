@@ -5,6 +5,7 @@ import { defineCommand } from '../command/define';
 import { registerCommand } from '../command/register';
 import { abilityMod } from '../entities/ability';
 import { item } from '../entities/item';
+import type { RuleCtx } from '../execution/context';
 import type { CharacterId, ItemId } from '../store/ids';
 import { battleIdSchema, characterIdSchema, itemIdSchema } from '../store/ids';
 
@@ -14,8 +15,9 @@ const params = z.object({
   battleId: battleIdSchema.optional(),
   weaponId: itemIdSchema.optional(), // placeholder until item entity linking
 });
+type Params = z.infer<typeof params>;
 
-interface AttackContextAccum {
+interface AttackContextAccumulator extends Record<string, unknown> {
   attacker: {
     id: CharacterId;
     str: number;
@@ -45,8 +47,8 @@ interface AttackContextAccum {
 }
 
 class ValidateEntitiesRule extends Rule<{
-  attacker: AttackContextAccum['attacker'];
-  target: AttackContextAccum['target'];
+  attacker: AttackContextAccumulator['attacker'];
+  target: AttackContextAccumulator['target'];
 }> {
   static ruleName = 'ValidateEntities';
   static output = z.object({
@@ -68,16 +70,10 @@ class ValidateEntitiesRule extends Rule<{
     }),
   });
   apply(ctx: unknown) {
-    interface LocalCtx {
-      params: {
-        attacker?: CharacterId;
-        target: CharacterId;
-        weaponId?: ItemId;
-        battleId?: import('../store/ids').BattleId;
-      };
+    const c = ctx as RuleCtx<Params, Record<string, never>> & {
       store: {
         getEntity: (
-          type: 'character',
+          t: 'character',
           id: CharacterId
         ) => {
           id: CharacterId;
@@ -105,32 +101,30 @@ class ValidateEntitiesRule extends Rule<{
         code: 'CHARACTER_NOT_FOUND' | 'TARGET_NOT_FOUND' | 'BATTLE_NOT_FOUND',
         msg: string
       ) => Record<string, unknown>;
-      ok: (d: Record<string, unknown>) => Record<string, unknown>;
-    }
-    const c = ctx as LocalCtx;
+    };
     let attackerId = c.params.attacker as CharacterId | undefined;
     if (!attackerId && c.params.battleId) {
       const battle = c.store.getBattle(c.params.battleId);
       if (!battle)
         return c.fail('BATTLE_NOT_FOUND', 'Battle not found') as unknown as {
-          attacker: AttackContextAccum['attacker'];
-          target: AttackContextAccum['target'];
+          attacker: AttackContextAccumulator['attacker'];
+          target: AttackContextAccumulator['target'];
         };
       attackerId = battle.order[battle.activeIndex].id;
     }
     const attacker = attackerId ? c.store.getEntity('character', attackerId) : null;
     if (!attacker)
       return c.fail('CHARACTER_NOT_FOUND', 'Attacker not found') as unknown as {
-        attacker: AttackContextAccum['attacker'];
-        target: AttackContextAccum['target'];
+        attacker: AttackContextAccumulator['attacker'];
+        target: AttackContextAccumulator['target'];
       };
     const target = c.store.getEntity('character', c.params.target as CharacterId);
     if (!target)
       return c.fail('TARGET_NOT_FOUND', 'Target not found') as unknown as {
-        attacker: AttackContextAccum['attacker'];
-        target: AttackContextAccum['target'];
+        attacker: AttackContextAccumulator['attacker'];
+        target: AttackContextAccumulator['target'];
       };
-    // Resolve weapon meta (simplified by equipped weapon string key -> catalog key subset)
+    // Resolve weapon meta
     let weaponMeta = item.weapons.unarmed;
     if (attacker.equipped.weapon) {
       const wKey = attacker.equipped.weapon as keyof typeof item.weapons;
@@ -155,10 +149,9 @@ class ValidateEntitiesRule extends Rule<{
         },
       },
     };
-    c.ok(data as unknown as Record<string, unknown>);
-    return data as {
-      attacker: AttackContextAccum['attacker'];
-      target: AttackContextAccum['target'];
+    return data as unknown as {
+      attacker: AttackContextAccumulator['attacker'];
+      target: AttackContextAccumulator['target'];
     };
   }
 }
@@ -190,10 +183,8 @@ class ComputeAttackRule extends Rule<{
     criticalMultiplier: z.number().int().optional(),
   });
   apply(ctx: unknown) {
-    interface LocalCtx {
-      acc: AttackContextAccum;
+    const c = ctx as RuleCtx<Params, AttackContextAccumulator> & {
       rng: { int: (min: number, max: number) => number; getState: () => number };
-      ok: (d: Record<string, unknown>) => Record<string, unknown>;
       params: { battleId?: string };
       store: {
         getBattle?: (id: string) => {
@@ -208,8 +199,7 @@ class ComputeAttackRule extends Rule<{
         } | null;
         updateBattle?: (id: string, patch: Record<string, unknown>) => unknown;
       };
-    }
-    const c = ctx as LocalCtx;
+    };
     const { attacker, target } = c.acc;
     const strMod = abilityMod(attacker.str);
     const dexMod = abilityMod(attacker.dex);
@@ -250,7 +240,6 @@ class ComputeAttackRule extends Rule<{
       fumble: fumble || undefined,
       criticalMultiplier: critical ? 2 : undefined,
     };
-    c.ok(delta);
     // Battle logging
     const battleId = c.params.battleId as import('../store/ids').BattleId | undefined;
     if (battleId && c.store.getBattle) {

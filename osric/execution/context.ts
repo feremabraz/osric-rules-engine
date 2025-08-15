@@ -1,34 +1,40 @@
 import type { BuiltCommandMeta, BuiltRuleMeta } from '../command/register';
 import { type DomainFailure, domainFail } from '../errors/codes';
 import type { Rng } from '../rng/random';
-// Phase 5/6: Execution context & helpers (with ok/fail helpers)
 import type { StoreFacade } from '../store/storeFacade';
 import { type EffectCollector, createEffectCollector } from '../types/effects';
 
-export interface ExecutionContext<Acc extends Record<string, unknown> = Record<string, unknown>> {
+export interface ExecutionContext<
+  Accumulator extends Record<string, unknown> = Record<string, unknown>,
+> {
   command: BuiltCommandMeta;
   params: unknown;
   store: StoreFacade;
-  acc: Acc;
+  acc: Accumulator;
   effects: EffectCollector;
   rng?: Rng;
   ok<T extends Record<string, unknown>>(delta?: T): T | undefined;
   fail(code: DomainFailure['code'], message: string): DomainFailure;
 }
 
+// Author-facing narrowed rule context helper. Library keeps ExecutionContext generic only on accumulator
+// for internal flexibility; command authors can import RuleCtx to strongly type params & acc.
+// It is an intersection type so there is no runtime impact.
+export type RuleCtx<P, A extends Record<string, unknown>> = ExecutionContext<A> & { params: P };
+
 export function createExecutionContext<
-  Acc extends Record<string, unknown> = Record<string, unknown>,
+  Accumulator extends Record<string, unknown> = Record<string, unknown>,
 >(
   command: BuiltCommandMeta,
   params: unknown,
   store: StoreFacade,
   rng?: Rng
-): ExecutionContext<Acc> {
+): ExecutionContext<Accumulator> {
   return {
     command,
     params,
     store,
-    acc: {} as Acc,
+    acc: {} as Accumulator,
     effects: createEffectCollector(),
     rng,
     ok: <T extends Record<string, unknown>>(delta?: T) => (delta ? delta : undefined),
@@ -36,7 +42,7 @@ export function createExecutionContext<
   };
 }
 
-// Simple DFS topological sort (no caching yet)
+// Simple DFS topological sort (no caching)
 export function topoSortRules(rules: BuiltRuleMeta[]): BuiltRuleMeta[] {
   const graph = new Map<string, BuiltRuleMeta>();
   for (const r of rules) graph.set(r.ruleName, r);

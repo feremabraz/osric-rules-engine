@@ -5,6 +5,7 @@ Use for user-correctable conditions (missing entity, invalid state for action). 
 ```ts
 return ctx.fail('NO_LEADER', 'Leader character not found');
 ```
+`ctx.fail` returns a structured domain failure result (it does NOT throw). The engine stops further rule execution for that command and no effects are committed. Prefer early `fail` over accumulating multiple domain problems; report the first decisive blocker.
 
 ## Structural Failures
 Caused by:
@@ -14,6 +15,9 @@ Caused by:
 - Store invariant violations (`STORE_CONSTRAINT`) like attempting to push HP below the allowed floor (currently -10) or invalid equip references.
 
 Avoid catching and repackaging programmer bugs as domain failures; allow them to surface as structural issues. For store updates validate early and fail fast.
+
+## Legacy Note
+Older examples used an `ok()` helper for success returns. This is deprecated—just `return { ...delta }` (or `{}` when a rule has no fields) matching the rule's `output` schema. 
 
 ## Choosing Codes
 Add new domain codes by extending the union in `errors/codes.ts` (ensure they are not part of the structural subset). Keep codes uppercase with underscores.

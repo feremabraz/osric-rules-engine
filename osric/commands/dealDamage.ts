@@ -6,6 +6,7 @@ import { defineCommand } from '../command/define';
 import { registerCommand } from '../command/register';
 import { abilityMod } from '../entities/ability';
 import { item } from '../entities/item';
+import type { RuleCtx } from '../execution/context';
 import type { CharacterId, ItemId } from '../store/ids';
 import { battleIdSchema, characterIdSchema, itemIdSchema } from '../store/ids';
 
@@ -24,8 +25,9 @@ const params = z.object({
     .partial()
     .optional(),
 });
+type Params = z.infer<typeof params>;
 
-interface DamageAcc {
+interface DamageAcc extends Record<string, unknown> {
   source: {
     id: CharacterId;
     str: number;
@@ -62,17 +64,10 @@ class ValidateEntitiesRule extends Rule<{
     target: z.object({ id: z.string(), hp: z.number().int() }),
   });
   apply(ctx: unknown) {
-    interface LocalCtx {
-      params: {
-        source: CharacterId;
-        target: CharacterId;
-        weaponId?: ItemId;
-        battleId?: import('../store/ids').BattleId;
-        attackContext?: { hit?: boolean };
-      };
+    const c = ctx as RuleCtx<Params, Record<string, never>> & {
       store: {
         getEntity: (
-          type: 'character',
+          t: 'character',
           id: CharacterId
         ) => {
           id: CharacterId;
@@ -97,9 +92,7 @@ class ValidateEntitiesRule extends Rule<{
         code: 'CHARACTER_NOT_FOUND' | 'TARGET_NOT_FOUND' | 'ATTACK_NOT_HIT',
         msg: string
       ) => Record<string, unknown>;
-      ok: (d: Record<string, unknown>) => Record<string, unknown>;
-    }
-    const c = ctx as LocalCtx;
+    };
     const source = c.store.getEntity('character', c.params.source as CharacterId);
     if (!source)
       return c.fail('CHARACTER_NOT_FOUND', 'Source not found') as unknown as {
@@ -127,8 +120,7 @@ class ValidateEntitiesRule extends Rule<{
       source: { id: source.id, str: source.ability.str, weapon: weaponMeta },
       target: { id: target.id, hp: target.hp },
     };
-    c.ok(data as unknown as Record<string, unknown>);
-    return data as { source: DamageAcc['source']; target: DamageAcc['target'] };
+    return data as unknown as { source: DamageAcc['source']; target: DamageAcc['target'] };
   }
 }
 
@@ -145,12 +137,11 @@ class ComputeDamageRule extends Rule<{
     targetStatus: z.enum(['alive', 'dead']),
   });
   apply(ctx: unknown) {
-    interface LocalCtx {
-      acc: DamageAcc & { source: DamageAcc['source']; target: DamageAcc['target'] };
+    const c = ctx as RuleCtx<Params, DamageAcc> & {
       rng: { int: (a: number, b: number) => number; getState: () => number };
       store: {
         updateEntity: (
-          type: 'character',
+          t: 'character',
           id: CharacterId,
           patch: Record<string, unknown>
         ) => { hp: number };
@@ -165,10 +156,8 @@ class ComputeDamageRule extends Rule<{
         updateBattle?: (id: string, patch: Record<string, unknown>) => unknown;
       };
       effects: { add: (type: string, target: CharacterId, payload?: unknown) => void };
-      ok: (d: Record<string, unknown>) => Record<string, unknown>;
       params: { battleId?: import('../store/ids').BattleId };
-    }
-    const c = ctx as LocalCtx;
+    };
     const { source, target } = c.acc;
     const strMod = abilityMod(source.str);
     // Support critical: double dice count (not modifiers) when attackContext.critical supplied via params
@@ -509,7 +498,6 @@ class ComputeDamageRule extends Rule<{
         c.store.updateBattle(battleId, { rollsLog });
       }
     }
-    c.ok(delta);
     return delta;
   }
 }

@@ -12,6 +12,13 @@ For new entity types (e.g. Spell):
 - Extend `StoreFacade` types & implementation with new maps and dispatch clauses.
 - Re-export through `engine.entities` in `Engine` constructor file.
 
+Branded ID pattern:
+```ts
+export const spellIdSchema = z.string().min(1).brand<'SpellId'>();
+export type SpellId = z.infer<typeof spellIdSchema>;
+```
+Always use the branded schema in params & outputs to avoid unsafe casts.
+
 Keep changes minimal and consistent; prefer small PRs per entity addition.
 
 Next: Registry & Auto-Discovery Internals (9).

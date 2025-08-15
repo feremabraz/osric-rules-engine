@@ -3,6 +3,7 @@ import { testEngine } from '../../osric/testing/testEngine';
 import '../../osric/commands/createCharacter';
 
 import { z } from 'zod';
+import type { RuleCtx } from '../../osric';
 // Simple command producing randomness via a rule
 import { Command } from '../../osric/command/Command';
 import type { CommandClass } from '../../osric/command/Command';
@@ -13,10 +14,9 @@ class RandomRule extends Rule<{ roll: number }> {
   static ruleName = 'Random';
   static output = z.object({ roll: z.number().int() });
   apply(ctx: unknown) {
-    interface LocalCtx {
+    const c = ctx as RuleCtx<Record<string, never>, Record<string, never>> & {
       rng: { int: (a: number, b: number) => number };
-    }
-    const c = ctx as LocalCtx;
+    };
     return { roll: c.rng.int(1, 6) };
   }
 }

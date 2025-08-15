@@ -83,3 +83,5 @@ export { defineCommand, emptyOutput } from './command/define';
 export { explainRuleGraph } from './command/graph';
 // Batch orchestration (Phase 06 Item 14)
 export { batch, batchAtomic } from './command/batch';
+// Authoring helper: strongly typed rule context narrowing for params + accumulator
+export type { RuleCtx } from './execution/context';

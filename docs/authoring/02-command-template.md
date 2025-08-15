@@ -4,50 +4,78 @@ We introduced `defineCommand` which replaces the need to author a bespoke subcla
 
 Old (subclass) pattern is now legacy. Prefer the factory below.
 
-## Minimal Example
+## Example
 ```ts
-import { defineCommand, emptyOutput } from '@osric';
-import { Rule, registerCommand } from '@osric';
+import { defineCommand, Rule, registerCommand, type RuleCtx, characterIdSchema, getCharacter, updateCharacter, type CharacterId } from '@osric';
 import { z } from 'zod';
-import { getCharacter, updateCharacter } from '@osric';
 
-// Params MUST use branded schemas for IDs (guard test will fail otherwise)
-const params = z.object({ characterId: z.string(), amount: z.number().int().positive() });
+const params = z.object({ characterId: characterIdSchema, amount: z.number().int().positive() });
+type Params = z.infer<typeof params>;
 
-class Validate extends Rule<{ character: Record<string, unknown> }> {
+// 1. Validate (no accumulator output)
+class Validate extends Rule<Record<string, never>> {
   static ruleName = 'Validate';
-  static output = z.object({ character: z.record(z.unknown()) });
-  apply(ctx: any) {
-    const ch = getCharacter(ctx.store, ctx.params.characterId as any);
-    if (!ch) return ctx.fail('CHARACTER_NOT_FOUND', 'Missing');
-    return { character: ch };
+  static output = z.object({}); // empty
+  apply(ctx: unknown) {
+    const c = ctx as RuleCtx<Params, Record<string, never>>;
+    // (Optional extra param checks could go here)
+    // We succeed with empty delta
+    return {};
   }
 }
 
-class Apply extends Rule<{ newXp: number }> {
-  static ruleName = 'Apply';
+// 2. Load (depends on Validate)
+interface CharacterForGrant { id: CharacterId; xp: number }
+interface LoadOut extends Record<string, unknown> { character: CharacterForGrant }
+class Load extends Rule<LoadOut> {
+  static ruleName = 'Load';
   static after = ['Validate'];
-  static output = z.object({ newXp: z.number().int() });
-  apply(ctx: any) {
-    const updated = updateCharacter(ctx.store, ctx.acc.character.id, {
-      xp: (ctx.acc.character as any).xp + ctx.params.amount,
-    });
-    return { newXp: (updated as any).xp };
+  static output = z.object({
+    character: z.object({ id: characterIdSchema, xp: z.number().int() }),
+  });
+  apply(ctx: unknown): LoadOut {
+    const c = ctx as RuleCtx<Params, Record<string, never>>;
+    const ch = getCharacter(c.store, c.params.characterId);
+    if (!ch) return c.fail('CHARACTER_NOT_FOUND', 'Character not found') as unknown as LoadOut;
+    return { character: { id: ch.id, xp: ch.xp } };
   }
 }
 
+// 3. Grant XP (depends on Load)
+class Grant extends Rule<{ newXp: number }> {
+  static ruleName = 'Grant';
+  static after = ['Load'];
+  static output = z.object({ newXp: z.number().int() });
+  apply(ctx: unknown) {
+    const c = ctx as RuleCtx<Params, LoadOut>;
+    const updated = updateCharacter(c.store, c.acc.character.id, {
+      xp: c.acc.character.xp + c.params.amount,
+    });
+    return { newXp: updated.xp };
+  }
+}
+
+// 4. Assemble command
 export const GrantXpCommand = defineCommand({
   key: 'grantXp',
   params,
-  rules: [Validate, Apply],
+  rules: [Validate, Load, Grant],
 });
-registerCommand(GrantXpCommand as any);
+registerCommand(GrantXpCommand as unknown as typeof GrantXpCommand);
 ```
 
 ## Empty Output Rules
-If a rule contributes no accumulator keys, return `{}` and use `static output = z.object({})` or reuse `emptyOutput` object when building ad‑hoc meta.
+If a rule contributes no accumulator keys, return `{}` and use `static output = z.object({})`. (The old pattern of calling `ctx.ok({})` is deprecated; just return the object.)
 
 ## When To Still Use a Subclass
-Only if you need custom constructor logic (rare).
+Only if you need a custom constructor or dynamic rule assembly (rare). The `defineCommand` factory + co‑located `Rule` classes should cover almost all cases.
+
+## Key Conventions Recap
+1. Always use branded ID schemas (`characterIdSchema`, `battleIdSchema`, etc.) in params.
+2. Keep `apply(ctx: unknown)` for structural compatibility; inside cast to `RuleCtx<Params, Acc>`.
+3. Return plain objects; engine merges them (no `ok()` helper needed).
+4. Each rule declares a precise `output` schema; use `z.object({})` for empty.
+5. Use domain `ctx.fail(code, message)` for business failures; throw for programmer bugs.
+6. Emit effects only in terminal rules after validation passes.
 
 Next: Rule Design Guidelines (3).

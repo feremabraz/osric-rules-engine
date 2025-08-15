@@ -5,46 +5,43 @@ import { Rule } from '../command/Rule';
 import { defineCommand } from '../command/define';
 import { registerCommand } from '../command/register';
 import type { Character } from '../entities/character';
+import type { RuleCtx } from '../execution/context';
 import { getCharacter, requireCharacter } from '../store/entityHelpers';
-import type { CharacterId } from '../store/ids';
+import type { BattleId, CharacterId } from '../store/ids';
 import { createBattleId } from '../store/ids';
 import { battleIdSchema, characterIdSchema } from '../store/ids';
 import type { BattleState } from '../store/storeFacade';
-import { ROUND_SECONDS } from '../types/temporal';
 
 const params = z.object({
   participants: z.array(characterIdSchema).min(1),
   recordRolls: z.boolean().optional(),
 });
+type Params = z.infer<typeof params>;
 
 class ValidateParticipantsRule extends Rule<{ participants: CharacterId[] }> {
   static ruleName = 'ValidateParticipants';
   static output = z.object({ participants: z.array(z.string()) });
   apply(ctx: unknown): { participants: CharacterId[] } {
-    interface Ctx {
-      params: { participants: CharacterId[] };
+    const c = ctx as RuleCtx<Params, Record<string, never>> & {
       store: { getEntity: (t: 'character', id: CharacterId) => { hp: number } | null };
       fail: (code: string, msg: string) => unknown;
-      ok: (d: Record<string, unknown>) => unknown;
-    }
-    const { params, store, fail, ok } = ctx as Ctx;
+    };
     const list: CharacterId[] = [];
-    for (const pid of params.participants as CharacterId[]) {
+    for (const pid of c.params.participants as CharacterId[]) {
       const ch = getCharacter(
-        store as unknown as import('../store/storeFacade').StoreFacade,
+        c.store as unknown as import('../store/storeFacade').StoreFacade,
         pid as CharacterId
       );
       if (!ch)
-        return fail('CHARACTER_NOT_FOUND', `Participant ${pid} missing`) as unknown as {
+        return c.fail('CHARACTER_NOT_FOUND', `Participant ${pid} missing`) as unknown as {
           participants: CharacterId[];
         };
-      if (ch.hp <= 0)
-        return fail('RULE_EXCEPTION', `Participant ${pid} not alive`) as unknown as {
+      if ((ch as unknown as { hp: number }).hp <= 0)
+        return c.fail('RULE_EXCEPTION', `Participant ${pid} not alive`) as unknown as {
           participants: CharacterId[];
         };
       list.push(pid as CharacterId);
     }
-    ok({ participants: list });
     return { participants: list };
   }
 }
@@ -66,11 +63,10 @@ class RollInitiativeRule extends Rule<{
     initiativeEffects: z.array(z.object({ id: z.string(), rolled: z.number().int() })).optional(),
   });
   apply(ctx: unknown) {
-    interface Ctx {
-      acc: {
-        participants: CharacterId[];
-        rollsLog?: { type: 'init'; value: number; state: number }[];
-      };
+    const { acc, rng, store, params } = ctx as RuleCtx<
+      Params,
+      { participants: CharacterId[]; rollsLog?: { type: 'init'; value: number; state: number }[] }
+    > & {
       rng: { int: (a: number, b: number) => number; getState: () => number };
       store: {
         getEntity: (
@@ -81,10 +77,7 @@ class RollInitiativeRule extends Rule<{
           stats: { initiative: { base: number } };
         } | null;
       };
-      ok: (d: Record<string, unknown>) => unknown;
-      params: { recordRolls?: boolean };
-    }
-    const { acc, rng, store, ok, params } = ctx as Ctx;
+    };
     const initiativeOrder: { id: CharacterId; rolled: number }[] = [];
     for (const id of acc.participants as CharacterId[]) {
       const ch = getCharacter(store as unknown as import('../store/storeFacade').StoreFacade, id);
@@ -103,7 +96,6 @@ class RollInitiativeRule extends Rule<{
       rollsLog?: { type: 'init'; value: number; state: number }[];
       initiativeEffects?: { id: CharacterId; rolled: number }[];
     } = { initiativeOrder, rollsLog: acc.rollsLog, initiativeEffects: initiativeOrder };
-    ok(delta as unknown as Record<string, unknown>);
     return delta;
   }
 }
@@ -113,7 +105,7 @@ class PersistBattleRule extends Rule<{ battle: BattleState }> {
   static after = ['RollInitiative'];
   static output = z.object({
     battle: z.object({
-      id: z.string(),
+      id: battleIdSchema,
       round: z.number().int(),
       timeSeconds: z.number().int(),
       order: z.array(z.object({ id: characterIdSchema, rolled: z.number().int() })),
@@ -137,17 +129,14 @@ class PersistBattleRule extends Rule<{ battle: BattleState }> {
     }),
   });
   apply(ctx: unknown) {
-    interface Ctx {
-      acc: {
+    const { acc, store, params } = ctx as RuleCtx<
+      Params,
+      {
         initiativeOrder: { id: CharacterId; rolled: number }[];
         rollsLog?: { type: 'init'; value: number; state: number }[];
         initiativeEffects?: { id: CharacterId; rolled: number }[];
-      };
-      store: { setBattle: (b: BattleState) => string };
-      params: { recordRolls?: boolean };
-      ok: (d: Record<string, unknown>) => unknown;
-    }
-    const { acc, store, params, ok } = ctx as Ctx;
+      }
+    > & { store: { setBattle: (b: BattleState) => string } };
     const id = createBattleId();
     const battle: BattleState = {
       id,
@@ -165,13 +154,12 @@ class PersistBattleRule extends Rule<{ battle: BattleState }> {
       })),
     };
     store.setBattle(battle);
-    ok({ battle });
     return { battle };
   }
 }
 
 class ResultShapeRule extends Rule<{
-  battleId: string;
+  battleId: BattleId;
   order: { id: CharacterId; rolled: number }[];
 }> {
   static ruleName = 'ResultShape';
@@ -181,14 +169,8 @@ class ResultShapeRule extends Rule<{
     order: z.array(z.object({ id: z.string(), rolled: z.number().int() })),
   });
   apply(ctx: unknown) {
-    interface Ctx {
-      acc: { battle: BattleState };
-      ok: (d: Record<string, unknown>) => unknown;
-    }
-    const { acc, ok } = ctx as Ctx;
-    const res = { battleId: acc.battle.id, order: acc.battle.order };
-    ok(res as unknown as Record<string, unknown>);
-    return res;
+    const c = ctx as RuleCtx<Params, { battle: BattleState }>;
+    return { battleId: c.acc.battle.id as BattleId, order: c.acc.battle.order };
   }
 }
 

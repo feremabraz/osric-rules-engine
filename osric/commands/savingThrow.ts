@@ -8,6 +8,7 @@ import type { Command } from '../command/Command';
 import { Rule } from '../command/Rule';
 import { defineCommand } from '../command/define';
 import { registerCommand } from '../command/register';
+import type { RuleCtx } from '../execution/context';
 import { getCharacter } from '../store/entityHelpers';
 import type { CharacterId } from '../store/ids';
 import { characterIdSchema } from '../store/ids';
@@ -17,13 +18,18 @@ const params = z.object({
   type: z.enum(['death', 'wands', 'petrification', 'breath', 'spells']),
   modifiers: z.array(z.number()).optional(),
 });
+type Params = z.infer<typeof params>;
 
-class ExecuteSavingThrowRule extends Rule<{ result: SavingThrowResult }> {
+interface ExecuteOut extends Record<string, unknown> {
+  result: SavingThrowResult;
+}
+
+class ExecuteSavingThrowRule extends Rule<ExecuteOut> {
   static ruleName = 'Execute';
   static output = z.object({
     result: z.object({
       type: z.string(),
-      characterId: z.string(),
+      characterId: characterIdSchema,
       roll: z.number(),
       abilityMod: z.number(),
       modifiersTotal: z.number(),
@@ -32,36 +38,21 @@ class ExecuteSavingThrowRule extends Rule<{ result: SavingThrowResult }> {
       success: z.boolean(),
     }),
   });
-  apply(ctx: unknown) {
-    interface Ctx {
-      params: { characterId: CharacterId; type: SavingThrowType; modifiers?: number[] };
-      engine?: unknown;
-      store: { getEntity: (t: 'character', id: CharacterId) => unknown };
-      ok: (d: Record<string, unknown>) => unknown;
-      fail: (c: 'CHARACTER_NOT_FOUND', m: string) => unknown;
-    }
-    const { params, ok, store, fail } = ctx as Ctx;
-    const ch = getCharacter(
-      store as unknown as import('../store/storeFacade').StoreFacade,
-      params.characterId
-    );
+  apply(ctx: unknown): ExecuteOut {
+    const typed = ctx as RuleCtx<Params, Record<string, never>>;
+    const ch = getCharacter(typed.store, typed.params.characterId as CharacterId);
     if (!ch)
-      return fail('CHARACTER_NOT_FOUND', 'Character not found') as unknown as {
-        result: SavingThrowResult;
-      };
-    // Access engine via closure not present; rely on performSavingThrow needing Engine, adapt by building minimal wrapper using global RNG? Instead cast ctx as has rng.
-    const engineLike = ctx as unknown as {
-      rng: { int: (a: number, b: number) => number };
-      store: typeof store;
-    };
-    const engineObj = engineLike as unknown as import('../engine/Engine').Engine; // unsafe cast for internal utility
+      return typed.fail('CHARACTER_NOT_FOUND', 'Character not found') as unknown as ExecuteOut;
+    // We only need rng + store – synthesize a minimal Engine-like shape for performSavingThrow contract.
+    const engineLike = { store: { ...typed.store }, rng: typed.rng } as unknown as import(
+      '../engine/Engine'
+    ).Engine;
     const result = performSavingThrow(
-      engineObj,
-      params.characterId as CharacterId,
-      params.type,
-      params.modifiers ?? []
+      engineLike,
+      typed.params.characterId as CharacterId,
+      typed.params.type as SavingThrowType,
+      typed.params.modifiers ?? []
     );
-    ok({ result } as unknown as Record<string, unknown>);
     return { result };
   }
 }

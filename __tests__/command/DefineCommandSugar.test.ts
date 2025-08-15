@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
+import type { RuleCtx } from '../../osric';
 import { Command } from '../../osric/command/Command';
 import { Rule } from '../../osric/command/Rule';
 import { defineCommand, emptyOutput } from '../../osric/command/define';
@@ -14,10 +15,8 @@ class ManualEchoCommand extends Command {
       static ruleName = 'Echo';
       static output = z.object({ echoed: z.number().int() });
       apply(ctx: unknown) {
-        const c = ctx as { params: { value: number }; ok: (d: Record<string, unknown>) => unknown };
-        const out = { echoed: c.params.value };
-        c.ok(out as unknown as Record<string, unknown>);
-        return out;
+        const c = ctx as RuleCtx<{ value: number }, Record<string, never>>;
+        return { echoed: c.params.value };
       }
     },
   ];
@@ -27,10 +26,8 @@ const SugarEchoRule = class extends Rule<{ echoed: number }> {
   static ruleName = 'Echo';
   static output = z.object({ echoed: z.number().int() });
   apply(ctx: unknown) {
-    const c = ctx as { params: { value: number }; ok: (d: Record<string, unknown>) => unknown };
-    const out = { echoed: c.params.value };
-    c.ok(out as unknown as Record<string, unknown>);
-    return out;
+    const c = ctx as RuleCtx<{ value: number }, Record<string, never>>;
+    return { echoed: c.params.value };
   }
 };
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
+import type { RuleCtx } from '../../osric';
 import { Command } from '../../osric/command/Command';
 import { Rule } from '../../osric/command/Rule';
 import { registerCommand, resetRegisteredCommands } from '../../osric/command/register';
@@ -59,7 +60,9 @@ describe('Effects commit phase', () => {
       static after = ['FailFirst'];
       static output = z.object({ y: z.number() });
       apply(ctx: unknown) {
-        const c = ctx as { effects: { add: (t: string, target: string, p?: unknown) => void } };
+        const c = ctx as RuleCtx<Record<string, never>, Record<string, never>> & {
+          effects: { add: (t: string, target: string, p?: unknown) => void };
+        };
         c.effects.add('test', 't1', { v: 1 });
         return { y: 1 };
       }

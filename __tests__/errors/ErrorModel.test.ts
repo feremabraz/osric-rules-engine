@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { Command, Engine, registerCommand, resetRegisteredCommands } from '../../osric';
+import type { RuleCtx } from '../../osric';
 
 describe('Error model & domain failures', () => {
   it('domain failure short-circuits with specific domain code and prevents later rules', async () => {
@@ -12,10 +13,7 @@ describe('Error model & domain failures', () => {
         class StartRule extends class {} {
           static ruleName = 'Start';
           static output = z.object({ begun: z.boolean().optional() });
-          apply(ctx: unknown) {
-            (ctx as { ok: (d: Record<string, unknown>) => Record<string, unknown> }).ok({
-              begun: true,
-            });
+          apply(_ctx: unknown) {
             return { begun: true };
           }
         },
@@ -33,10 +31,7 @@ describe('Error model & domain failures', () => {
           static ruleName = 'Never';
           static after = ['Fail'];
           static output = z.object({ shouldNot: z.boolean().optional() });
-          apply(ctx: unknown) {
-            (ctx as { ok: (d: Record<string, unknown>) => Record<string, unknown> }).ok({
-              shouldNot: true,
-            });
+          apply(_ctx: unknown) {
             return { shouldNot: true };
           }
         },

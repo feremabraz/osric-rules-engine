@@ -6,11 +6,13 @@ import { Rule } from '../command/Rule';
 import { defineCommand } from '../command/define';
 import { registerCommand } from '../command/register';
 import type { Character } from '../entities/character';
+import type { RuleCtx } from '../execution/context';
 import { battleIdSchema } from '../store/ids';
 import type { BattleState } from '../store/storeFacade';
 import { ROUND_SECONDS } from '../types/temporal';
 
 const params = z.object({ battleId: battleIdSchema, rerollAtNewRound: z.boolean().optional() });
+type Params = z.infer<typeof params>;
 
 class LoadBattleRule extends Rule<{ battle: BattleState }> {
   static ruleName = 'LoadBattle';
@@ -44,19 +46,15 @@ class LoadBattleRule extends Rule<{ battle: BattleState }> {
     }),
   });
   apply(ctx: unknown) {
-    interface Ctx {
-      params: { battleId: import('../store/ids').BattleId };
+    const c = ctx as RuleCtx<Params, Record<string, never>> & {
       store: { getBattle: (id: string) => BattleState | null };
       fail: (c: 'BATTLE_NOT_FOUND', m: string) => unknown;
-      ok: (d: Record<string, unknown>) => unknown;
-    }
-    const { params, store, fail, ok } = ctx as Ctx;
-    const battle = store.getBattle(params.battleId);
+    };
+    const battle = c.store.getBattle(c.params.battleId);
     if (!battle)
-      return fail('BATTLE_NOT_FOUND', `Battle ${params.battleId} not found`) as unknown as {
+      return c.fail('BATTLE_NOT_FOUND', `Battle ${c.params.battleId} not found`) as unknown as {
         battle: BattleState;
       };
-    ok({ battle } as unknown as Record<string, unknown>);
     return { battle };
   }
 }
@@ -70,23 +68,14 @@ class AdvanceRule extends Rule<{ activeCombatant: string; round: number; timeSec
     timeSeconds: z.number().int(),
   });
   apply(ctx: unknown) {
-    interface Ctx {
-      params: { rerollAtNewRound?: boolean };
-      acc: { battle: BattleState };
+    const { acc, params, store, rng, effects } = ctx as RuleCtx<Params, { battle: BattleState }> & {
       store: {
         updateBattle: (id: string, patch: Partial<BattleState>) => BattleState;
         getEntity: (t: 'character', id: string) => Character | null;
       };
-      rng: {
-        int: (a: number, b: number) => number;
-        getState: () => number;
-        float?: () => number;
-        clone?: () => unknown;
-        setState?: (n: number) => void;
-      };
-      effects: { add: (type: string, target: string, payload?: unknown) => void };
-    }
-    const { acc, params, store, rng, effects } = ctx as Ctx;
+      rng: { int: (a: number, b: number) => number; getState: () => number; float?: () => number };
+      effects: { add: (t: string, target: string, payload?: unknown) => void };
+    };
     let battle = acc.battle;
     let nextIndex = battle.activeIndex + 1;
     let round = battle.round;

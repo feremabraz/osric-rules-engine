@@ -9,6 +9,7 @@ import {
   registerCommand,
   resetRegisteredCommands,
 } from '../../osric';
+import type { RuleCtx } from '../../osric';
 
 class R1 extends class {} {
   static ruleName = 'Validate';
@@ -22,7 +23,7 @@ class R2 extends class {} {
   static after = ['Validate'];
   static output = z.object({ total: z.number().int() });
   apply(ctx: unknown) {
-    const c = ctx as { acc: Record<string, unknown> };
+    const c = ctx as RuleCtx<{ a: number }, { valid: boolean }> & { acc: { valid: boolean } };
     return { total: c.acc.valid ? 1 : 0 };
   }
 }

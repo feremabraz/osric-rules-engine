@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { Command, registerCommand, resetRegisteredCommands, testEngine } from '../../osric';
+import type { RuleCtx } from '../../osric';
 
 class EchoCommand extends Command {
   static key = 'echo';
@@ -10,11 +11,7 @@ class EchoCommand extends Command {
       static ruleName = 'Emit';
       static output = z.object({ echoed: z.string() });
       apply(ctx: unknown) {
-        const c = ctx as {
-          params: { msg: string };
-          ok: (d: Record<string, unknown>) => Record<string, unknown>;
-        };
-        c.ok({ echoed: c.params.msg });
+        const c = ctx as RuleCtx<{ msg: string }, Record<string, never>>;
         return { echoed: c.params.msg };
       }
     },

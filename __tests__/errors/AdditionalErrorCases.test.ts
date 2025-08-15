@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { Command, Engine, registerCommand, resetRegisteredCommands } from '../../osric';
+import type { RuleCtx } from '../../osric';
+import { type CharacterId, characterIdSchema } from '../../osric/store/ids';
 
 // Command to trigger CHARACTER_NOT_FOUND via gainExperience
 // We import existing command definitions by referencing engine.command after start.
@@ -8,7 +10,7 @@ import { Command, Engine, registerCommand, resetRegisteredCommands } from '../..
 // Custom command to force STORE_CONSTRAINT: attempt negative hp update rule
 class NegativeHpCommand extends Command {
   static key = 'negHp';
-  static params = z.object({ characterId: z.string() });
+  static params = z.object({ characterId: characterIdSchema });
   static rules = [
     class Validate extends class {} {
       static ruleName = 'Validate';
@@ -23,12 +25,14 @@ class NegativeHpCommand extends Command {
       static after = ['Validate'];
       static output = z.object({});
       apply(ctx: unknown) {
-        const c = ctx as {
+        const c = ctx as RuleCtx<{ characterId: CharacterId }, Record<string, never>> & {
           store: {
-            updateEntity: (t: 'character', id: string, patch: Record<string, unknown>) => unknown;
+            updateEntity: (
+              t: 'character',
+              id: CharacterId,
+              patch: Record<string, unknown>
+            ) => unknown;
           };
-          params: { characterId: string };
-          fail: (code: 'STORE_CONSTRAINT', m: string) => unknown;
         };
         try {
           c.store.updateEntity('character', c.params.characterId, { hp: -20 });
@@ -66,7 +70,7 @@ describe('Errors: Additional cases', () => {
     const engine = new Engine();
     await engine.start();
     const res = await engine.execute('gainExperience', {
-      characterId: 'does-not-exist',
+      characterId: 'char_doesntex' as CharacterId,
       amount: 10,
     });
     expect(res.ok).toBe(false);
