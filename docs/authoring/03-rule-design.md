@@ -33,7 +33,7 @@ Avoid reusing the same key across rules; each key space is global within the com
 * Developer errors (unexpected states) should throw; surfaces as structural `RULE_EXCEPTION`.
 * Avoid mixing partial mutations with failures; validate first, mutate later rules.
 
-`ok()` is legacy; just `return { ...delta }`. Returning `{}` for empty output is fine (must match schema).
+Return objects directly. `{}` is valid for empty output (must match schema).
 
 ## Effects
 Emit effects only after validation & calculation steps succeed (ideally terminal or near‑terminal rules).

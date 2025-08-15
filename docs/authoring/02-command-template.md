@@ -1,8 +1,6 @@
 # 2. Command File Template
 
-We introduced `defineCommand` which replaces the need to author a bespoke subclass for the majority of commands. You still co‑locate your `Rule` classes; the factory wires the static metadata.
-
-Old (subclass) pattern is now legacy. Prefer the factory below.
+We use `defineCommand` to eliminate bespoke subclasses for most commands. You still co‑locate your `Rule` classes; the factory wires the static metadata.
 
 ## Example
 ```ts
@@ -65,10 +63,10 @@ registerCommand(GrantXpCommand as unknown as typeof GrantXpCommand);
 ```
 
 ## Empty Output Rules
-If a rule contributes no accumulator keys, return `{}` and use `static output = z.object({})`. (The old pattern of calling `ctx.ok({})` is deprecated; just return the object.)
+If a rule contributes no accumulator keys, return `{}` and use `static output = z.object({})`.
 
 ## When To Still Use a Subclass
-Only if you need a custom constructor or dynamic rule assembly (rare). The `defineCommand` factory + co‑located `Rule` classes should cover almost all cases.
+Only if you need a custom constructor or dynamic rule assembly (rare). The `defineCommand` factory + co‑located `Rule` classes cover almost all cases.
 
 ## Key Conventions Recap
 1. Always use branded ID schemas (`characterIdSchema`, `battleIdSchema`, etc.) in params.

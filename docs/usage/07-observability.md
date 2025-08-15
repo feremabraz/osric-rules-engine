@@ -10,8 +10,20 @@ for (const ev of engine.events.trace) {
 
 ## Effects Log
 `engine.events.effects` contains lists of effects committed by each successful command.
+Helpers:
+```ts
+import { getEffects, effectStats } from '@osric';
+console.log(effectStats(engine));
+```
 
 ## Custom Instrumentation
 Wrap command calls to add logging, or inspect the registry via `engine.getRegistry()` for metadata-driven dashboards.
+
+### Rule Graph Introspection
+```ts
+import { explainRuleGraph } from '@osric';
+const graph = explainRuleGraph(engine, 'gainExperience');
+console.log(graph.rules.map(r => r.ruleName));
+```
 
 Next: Advanced Patterns (8).

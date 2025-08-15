@@ -139,7 +139,22 @@ export const MoveCommand = defineCommand({
 registerCommand(MoveCommand as any);
 ```
 ### 7.2 Rules
-`Rule` classes still declare `static ruleName` (or `name` legacy), optional `static after`, and mandatory `static output` schemas. Empty outputs use `z.object({})` (conceptually the same shape as the shared `emptyOutput`).
+`Rule` classes declare `static ruleName`, optional `static after`, and mandatory `static output` schemas. Empty outputs use `z.object({})`.
+
+#### 7.2.1 Typed Rule Context (`RuleCtx`)
+Runtime passes a strongly typed context object into every rule `apply` method. The exported generic alias:
+```ts
+export type RuleCtx<P, A> = {
+  params: P;          // validated command params
+  acc: A;             // accumulated outputs from prior rules
+  store: StoreFacade; // entity/world access helpers
+  rng: RngFacade;     // deterministic RNG (seed advanced per command)
+  effects: EffectsBuffer; // buffered until commit
+  fail: (code: string, message?: string) => never; // short-circuit helper
+  logger: Logger;
+};
+```
+Rules type themselves as `class SomeRule extends Rule<MyParams, PrevAcc, ThisOutput>`; inside `apply(ctx: RuleCtx<MyParams, PrevAcc>)` TypeScript infers `ctx.acc` and `ctx.params` without casts. Using `ctx.fail` aborts execution and prevents effect commit.
 ### 7.3 Co‑located File Pattern (Updated Example)
 ```ts
 import { defineCommand, Rule, registerCommand, getCharacter } from '@osric';
@@ -207,8 +222,8 @@ Positional mapping applies (leading entity IDs inferred from schema field order 
 2. Parse & validate params (zod) → typed `params`.
 3. Build `ExecutionContext` including RNG (seed progressed), snapshot reference.
 4. Topologically sort rules (cache). Execute sequentially:
-   * Each rule returns `ok(data?)` / `fail(code,message)`.
-   * Accumulator merges rule `data` (keys cannot clash unless identical types; conflict triggers validation error at startup).
+  * Each rule's `apply` returns its output object; to signal a domain failure a rule calls `ctx.fail(code, message)` which short-circuits execution.
+  * Accumulator merges rule output objects (keys cannot clash unless identical types; conflict triggers validation error at startup).
 5. Aggregate final result and apply collected world mutations & effects in a *single commit phase*.
 6. Emit events: `command:start`, per rule events, `command:complete`.
 7. (If invoked via `batchAtomic`) earlier mutations may be rolled back (entity creations removed, updates shallowly reverted) upon first failure.
@@ -235,6 +250,7 @@ Positional mapping applies (leading entity IDs inferred from schema field order 
 | Derived result mapper | Command result data type auto-built from rule payloads |
 | Static rule dependency list | Compile-time (with const assertions) + runtime validation |
 | Central registry generics | `CommandRegistry<Key extends string>` ensures consistent key usage |
+| `RuleCtx<P,A>` generic | Precise typing of per-rule execution context (params + accumulator + helpers) |
 
 ---
 ## 12. Plugins (Intentionally Omitted)
@@ -297,7 +313,7 @@ Runtime registration APIs for new races/classes are out-of-scope. Initial librar
 
 ---
 ## 18. Migration / Versioning Principles
-(Legacy prepare APIs, weather feature, optional rule outputs removed in current baseline.)
+Removed prepare APIs, weather feature, and optional rule outputs from the baseline.
 
 ---
 ## 19. Alternative Options Considered (Skipped Here)
@@ -321,6 +337,75 @@ Runtime registration APIs for new races/classes are out-of-scope. Initial librar
 ---
 ## 21. Summary
 This redesign centers the *user ergonomics you outlined*: direct Engine construction, intuitive entity creation, single shared store, effortless command invocation, and co-located command + rule authoring. It preserves robust safeguards (typed params, rule dependency validation, discriminated results, early startup failures) without imposing heavy ceremony. The architecture deliberately omits plugins and early micro‑optimizations to keep the mental model lean.
+
+## 22. Additional Design Clarifications
+These concise subsections capture behavior implemented across code + docs for quick reference.
+
+### 22.1 Batching & Atomic Execution
+`batch(steps)` executes a list (functions or `{ run, optional }` objects) in order; failures of non‑optional steps stop further execution but keep prior committed command effects. `batchAtomic(steps)` defers commit bookkeeping and attempts to rollback entity creations, updates, and effect buffer if any non‑optional step fails; optional steps may fail without aborting. External side‑effects (user code outside engine) are not rolled back.
+
+### 22.2 Effects Buffer & Commit Semantics
+Rules add effects via `ctx.effects.add(type, targetId, payload)`. Buffer flushes only if the command succeeds (or if inside a batch: the individual command succeeds and, for atomic batches, the batch has not aborted). On failure all buffered effects for the failing command are discarded.
+
+### 22.3 Deterministic RNG & Advancement Model
+Each command invocation advances the master seed stream. Within a command, rule RNG calls are deterministic relative to prior commands. Extra RNG calls inserted earlier in the rule order change subsequent numbers; snapshot tests should pin both seed and command ordering. `withTempSeed(seed, fn)` executes a deterministic sub‑sequence without affecting the outer progression until completion.
+
+### 22.4 ID Utilities & Parsing Layer
+Branded ID schemas (e.g. `characterIdSchema`) enforce shape at parse time. Helpers:
+- `parseCharacterId(str)` throws on invalid.
+- `tryParseCharacterId(str)` returns `{ ok, value? }`.
+- `ensureCharacterId(str | CharacterId)` normalizes unknown inputs.
+- `idKind(id)` returns discriminant (`'char' | 'battle' | ...`).
+All command param schemas must use the branded schemas—plain `z.string()` is rejected for ID fields during review.
+
+### 22.5 Functional Result Helpers
+Utilities (`isOk`, `isFail`, `mapResult`, `chain`, `tapResult`, `assertOk`) allow ergonomic composition of command results without manual discriminant checks. They operate on the discriminated union returned by the engine façade.
+
+### 22.6 Positional Parameter Mapping Caveat
+Positional shorthand works only when the leading parameters are entity IDs whose field names can be inferred (`attacker`, `target`, etc.). Prefer object form when passing many params or when readability would suffer; mixing positionals and object shapes in the same call is unsupported.
+
+### 22.7 Accumulator Merge & Key Collision Rules
+Rule outputs are shallow‑merged into `ctx.acc` in execution order. A startup validation pass precomputes all keys; duplicate keys with incompatible schemas cause an engine start error. Identical schema duplicates are allowed but discouraged—prefer a single producing rule.
+
+### 22.8 Introspection & Tooling
+`explainRuleGraph(commandKey)` returns ordered rules, dependencies, and output keys for snapshot testing and visualization. Registry dumps (command list + param/output keys) are stable across runs given the same module set.
+
+### 22.9 Effects Log & Battle Flow Trace
+Committed effects emit into an effects log (`engine.events.effects` or helper accessors) enabling reconstruction of combat timelines. Typical fields: `timestamp`, `command`, `effectType`, `targetId`, `data`. Battle helpers aggregate recent effects for UI/debug overlays.
+
+### 22.10 Error Classification Granularity
+Categories:
+- Param validation (`PARAM_INVALID`).
+- Domain rule failures (custom codes like `NO_TARGET`).
+- Structural runtime issues (`RULE_EXCEPTION`).
+- Startup integrity (`DEPENDENCY_MISSING`, `CONFLICTING_RESULT_KEY`).
+- Store invariants (`STORE_CONSTRAINT`).
+Guideline: prefer precise domain codes; avoid overloading a generic error bucket.
+
+### 22.11 Atomic Rollback Scope
+`batchAtomic` rollback reverts:
+- Entity creations (removes them if created in batch scope).
+- Entity updates (restores pre‑batch snapshot shallowly per entity object).
+- Effects buffer (drops unflushed effects).
+It does not undo external side effects (I/O, logging) or user‑maintained caches.
+
+### 22.12 Testing Shortcuts & Determinism Strategy
+Helpers: `fastCharacter`, snapshot digest (`snapshotWorld`), rule graph snapshots, RNG seed pinning. Compose multi‑command scenarios via `batch` to isolate failure points while retaining deterministic RNG sequences.
+
+### 22.13 Seeding & Repro Troubleshooting
+Capture failing test seed + serialized command sequence. Reproduce by constructing engine with captured seed then replaying commands. Divergence usually indicates added/removed RNG calls or re‑ordered rules.
+
+### 22.14 Event Emission Contract
+Events (stable names): `command:start`, `rule:start`, `rule:complete`, `command:complete`, `effects:flush`. Payloads include timestamps and identifiers; schema additions are additive (no removal without major version bump).
+
+### 22.15 Extensibility Boundaries
+Out‑of‑scope by design: dynamic entity catalog mutation at runtime, generic plugin injection, arbitrary rule pipeline reconfiguration post‑startup. Extensibility surfaces are limited to adapters (RNG, persistence) and future telemetry hooks.
+
+### 22.16 Performance Guardrails
+Current complexity: rule DAG resolution O(R) per first command run (cached), command execution O(R). Store operations are hash‑map based (amortized O(1)). Avoid premature caching inside rules; profile before adding indexes or secondary lookups.
+
+### 22.17 Future Extension Hooks (Reserved)
+Reserved conceptual spaces: persistence adapter lifecycle hooks, telemetry spans around rule execution, configurable effect serialization formats. Not implemented; documented to signal intentional design surface.
 
 ---
 **End of User-Centric Redesign Blueprint**

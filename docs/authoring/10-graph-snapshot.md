@@ -24,3 +24,7 @@ Why is useful:
 How many do we need:
 
 Only snapshot the commands whose internal sequence embodies meaningful OSRIC procedural logic (attackRoll, dealDamage, nextTurn, maybe savingThrow if it gains multi‑step modifiers). That keeps noise low while protecting core procedure fidelity.
+
+Implementation Note: 
+
+Use `explainRuleGraph(commandKey)` to obtain a stable JSON description (`rules`, `edges`, `topoOrder`). Commit snapshot files in tests; diffs require explicit acceptance, preventing unnoticed ordering drift.

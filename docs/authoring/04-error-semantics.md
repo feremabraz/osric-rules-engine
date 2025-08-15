@@ -16,9 +16,6 @@ Caused by:
 
 Avoid catching and repackaging programmer bugs as domain failures; allow them to surface as structural issues. For store updates validate early and fail fast.
 
-## Legacy Note
-Older examples used an `ok()` helper for success returns. This is deprecated—just `return { ...delta }` (or `{}` when a rule has no fields) matching the rule's `output` schema. 
-
 ## Choosing Codes
 Add new domain codes by extending the union in `errors/codes.ts` (ensure they are not part of the structural subset). Keep codes uppercase with underscores.
 
