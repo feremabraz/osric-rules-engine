@@ -28,9 +28,9 @@
   "version": "0.2.0",
   "exports": {
     ".": {
-      "import": "./osric/index.ts",
-      "types": "./osric/index.ts"
+      "import": "./osric-engine/index.ts",
+      "types": "./osric-engine/index.ts"
     }
   },
-  "types": "./osric/index.ts"
+  "types": "./osric-engine/index.ts"
 }

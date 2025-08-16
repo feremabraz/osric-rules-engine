@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
+    "target": "ES2020",
     "lib": ["es2022"],
     "allowJs": false,
     "skipLibCheck": true,
@@ -15,13 +15,7 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "@tests/*": ["./__tests__/*"],
-      "@osric/*": ["./osric/*"],
-      "@osric/core/*": ["./osric/core/*"],
-      "@osric/types/*": ["./osric/types/*"],
-      "@osric/rules/*": ["./osric/rules/*"],
-      "@osric/commands/*": ["./osric/commands/*"],
-      "@osric/entities/*": ["./osric/entities/*"]
+      "@tests/*": ["./__tests__/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"],

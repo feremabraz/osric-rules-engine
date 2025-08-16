@@ -14,12 +14,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@tests': resolve(__dirname, './__tests__'),
-      '@osric': resolve(__dirname, './osric'),
-      '@osric/core': resolve(__dirname, './osric/core'),
-      '@osric/types': resolve(__dirname, './osric/types'),
-      '@osric/rules': resolve(__dirname, './osric/rules'),
-      '@osric/commands': resolve(__dirname, './osric/commands'),
-      '@osric/entities': resolve(__dirname, './osric/entities'),
     },
   },
 });
