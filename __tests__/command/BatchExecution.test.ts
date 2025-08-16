@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { batch, batchAtomic } from '../../osric/command/batch';
 import { Engine } from '../../osric/engine/Engine';
-import { fastCharacter, testExpectOk } from '../../osric/testing/shortcuts';
+import { baselineCharacter, testExpectOk } from '../../osric/testing/shortcuts';
 
 // We rely on existing commands: createCharacter, gainExperience (needs existing character), savingThrow (will fail if character missing)
 

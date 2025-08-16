@@ -1,5 +1,4 @@
 // Stable hashing utilities (unified for accumulator integrity & command schema digests)
-// Mixing algorithm preserved to avoid snapshot churn.
 
 const MIX_CONST = 0x9e3779b1; // golden ratio derived prime-ish constant
 
@@ -22,15 +21,20 @@ export function hashStrings(parts: string[]): string {
 
 export function hashObject(obj: Record<string, unknown>): number {
   const stack: unknown[] = [obj];
+  const seen = new WeakSet<object>();
   let h = 0 >>> 0;
   while (stack.length) {
     const current = stack.pop();
-    if (!current) continue;
-    if (typeof current !== 'object') {
+    if (current === null || current === undefined) continue;
+    const t = typeof current;
+    if (t !== 'object') {
       const prim = String(current);
       for (let i = 0; i < prim.length; i++) h = mixChar(h, prim.charCodeAt(i));
       continue;
     }
+    const objCur = current as object;
+    if (seen.has(objCur)) continue; // cycle / shared ref guard
+    seen.add(objCur);
     const entries = Object.entries(current as Record<string, unknown>).sort((a, b) =>
       a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0
     );

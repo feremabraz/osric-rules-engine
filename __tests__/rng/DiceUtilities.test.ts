@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createRng, rollDice, rollDie, withTempSeed } from '../../osric';
+import { rollDice, rollDie, withTempSeed } from '../../osric/rng/dice';
+import { createRng } from '../../osric/rng/random';
 
 describe('Dice utilities (Item 9)', () => {
   it('rollDie respects bounds', () => {

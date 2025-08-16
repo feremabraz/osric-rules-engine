@@ -1,6 +1,6 @@
 import type { Rng } from './random';
 
-// Phase 06 Item 9: RNG & Dice Utilities
+// RNG & Dice Utilities
 
 export function rollDie(rng: Rng, sides: number): number {
   if (sides < 2) return 1;

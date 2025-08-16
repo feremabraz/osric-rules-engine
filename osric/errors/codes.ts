@@ -1,5 +1,5 @@
-// Phase 6: Central engine runtime error codes (expanded)
-// Structural or startup validation errors (dependency missing, conflicting keys) throw directly before start completes.
+// Central engine runtime error codes
+// Structural or startup validation errors (dependency missing, conflicting keys) throw before start completes.
 export type CommandErrorCode =
   | 'PARAM_INVALID'
   | 'RULE_EXCEPTION'
@@ -22,7 +22,7 @@ export type CommandErrorCode =
   // Phase 03 battles
   | 'BATTLE_NOT_FOUND';
 
-// Phase 08: structural vs domain code categorization
+// Structural vs domain code categorization
 export type EngineStructuralCode =
   | 'PARAM_INVALID'
   | 'RULE_EXCEPTION'
@@ -32,6 +32,7 @@ export type EngineStructuralCode =
   | 'NESTED_TRANSACTION_UNSUPPORTED'
   | 'INTEGRITY_MUTATION'
   | 'ORDERING_VIOLATION';
+
 export type DomainCode = Exclude<CommandErrorCode, EngineStructuralCode>;
 
 export type EngineErrorCode = CommandErrorCode; // alias for public export

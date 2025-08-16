@@ -33,6 +33,7 @@ Avoid reusing the same key across rules; each key space is global within the com
 * Domain issues: `return ctx.fail('CODE', 'message')` to stop execution gracefully. This returns a sentinel (currently typed as a value, not `never`).
 * Developer errors (unexpected states) should throw; surfaces as structural `RULE_EXCEPTION`.
 * Avoid mixing partial mutations with failures; validate first, mutate later rules.
+* Use `simulate` runs during development to confirm early rule failures short‑circuit before mutating state.
 
 Return objects directly. `{}` is valid for empty output (must match schema).
 
@@ -72,7 +73,7 @@ Batch expensive lookups into one load rule if later rules all require them.
 - Each rule: unique `ruleName`, `output` schema declared.
 - `apply` typed with `RuleCtx`.
 - No `any` / broad `unknown` casts except the single narrowing at function boundary (if needed).
-// The former `ok()` helper was removed; simply return an object (or `{}`) or a domain failure via `ctx.fail()`.
+// The former `ok()` helper and functional result helpers (mapResult/tapResult/chain) were removed; simply return an object (or `{}`) or a domain failure via `ctx.fail()` and branch with isOk when needed.
 // The engine freezes contributed deltas (except `draft`) to prevent temporal coupling between rules.
 - Fail fast before mutation.
 - Effects emitted only after successful validation.

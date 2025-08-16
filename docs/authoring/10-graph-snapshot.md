@@ -1,4 +1,4 @@
-# 11. Graph Snapshot
+# 10. Graph Snapshot
 
 Think of the rule‑graph snapshot as freezing your “mini OSRIC procedure” per command, analogous to locking down the canonical AD&D/OSRIC sequence (e.g. Surprise → Initiative → Declarations → Movement → Missiles → Spells → Melee → Morale). For each engine command (attackRoll, dealDamage, nextTurn, etc.) you currently have an internal micro‑ordering of rules (validation, modifier aggregation, roll, crit resolution, assembly). 
 
@@ -25,6 +25,6 @@ How many do we need:
 
 Only snapshot the commands whose internal sequence embodies meaningful OSRIC procedural logic (attackRoll, dealDamage, nextTurn, maybe savingThrow if it gains multi‑step modifiers). That keeps noise low while protecting core procedure fidelity.
 
-Implementation Note: 
+Implementation Note:
 
-Use `explainRuleGraph(commandKey)` to obtain a stable JSON description (`rules`, `edges`, `topoOrder`). Commit snapshot files in tests; diffs require explicit acceptance, preventing unnoticed ordering drift.
+Use `explainRuleGraph(commandKey)` to obtain a stable JSON description (`rules`, `edges`, `topoOrder`). Commit snapshot files in tests; diffs require explicit acceptance, preventing unnoticed ordering drift. See also structural contracts doc (`12-structural-contracts.md`) for digest pairing.

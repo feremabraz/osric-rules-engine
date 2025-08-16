@@ -7,14 +7,14 @@ import {
   updateCharacter,
 } from '../../osric';
 import { Engine } from '../../osric/engine/Engine';
-import { fastCharacter } from '../../osric/testing/shortcuts';
+import { baselineCharacter } from '../../osric/testing/shortcuts';
 
 async function setup() {
   const engine = new Engine();
   await engine.start();
-  const a = await fastCharacter(engine, { name: 'Alice' });
-  const b = await fastCharacter(engine, { name: 'Bob' });
-  const c = await fastCharacter(engine, { name: 'Cultist' });
+  const a = await baselineCharacter(engine, { name: 'Alice' });
+  const b = await baselineCharacter(engine, { name: 'Bob' });
+  const c = await baselineCharacter(engine, { name: 'Cultist' });
   // Adjust factions (default is 'party')
   updateCharacter(engine.store, c, { faction: 'cult' });
   return { engine, a, b, c };

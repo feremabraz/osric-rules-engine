@@ -4,6 +4,7 @@ import type { RuleSubclass } from './Rule';
 
 // Factory to reduce boilerplate when authoring commands.
 
+/** @internal Placeholder for commands with no accumulator delta */
 export const emptyOutput = Object.freeze({});
 
 export interface DefineCommandInput<P extends ZodTypeAny> {

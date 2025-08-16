@@ -1,6 +1,6 @@
 import { type ZodObject, type ZodRawShape, type ZodTypeAny, z } from 'zod';
 import { type BuiltCommandMeta, buildRegistry } from '../command/register';
-import { getRegisteredCommands, resetRegisteredCommands } from '../command/register';
+import { getRegisteredCommands } from '../command/register';
 import { type EngineConfig, type EngineConfigInput, EngineConfigSchema } from '../config/schema';
 import { character as characterEntities } from '../entities/character';
 import { item as itemEntities } from '../entities/item';
@@ -12,7 +12,6 @@ import { __setIdRandom } from '../store/ids';
 import { type StoreFacade, createStoreFacade } from '../store/storeFacade';
 import type { CommandResultShape } from '../types/commandResults';
 import { type Logger, NoopLogger } from '../types/logger';
-// Engine (Phase 5: config, entities, registry, execution skeleton & command proxy)
 import type { Result } from '../types/result';
 import { engineFail } from '../types/result';
 
@@ -29,7 +28,7 @@ export class Engine {
     command: string;
     effects: { type: string; target: string; payload?: unknown }[];
   }[] = [];
-  // Simple transaction state (Item 9)
+  // Simple transaction state
   private txState: null | {
     snapshot: ReturnType<StoreFacade['snapshot']>;
     rngState: number;
@@ -37,7 +36,7 @@ export class Engine {
     startedAt: number;
     dirty: boolean;
   } = null;
-  // Metrics (Phase 05 Item 3)
+  // Metrics
   private metrics = {
     commandsExecuted: 0,
     commandsFailed: 0,
@@ -98,7 +97,7 @@ export class Engine {
     this.started = true;
   }
 
-  // Phase 06: strategy – runtime static import list (could be code-generated at build time).
+  // strategy – runtime static import list (could be code-generated at build time).
   private async autoDiscoverCommands(): Promise<void> {
     // In a build-time generated variant, this list would be produced automatically.
     const modules: (() => Promise<unknown>)[] = [
@@ -438,6 +437,11 @@ export class Engine {
     this.rollbackTransaction();
     const diagnostics = (result as unknown as { diagnostics?: unknown }).diagnostics;
     return { result, diagnostics, diff: { created, mutated, deleted } };
+  }
+
+  /** Public ergonomic alias (Step 3): mirrors preview/transaction naming without trailing 'Command'. */
+  async simulate(command: string, params: unknown) {
+    return this.simulateCommand(command, params);
   }
 }
 

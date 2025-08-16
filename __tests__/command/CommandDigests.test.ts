@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { getCommandDigests, registerCommand, resetRegisteredCommands } from '../../osric';
-import { buildRegistry } from '../../osric/command/register';
+import { getCommandDigests } from '../../osric';
+import {
+  buildRegistry,
+  registerCommand,
+  resetRegisteredCommands,
+} from '../../osric/command/register';
 import { AttackRollCommand } from '../../osric/commands/attackRoll';
 // Import a representative subset of commands (enough for structural coverage)
 import { CreateCharacterCommand } from '../../osric/commands/createCharacter';

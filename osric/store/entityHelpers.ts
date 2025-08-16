@@ -2,7 +2,6 @@ import type { Character } from '../entities/character';
 import type { CharacterId } from './ids';
 import type { StoreFacade } from './storeFacade';
 
-// Phase 06 Item 10: Store Entity Access Helpers
 // Character-focused helpers providing clearer intent, stronger typing, and reduced repetition.
 
 /** Retrieve a character by id or null if missing. */

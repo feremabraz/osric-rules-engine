@@ -1,4 +1,4 @@
-// Phase 01 Item 1: Ability Score Generation Service
+// Ability Score Generation Service
 import type { Rng } from '../rng/random';
 
 export interface AbilityScores {

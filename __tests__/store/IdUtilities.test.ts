@@ -6,8 +6,8 @@ import {
   createMonsterId,
   ensureCharacterId,
   idKind,
-  tryParseCharacterId,
 } from '../../osric';
+import { tryParseCharacterId } from '../../osric/store/ids';
 
 // Phase 06 Item 3: Tests for generic ID utilities & discriminator
 

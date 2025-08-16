@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Engine, registerCommand, resetRegisteredCommands } from '../../osric';
+import { Engine } from '../../osric';
+import { registerCommand, resetRegisteredCommands } from '../../osric/command/register';
 import { CreateCharacterCommand } from '../../osric/commands/createCharacter';
 import { SavingThrowCommand } from '../../osric/commands/savingThrow';
 import { character } from '../../osric/entities/character';

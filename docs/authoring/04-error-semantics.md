@@ -7,6 +7,8 @@ return ctx.fail('NO_LEADER', 'Leader character not found');
 ```
 `ctx.fail` returns a structured domain failure result (it does NOT throw). The engine stops further rule execution for that command and no effects are committed. Prefer early `fail` over accumulating multiple domain problems; report the first decisive blocker.
 
+Diagnostics now include a `failedRule` field for both domain and structural failures so you can immediately identify the stopping point (available on normal execution result diagnostics and via `simulate`).
+
 ## Structural Failures
 Caused by:
 - Parameter validation failures (`PARAM_INVALID`)

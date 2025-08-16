@@ -4,7 +4,7 @@ We use `defineCommand` to eliminate bespoke subclasses for most commands. You st
 
 ## Example
 ```ts
-import { defineCommand, Rule, registerCommand, type RuleCtx, characterIdSchema, getCharacter, updateCharacter, type CharacterId } from '@osric';
+import { defineCommand, Rule, type RuleCtx, characterIdSchema, getCharacter, updateCharacter, type CharacterId } from 'osric';
 import { z } from 'zod';
 
 const params = z.object({ characterId: characterIdSchema, amount: z.number().int().positive() });
@@ -59,7 +59,7 @@ export const GrantXpCommand = defineCommand({
   params,
   rules: [Validate, Load, Grant],
 });
-registerCommand(GrantXpCommand as unknown as typeof GrantXpCommand);
+// In tests or internal setup you still call registerCommand; external consumers typically rely on built-in or documented registration hooks.
 ```
 
 ## Empty Output Rules
@@ -68,12 +68,20 @@ If a rule contributes no accumulator keys, return `{}` and use `static output = 
 ## When To Still Use a Subclass
 Only if you need a custom constructor or dynamic rule assembly (rare). The `defineCommand` factory + co‑located `Rule` classes cover almost all cases.
 
+## Simulating a Command Before Commit
+```ts
+// After registering & starting engine
+const preview = await simulate(engine, 'grantXp', { characterId, amount: 50 });
+if (preview.result.ok) console.log(preview.diff);
+```
+
 ## Key Conventions Recap
 1. Always use branded ID schemas (`characterIdSchema`, `battleIdSchema`, etc.) in params.
 2. Keep `apply(ctx: unknown)` for structural compatibility; inside cast to `RuleCtx<Params, Acc>`.
 3. Return plain objects; engine merges them (no `ok()` helper needed).
 4. Each rule declares a precise `output` schema; use `z.object({})` for empty.
 5. Use domain `ctx.fail(code, message)` for business failures; throw for programmer bugs.
-6. Emit effects only in terminal rules after validation passes.
+6. Use `simulate` for speculative inspection (diff, diagnostics) before affecting persistent state.
+7. Emit effects only in terminal rules after validation passes.
 
 Next: Rule Design Guidelines (3).

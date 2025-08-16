@@ -13,6 +13,7 @@ export interface BatchStepResult {
   ok: boolean;
   data?: Record<string, unknown>;
   error?: { code: string; message: string };
+  diagnostics?: unknown; // passthrough from underlying command for parity testing
 }
 
 export interface BatchResult {
@@ -28,12 +29,18 @@ export async function batch(engine: Engine, steps: BatchStep[]): Promise<BatchRe
     const res = await engine.execute(step.command, step.params);
     if (res.ok) {
       if (step.assign) acc[step.assign] = res.data;
-      results.push({ command: step.command, ok: true, data: res.data });
+      results.push({
+        command: step.command,
+        ok: true,
+        data: res.data,
+        diagnostics: (res as unknown as { diagnostics?: unknown }).diagnostics,
+      });
     } else {
       results.push({
         command: step.command,
         ok: false,
         error: { code: res.error.code, message: res.error.message },
+        diagnostics: (res as unknown as { diagnostics?: unknown }).diagnostics,
       });
     }
   }
@@ -51,12 +58,18 @@ export async function batchAtomic(engine: Engine, steps: BatchStep[]): Promise<B
       const res = await engine.execute(step.command, step.params);
       if (res.ok) {
         if (step.assign) acc[step.assign] = res.data;
-        results.push({ command: step.command, ok: true, data: res.data });
+        results.push({
+          command: step.command,
+          ok: true,
+          data: res.data,
+          diagnostics: (res as unknown as { diagnostics?: unknown }).diagnostics,
+        });
       } else {
         results.push({
           command: step.command,
           ok: false,
           error: { code: res.error.code, message: res.error.message },
+          diagnostics: (res as unknown as { diagnostics?: unknown }).diagnostics,
         });
         if (!step.optional) {
           aborted = true;

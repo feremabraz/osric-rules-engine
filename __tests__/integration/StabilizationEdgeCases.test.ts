@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { Command, Engine, registerCommand, resetRegisteredCommands } from '../../osric';
+import { Command, Engine } from '../../osric';
 import type { RuleCtx } from '../../osric';
+import { registerCommand, resetRegisteredCommands } from '../../osric/command/register';
 
 // Cyclic dependency rules
 class A extends class {} {

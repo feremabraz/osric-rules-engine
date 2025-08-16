@@ -3,15 +3,16 @@
 ## Pattern
 1. Build test engine with only the command(s) under test.
 2. Seed RNG for determinism.
-3. Pre-create required entities (use `fastCharacter` where possible).
-4. Execute command via `engine.command.<key>` *or* wrapped in a `batch` if orchestrating.
-5. Assert using result helpers (`isOk`, `assertOk`) & effect helpers (`getEffects`, `effectStats`).
+3. Pre-create required entities (use `baselineCharacter` where possible).
+4. (Optional) Run `simulate` first to inspect accumulator / diff / diagnostics.
+5. Execute command via `engine.command.<key>` *or* wrapped in a `batch` if orchestrating.
+6. Assert using result helpers (`isOk`, `assertOk`) & effect helpers (`getEffects`, `effectStats`).
 
 ```ts
 const { engine } = testEngine({ seed: 123 })
   .register(MyCommand)
   .finalize();
-const heroId = await fastCharacter(engine, { name: 'Hero' });
+const heroId = await baselineCharacter(engine, { name: 'Hero' });
 const res = await engine.command.myCommand(heroId, { foo: 'bar' });
 expect(res.ok).toBe(true);
 expect(effectStats(engine).total).toBe(1);
@@ -30,7 +31,7 @@ const heroId = characterIdSchema.parse(res.value.newCharacterId);
 Use `expectAllDurationsUnder(engine, 5)` to guard against performance regressions in micro-bench scenarios.
 
 ## Digest / Snapshot Tests
-For broader regression coverage, construct a minimized digest (omit volatile fields like HP if not needed). Use rule graph snapshots (`explainRuleGraph`) for structural assurances distinct from state digests.
+For broader regression coverage, construct a minimized digest (omit volatile fields like HP if not needed). Use rule graph snapshots (`explainRuleGraph`) for structural assurances distinct from state digests. Functional result helpers (`mapResult`, `tapResult`, etc.) were removed—inline simple branching with `isOk`.
 ```ts
 const digest = {
   chars: snapshotWorld(engine).characters.map(c => ({ id: c.id, lvl: c.level })),

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { Command, Engine, registerCommand, resetRegisteredCommands } from '../../osric';
+import { Command, Engine } from '../../osric';
+import { registerCommand, resetRegisteredCommands } from '../../osric/command/register';
 
 class S1 extends class {} {
   static ruleName = 'S1';

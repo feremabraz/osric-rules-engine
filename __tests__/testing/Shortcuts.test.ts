@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Engine, type Result, fastCharacter, snapshotWorld, testExpectOk } from '../../osric';
+import { Engine, type Result } from '../../osric';
+import { baselineCharacter, snapshotWorld, testExpectOk } from '../../osric/testing/shortcuts';
 import '../../osric/commands/createCharacter';
 
 // Phase 06 Item 8: Testing shortcuts usage
@@ -8,7 +9,7 @@ describe('testing shortcuts', () => {
   it('creates character and snapshots world', async () => {
     const engine = new Engine({ seed: 5 });
     await engine.start();
-    const id = await fastCharacter(engine, { name: 'ShortcutChar' });
+    const id = await baselineCharacter(engine, { name: 'ShortcutChar' });
     expect(typeof id).toBe('string');
     const snap = snapshotWorld(engine);
     expect(snap.characters.some((c) => c.id === id)).toBe(true);

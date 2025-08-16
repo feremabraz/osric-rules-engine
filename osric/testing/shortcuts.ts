@@ -3,8 +3,6 @@ import type { CharacterId } from '../store/ids';
 import type { Result } from '../types/result';
 import { assertOk } from '../types/result';
 
-// Phase 06 Item 8: Testing Shortcuts
-
 // Await (or accept) a Result and return the ok data (throws if failure)
 export async function testExpectOk<T>(resOrPromise: Result<T> | Promise<Result<T>>): Promise<T> {
   const r = await resOrPromise;
@@ -15,8 +13,8 @@ interface FastCharacterOptions {
   name?: string;
 }
 
-// Quickly create a baseline character (first human/fighter catalog entries) returning CharacterId
-export async function fastCharacter(
+// Create a baseline character for testing, returning its ID
+export async function baselineCharacter(
   engine: Engine,
   opts: FastCharacterOptions = {}
 ): Promise<CharacterId> {

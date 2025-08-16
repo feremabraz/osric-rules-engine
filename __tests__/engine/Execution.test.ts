@@ -1,15 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import {
-  Command,
-  Engine,
-  assertOk,
-  isFail,
-  isOk,
-  registerCommand,
-  resetRegisteredCommands,
-} from '../../osric';
+import { Command, Engine, assertOk, isFail, isOk } from '../../osric';
 import type { RuleCtx } from '../../osric';
+import { registerCommand, resetRegisteredCommands } from '../../osric/command/register';
 
 class R1 extends class {} {
   static ruleName = 'Validate';

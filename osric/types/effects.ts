@@ -1,4 +1,4 @@
-// Phase 03: Effect descriptor and collector types
+// Effect descriptor and collector types
 export interface Effect<Payload = unknown> {
   type: string;
   target: string; // entity id or other target identifier

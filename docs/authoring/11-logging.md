@@ -104,3 +104,6 @@ The initial implementation deliberately excludes:
 
 These can be layered on later without breaking the basic contract.
 
+### Failure Context
+On any failure the logger emits `command.error`; inspect the execution result (domain vs structural) and diagnostics `failedRule` to pinpoint the stopping rule.
+

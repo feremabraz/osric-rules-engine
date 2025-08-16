@@ -1,6 +1,5 @@
-// Minimal logger interface and no-op implementation.
 export interface Logger {
-  trace?: (...args: unknown[]) => void; // optional
+  trace?: (...args: unknown[]) => void;
   debug: (...args: unknown[]) => void;
   info: (...args: unknown[]) => void;
   warn: (...args: unknown[]) => void;

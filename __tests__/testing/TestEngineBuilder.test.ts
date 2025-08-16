@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { Command, registerCommand, resetRegisteredCommands, testEngine } from '../../osric';
+import { Command } from '../../osric';
 import type { RuleCtx } from '../../osric';
+import { registerCommand, resetRegisteredCommands } from '../../osric/command/register';
+import { testEngine } from '../../osric/testing/testEngine';
 
 class EchoCommand extends Command {
   static key = 'echo';

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { Command, Engine, registerCommand, resetRegisteredCommands } from '../../osric';
+import { Command, Engine } from '../../osric';
+// Internalized registration helpers (Step 6) – import from internal module for tests
+import { registerCommand, resetRegisteredCommands } from '../../osric/command/register';
 
 class SimpleRule extends class {} {}
 function makeRule(name: string, after?: string[]) {

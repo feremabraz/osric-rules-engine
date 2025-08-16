@@ -1,4 +1,4 @@
-// Phase 7: Deterministic RNG (simple LCG)
+// Deterministic RNG (simple LCG)
 export interface Rng {
   int(min: number, max: number): number; // inclusive
   float(): number; // [0,1)
